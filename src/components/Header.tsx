@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -19,7 +20,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-gold rounded-lg flex items-center justify-center">
               <Zap className="w-6 h-6 text-gold-foreground font-bold" />
             </div>
@@ -27,7 +28,7 @@ const Header = () => {
               <div className="text-xl font-bold text-foreground">AIQTP</div>
               <div className="text-xs text-muted-foreground">Global Marketplace</div>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -35,14 +36,13 @@ const Header = () => {
               <span>Markets</span>
               <ChevronDown className="w-4 h-4" />
             </div>
-            <div className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
+            <Link to="/trading" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
               <span>Trading</span>
-              <ChevronDown className="w-4 h-4" />
-            </div>
-            <div className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
+            </Link>
+            <Link to="/vault" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
               <span>Vault</span>
               <Zap className="w-4 h-4" />
-            </div>
+            </Link>
             <span className="text-foreground hover:text-gold cursor-pointer transition-smooth">Security</span>
             <span className="text-foreground hover:text-gold cursor-pointer transition-smooth">Support</span>
           </nav>
@@ -78,13 +78,13 @@ const Header = () => {
               <div className="text-foreground hover:text-gold cursor-pointer transition-smooth py-2">
                 Markets
               </div>
-              <div className="text-foreground hover:text-gold cursor-pointer transition-smooth py-2">
+              <Link to="/trading" className="block text-foreground hover:text-gold transition-smooth py-2">
                 Trading
-              </div>
-              <div className="flex items-center space-x-2 text-foreground hover:text-gold cursor-pointer transition-smooth py-2">
+              </Link>
+              <Link to="/vault" className="flex items-center space-x-2 text-foreground hover:text-gold transition-smooth py-2">
                 <Zap className="w-4 h-4" />
                 <span>Lightning Vault</span>
-              </div>
+              </Link>
               <div className="text-foreground hover:text-gold cursor-pointer transition-smooth py-2">
                 Security
               </div>
