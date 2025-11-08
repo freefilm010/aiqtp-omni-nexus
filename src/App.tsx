@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import TradingDashboard from "./pages/TradingDashboard";
 import LightningVault from "./pages/LightningVault";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -18,8 +20,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/trading" element={<TradingDashboard />} />
-          <Route path="/vault" element={<LightningVault />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/trading" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
+          <Route path="/vault" element={<ProtectedRoute><LightningVault /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

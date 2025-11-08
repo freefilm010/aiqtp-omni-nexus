@@ -44,7 +44,7 @@ const Hero = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Link to="/trading">
+          <Link to="/auth">
             <Button variant="hero" size="xl" className="group">
               Start Trading Now
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

@@ -53,13 +53,17 @@ const Header = () => {
               <Globe className="w-3 h-3 mr-1" />
               200+ Countries
             </Badge>
-            <Button variant="ghost" size="sm">
-              <User className="w-4 h-4 mr-2" />
-              Sign In
-            </Button>
-            <Button variant="premium" size="sm">
-              Get Started
-            </Button>
+            <Link to="/auth">
+              <Button variant="ghost" size="sm">
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button variant="premium" size="sm">
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -93,13 +97,17 @@ const Header = () => {
               </div>
               
               <div className="pt-4 space-y-3">
-                <Button variant="ghost" className="w-full justify-start">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-                <Button variant="premium" className="w-full">
-                  Get Started
-                </Button>
+                <Link to="/auth" className="block">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/auth" className="block">
+                  <Button variant="premium" className="w-full">
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             </nav>
           </div>

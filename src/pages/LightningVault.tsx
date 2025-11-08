@@ -22,9 +22,84 @@ import {
   Globe,
   Wallet
 } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
+
+// Validation schemas
+const sendPaymentSchema = z.object({
+  recipientAddress: z.string()
+    .min(10, "Address must be at least 10 characters")
+    .max(200, "Address must be less than 200 characters")
+    .trim(),
+  amount: z.string()
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Amount must be greater than 0")
+    .refine((val) => Number(val) <= 1000000, "Amount must be less than 1,000,000")
+    .refine((val) => {
+      const decimals = val.split('.')[1];
+      return !decimals || decimals.length <= 8;
+    }, "Maximum 8 decimal places allowed"),
+  asset: z.string().min(1, "Please select an asset"),
+});
+
+const swapSchema = z.object({
+  fromAmount: z.string()
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Amount must be greater than 0")
+    .refine((val) => Number(val) <= 1000000, "Amount must be less than 1,000,000")
+    .refine((val) => {
+      const decimals = val.split('.')[1];
+      return !decimals || decimals.length <= 8;
+    }, "Maximum 8 decimal places allowed"),
+  fromAsset: z.string().min(1, "Please select source asset"),
+  toAsset: z.string().min(1, "Please select destination asset"),
+}).refine((data) => data.fromAsset !== data.toAsset, {
+  message: "Source and destination assets must be different",
+  path: ["toAsset"],
+});
 
 const LightningVault = () => {
-  const [amount, setAmount] = useState("");
+  // Send form state
+  const [recipientAddress, setRecipientAddress] = useState("");
+  const [sendAmount, setSendAmount] = useState("");
+  const [sendAsset, setSendAsset] = useState("BTC");
+  
+  // Swap form state
+  const [fromAmount, setFromAmount] = useState("");
+  const [fromAsset, setFromAsset] = useState("BTC");
+  const [toAsset, setToAsset] = useState("ETH");
+
+  const handleSendPayment = () => {
+    try {
+      const validated = sendPaymentSchema.parse({
+        recipientAddress,
+        amount: sendAmount,
+        asset: sendAsset,
+      });
+      
+      toast.success("Payment validated successfully!");
+      // Backend integration would happen here
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+    }
+  };
+
+  const handleSwap = () => {
+    try {
+      const validated = swapSchema.parse({
+        fromAmount,
+        fromAsset,
+        toAsset,
+      });
+      
+      toast.success("Swap validated successfully!");
+      // Backend integration would happen here
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+    }
+  };
 
   const recentTransactions = [
     { id: "1", type: "Received", amount: "+0.0234 BTC", usd: "+$1,567", time: "2 mins ago", status: "completed" },
@@ -127,7 +202,12 @@ const LightningVault = () => {
                       <div className="space-y-4">
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">Recipient Address</label>
-                          <Input placeholder="Enter wallet address or Lightning invoice" />
+                          <Input 
+                            placeholder="Enter wallet address or Lightning invoice"
+                            value={recipientAddress}
+                            onChange={(e) => setRecipientAddress(e.target.value)}
+                            maxLength={200}
+                          />
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
@@ -136,16 +216,23 @@ const LightningVault = () => {
                             <Input
                               type="number"
                               placeholder="0.00"
-                              value={amount}
-                              onChange={(e) => setAmount(e.target.value)}
+                              value={sendAmount}
+                              onChange={(e) => setSendAmount(e.target.value)}
+                              min="0"
+                              max="1000000"
+                              step="0.00000001"
                             />
                           </div>
                           <div>
                             <label className="text-sm font-medium text-foreground mb-2 block">Asset</label>
-                            <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                              <option>BTC - Bitcoin</option>
-                              <option>ETH - Ethereum</option>
-                              <option>USDC - USD Coin</option>
+                            <select 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              value={sendAsset}
+                              onChange={(e) => setSendAsset(e.target.value)}
+                            >
+                              <option value="BTC">BTC - Bitcoin</option>
+                              <option value="ETH">ETH - Ethereum</option>
+                              <option value="USDC">USDC - USD Coin</option>
                             </select>
                           </div>
                         </div>
@@ -161,7 +248,7 @@ const LightningVault = () => {
                           </div>
                         </div>
 
-                        <Button variant="gold" className="w-full" size="lg">
+                        <Button variant="gold" className="w-full" size="lg" onClick={handleSendPayment}>
                           <Send className="w-5 h-5 mr-2" />
                           Send Payment
                         </Button>
@@ -205,11 +292,23 @@ const LightningVault = () => {
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">From</label>
                           <div className="grid grid-cols-2 gap-2">
-                            <Input type="number" placeholder="0.00" />
-                            <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                              <option>BTC</option>
-                              <option>ETH</option>
-                              <option>USDC</option>
+                            <Input 
+                              type="number" 
+                              placeholder="0.00"
+                              value={fromAmount}
+                              onChange={(e) => setFromAmount(e.target.value)}
+                              min="0"
+                              max="1000000"
+                              step="0.00000001"
+                            />
+                            <select 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              value={fromAsset}
+                              onChange={(e) => setFromAsset(e.target.value)}
+                            >
+                              <option value="BTC">BTC</option>
+                              <option value="ETH">ETH</option>
+                              <option value="USDC">USDC</option>
                             </select>
                           </div>
                         </div>
@@ -223,11 +322,20 @@ const LightningVault = () => {
                         <div>
                           <label className="text-sm font-medium text-foreground mb-2 block">To</label>
                           <div className="grid grid-cols-2 gap-2">
-                            <Input type="number" placeholder="0.00" />
-                            <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                              <option>ETH</option>
-                              <option>BTC</option>
-                              <option>USDC</option>
+                            <Input 
+                              type="number" 
+                              placeholder="0.00" 
+                              readOnly
+                              className="bg-muted"
+                            />
+                            <select 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              value={toAsset}
+                              onChange={(e) => setToAsset(e.target.value)}
+                            >
+                              <option value="ETH">ETH</option>
+                              <option value="BTC">BTC</option>
+                              <option value="USDC">USDC</option>
                             </select>
                           </div>
                         </div>
@@ -243,7 +351,7 @@ const LightningVault = () => {
                           </div>
                         </div>
 
-                        <Button variant="premium" className="w-full" size="lg">
+                        <Button variant="premium" className="w-full" size="lg" onClick={handleSwap}>
                           <Zap className="w-5 h-5 mr-2" />
                           Instant Swap
                         </Button>

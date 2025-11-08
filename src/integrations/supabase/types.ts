@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      lightning_channels: {
+        Row: {
+          capacity: number
+          channel_id: string
+          created_at: string
+          id: string
+          local_balance: number
+          remote_balance: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          capacity: number
+          channel_id: string
+          created_at?: string
+          id?: string
+          local_balance: number
+          remote_balance: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          capacity?: number
+          channel_id?: string
+          created_at?: string
+          id?: string
+          local_balance?: number
+          remote_balance?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lightning_transactions: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          destination: string | null
+          id: string
+          payment_hash: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency: string
+          destination?: string | null
+          id?: string
+          payment_hash?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          destination?: string | null
+          id?: string
+          payment_hash?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      portfolio: {
+        Row: {
+          asset_name: string
+          asset_symbol: string
+          average_price: number
+          created_at: string
+          current_price: number | null
+          id: string
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_name: string
+          asset_symbol: string
+          average_price: number
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          quantity: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_name?: string
+          asset_symbol?: string
+          average_price?: number
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          created_at: string
+          executed_at: string | null
+          id: string
+          price: number
+          quantity: number
+          status: string
+          symbol: string
+          total: number
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          price: number
+          quantity: number
+          status?: string
+          symbol: string
+          total: number
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          price?: number
+          quantity?: number
+          status?: string
+          symbol?: string
+          total?: number
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
