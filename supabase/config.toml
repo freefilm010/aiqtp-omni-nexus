@@ -1,1 +1,7 @@
 project_id = "msgzfkcqnkzdnlvuhnmn"
+
+[functions.generate-factors]
+verify_jwt = true
+
+[functions.generate-strategy]
+verify_jwt = true

@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_factors: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          factor_type: Database["public"]["Enums"]["ai_factor_type"]
+          id: string
+          is_active: boolean | null
+          name: string
+          parameters: Json | null
+          performance_metrics: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          factor_type: Database["public"]["Enums"]["ai_factor_type"]
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parameters?: Json | null
+          performance_metrics?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          factor_type?: Database["public"]["Enums"]["ai_factor_type"]
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parameters?: Json | null
+          performance_metrics?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_strategies: {
+        Row: {
+          code: string | null
+          created_at: string
+          description: string | null
+          entry_rules: Json
+          exit_rules: Json
+          factors: string[] | null
+          id: string
+          name: string
+          risk_parameters: Json
+          status: Database["public"]["Enums"]["strategy_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          entry_rules: Json
+          exit_rules: Json
+          factors?: string[] | null
+          id?: string
+          name: string
+          risk_parameters: Json
+          status?: Database["public"]["Enums"]["strategy_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          entry_rules?: Json
+          exit_rules?: Json
+          factors?: string[] | null
+          id?: string
+          name?: string
+          risk_parameters?: Json
+          status?: Database["public"]["Enums"]["strategy_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lightning_channels: {
         Row: {
           capacity: number
@@ -152,6 +239,68 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_performance: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          final_capital: number | null
+          id: string
+          initial_capital: number
+          max_drawdown: number | null
+          performance_data: Json | null
+          sharpe_ratio: number | null
+          start_date: string
+          strategy_id: string
+          test_type: string
+          total_return: number | null
+          total_trades: number | null
+          user_id: string
+          win_rate: number | null
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          final_capital?: number | null
+          id?: string
+          initial_capital: number
+          max_drawdown?: number | null
+          performance_data?: Json | null
+          sharpe_ratio?: number | null
+          start_date: string
+          strategy_id: string
+          test_type: string
+          total_return?: number | null
+          total_trades?: number | null
+          user_id: string
+          win_rate?: number | null
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          final_capital?: number | null
+          id?: string
+          initial_capital?: number
+          max_drawdown?: number | null
+          performance_data?: Json | null
+          sharpe_ratio?: number | null
+          start_date?: string
+          strategy_id?: string
+          test_type?: string
+          total_return?: number | null
+          total_trades?: number | null
+          user_id?: string
+          win_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_strategy"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trades: {
         Row: {
           created_at: string
@@ -253,7 +402,14 @@ export type Database = {
       }
     }
     Enums: {
+      ai_factor_type: "technical" | "fundamental" | "sentiment" | "alternative"
       app_role: "admin" | "moderator" | "user"
+      strategy_status:
+        | "draft"
+        | "backtesting"
+        | "paper_trading"
+        | "live"
+        | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -381,7 +537,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_factor_type: ["technical", "fundamental", "sentiment", "alternative"],
       app_role: ["admin", "moderator", "user"],
+      strategy_status: [
+        "draft",
+        "backtesting",
+        "paper_trading",
+        "live",
+        "archived",
+      ],
     },
   },
 } as const

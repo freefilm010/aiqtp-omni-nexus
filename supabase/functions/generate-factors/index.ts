@@ -1,0 +1,171 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { marketData, factorType = 'technical' } = await req.json();
+    
+    const authHeader = req.headers.get('Authorization')!;
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+      throw new Error('Unauthorized');
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
+
+    // System prompt for AIQTP RD-Agent factor generation
+    const systemPrompt = `You are AIQTP RD-Agent, an advanced AI quantitative trading research assistant. 
+Your role is to generate innovative trading factors based on market data.
+
+For ${factorType} factors:
+- Technical: Price patterns, momentum, volatility indicators
+- Fundamental: Financial ratios, earnings metrics
+- Sentiment: News analysis, social media signals
+- Alternative: Non-traditional data sources
+
+Generate 1-3 novel factors with:
+1. Name (concise, descriptive)
+2. Description (what it measures and why it's valuable)
+3. Formula/Code (Python-style pseudocode)
+4. Parameters (configurable values)
+
+Return as JSON array: [{"name": "...", "description": "...", "code": "...", "parameters": {...}}]`;
+
+    const userPrompt = `Generate ${factorType} trading factors based on this market context:
+${JSON.stringify(marketData, null, 2)}
+
+Focus on creating factors that are:
+- Theoretically sound
+- Practically implementable
+- Novel but not overfitted
+- Clearly interpretable`;
+
+    console.log('Calling Lovable AI for factor generation...');
+    
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('AI API error:', aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'AI credits exhausted. Please add credits to your workspace.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw new Error(`AI API error: ${aiResponse.status}`);
+    }
+
+    const aiData = await aiResponse.json();
+    const generatedText = aiData.choices[0].message.content;
+    
+    console.log('AI generated factors:', generatedText);
+    
+    // Parse AI response to extract factors
+    let factors = [];
+    try {
+      // Try to extract JSON from response
+      const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        factors = JSON.parse(jsonMatch[0]);
+      } else {
+        // Fallback: create structured factors from text
+        factors = [{
+          name: `${factorType.charAt(0).toUpperCase() + factorType.slice(1)} Factor`,
+          description: generatedText.substring(0, 200),
+          code: '# AI-generated factor code\n' + generatedText.substring(0, 500),
+          parameters: { lookback_period: 20, threshold: 0.5 }
+        }];
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      factors = [{
+        name: 'Generated Factor',
+        description: generatedText.substring(0, 200),
+        code: generatedText,
+        parameters: {}
+      }];
+    }
+
+    // Save factors to database
+    const savedFactors = [];
+    for (const factor of factors) {
+      const { data, error } = await supabaseClient
+        .from('ai_factors')
+        .insert({
+          user_id: user.id,
+          name: factor.name,
+          description: factor.description,
+          factor_type: factorType,
+          code: factor.code,
+          parameters: factor.parameters || {},
+          performance_metrics: { generated_at: new Date().toISOString() }
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving factor:', error);
+      } else {
+        savedFactors.push(data);
+      }
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        factors: savedFactors,
+        raw_response: generatedText 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error in generate-factors:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

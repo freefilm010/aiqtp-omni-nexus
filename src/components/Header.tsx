@@ -9,7 +9,8 @@ import {
   ChevronDown, 
   Globe,
   User,
-  Settings
+  Settings,
+  Brain
 } from "lucide-react";
 
 const Header = () => {
@@ -38,6 +39,10 @@ const Header = () => {
             </div>
             <Link to="/trading" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
               <span>Trading</span>
+            </Link>
+            <Link to="/ai-lab" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
+              <Brain className="w-4 h-4" />
+              <span>AI Lab</span>
             </Link>
             <Link to="/vault" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
               <span>Vault</span>
@@ -84,6 +89,10 @@ const Header = () => {
               </div>
               <Link to="/trading" className="block text-foreground hover:text-gold transition-smooth py-2">
                 Trading
+              </Link>
+              <Link to="/ai-lab" className="flex items-center space-x-2 text-foreground hover:text-gold transition-smooth py-2">
+                <Brain className="w-4 h-4" />
+                <span>AI Research Lab</span>
               </Link>
               <Link to="/vault" className="flex items-center space-x-2 text-foreground hover:text-gold transition-smooth py-2">
                 <Zap className="w-4 h-4" />
