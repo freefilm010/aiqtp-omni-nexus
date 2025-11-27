@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +13,6 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowUpRight,
-  ArrowDownRight,
   Search,
   Filter,
   Star,
@@ -19,12 +20,19 @@ import {
   BarChart3,
   Zap,
   Shield,
-  Globe
+  Globe,
+  Loader2
 } from "lucide-react";
+import { toast } from "sonner";
 
 const TradingDashboard = () => {
+  const { user, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [portfolio, setPortfolio] = useState<any[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Mock markets data (would be fetched from a real API in production)
   const markets = [
     { symbol: "BTC/USD", name: "Bitcoin", price: "67,234.89", change: "+5.23%", volume: "$2.4B", trend: "up" },
     { symbol: "ETH/USD", name: "Ethereum", price: "3,456.12", change: "+3.45%", volume: "$1.2B", trend: "up" },
@@ -34,11 +42,83 @@ const TradingDashboard = () => {
     { symbol: "ART-MON-01", name: "Monet NFT", price: "1,234,567", change: "-1.23%", volume: "$12M", trend: "down" },
   ];
 
-  const portfolio = [
-    { asset: "Bitcoin", amount: "2.4567", value: "$165,234", change: "+$12,345", percent: "+8.1%" },
-    { asset: "Ethereum", amount: "34.567", value: "$119,456", change: "+$4,567", percent: "+4.0%" },
-    { asset: "Gold Tokens", amount: "45.00", value: "$95,456", change: "-$234", percent: "-0.2%" },
-  ];
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchUserData();
+    } else if (!authLoading && !user) {
+      setLoading(false);
+    }
+  }, [user, authLoading]);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch portfolio
+      const { data: portfolioData, error: portfolioError } = await supabase
+        .from('portfolio')
+        .select('*')
+        .eq('user_id', user!.id);
+
+      if (portfolioError) throw portfolioError;
+
+      // Fetch trades
+      const { data: tradesData, error: tradesError } = await supabase
+        .from('trades')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (tradesError) throw tradesError;
+
+      setPortfolio(portfolioData || []);
+      setTrades(tradesData || []);
+    } catch (error: any) {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load portfolio data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateTotalBalance = () => {
+    if (portfolio.length === 0) return 0;
+    return portfolio.reduce((total, item) => {
+      const value = item.quantity * (item.current_price || item.average_price);
+      return total + value;
+    }, 0);
+  };
+
+  const calculateTotalChange = () => {
+    if (portfolio.length === 0) return { amount: 0, percent: 0 };
+    let totalCost = 0;
+    let totalValue = 0;
+    
+    portfolio.forEach(item => {
+      const cost = item.quantity * item.average_price;
+      const value = item.quantity * (item.current_price || item.average_price);
+      totalCost += cost;
+      totalValue += value;
+    });
+    
+    const changeAmount = totalValue - totalCost;
+    const changePercent = totalCost > 0 ? (changeAmount / totalCost) * 100 : 0;
+    
+    return { amount: changeAmount, percent: changePercent };
+  };
+
+  const totalBalance = calculateTotalBalance();
+  const { amount: changeAmount, percent: changePercent } = calculateTotalChange();
+  const activeTrades = trades.filter(t => t.status === 'pending').length;
+
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,10 +156,12 @@ const TradingDashboard = () => {
                 <CardTitle className="text-sm text-muted-foreground">Total Balance</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-foreground">$384,146</div>
-                <div className="flex items-center text-success text-sm mt-2">
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                  <span>+$16,678 (4.5%)</span>
+                <div className="text-3xl font-bold text-foreground">
+                  ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div className={`flex items-center text-sm mt-2 ${changeAmount >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  <ArrowUpRight className={`w-4 h-4 mr-1 ${changeAmount < 0 ? 'rotate-90' : ''}`} />
+                  <span>${Math.abs(changeAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({changePercent.toFixed(2)}%)</span>
                 </div>
               </CardContent>
             </Card>
@@ -102,10 +184,10 @@ const TradingDashboard = () => {
                 <CardTitle className="text-sm text-muted-foreground">Active Trades</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-foreground">12</div>
+                <div className="text-3xl font-bold text-foreground">{activeTrades}</div>
                 <div className="flex items-center text-primary text-sm mt-2">
                   <Clock className="w-4 h-4 mr-1" />
-                  <span>3 pending orders</span>
+                  <span>{activeTrades} pending orders</span>
                 </div>
               </CardContent>
             </Card>
@@ -118,7 +200,7 @@ const TradingDashboard = () => {
                 <div className="text-3xl font-bold text-success">Secure</div>
                 <div className="flex items-center text-muted-foreground text-sm mt-2">
                   <Shield className="w-4 h-4 mr-1" />
-                  <span>2FA Enabled</span>
+                  <span>Protected</span>
                 </div>
               </CardContent>
             </Card>
@@ -205,27 +287,41 @@ const TradingDashboard = () => {
                   <CardTitle className="text-2xl">Your Portfolio</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {portfolio.map((item) => (
-                      <div key={item.asset} className="p-4 rounded-lg bg-secondary">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <div className="font-semibold text-foreground">{item.asset}</div>
-                            <div className="text-sm text-muted-foreground">{item.amount} units</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-foreground">{item.value}</div>
-                            <div className={`text-sm ${item.change.startsWith('+') ? 'text-success' : 'text-destructive'}`}>
-                              {item.change} ({item.percent})
+                  {portfolio.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p className="mb-4">No assets in portfolio yet</p>
+                      <Button variant="outline">Start Trading</Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {portfolio.map((item) => {
+                        const value = item.quantity * (item.current_price || item.average_price);
+                        const cost = item.quantity * item.average_price;
+                        const change = value - cost;
+                        const changePercent = cost > 0 ? (change / cost) * 100 : 0;
+                        
+                        return (
+                          <div key={item.id} className="p-4 rounded-lg bg-secondary">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <div className="font-semibold text-foreground">{item.asset_name}</div>
+                                <div className="text-sm text-muted-foreground">{item.quantity} {item.asset_symbol}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-semibold text-foreground">${value.toFixed(2)}</div>
+                                <div className={`text-sm ${change >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                  {change >= 0 ? '+' : ''}${change.toFixed(2)} ({changePercent.toFixed(2)}%)
+                                </div>
+                              </div>
                             </div>
+                            <Button variant="outline" size="sm" className="w-full mt-2">
+                              Manage
+                            </Button>
                           </div>
-                        </div>
-                        <Button variant="outline" size="sm" className="w-full mt-2">
-                          Manage
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   
                   <Link to="/vault">
                     <Button variant="gold" className="w-full mt-6">
