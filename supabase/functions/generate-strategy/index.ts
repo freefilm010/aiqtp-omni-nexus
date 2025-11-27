@@ -6,13 +6,51 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation constants
+const MAX_FACTOR_IDS = 10;
+const MAX_USER_GOALS_LENGTH = 500;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { factorIds, userGoals } = await req.json();
+    const requestBody = await req.json();
+    const { factorIds, userGoals } = requestBody;
+    
+    // Input validation
+    if (!factorIds || !Array.isArray(factorIds) || factorIds.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid factorIds: must be a non-empty array' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (factorIds.length > MAX_FACTOR_IDS) {
+      return new Response(
+        JSON.stringify({ error: `Too many factors: maximum ${MAX_FACTOR_IDS} factors allowed` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Validate each factorId is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    for (const id of factorIds) {
+      if (typeof id !== 'string' || !uuidRegex.test(id)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid factorId format: must be valid UUIDs' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+    
+    if (userGoals && typeof userGoals === 'string' && userGoals.length > MAX_USER_GOALS_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: `userGoals too long: maximum ${MAX_USER_GOALS_LENGTH} characters` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     const authHeader = req.headers.get('Authorization')!;
     const supabaseClient = createClient(
@@ -24,6 +62,26 @@ serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
       throw new Error('Unauthorized');
+    }
+    
+    // Rate limiting: Check recent generations (10 per hour)
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count, error: rateLimitError } = await supabaseClient
+      .from('ai_generation_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('function_name', 'generate-strategy')
+      .gte('created_at', oneHourAgo);
+    
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
+    }
+    
+    if (count && count >= 10) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded: Maximum 10 strategy generations per hour' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -149,6 +207,14 @@ The strategy should be:
         code: generatedText
       };
     }
+
+    // Log this generation for rate limiting
+    await supabaseClient
+      .from('ai_generation_logs')
+      .insert({
+        user_id: user.id,
+        function_name: 'generate-strategy'
+      });
 
     // Save strategy to database
     const { data: savedStrategy, error: saveError } = await supabaseClient

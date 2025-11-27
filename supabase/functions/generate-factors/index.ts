@@ -6,13 +6,41 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Input validation constants
+const VALID_FACTOR_TYPES = ['technical', 'fundamental', 'sentiment', 'alternative'];
+const MAX_MARKET_DATA_LENGTH = 2000;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { marketData, factorType = 'technical' } = await req.json();
+    const requestBody = await req.json();
+    const { marketData, factorType = 'technical' } = requestBody;
+    
+    // Input validation
+    if (!marketData || typeof marketData !== 'object') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid marketData: must be an object' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const marketDataString = JSON.stringify(marketData);
+    if (marketDataString.length > MAX_MARKET_DATA_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: `marketData too large: maximum ${MAX_MARKET_DATA_LENGTH} characters` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!VALID_FACTOR_TYPES.includes(factorType)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid factorType: must be one of ${VALID_FACTOR_TYPES.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     const authHeader = req.headers.get('Authorization')!;
     const supabaseClient = createClient(
@@ -24,6 +52,26 @@ serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
       throw new Error('Unauthorized');
+    }
+    
+    // Rate limiting: Check recent generations (10 per hour)
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count, error: rateLimitError } = await supabaseClient
+      .from('ai_generation_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('function_name', 'generate-factors')
+      .gte('created_at', oneHourAgo);
+    
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
+    }
+    
+    if (count && count >= 10) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded: Maximum 10 factor generations per hour' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -127,6 +175,14 @@ Focus on creating factors that are:
         parameters: {}
       }];
     }
+
+    // Log this generation for rate limiting
+    await supabaseClient
+      .from('ai_generation_logs')
+      .insert({
+        user_id: user.id,
+        function_name: 'generate-factors'
+      });
 
     // Save factors to database
     const savedFactors = [];

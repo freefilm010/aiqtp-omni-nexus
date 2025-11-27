@@ -56,6 +56,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_generation_logs: {
+        Row: {
+          created_at: string | null
+          function_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          function_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          function_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_strategies: {
         Row: {
           code: string | null

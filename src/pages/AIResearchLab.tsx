@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -8,18 +8,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, TrendingUp, Target, Zap, Loader2, Sparkles } from "lucide-react";
+import { Brain, TrendingUp, Target, Zap, Loader2, Sparkles, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const AIResearchLab = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedFactorType, setSelectedFactorType] = useState("technical");
   const [userGoals, setUserGoals] = useState("");
   const [selectedFactors, setSelectedFactors] = useState<string[]>([]);
+  const [lastFactorGeneration, setLastFactorGeneration] = useState<Date | null>(null);
+  const [lastStrategyGeneration, setLastStrategyGeneration] = useState<Date | null>(null);
+  
+  const COOLDOWN_SECONDS = 30;
+  
+  const getFactorCooldownRemaining = () => {
+    if (!lastFactorGeneration) return 0;
+    const elapsed = (Date.now() - lastFactorGeneration.getTime()) / 1000;
+    return Math.max(0, Math.ceil(COOLDOWN_SECONDS - elapsed));
+  };
+  
+  const getStrategyCooldownRemaining = () => {
+    if (!lastStrategyGeneration) return 0;
+    const elapsed = (Date.now() - lastStrategyGeneration.getTime()) / 1000;
+    return Math.max(0, Math.ceil(COOLDOWN_SECONDS - elapsed));
+  };
+  
+  const canGenerateFactors = getFactorCooldownRemaining() === 0;
+  const canGenerateStrategy = getStrategyCooldownRemaining() === 0;
+  
+  // Trigger re-render every second to update cooldown buttons
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (lastFactorGeneration || lastStrategyGeneration) {
+        // Force re-render
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastFactorGeneration, lastStrategyGeneration]);
 
   // Fetch factors
   const { data: factors, isLoading: factorsLoading } = useQuery({
@@ -67,18 +95,16 @@ const AIResearchLab = () => {
       return data;
     },
     onSuccess: (data) => {
+      setLastFactorGeneration(new Date());
       queryClient.invalidateQueries({ queryKey: ['ai-factors'] });
-      toast({
-        title: "Factors Generated",
-        description: `Successfully generated ${data.factors?.length || 0} new factors`,
-      });
+      toast.success(`Successfully generated ${data.factors?.length || 0} new factors`);
     },
     onError: (error: any) => {
-      toast({
-        title: "Generation Failed",
-        description: error.message || "Failed to generate factors",
-        variant: "destructive",
-      });
+      if (error.message.includes('Rate limit') || error.message.includes('429')) {
+        toast.error("Rate limit exceeded. Please wait before generating more factors.");
+      } else {
+        toast.error(error.message || "Failed to generate factors");
+      }
     }
   });
 
@@ -92,7 +118,7 @@ const AIResearchLab = () => {
       const { data, error } = await supabase.functions.invoke('generate-strategy', {
         body: {
           factorIds: selectedFactors,
-          userGoals: userGoals || 'Balanced risk-return profile'
+          userGoals: userGoals || undefined
         }
       });
 
@@ -100,20 +126,18 @@ const AIResearchLab = () => {
       return data;
     },
     onSuccess: (data) => {
+      setLastStrategyGeneration(new Date());
       queryClient.invalidateQueries({ queryKey: ['ai-strategies'] });
-      toast({
-        title: "Strategy Generated",
-        description: `Created strategy: ${data.strategy?.name}`,
-      });
+      toast.success(`Created strategy: ${data.strategy?.name}`);
       setSelectedFactors([]);
       setUserGoals("");
     },
     onError: (error: any) => {
-      toast({
-        title: "Strategy Creation Failed",
-        description: error.message || "Failed to generate strategy",
-        variant: "destructive",
-      });
+      if (error.message.includes('Rate limit') || error.message.includes('429')) {
+        toast.error("Rate limit exceeded. Please wait before generating more strategies.");
+      } else {
+        toast.error(error.message || "Failed to generate strategy");
+      }
     }
   });
 
@@ -247,13 +271,18 @@ const AIResearchLab = () => {
 
                   <Button
                     onClick={() => generateFactorsMutation.mutate()}
-                    disabled={generateFactorsMutation.isPending}
+                    disabled={generateFactorsMutation.isPending || !canGenerateFactors}
                     className="w-full"
                   >
                     {generateFactorsMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Generating...
+                      </>
+                    ) : !canGenerateFactors ? (
+                      <>
+                        <Clock className="mr-2 h-4 w-4" />
+                        Wait {getFactorCooldownRemaining()}s
                       </>
                     ) : (
                       <>
@@ -347,18 +376,27 @@ const AIResearchLab = () => {
                       value={userGoals}
                       onChange={(e) => setUserGoals(e.target.value)}
                       rows={3}
+                      maxLength={500}
                     />
+                    <p className="text-xs text-muted-foreground text-right">
+                      {userGoals.length}/500 characters
+                    </p>
                   </div>
 
                   <Button
                     onClick={() => generateStrategyMutation.mutate()}
-                    disabled={generateStrategyMutation.isPending || selectedFactors.length === 0}
+                    disabled={generateStrategyMutation.isPending || selectedFactors.length === 0 || !canGenerateStrategy}
                     className="w-full"
                   >
                     {generateStrategyMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Creating Strategy...
+                      </>
+                    ) : !canGenerateStrategy ? (
+                      <>
+                        <Clock className="mr-2 h-4 w-4" />
+                        Wait {getStrategyCooldownRemaining()}s
                       </>
                     ) : (
                       <>
