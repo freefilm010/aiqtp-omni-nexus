@@ -149,17 +149,35 @@ const Header = () => {
               </div>
               
               <div className="pt-4 space-y-3">
-                <Link to="/auth" className="block">
-                  <Button variant="ghost" className="w-full justify-start">
-                    <User className="w-4 h-4 mr-2" />
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/auth" className="block">
-                  <Button variant="premium" className="w-full">
-                    Get Started
-                  </Button>
-                </Link>
+                {user ? (
+                  <>
+                    <div className="text-sm text-muted-foreground px-3 py-2 border-b border-white/10">
+                      {user.email}
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      onClick={signOut} 
+                      className="w-full justify-start text-foreground hover:text-gold"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Log Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth" className="block">
+                      <Button variant="ghost" className="w-full justify-start">
+                        <User className="w-4 h-4 mr-2" />
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link to="/auth" className="block">
+                      <Button variant="premium" className="w-full">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>

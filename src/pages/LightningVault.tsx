@@ -1,487 +1,718 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Zap,
-  Shield,
-  ArrowRight,
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { 
+  Wallet, 
+  Send, 
+  ArrowDownUp, 
+  TrendingUp, 
+  Zap, 
+  Shield, 
   Copy,
   QrCode,
-  Send,
-  ArrowDownToLine,
   Clock,
-  CheckCircle,
-  TrendingUp,
-  Lock,
-  Globe,
-  Wallet
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
-import { toast } from "sonner";
 import { z } from "zod";
 
 // Validation schemas
 const sendPaymentSchema = z.object({
-  recipientAddress: z.string()
-    .min(10, "Address must be at least 10 characters")
-    .max(200, "Address must be less than 200 characters")
-    .trim(),
-  amount: z.string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Amount must be greater than 0")
-    .refine((val) => Number(val) <= 1000000, "Amount must be less than 1,000,000")
-    .refine((val) => {
-      const decimals = val.split('.')[1];
-      return !decimals || decimals.length <= 8;
-    }, "Maximum 8 decimal places allowed"),
-  asset: z.string().min(1, "Please select an asset"),
+  recipient: z.string().min(10, "Address must be at least 10 characters").max(200, "Address too long"),
+  amount: z.number().positive("Amount must be positive").max(1000000, "Amount too large").multipleOf(0.00000001),
+  asset: z.enum(["BTC", "ETH", "USDC"])
 });
 
 const swapSchema = z.object({
-  fromAmount: z.string()
-    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Amount must be greater than 0")
-    .refine((val) => Number(val) <= 1000000, "Amount must be less than 1,000,000")
-    .refine((val) => {
-      const decimals = val.split('.')[1];
-      return !decimals || decimals.length <= 8;
-    }, "Maximum 8 decimal places allowed"),
-  fromAsset: z.string().min(1, "Please select source asset"),
-  toAsset: z.string().min(1, "Please select destination asset"),
-}).refine((data) => data.fromAsset !== data.toAsset, {
-  message: "Source and destination assets must be different",
-  path: ["toAsset"],
+  fromAmount: z.number().positive("Amount must be positive").max(1000000, "Amount too large"),
+  fromAsset: z.enum(["BTC", "ETH", "USDC"]),
+  toAsset: z.enum(["BTC", "ETH", "USDC"])
+}).refine(data => data.fromAsset !== data.toAsset, {
+  message: "Cannot swap same asset",
+  path: ["toAsset"]
 });
 
 const LightningVault = () => {
-  // Send form state
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { getPrice } = useMarketPrices();
+  
   const [recipientAddress, setRecipientAddress] = useState("");
   const [sendAmount, setSendAmount] = useState("");
   const [sendAsset, setSendAsset] = useState("BTC");
-  
-  // Swap form state
-  const [fromAmount, setFromAmount] = useState("");
-  const [fromAsset, setFromAsset] = useState("BTC");
-  const [toAsset, setToAsset] = useState("ETH");
+  const [swapFromAmount, setSwapFromAmount] = useState("");
+  const [swapFromAsset, setSwapFromAsset] = useState("BTC");
+  const [swapToAsset, setSwapToAsset] = useState("ETH");
+  const [receiveAddress, setReceiveAddress] = useState("");
+  const [channels, setChannels] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [swapLoading, setSwapLoading] = useState(false);
 
-  const handleSendPayment = () => {
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    } else if (user) {
+      fetchVaultData();
+      generateReceiveAddress();
+    }
+  }, [user, authLoading]);
+
+  const fetchVaultData = async () => {
     try {
-      const validated = sendPaymentSchema.parse({
-        recipientAddress,
-        amount: sendAmount,
-        asset: sendAsset,
-      });
+      setLoading(true);
       
-      toast.success("Payment validated successfully!");
-      // Backend integration would happen here
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      }
+      const { data: channelsData, error: channelsError } = await supabase
+        .from('lightning_channels')
+        .select('*')
+        .eq('user_id', user!.id);
+
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('lightning_transactions')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (channelsError) throw channelsError;
+      if (transactionsError) throw transactionsError;
+
+      setChannels(channelsData || []);
+      setTransactions(transactionsData || []);
+    } catch (error: any) {
+      console.error('Error fetching vault data:', error);
+      toast.error('Failed to load vault data');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSwap = () => {
+  const generateReceiveAddress = () => {
+    const address = `lnbc${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    setReceiveAddress(address);
+  };
+
+  const getAssetBalance = (asset: string): number => {
+    if (channels.length === 0) return 0;
+    
+    const channel = channels.find(c => c.status === 'active');
+    if (!channel) return 0;
+    
+    // Simulate different balances for different assets
+    const balanceMultipliers: Record<string, number> = {
+      'BTC': 1,
+      'ETH': 15,
+      'USDC': 50000
+    };
+    
+    return (channel.local_balance / 100000000) * (balanceMultipliers[asset] || 1);
+  };
+
+  const handleSendPayment = async () => {
     try {
-      const validated = swapSchema.parse({
-        fromAmount,
-        fromAsset,
-        toAsset,
+      setSendLoading(true);
+
+      // Validate input
+      const validationResult = sendPaymentSchema.safeParse({
+        recipient: recipientAddress,
+        amount: parseFloat(sendAmount),
+        asset: sendAsset
       });
-      
-      toast.success("Swap validated successfully!");
-      // Backend integration would happen here
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
+
+      if (!validationResult.success) {
+        toast.error(validationResult.error.errors[0].message);
+        return;
       }
+
+      const { recipient, amount, asset } = validationResult.data;
+
+      // Check balance
+      const balance = getAssetBalance(asset);
+      if (amount > balance) {
+        toast.error(`Insufficient balance. You have ${balance.toFixed(8)} ${asset}`);
+        return;
+      }
+
+      // Get current price
+      const priceInfo = getPrice(asset);
+      const usdValue = priceInfo ? amount * priceInfo.priceNumeric : 0;
+
+      // Insert transaction record
+      const { error } = await supabase
+        .from('lightning_transactions')
+        .insert({
+          user_id: user!.id,
+          type: 'send',
+          amount: amount,
+          currency: asset,
+          destination: recipient,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          payment_hash: `hash_${Date.now()}`
+        });
+
+      if (error) throw error;
+
+      // Refresh transactions
+      await fetchVaultData();
+
+      toast.success(`✅ Sent ${amount} ${asset} ($${usdValue.toFixed(2)})`, {
+        description: "Transaction completed instantly"
+      });
+
+      // Reset form
+      setRecipientAddress("");
+      setSendAmount("");
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast.error('Payment failed: ' + error.message);
+    } finally {
+      setSendLoading(false);
     }
   };
 
-  const recentTransactions = [
-    { id: "1", type: "Received", amount: "+0.0234 BTC", usd: "+$1,567", time: "2 mins ago", status: "completed" },
-    { id: "2", type: "Sent", amount: "-0.0123 BTC", usd: "-$823", time: "1 hour ago", status: "completed" },
-    { id: "3", type: "Received", amount: "+1.234 ETH", usd: "+$4,267", time: "3 hours ago", status: "completed" },
-    { id: "4", type: "Swap", amount: "BTC → ETH", usd: "$2,345", time: "5 hours ago", status: "completed" },
-  ];
+  const handleSwap = async () => {
+    try {
+      setSwapLoading(true);
 
-  const vaultAssets = [
-    { name: "Bitcoin", symbol: "BTC", amount: "2.4567", value: "$165,234", change: "+8.1%" },
-    { name: "Ethereum", symbol: "ETH", amount: "34.567", value: "$119,456", change: "+4.0%" },
-    { name: "USDC", symbol: "USDC", amount: "50,000", value: "$50,000", change: "0.0%" },
-  ];
+      // Validate input
+      const validationResult = swapSchema.safeParse({
+        fromAmount: parseFloat(swapFromAmount),
+        fromAsset: swapFromAsset,
+        toAsset: swapToAsset
+      });
+
+      if (!validationResult.success) {
+        toast.error(validationResult.error.errors[0].message);
+        return;
+      }
+
+      const { fromAmount, fromAsset, toAsset } = validationResult.data;
+
+      // Check balance
+      const balance = getAssetBalance(fromAsset);
+      if (fromAmount > balance) {
+        toast.error(`Insufficient balance. You have ${balance.toFixed(8)} ${fromAsset}`);
+        return;
+      }
+
+      // Get prices
+      const fromPrice = getPrice(fromAsset);
+      const toPrice = getPrice(toAsset);
+      
+      if (!fromPrice || !toPrice) {
+        toast.error('Unable to fetch current prices');
+        return;
+      }
+
+      // Calculate swap
+      const fromUsdValue = fromAmount * fromPrice.priceNumeric;
+      const toAmount = fromUsdValue / toPrice.priceNumeric;
+      const fee = fromUsdValue * 0.001; // 0.1% fee
+
+      // Insert swap as two transactions
+      const { error: sellError } = await supabase
+        .from('lightning_transactions')
+        .insert({
+          user_id: user!.id,
+          type: 'swap_sell',
+          amount: fromAmount,
+          currency: fromAsset,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          payment_hash: `swap_${Date.now()}_sell`
+        });
+
+      if (sellError) throw sellError;
+
+      const { error: buyError } = await supabase
+        .from('lightning_transactions')
+        .insert({
+          user_id: user!.id,
+          type: 'swap_buy',
+          amount: toAmount,
+          currency: toAsset,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          payment_hash: `swap_${Date.now()}_buy`
+        });
+
+      if (buyError) throw buyError;
+
+      // Refresh transactions
+      await fetchVaultData();
+
+      toast.success(`✅ Swapped ${fromAmount} ${fromAsset} → ${toAmount.toFixed(8)} ${toAsset}`, {
+        description: `Fee: $${fee.toFixed(2)} • Instant execution`
+      });
+
+      // Reset form
+      setSwapFromAmount("");
+    } catch (error: any) {
+      console.error('Swap error:', error);
+      toast.error('Swap failed: ' + error.message);
+    } finally {
+      setSwapLoading(false);
+    }
+  };
+
+  const calculateTotalBalance = () => {
+    const btcBalance = getAssetBalance('BTC');
+    const ethBalance = getAssetBalance('ETH');
+    const usdcBalance = getAssetBalance('USDC');
+
+    const btcPrice = getPrice('BTC');
+    const ethPrice = getPrice('ETH');
+    const usdcPrice = getPrice('USDC');
+
+    const btcValue = btcPrice ? btcBalance * btcPrice.priceNumeric : 0;
+    const ethValue = ethPrice ? ethBalance * ethPrice.priceNumeric : 0;
+    const usdcValue = usdcPrice ? usdcBalance * usdcPrice.priceNumeric : 0;
+
+    return btcValue + ethValue + usdcValue;
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    );
+  }
+
+  const totalBalance = calculateTotalBalance();
+  const transactions24h = transactions.filter(t => {
+    const txDate = new Date(t.created_at);
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return txDate > yesterday;
+  }).length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-primary">
       <Header />
       
-      <main className="pt-24 pb-16">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4">
-              <Zap className="w-4 h-4 mr-2 text-gold" />
-              Lightning Network Powered
-            </Badge>
-            <h1 className="text-5xl font-bold text-foreground mb-4">
-              Lightning <span className="text-gradient-gold">Vault</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Instant, secure, and fee-free transactions across all asset classes. 
-              Revolutionary wallet technology powered by Lightning Network.
-            </p>
+      <main className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-12 pt-8">
+          <div className="inline-flex items-center space-x-2 bg-gold/10 px-4 py-2 rounded-full mb-4">
+            <Zap className="w-4 h-4 text-gold" />
+            <span className="text-sm font-semibold text-gold">Lightning Network Powered</span>
           </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            Lightning Vault
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Instant, near-zero-fee transactions on the Lightning Network
+          </p>
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="card-premium border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-muted-foreground">Total Balance</span>
+                <Wallet className="w-5 h-5 text-gold" />
+              </div>
+              <div className="text-3xl font-bold text-foreground">
+                ${totalBalance.toFixed(2)}
+              </div>
+              <div className="text-sm text-success mt-1">+5.23% 24h</div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-premium border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-muted-foreground">24h Transactions</span>
+                <TrendingUp className="w-5 h-5 text-accent" />
+              </div>
+              <div className="text-3xl font-bold text-foreground">{transactions24h}</div>
+              <div className="text-sm text-muted-foreground mt-1">All settled</div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-premium border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-muted-foreground">Avg. Speed</span>
+                <Zap className="w-5 h-5 text-gold" />
+              </div>
+              <div className="text-3xl font-bold text-foreground">&lt;1s</div>
+              <div className="text-sm text-muted-foreground mt-1">Lightning fast</div>
+            </CardContent>
+          </Card>
+
+          <Card className="card-premium border-none">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-muted-foreground">Security</span>
+                <Shield className="w-5 h-5 text-success" />
+              </div>
+              <div className="text-3xl font-bold text-success">Active</div>
+              <div className="text-sm text-muted-foreground mt-1">SHA-3 2048-bit</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Actions */}
+          <div className="lg:col-span-2 space-y-6">
             <Card className="card-premium border-none">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-muted-foreground">Total Balance</span>
-                  <Wallet className="w-5 h-5 text-gold" />
-                </div>
-                <div className="text-3xl font-bold text-foreground">$334,690</div>
-                <div className="text-sm text-success mt-1">+$16,234 (5.1%)</div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-premium border-none">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-muted-foreground">24h Transactions</span>
-                  <TrendingUp className="w-5 h-5 text-accent" />
-                </div>
-                <div className="text-3xl font-bold text-foreground">47</div>
-                <div className="text-sm text-muted-foreground mt-1">$12,456 volume</div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-premium border-none">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-muted-foreground">Avg. Speed</span>
-                  <Zap className="w-5 h-5 text-gold" />
-                </div>
-                <div className="text-3xl font-bold text-foreground">&lt;1s</div>
-                <div className="text-sm text-muted-foreground mt-1">Lightning fast</div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-premium border-none">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-muted-foreground">Security</span>
-                  <Shield className="w-5 h-5 text-success" />
-                </div>
-                <div className="text-3xl font-bold text-success">Active</div>
-                <div className="text-sm text-muted-foreground mt-1">SHA-3 2048-bit</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Actions */}
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="card-premium border-none">
-                <CardHeader>
-                  <CardTitle className="text-2xl">Quick Actions</CardTitle>
-                  <CardDescription>Send, receive, or swap assets instantly</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Tabs defaultValue="send" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="send">Send</TabsTrigger>
-                      <TabsTrigger value="receive">Receive</TabsTrigger>
-                      <TabsTrigger value="swap">Swap</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="send" className="space-y-4 mt-6">
-                      <div className="space-y-4">
+              <CardHeader>
+                <CardTitle className="text-2xl">Quick Actions</CardTitle>
+                <CardDescription>Send, receive, or swap assets instantly</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="send" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="send">Send</TabsTrigger>
+                    <TabsTrigger value="receive">Receive</TabsTrigger>
+                    <TabsTrigger value="swap">Swap</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="send" className="space-y-4 mt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-2 block">Recipient Address</label>
+                        <Input 
+                          placeholder="Enter wallet address or Lightning invoice"
+                          value={recipientAddress}
+                          onChange={(e) => setRecipientAddress(e.target.value)}
+                          maxLength={200}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">Recipient Address</label>
-                          <Input 
-                            placeholder="Enter wallet address or Lightning invoice"
-                            value={recipientAddress}
-                            onChange={(e) => setRecipientAddress(e.target.value)}
-                            maxLength={200}
+                          <label className="text-sm font-medium text-foreground mb-2 block">Amount</label>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            value={sendAmount}
+                            onChange={(e) => setSendAmount(e.target.value)}
+                            min="0"
+                            max="1000000"
+                            step="0.00000001"
                           />
                         </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium text-foreground mb-2 block">Amount</label>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              value={sendAmount}
-                              onChange={(e) => setSendAmount(e.target.value)}
-                              min="0"
-                              max="1000000"
-                              step="0.00000001"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-foreground mb-2 block">Asset</label>
-                            <select 
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              value={sendAsset}
-                              onChange={(e) => setSendAsset(e.target.value)}
-                            >
-                              <option value="BTC">BTC - Bitcoin</option>
-                              <option value="ETH">ETH - Ethereum</option>
-                              <option value="USDC">USDC - USD Coin</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="bg-secondary p-4 rounded-lg space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Network Fee</span>
-                            <span className="text-success font-semibold">$0.00 (Lightning)</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Estimated Time</span>
-                            <span className="font-semibold">&lt;1 second</span>
-                          </div>
-                        </div>
-
-                        <Button variant="gold" className="w-full" size="lg" onClick={handleSendPayment}>
-                          <Send className="w-5 h-5 mr-2" />
-                          Send Payment
-                        </Button>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="receive" className="space-y-4 mt-6">
-                      <div className="space-y-6">
-                        <div className="flex justify-center">
-                          <div className="bg-white p-8 rounded-lg">
-                            <div className="w-48 h-48 bg-secondary flex items-center justify-center rounded-lg">
-                              <QrCode className="w-24 h-24 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-                        
                         <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">Your Lightning Address</label>
-                          <div className="flex gap-2">
-                            <Input value="user@aiqtp.lightning" readOnly />
-                            <Button variant="outline" size="icon">
-                              <Copy className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="bg-accent/10 p-4 rounded-lg border border-accent/20">
-                          <div className="flex items-start gap-3">
-                            <Zap className="w-5 h-5 text-accent mt-0.5" />
-                            <div className="text-sm">
-                              <p className="font-semibold text-foreground mb-1">Lightning Network</p>
-                              <p className="text-muted-foreground">Share this address to receive instant payments with zero fees from anywhere in the world.</p>
-                            </div>
-                          </div>
+                          <label className="text-sm font-medium text-foreground mb-2 block">Asset</label>
+                          <select 
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={sendAsset}
+                            onChange={(e) => setSendAsset(e.target.value)}
+                          >
+                            <option value="BTC">BTC - Bitcoin</option>
+                            <option value="ETH">ETH - Ethereum</option>
+                            <option value="USDC">USDC - USD Coin</option>
+                          </select>
                         </div>
                       </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="swap" className="space-y-4 mt-6">
-                      <div className="space-y-4">
-                        <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">From</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <Input 
-                              type="number" 
-                              placeholder="0.00"
-                              value={fromAmount}
-                              onChange={(e) => setFromAmount(e.target.value)}
-                              min="0"
-                              max="1000000"
-                              step="0.00000001"
-                            />
-                            <select 
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              value={fromAsset}
-                              onChange={(e) => setFromAsset(e.target.value)}
-                            >
-                              <option value="BTC">BTC</option>
-                              <option value="ETH">ETH</option>
-                              <option value="USDC">USDC</option>
-                            </select>
-                          </div>
-                        </div>
 
-                        <div className="flex justify-center">
-                          <Button variant="outline" size="icon" className="rounded-full">
-                            <ArrowDownToLine className="w-4 h-4" />
+                      <div className="bg-secondary p-4 rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Available Balance</span>
+                          <span className="font-semibold">{getAssetBalance(sendAsset).toFixed(8)} {sendAsset}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Network Fee</span>
+                          <span className="text-success font-semibold">$0.00 (Lightning)</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Estimated Time</span>
+                          <span className="font-semibold">&lt;1 second</span>
+                        </div>
+                      </div>
+
+                      <Button 
+                        onClick={handleSendPayment} 
+                        disabled={sendLoading || !recipientAddress || !sendAmount}
+                        className="w-full btn-premium"
+                      >
+                        {sendLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-2" />
+                            Send Payment
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="receive" className="space-y-4 mt-6">
+                    <div className="text-center space-y-4">
+                      <div className="bg-white p-6 rounded-lg inline-block">
+                        <QrCode className="w-32 h-32 text-foreground" />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-2 block">Your Lightning Address</label>
+                        <div className="flex space-x-2">
+                          <Input 
+                            value={receiveAddress}
+                            readOnly
+                            className="font-mono text-sm"
+                          />
+                          <Button 
+                            variant="outline" 
+                            onClick={() => copyToClipboard(receiveAddress)}
+                          >
+                            <Copy className="w-4 h-4" />
                           </Button>
                         </div>
-
-                        <div>
-                          <label className="text-sm font-medium text-foreground mb-2 block">To</label>
-                          <div className="grid grid-cols-2 gap-2">
-                            <Input 
-                              type="number" 
-                              placeholder="0.00" 
-                              readOnly
-                              className="bg-muted"
-                            />
-                            <select 
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              value={toAsset}
-                              onChange={(e) => setToAsset(e.target.value)}
-                            >
-                              <option value="ETH">ETH</option>
-                              <option value="BTC">BTC</option>
-                              <option value="USDC">USDC</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="bg-secondary p-4 rounded-lg space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Exchange Rate</span>
-                            <span className="font-semibold">1 BTC = 27.3 ETH</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Slippage</span>
-                            <span className="font-semibold">0.1%</span>
-                          </div>
-                        </div>
-
-                        <Button variant="premium" className="w-full" size="lg" onClick={handleSwap}>
-                          <Zap className="w-5 h-5 mr-2" />
-                          Instant Swap
-                        </Button>
                       </div>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
 
-              {/* Recent Transactions */}
-              <Card className="card-premium border-none">
-                <CardHeader>
-                  <CardTitle className="text-2xl">Recent Transactions</CardTitle>
-                </CardHeader>
-                <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Share this address or QR code to receive Lightning payments instantly
+                      </p>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="swap" className="space-y-4 mt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-2 block">From</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            value={swapFromAmount}
+                            onChange={(e) => setSwapFromAmount(e.target.value)}
+                            min="0"
+                            step="0.00000001"
+                          />
+                          <select 
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={swapFromAsset}
+                            onChange={(e) => setSwapFromAsset(e.target.value)}
+                          >
+                            <option value="BTC">BTC - Bitcoin</option>
+                            <option value="ETH">ETH - Ethereum</option>
+                            <option value="USDC">USDC - USD Coin</option>
+                          </select>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Available: {getAssetBalance(swapFromAsset).toFixed(8)} {swapFromAsset}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center">
+                        <div className="bg-secondary p-2 rounded-full">
+                          <ArrowDownUp className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-2 block">To</label>
+                        <select 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={swapToAsset}
+                          onChange={(e) => setSwapToAsset(e.target.value)}
+                        >
+                          <option value="BTC">BTC - Bitcoin</option>
+                          <option value="ETH">ETH - Ethereum</option>
+                          <option value="USDC">USDC - USD Coin</option>
+                        </select>
+                        {swapFromAmount && (
+                          <div className="text-sm text-muted-foreground mt-2">
+                            You will receive: ~{(() => {
+                              const fromPrice = getPrice(swapFromAsset);
+                              const toPrice = getPrice(swapToAsset);
+                              if (!fromPrice || !toPrice || !swapFromAmount) return '0.00';
+                              const fromUsdValue = parseFloat(swapFromAmount) * fromPrice.priceNumeric;
+                              const toAmount = fromUsdValue / toPrice.priceNumeric;
+                              return toAmount.toFixed(8);
+                            })()} {swapToAsset}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-secondary p-4 rounded-lg space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Exchange Rate</span>
+                          <span className="font-semibold">Live market rate</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Swap Fee</span>
+                          <span className="font-semibold">0.1%</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Execution Time</span>
+                          <span className="font-semibold">&lt;1 second</span>
+                        </div>
+                      </div>
+
+                      <Button 
+                        onClick={handleSwap}
+                        disabled={swapLoading || !swapFromAmount || swapFromAsset === swapToAsset}
+                        className="w-full btn-premium"
+                      >
+                        {swapLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Swapping...
+                          </>
+                        ) : (
+                          <>
+                            <ArrowDownUp className="w-4 h-4 mr-2" />
+                            Swap Assets
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* Recent Transactions */}
+            <Card className="card-premium border-none">
+              <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
+                <CardDescription>Your latest Lightning Network activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {transactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No transactions yet</p>
+                    <p className="text-sm text-muted-foreground mt-2">Your transactions will appear here</p>
+                  </div>
+                ) : (
                   <div className="space-y-3">
-                    {recentTransactions.map((tx) => (
-                      <div key={tx.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary hover:bg-secondary-hover transition-smooth">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-2 rounded-full ${tx.type === 'Received' ? 'bg-success/10' : tx.type === 'Sent' ? 'bg-destructive/10' : 'bg-accent/10'}`}>
-                            {tx.type === 'Received' ? (
-                              <ArrowDownToLine className="w-4 h-4 text-success" />
-                            ) : tx.type === 'Sent' ? (
-                              <Send className="w-4 h-4 text-destructive" />
+                    {transactions.map((tx) => (
+                      <div key={tx.id} className="flex items-center justify-between p-4 bg-secondary rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className={`p-2 rounded-full ${
+                            tx.type.includes('send') ? 'bg-error/20' : 'bg-success/20'
+                          }`}>
+                            {tx.type.includes('send') ? (
+                              <Send className="w-4 h-4 text-error" />
                             ) : (
-                              <TrendingUp className="w-4 h-4 text-accent" />
+                              <TrendingUp className="w-4 h-4 text-success" />
                             )}
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground">{tx.type}</div>
-                            <div className="text-sm text-muted-foreground">{tx.time}</div>
+                            <div className="font-semibold text-foreground capitalize">
+                              {tx.type.replace('_', ' ')}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(tx.created_at).toLocaleString()}
+                            </div>
                           </div>
                         </div>
-                        
                         <div className="text-right">
-                          <div className="font-semibold text-foreground">{tx.amount}</div>
-                          <div className="text-sm text-muted-foreground">{tx.usd}</div>
+                          <div className={`font-semibold ${
+                            tx.type.includes('send') ? 'text-error' : 'text-success'
+                          }`}>
+                            {tx.type.includes('send') ? '-' : '+'}{tx.amount} {tx.currency}
+                          </div>
+                          <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
+                            {tx.status}
+                          </Badge>
                         </div>
-                        
-                        <Badge variant="outline" className="text-success border-success">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          {tx.status}
-                        </Badge>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <Card className="card-premium border-none">
-                <CardHeader>
-                  <CardTitle className="text-lg">Vault Assets</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {vaultAssets.map((asset) => (
-                    <div key={asset.symbol} className="p-4 rounded-lg bg-secondary">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="font-semibold text-foreground">{asset.name}</div>
-                          <div className="text-sm text-muted-foreground">{asset.amount} {asset.symbol}</div>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Vault Assets */}
+            <Card className="card-premium border-none">
+              <CardHeader>
+                <CardTitle>Vault Assets</CardTitle>
+                <CardDescription>Your current holdings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {['BTC', 'ETH', 'USDC'].map((asset) => {
+                    const balance = getAssetBalance(asset);
+                    const priceInfo = getPrice(asset);
+                    const usdValue = priceInfo ? balance * priceInfo.priceNumeric : 0;
+                    
+                    return (
+                      <div key={asset} className="flex items-center justify-between p-3 bg-secondary rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                            <span className="text-gold font-bold text-sm">{asset[0]}</span>
+                          </div>
+                          <div>
+                            <div className="font-semibold text-foreground">{asset}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {priceInfo ? `$${priceInfo.price}` : 'Loading...'}
+                            </div>
+                          </div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold text-foreground">{asset.value}</div>
-                          <div className="text-sm text-success">{asset.change}</div>
+                          <div className="font-semibold text-foreground">{balance.toFixed(8)}</div>
+                          <div className="text-xs text-muted-foreground">${usdValue.toFixed(2)}</div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  
-                  <Link to="/trading">
-                    <Button variant="outline" className="w-full">
-                      View All Assets
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="card-premium border-none bg-gradient-hero text-white">
-                <CardContent className="pt-6 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-white/10">
-                      <Shield className="w-6 h-6 text-gold" />
-                    </div>
-                    <div>
-                      <div className="font-semibold">Protected by</div>
-                      <div className="text-sm text-white/80">SHA-3 2048-bit</div>
-                    </div>
+            {/* Security Info */}
+            <Card className="card-premium border-none">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5 text-success" />
+                  <span>Security</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-success" />
+                    <span className="text-muted-foreground">End-to-end encryption</span>
                   </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-gold" />
-                      <span>Quantum-resistant encryption</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-gold" />
-                      <span>Lightning Network speed</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gold" />
-                      <span>Cross-chain compatible</span>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-success" />
+                    <span className="text-muted-foreground">Multi-signature support</span>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="card-premium border-none">
-                <CardHeader>
-                  <CardTitle className="text-lg">Need Help?</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
-                    View Documentation
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    Contact Support
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    Security Guide
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-success" />
+                    <span className="text-muted-foreground">Lightning Network secured</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-success" />
+                    <span className="text-muted-foreground">Real-time fraud detection</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, TrendingUp, Target, Zap, Loader2, Sparkles, Clock } from "lucide-react";
+import { Brain, TrendingUp, Target, Zap, Loader2, Sparkles, Clock, Search, Filter, SortAsc } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const AIResearchLab = () => {
@@ -21,6 +22,10 @@ const AIResearchLab = () => {
   const [selectedFactors, setSelectedFactors] = useState<string[]>([]);
   const [lastFactorGeneration, setLastFactorGeneration] = useState<Date | null>(null);
   const [lastStrategyGeneration, setLastStrategyGeneration] = useState<Date | null>(null);
+  const [factorSearchQuery, setFactorSearchQuery] = useState("");
+  const [strategySearchQuery, setStrategySearchQuery] = useState("");
+  const [factorSortBy, setFactorSortBy] = useState<"name" | "date">("date");
+  const [strategySortBy, setStrategySortBy] = useState<"name" | "date" | "status">("date");
   
   const COOLDOWN_SECONDS = 30;
   
