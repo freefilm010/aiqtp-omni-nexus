@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -27,20 +28,13 @@ import { toast } from "sonner";
 
 const TradingDashboard = () => {
   const { user, loading: authLoading } = useAuth();
+  const { getAllPrices, isLive } = useMarketPrices(3000);
   const [searchQuery, setSearchQuery] = useState("");
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock markets data (would be fetched from a real API in production)
-  const markets = [
-    { symbol: "BTC/USD", name: "Bitcoin", price: "67,234.89", change: "+5.23%", volume: "$2.4B", trend: "up" },
-    { symbol: "ETH/USD", name: "Ethereum", price: "3,456.12", change: "+3.45%", volume: "$1.2B", trend: "up" },
-    { symbol: "GOLD/USD", name: "Gold", price: "2,123.45", change: "-0.23%", volume: "$890M", trend: "down" },
-    { symbol: "AAPL", name: "Apple Inc", price: "178.34", change: "+1.23%", volume: "$3.2B", trend: "up" },
-    { symbol: "RE-NYC-01", name: "NYC Property Token", price: "245.67", change: "+2.34%", volume: "$45M", trend: "up" },
-    { symbol: "ART-MON-01", name: "Monet NFT", price: "1,234,567", change: "-1.23%", volume: "$12M", trend: "down" },
-  ];
+  const markets = getAllPrices();
 
   useEffect(() => {
     if (!authLoading && user) {
