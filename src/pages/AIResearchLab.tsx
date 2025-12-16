@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, TrendingUp, Target, Zap, Loader2, Sparkles, Clock, Search, Filter, SortAsc } from "lucide-react";
+import { Brain, TrendingUp, Target, Zap, Loader2, Sparkles, Clock, Search, Filter, SortAsc, FlaskConical } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import BacktestPanel from "@/components/research/BacktestPanel";
 
 const AIResearchLab = () => {
   const navigate = useNavigate();
@@ -244,9 +245,13 @@ const AIResearchLab = () => {
 
           {/* Main Content */}
           <Tabs defaultValue="factors" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="factors">Factor Generation</TabsTrigger>
               <TabsTrigger value="strategies">Strategy Builder</TabsTrigger>
+              <TabsTrigger value="backtest" className="flex items-center gap-1">
+                <FlaskConical className="h-3 w-3" />
+                Backtesting
+              </TabsTrigger>
             </TabsList>
 
             {/* Factors Tab */}
@@ -465,6 +470,16 @@ const AIResearchLab = () => {
                   </Card>
                 )}
               </div>
+            </TabsContent>
+
+            {/* Backtesting Tab */}
+            <TabsContent value="backtest">
+              <BacktestPanel 
+                strategies={strategies || []}
+                onBacktestComplete={(result) => {
+                  console.log('Backtest completed:', result);
+                }}
+              />
             </TabsContent>
           </Tabs>
         </div>
