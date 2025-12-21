@@ -181,8 +181,8 @@ const AIResearchLab = () => {
                 AI-Powered Quantitative Trading Research & Development
               </p>
             </div>
-            <Button onClick={() => navigate('/dashboard')} variant="outline">
-              Back to Dashboard
+            <Button onClick={() => navigate('/trading')} variant="outline">
+              Back to Trading
             </Button>
           </div>
 

@@ -86,7 +86,7 @@ const Header = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                  <DropdownMenuItem onClick={() => navigate('/trading')}>
                     <User className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
