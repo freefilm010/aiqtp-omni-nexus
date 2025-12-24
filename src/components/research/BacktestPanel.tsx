@@ -22,9 +22,34 @@ interface Strategy {
 }
 
 interface BacktestPanelProps {
-  strategies: Strategy[];
+  strategies?: Strategy[];
   onBacktestComplete?: (result: BacktestResult) => void;
 }
+
+// Default demo strategies for standalone usage
+const defaultStrategies: Strategy[] = [
+  {
+    id: 'momentum-rsi',
+    name: 'RSI Momentum Strategy',
+    entry_rules: { indicator: 'rsi', threshold: 30, type: 'technical' },
+    exit_rules: { stopLoss: 0.05, takeProfit: 0.15 },
+    risk_parameters: { maxDrawdown: 0.2 }
+  },
+  {
+    id: 'macd-crossover',
+    name: 'MACD Crossover Strategy',
+    entry_rules: { indicator: 'macd', type: 'technical' },
+    exit_rules: { stopLoss: 0.07, takeProfit: 0.20 },
+    risk_parameters: { maxDrawdown: 0.25 }
+  },
+  {
+    id: 'mean-reversion',
+    name: 'Bollinger Band Mean Reversion',
+    entry_rules: { indicator: 'bollinger', type: 'technical' },
+    exit_rules: { stopLoss: 0.04, takeProfit: 0.10 },
+    risk_parameters: { maxDrawdown: 0.15 }
+  }
+];
 
 // Generate mock OHLCV data for backtesting demo
 const generateMockData = (days: number, symbol: string): PriceData[] => {
@@ -147,7 +172,7 @@ const createSignalGenerator = (strategy: Strategy) => {
   };
 };
 
-export default function BacktestPanel({ strategies, onBacktestComplete }: BacktestPanelProps) {
+export default function BacktestPanel({ strategies = defaultStrategies, onBacktestComplete }: BacktestPanelProps) {
   const [selectedStrategy, setSelectedStrategy] = useState<string>("");
   const [initialCapital, setInitialCapital] = useState(100000);
   const [startDate, setStartDate] = useState(() => {
