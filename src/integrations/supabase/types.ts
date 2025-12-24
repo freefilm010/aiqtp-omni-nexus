@@ -14,6 +14,141 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_automation_logs: {
+        Row: {
+          action: string
+          automation_type: string
+          created_at: string
+          details: Json | null
+          error_message: string | null
+          id: string
+          status: string
+        }
+        Insert: {
+          action: string
+          automation_type: string
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          status?: string
+        }
+        Update: {
+          action?: string
+          automation_type?: string
+          created_at?: string
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      admin_investments: {
+        Row: {
+          allocation_percent: number
+          amount: number
+          asset_symbol: string
+          asset_type: string
+          created_at: string
+          current_value: number | null
+          entry_price: number | null
+          id: string
+          is_stable: boolean | null
+          status: string
+          strategy: string
+          updated_at: string
+        }
+        Insert: {
+          allocation_percent: number
+          amount: number
+          asset_symbol: string
+          asset_type: string
+          created_at?: string
+          current_value?: number | null
+          entry_price?: number | null
+          id?: string
+          is_stable?: boolean | null
+          status?: string
+          strategy?: string
+          updated_at?: string
+        }
+        Update: {
+          allocation_percent?: number
+          amount?: number
+          asset_symbol?: string
+          asset_type?: string
+          created_at?: string
+          current_value?: number | null
+          entry_price?: number | null
+          id?: string
+          is_stable?: boolean | null
+          status?: string
+          strategy?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      admin_revenue: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          processed_at: string | null
+          source: string
+          status: string
+          type: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          source: string
+          status?: string
+          type?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          source?: string
+          status?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      admin_settings: {
+        Row: {
+          category: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          category?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          category?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       ai_factors: {
         Row: {
           code: string
@@ -197,6 +332,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_processors: {
+        Row: {
+          config: Json | null
+          created_at: string
+          id: string
+          is_configured: boolean | null
+          is_enabled: boolean | null
+          last_health_check: string | null
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          is_enabled?: boolean | null
+          last_health_check?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          is_enabled?: boolean | null
+          last_health_check?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       portfolio: {
         Row: {
           asset_name: string
@@ -257,6 +428,36 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      security_logs: {
+        Row: {
+          created_at: string
+          description: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          severity: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          severity?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          severity?: string
         }
         Relationships: []
       }
