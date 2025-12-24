@@ -14,7 +14,9 @@ import {
   Activity,
   Users,
   FileText,
-  Zap
+  Zap,
+  Wallet,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,6 +29,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Overview", href: "/admin", icon: LayoutDashboard },
   { title: "Revenue", href: "/admin/revenue", icon: DollarSign },
+  { title: "Treasury Wallets", href: "/admin/treasury", icon: Wallet },
+  { title: "Profit Automation", href: "/admin/profit-automation", icon: RefreshCw },
   { title: "Investments", href: "/admin/investments", icon: TrendingUp },
   { title: "Payments", href: "/admin/payments", icon: CreditCard },
   { title: "Automation", href: "/admin/automation", icon: Zap },
