@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.generate-strategy]
 verify_jwt = true
+
+[functions.ai-copilot]
+verify_jwt = true
