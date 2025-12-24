@@ -8,6 +8,7 @@ import TradingDashboard from "./pages/TradingDashboard";
 import LightningVault from "./pages/LightningVault";
 import AIResearchLab from "./pages/AIResearchLab";
 import AdvancedAnalytics from "./pages/AdvancedAnalytics";
+import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/vault" element={<ProtectedRoute><LightningVault /></ProtectedRoute>} />
           <Route path="/ai-lab" element={<ProtectedRoute><AIResearchLab /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
+          <Route path="/admin/*" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
