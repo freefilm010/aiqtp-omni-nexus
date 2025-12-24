@@ -9,6 +9,8 @@ import PaymentProcessors from "@/components/admin/PaymentProcessors";
 import AICopilot from "@/components/admin/AICopilot";
 import SecurityCenter from "@/components/admin/SecurityCenter";
 import AutomationCenter from "@/components/admin/AutomationCenter";
+import TreasuryWallets from "@/components/admin/TreasuryWallets";
+import ProfitAutomation from "@/components/admin/ProfitAutomation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,6 +54,8 @@ const AdminDashboard = () => {
             <Route path="investments" element={<InvestmentManager />} />
             <Route path="payments" element={<PaymentProcessors />} />
             <Route path="automation" element={<AutomationCenter />} />
+            <Route path="treasury" element={<TreasuryWallets />} />
+            <Route path="profit-automation" element={<ProfitAutomation />} />
             <Route path="security" element={<SecurityCenter />} />
             <Route path="copilot" element={<AICopilot />} />
             <Route path="users" element={<AdminOverview />} />

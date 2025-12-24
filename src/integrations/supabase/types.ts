@@ -368,6 +368,207 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_investments: {
+        Row: {
+          asset_symbol: string
+          asset_type: string
+          created_at: string
+          current_price: number | null
+          entry_price: number
+          id: string
+          is_auto_managed: boolean | null
+          quantity: number
+          realized_pnl: number | null
+          strategy: string | null
+          unrealized_pnl: number | null
+          updated_at: string
+          wallet_id: string | null
+        }
+        Insert: {
+          asset_symbol: string
+          asset_type: string
+          created_at?: string
+          current_price?: number | null
+          entry_price: number
+          id?: string
+          is_auto_managed?: boolean | null
+          quantity: number
+          realized_pnl?: number | null
+          strategy?: string | null
+          unrealized_pnl?: number | null
+          updated_at?: string
+          wallet_id?: string | null
+        }
+        Update: {
+          asset_symbol?: string
+          asset_type?: string
+          created_at?: string
+          current_price?: number | null
+          entry_price?: number
+          id?: string
+          is_auto_managed?: boolean | null
+          quantity?: number
+          realized_pnl?: number | null
+          strategy?: string | null
+          unrealized_pnl?: number | null
+          updated_at?: string
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_investments_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "platform_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_nft_holdings: {
+        Row: {
+          acquired_at: string
+          acquisition_price: number | null
+          chain: string | null
+          collection_name: string
+          currency: string | null
+          current_valuation: number | null
+          id: string
+          metadata: Json | null
+          token_id: string
+          token_uri: string | null
+          updated_at: string
+          wallet_id: string | null
+        }
+        Insert: {
+          acquired_at?: string
+          acquisition_price?: number | null
+          chain?: string | null
+          collection_name: string
+          currency?: string | null
+          current_valuation?: number | null
+          id?: string
+          metadata?: Json | null
+          token_id: string
+          token_uri?: string | null
+          updated_at?: string
+          wallet_id?: string | null
+        }
+        Update: {
+          acquired_at?: string
+          acquisition_price?: number | null
+          chain?: string | null
+          collection_name?: string
+          currency?: string | null
+          current_valuation?: number | null
+          id?: string
+          metadata?: Json | null
+          token_id?: string
+          token_uri?: string | null
+          updated_at?: string
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_nft_holdings_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "platform_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_revenue: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          deal_id: string | null
+          id: string
+          metadata: Json | null
+          processed_at: string | null
+          source_category: string
+          source_type: string
+          status: string
+          wallet_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          deal_id?: string | null
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          source_category: string
+          source_type: string
+          status?: string
+          wallet_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          deal_id?: string | null
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          source_category?: string
+          source_type?: string
+          status?: string
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_revenue_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "platform_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_wallets: {
+        Row: {
+          available_balance: number
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean | null
+          locked_balance: number
+          metadata: Json | null
+          updated_at: string
+          wallet_address: string | null
+          wallet_type: string
+        }
+        Insert: {
+          available_balance?: number
+          balance?: number
+          created_at?: string
+          currency: string
+          id?: string
+          is_active?: boolean | null
+          locked_balance?: number
+          metadata?: Json | null
+          updated_at?: string
+          wallet_address?: string | null
+          wallet_type: string
+        }
+        Update: {
+          available_balance?: number
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean | null
+          locked_balance?: number
+          metadata?: Json | null
+          updated_at?: string
+          wallet_address?: string | null
+          wallet_type?: string
+        }
+        Relationships: []
+      }
       portfolio: {
         Row: {
           asset_name: string
@@ -430,6 +631,127 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      profit_distribution_log: {
+        Row: {
+          amount: number
+          currency: string
+          executed_at: string
+          from_wallet_id: string | null
+          id: string
+          metadata: Json | null
+          revenue_id: string | null
+          rule_id: string | null
+          status: string
+          to_wallet_id: string | null
+        }
+        Insert: {
+          amount: number
+          currency: string
+          executed_at?: string
+          from_wallet_id?: string | null
+          id?: string
+          metadata?: Json | null
+          revenue_id?: string | null
+          rule_id?: string | null
+          status?: string
+          to_wallet_id?: string | null
+        }
+        Update: {
+          amount?: number
+          currency?: string
+          executed_at?: string
+          from_wallet_id?: string | null
+          id?: string
+          metadata?: Json | null
+          revenue_id?: string | null
+          rule_id?: string | null
+          status?: string
+          to_wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_distribution_log_from_wallet_id_fkey"
+            columns: ["from_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "platform_wallets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_log_revenue_id_fkey"
+            columns: ["revenue_id"]
+            isOneToOne: false
+            referencedRelation: "platform_revenue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_log_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "profit_distribution_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profit_distribution_log_to_wallet_id_fkey"
+            columns: ["to_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "platform_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profit_distribution_rules: {
+        Row: {
+          created_at: string
+          distribution_type: string
+          execution_frequency: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          min_threshold: number | null
+          percentage: number
+          rule_name: string
+          source_type: string
+          target_wallet_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          distribution_type: string
+          execution_frequency?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          min_threshold?: number | null
+          percentage: number
+          rule_name: string
+          source_type: string
+          target_wallet_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          distribution_type?: string
+          execution_frequency?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          min_threshold?: number | null
+          percentage?: number
+          rule_name?: string
+          source_type?: string
+          target_wallet_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_distribution_rules_target_wallet_id_fkey"
+            columns: ["target_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "platform_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_logs: {
         Row: {
@@ -621,6 +943,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      process_profit_distribution: {
+        Args: { p_revenue_id: string }
+        Returns: undefined
       }
     }
     Enums: {
