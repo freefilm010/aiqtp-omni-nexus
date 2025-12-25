@@ -30,19 +30,15 @@ const Auth = () => {
   useEffect(() => {
     // If user came from a password recovery email, show reset UI.
     const url = `${window.location.search}${window.location.hash}`;
-    if (url.includes("type=recovery")) {
+    const isRecovery = url.includes("type=recovery");
+    if (isRecovery) {
       setRecoveryMode(true);
     }
 
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/trading");
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // Set up auth state listener FIRST (prevents missing events during init)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryMode(true);
         return;
@@ -50,6 +46,13 @@ const Auth = () => {
 
       if (session) {
         setRecoveryMode(false);
+        navigate("/trading");
+      }
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && !isRecovery) {
         navigate("/trading");
       }
     });
