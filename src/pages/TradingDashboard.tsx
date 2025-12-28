@@ -28,7 +28,7 @@ import { toast } from "sonner";
 
 const TradingDashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { getAllPrices, isLive } = useMarketPrices(3000);
+  const { getAllPrices, getPrice, isLive, lastSyncError } = useMarketPrices(15000);
   const [searchQuery, setSearchQuery] = useState("");
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [trades, setTrades] = useState<any[]>([]);
@@ -76,29 +76,45 @@ const TradingDashboard = () => {
     }
   };
 
+  const getLiveUsdPrice = (symbol: string): number | undefined => {
+    const direct = getPrice(symbol)?.priceNumeric;
+    if (typeof direct === "number") return direct;
+
+    const pair = getPrice(`${symbol}/USD`)?.priceNumeric;
+    if (typeof pair === "number") return pair;
+
+    return undefined;
+  };
+
   const calculateTotalBalance = () => {
     if (portfolio.length === 0) return 0;
     return portfolio.reduce((total, item) => {
-      const value = item.quantity * (item.current_price || item.average_price);
+      const livePrice = getLiveUsdPrice(item.asset_symbol);
+      const usdPrice = livePrice ?? item.current_price ?? item.average_price;
+      const value = item.quantity * usdPrice;
       return total + value;
     }, 0);
   };
 
   const calculateTotalChange = () => {
     if (portfolio.length === 0) return { amount: 0, percent: 0 };
+
     let totalCost = 0;
     let totalValue = 0;
-    
-    portfolio.forEach(item => {
+
+    portfolio.forEach((item) => {
+      const livePrice = getLiveUsdPrice(item.asset_symbol);
+      const usdPrice = livePrice ?? item.current_price ?? item.average_price;
+
       const cost = item.quantity * item.average_price;
-      const value = item.quantity * (item.current_price || item.average_price);
+      const value = item.quantity * usdPrice;
       totalCost += cost;
       totalValue += value;
     });
-    
+
     const changeAmount = totalValue - totalCost;
     const changePercent = totalCost > 0 ? (changeAmount / totalCost) * 100 : 0;
-    
+
     return { amount: changeAmount, percent: changePercent };
   };
 
@@ -289,7 +305,9 @@ const TradingDashboard = () => {
                   ) : (
                     <div className="space-y-4">
                       {portfolio.map((item) => {
-                        const value = item.quantity * (item.current_price || item.average_price);
+                        const livePrice = getLiveUsdPrice(item.asset_symbol);
+                        const currentPrice = livePrice ?? item.current_price ?? item.average_price;
+                        const value = item.quantity * currentPrice;
                         const cost = item.quantity * item.average_price;
                         const change = value - cost;
                         const changePercent = cost > 0 ? (change / cost) * 100 : 0;
