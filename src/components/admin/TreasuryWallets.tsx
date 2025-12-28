@@ -39,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -75,6 +76,8 @@ const walletIcons: Record<string, React.ElementType> = {
 };
 
 const TreasuryWallets = () => {
+  const { getPrice } = useMarketPrices(15000);
+
   const [wallets, setWallets] = useState<PlatformWallet[]>([]);
   const [distributionLogs, setDistributionLogs] = useState<DistributionLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,14 +155,21 @@ const TreasuryWallets = () => {
     }
   };
 
+  const getUsdRate = (currency: string): number => {
+    const c = currency.toUpperCase();
+
+    if (c === "USD" || c === "USDC") return 1;
+    if (c === "EUR") return 1.08; // fallback until we wire a live FX feed
+
+    if (c === "BTC") return getPrice("BTC")?.priceNumeric ?? 67000;
+    if (c === "ETH") return getPrice("ETH")?.priceNumeric ?? 3400;
+    if (c === "GOLD") return getPrice("GOLD")?.priceNumeric ?? 2100;
+
+    return 1;
+  };
+
   const totalBalance = wallets.reduce((acc, w) => {
-    // Simple conversion (in production, use real rates)
-    if (w.currency === 'USD' || w.currency === 'USDC') return acc + Number(w.balance);
-    if (w.currency === 'EUR') return acc + Number(w.balance) * 1.08;
-    if (w.currency === 'BTC') return acc + Number(w.balance) * 67000;
-    if (w.currency === 'ETH') return acc + Number(w.balance) * 3400;
-    if (w.currency === 'GOLD') return acc + Number(w.balance) * 2100;
-    return acc + Number(w.balance);
+    return acc + Number(w.balance) * getUsdRate(w.currency);
   }, 0);
 
   const groupedWallets = wallets.reduce((acc, wallet) => {
