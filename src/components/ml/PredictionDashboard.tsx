@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from "recharts";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import {
   Brain,
   TrendingUp,
@@ -30,54 +31,51 @@ interface Prediction {
   lastUpdated: Date;
 }
 
-const generatePredictions = (): Prediction[] => {
-  const assets = [
-    { symbol: 'BTC', name: 'Bitcoin', price: 67500 },
-    { symbol: 'ETH', name: 'Ethereum', price: 3420 },
-    { symbol: 'SOL', name: 'Solana', price: 145 },
-    { symbol: 'XRP', name: 'Ripple', price: 0.52 },
-    { symbol: 'DOGE', name: 'Dogecoin', price: 0.12 },
-    { symbol: 'AAPL', name: 'Apple Inc', price: 178.50 },
-    { symbol: 'TSLA', name: 'Tesla Inc', price: 245.20 },
-    { symbol: 'NVDA', name: 'NVIDIA Corp', price: 485.30 },
-  ];
-
-  return assets.map(asset => {
-    const changePercent = (Math.random() - 0.45) * 10;
-    const predictedPrice = asset.price * (1 + changePercent / 100);
-    const confidence = 60 + Math.random() * 35;
-    
-    return {
-      symbol: asset.symbol,
-      name: asset.name,
-      currentPrice: asset.price,
-      predictedPrice,
-      predictedChange: changePercent,
-      confidence,
-      direction: changePercent > 1 ? 'bullish' : changePercent < -1 ? 'bearish' : 'neutral',
-      timeframe: ['1h', '4h', '24h', '7d'][Math.floor(Math.random() * 4)],
-      model: ['LSTM', 'XGBoost', 'Transformer', 'Ensemble'][Math.floor(Math.random() * 4)],
-      accuracy: 65 + Math.random() * 25,
-      historicalPredictions: Array.from({ length: 24 }, (_, i) => ({
-        time: `${23 - i}h`,
-        actual: asset.price * (1 + (Math.random() - 0.5) * 0.02),
-        predicted: asset.price * (1 + (Math.random() - 0.5) * 0.02),
-      })).reverse(),
-      lastUpdated: new Date(),
-    };
-  });
-};
-
 const PredictionDashboard = () => {
-  const [predictions, setPredictions] = useState<Prediction[]>(() => generatePredictions());
+  const { prices, isLive } = useMarketPrices(10000);
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
 
+  // Generate predictions based on real prices
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPredictions(generatePredictions());
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const assets = [
+      { symbol: 'BTC', name: 'Bitcoin', priceKey: 'BTC' },
+      { symbol: 'ETH', name: 'Ethereum', priceKey: 'ETH' },
+      { symbol: 'USDC', name: 'USD Coin', priceKey: 'USDC' },
+    ];
+
+    const newPredictions: Prediction[] = assets.map(asset => {
+      const marketPrice = prices[asset.priceKey];
+      const currentPrice = marketPrice?.priceNumeric || 0;
+      
+      const changePercent = (Math.random() - 0.45) * 10;
+      const predictedPrice = currentPrice * (1 + changePercent / 100);
+      const confidence = 60 + Math.random() * 35;
+      const direction: 'bullish' | 'bearish' | 'neutral' = 
+        changePercent > 1 ? 'bullish' : changePercent < -1 ? 'bearish' : 'neutral';
+      
+      return {
+        symbol: asset.symbol,
+        name: asset.name,
+        currentPrice,
+        predictedPrice,
+        predictedChange: changePercent,
+        confidence,
+        direction,
+        timeframe: ['1h', '4h', '24h', '7d'][Math.floor(Math.random() * 4)],
+        model: ['LSTM', 'XGBoost', 'Transformer', 'Ensemble'][Math.floor(Math.random() * 4)],
+        accuracy: 65 + Math.random() * 25,
+        historicalPredictions: Array.from({ length: 24 }, (_, i) => ({
+          time: `${23 - i}h`,
+          actual: currentPrice * (1 + (Math.random() - 0.5) * 0.02),
+          predicted: currentPrice * (1 + (Math.random() - 0.5) * 0.02),
+        })).reverse(),
+        lastUpdated: new Date(),
+      };
+    });
+
+    setPredictions(newPredictions);
+  }, [prices]);
 
   const getDirectionIcon = (direction: string) => {
     switch (direction) {

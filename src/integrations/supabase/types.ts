@@ -151,6 +151,7 @@ export type Database = {
       }
       ai_factors: {
         Row: {
+          category: string | null
           code: string
           created_at: string
           description: string | null
@@ -160,10 +161,15 @@ export type Database = {
           name: string
           parameters: Json | null
           performance_metrics: Json | null
+          sharpe_ratio: number | null
+          tags: string[] | null
+          total_return: number | null
           updated_at: string
           user_id: string
+          win_rate: number | null
         }
         Insert: {
+          category?: string | null
           code: string
           created_at?: string
           description?: string | null
@@ -173,10 +179,15 @@ export type Database = {
           name: string
           parameters?: Json | null
           performance_metrics?: Json | null
+          sharpe_ratio?: number | null
+          tags?: string[] | null
+          total_return?: number | null
           updated_at?: string
           user_id: string
+          win_rate?: number | null
         }
         Update: {
+          category?: string | null
           code?: string
           created_at?: string
           description?: string | null
@@ -186,8 +197,12 @@ export type Database = {
           name?: string
           parameters?: Json | null
           performance_metrics?: Json | null
+          sharpe_ratio?: number | null
+          tags?: string[] | null
+          total_return?: number | null
           updated_at?: string
           user_id?: string
+          win_rate?: number | null
         }
         Relationships: []
       }
@@ -214,48 +229,128 @@ export type Database = {
       }
       ai_strategies: {
         Row: {
+          backtest_count: number | null
           code: string | null
+          consistency_score: number | null
           created_at: string
+          creator_earnings: number | null
           description: string | null
           entry_rules: Json
           exit_rules: Json
           factors: string[] | null
+          graduation_date: string | null
           id: string
+          is_available_for_rent: boolean | null
+          is_graduated: boolean | null
           name: string
+          profitability_score: number | null
+          rental_price_monthly: number | null
           risk_parameters: Json
           status: Database["public"]["Enums"]["strategy_status"]
+          total_rentals: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          backtest_count?: number | null
           code?: string | null
+          consistency_score?: number | null
           created_at?: string
+          creator_earnings?: number | null
           description?: string | null
           entry_rules: Json
           exit_rules: Json
           factors?: string[] | null
+          graduation_date?: string | null
           id?: string
+          is_available_for_rent?: boolean | null
+          is_graduated?: boolean | null
           name: string
+          profitability_score?: number | null
+          rental_price_monthly?: number | null
           risk_parameters: Json
           status?: Database["public"]["Enums"]["strategy_status"]
+          total_rentals?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          backtest_count?: number | null
           code?: string | null
+          consistency_score?: number | null
           created_at?: string
+          creator_earnings?: number | null
           description?: string | null
           entry_rules?: Json
           exit_rules?: Json
           factors?: string[] | null
+          graduation_date?: string | null
           id?: string
+          is_available_for_rent?: boolean | null
+          is_graduated?: boolean | null
           name?: string
+          profitability_score?: number | null
+          rental_price_monthly?: number | null
           risk_parameters?: Json
           status?: Database["public"]["Enums"]["strategy_status"]
+          total_rentals?: number | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      graduation_tests: {
+        Row: {
+          consistency_score: number | null
+          created_at: string | null
+          id: string
+          max_drawdown: number | null
+          passed: boolean | null
+          profitability: number | null
+          sharpe_ratio: number | null
+          strategy_id: string | null
+          test_data: Json | null
+          test_number: number
+          user_id: string
+          win_rate: number | null
+        }
+        Insert: {
+          consistency_score?: number | null
+          created_at?: string | null
+          id?: string
+          max_drawdown?: number | null
+          passed?: boolean | null
+          profitability?: number | null
+          sharpe_ratio?: number | null
+          strategy_id?: string | null
+          test_data?: Json | null
+          test_number: number
+          user_id: string
+          win_rate?: number | null
+        }
+        Update: {
+          consistency_score?: number | null
+          created_at?: string | null
+          id?: string
+          max_drawdown?: number | null
+          passed?: boolean | null
+          profitability?: number | null
+          sharpe_ratio?: number | null
+          strategy_id?: string | null
+          test_data?: Json | null
+          test_number?: number
+          user_id?: string
+          win_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graduation_tests_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lightning_channels: {
         Row: {
@@ -753,6 +848,56 @@ export type Database = {
           },
         ]
       }
+      rental_profit_splits: {
+        Row: {
+          created_at: string | null
+          creator_share: number
+          gross_profit: number
+          id: string
+          period_end: string
+          period_start: string
+          platform_share: number
+          rental_id: string | null
+          renter_share: number
+          status: string | null
+          trade_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_share: number
+          gross_profit: number
+          id?: string
+          period_end: string
+          period_start: string
+          platform_share: number
+          rental_id?: string | null
+          renter_share: number
+          status?: string | null
+          trade_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_share?: number
+          gross_profit?: number
+          id?: string
+          period_end?: string
+          period_start?: string
+          platform_share?: number
+          rental_id?: string | null
+          renter_share?: number
+          status?: string | null
+          trade_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_profit_splits_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_rentals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_logs: {
         Row: {
           created_at: string
@@ -838,6 +983,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_strategy"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategy_rentals: {
+        Row: {
+          created_at: string | null
+          creator_user_id: string
+          end_date: string | null
+          id: string
+          monthly_price: number
+          renter_user_id: string
+          start_date: string | null
+          status: string | null
+          strategy_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_user_id: string
+          end_date?: string | null
+          id?: string
+          monthly_price: number
+          renter_user_id: string
+          start_date?: string | null
+          status?: string | null
+          strategy_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_user_id?: string
+          end_date?: string | null
+          id?: string
+          monthly_price?: number
+          renter_user_id?: string
+          start_date?: string | null
+          status?: string | null
+          strategy_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_rentals_strategy_id_fkey"
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "ai_strategies"

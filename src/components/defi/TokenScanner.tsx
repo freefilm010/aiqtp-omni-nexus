@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import {
   Rocket,
   Search,
@@ -20,7 +20,9 @@ import {
   Flame,
   Shield,
   ExternalLink,
-  Copy
+  Copy,
+  Wifi,
+  WifiOff
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,6 +65,7 @@ const chainColors: Record<string, string> = {
 };
 
 const TokenScanner = () => {
+  const { prices, isLive, toggleLive } = useMarketPrices(10000);
   const [tokens, setTokens] = useState(mockTokens);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<'all' | 'trending' | 'new' | 'verified'>('all');
@@ -133,6 +136,14 @@ const TokenScanner = () => {
             <Rocket className="h-5 w-5" />
             Token Scanner
           </CardTitle>
+          <Badge 
+            variant="outline" 
+            className={`cursor-pointer ${isLive ? 'text-green-500 border-green-500' : 'text-muted-foreground'}`}
+            onClick={toggleLive}
+          >
+            {isLive ? <Wifi className="h-3 w-3 mr-1" /> : <WifiOff className="h-3 w-3 mr-1" />}
+            {isLive ? 'LIVE' : 'Paused'}
+          </Badge>
           <Badge variant="outline" className="text-green-500 border-green-500">
             <Flame className="h-3 w-3 mr-1" />
             {tokens.filter(t => t.trending).length} Trending
