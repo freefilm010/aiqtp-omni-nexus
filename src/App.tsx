@@ -20,6 +20,9 @@ import StrategyMarketplacePage from "./pages/StrategyMarketplacePage";
 import RiskManagement from "./pages/RiskManagement";
 import SocialTrading from "./pages/SocialTrading";
 import InstitutionalServices from "./pages/InstitutionalServices";
+import AdvancedTrading from "./pages/AdvancedTrading";
+import NFTStudio from "./pages/NFTStudio";
+import TokenLaunchpad from "./pages/TokenLaunchpad";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +47,9 @@ const App = () => (
           <Route path="/risk" element={<ProtectedRoute><RiskManagement /></ProtectedRoute>} />
           <Route path="/social" element={<ProtectedRoute><SocialTrading /></ProtectedRoute>} />
           <Route path="/institutional" element={<ProtectedRoute><InstitutionalServices /></ProtectedRoute>} />
+          <Route path="/advanced-trading" element={<ProtectedRoute><AdvancedTrading /></ProtectedRoute>} />
+          <Route path="/nft-studio" element={<ProtectedRoute><NFTStudio /></ProtectedRoute>} />
+          <Route path="/token-launchpad" element={<ProtectedRoute><TokenLaunchpad /></ProtectedRoute>} />
           <Route path="/admin/*" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
