@@ -12,6 +12,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ExchangeHub from "./pages/ExchangeHub";
+import FreqtradeStudio from "./pages/FreqtradeStudio";
+import MLPredictions from "./pages/MLPredictions";
+import DefiSniperPage from "./pages/DefiSniperPage";
 
 const queryClient = new QueryClient();
 
