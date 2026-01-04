@@ -21,7 +21,12 @@ import {
   User,
   Settings,
   Brain,
-  LogOut
+  LogOut,
+  BarChart3,
+  Target,
+  ShoppingCart,
+  Activity,
+  Crosshair
 } from "lucide-react";
 
 const Header = () => {
@@ -45,14 +50,49 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <div className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
-              <span>Markets</span>
-              <ChevronDown className="w-4 h-4" />
-            </div>
-            <Link to="/trading" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
-              <span>Trading</span>
-            </Link>
+          <nav className="hidden md:flex items-center space-x-6">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
+                <span>Markets</span>
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => navigate('/trading')}>
+                  <Activity className="mr-2 h-4 w-4" />
+                  Trading Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/exchange')}>
+                  <Globe className="mr-2 h-4 w-4" />
+                  Exchange Hub
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/defi-sniper')}>
+                  <Crosshair className="mr-2 h-4 w-4" />
+                  DeFi Sniper
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
+                <span>Strategies</span>
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => navigate('/strategy-studio')}>
+                  <Target className="mr-2 h-4 w-4" />
+                  Strategy Studio
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/marketplace')}>
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Marketplace
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/ml-predictions')}>
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  ML Predictions
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Link to="/ai-lab" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
               <Brain className="w-4 h-4" />
               <span>AI Lab</span>
@@ -61,8 +101,9 @@ const Header = () => {
               <span>Vault</span>
               <Zap className="w-4 h-4" />
             </Link>
-            <span className="text-foreground hover:text-gold cursor-pointer transition-smooth">Security</span>
-            <span className="text-foreground hover:text-gold cursor-pointer transition-smooth">Support</span>
+            <Link to="/analytics" className="text-foreground hover:text-gold cursor-pointer transition-smooth">
+              Analytics
+            </Link>
           </nav>
 
           {/* Desktop Actions */}

@@ -6,26 +6,47 @@ import IndicatorLibrary from "@/components/strategy/IndicatorLibrary";
 import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import LiveStrategies from "@/components/strategy/LiveStrategies";
 import BacktestPanel from "@/components/research/BacktestPanel";
+import GraduationPipeline from "@/components/strategy/GraduationPipeline";
+import { Code2, BookOpen, FlaskConical, Play, History, Award } from "lucide-react";
 
 const FreqtradeStudio = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pt-24">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Strategy Studio</h1>
           <p className="text-muted-foreground mt-1">
-            Build, backtest, and deploy trading strategies • Inspired by Freqtrade architecture
+            Build, backtest, graduate and deploy trading strategies • 92% profitability standard
           </p>
         </div>
 
         <Tabs defaultValue="builder" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="builder">Strategy Builder</TabsTrigger>
-            <TabsTrigger value="indicators">Indicator Library</TabsTrigger>
-            <TabsTrigger value="backtest">Advanced Backtest</TabsTrigger>
-            <TabsTrigger value="live">Live Strategies</TabsTrigger>
-            <TabsTrigger value="legacy">Legacy Backtest</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="builder" className="flex items-center gap-2">
+              <Code2 className="h-4 w-4" />
+              Builder
+            </TabsTrigger>
+            <TabsTrigger value="indicators" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Indicators
+            </TabsTrigger>
+            <TabsTrigger value="backtest" className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4" />
+              Backtest
+            </TabsTrigger>
+            <TabsTrigger value="graduation" className="flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              Graduation
+            </TabsTrigger>
+            <TabsTrigger value="live" className="flex items-center gap-2">
+              <Play className="h-4 w-4" />
+              Live
+            </TabsTrigger>
+            <TabsTrigger value="legacy" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Legacy
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="builder">
@@ -38,6 +59,10 @@ const FreqtradeStudio = () => {
 
           <TabsContent value="backtest">
             <StrategyBacktest />
+          </TabsContent>
+
+          <TabsContent value="graduation">
+            <GraduationPipeline />
           </TabsContent>
 
           <TabsContent value="live">
