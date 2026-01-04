@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
+import InputDevicesPanel from './InputDevicesPanel';
 import {
   Volume2,
   Mic,
@@ -22,7 +23,8 @@ import {
   Languages,
   Accessibility,
   Moon,
-  Sun
+  Sun,
+  Gamepad2
 } from 'lucide-react';
 
 const AccessibilityPanel: React.FC = () => {
@@ -53,7 +55,7 @@ const AccessibilityPanel: React.FC = () => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="voice" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="voice" className="flex items-center gap-1">
               <Volume2 className="h-4 w-4" />
               <span className="hidden sm:inline">Voice</span>
@@ -69,6 +71,10 @@ const AccessibilityPanel: React.FC = () => {
             <TabsTrigger value="keyboard" className="flex items-center gap-1">
               <Keyboard className="h-4 w-4" />
               <span className="hidden sm:inline">Keyboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="devices" className="flex items-center gap-1">
+              <Gamepad2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Devices</span>
             </TabsTrigger>
             <TabsTrigger value="braille" className="flex items-center gap-1">
               <Hand className="h-4 w-4" />
@@ -395,6 +401,10 @@ const AccessibilityPanel: React.FC = () => {
                   <li>• Eye tracking systems</li>
                 </ul>
               </div>
+            </TabsContent>
+
+            <TabsContent value="devices" className="space-y-6">
+              <InputDevicesPanel />
             </TabsContent>
 
             <TabsContent value="braille" className="space-y-6">
