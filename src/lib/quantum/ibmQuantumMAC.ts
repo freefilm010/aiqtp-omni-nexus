@@ -291,10 +291,10 @@ export const IQM_SPECS = {
   radiance: {
     name: 'IQM Radiance',
     qubits: 150,
-    gateTime1Q: 20, // nanoseconds
-    gateTime2Q: 100, // nanoseconds
-    coherenceT1: 100, // microseconds
-    coherenceT2: 80, // microseconds
+    gateTime1Q: 20,
+    gateTime2Q: 100,
+    coherenceT1: 100,
+    coherenceT2: 80,
     fidelity1Q: 0.999,
     fidelity2Q: 0.99
   },
@@ -310,5 +310,184 @@ export const IQM_SPECS = {
   }
 };
 
-// Export singleton
+// QAQI (Quantum AI Query Interface) Integration
+export interface QAQIConfig {
+  enableQuantumAcceleration: boolean;
+  classicalFallback: boolean;
+  maxQueueDepth: number;
+  autoOptimize: boolean;
+}
+
+export class QAQIInterface {
+  private qmac: IBMQuantumMAC;
+  private config: QAQIConfig;
+  private queryHistory: Array<{ query: string; result: QuantumResult; timestamp: number }> = [];
+
+  constructor(qmac: IBMQuantumMAC, config: Partial<QAQIConfig> = {}) {
+    this.qmac = qmac;
+    this.config = {
+      enableQuantumAcceleration: config.enableQuantumAcceleration ?? true,
+      classicalFallback: config.classicalFallback ?? true,
+      maxQueueDepth: config.maxQueueDepth ?? 100,
+      autoOptimize: config.autoOptimize ?? true
+    };
+  }
+
+  // Query the quantum system for fraud classification
+  async queryFraudRisk(clusterData: number[]): Promise<{
+    result: QuantumResult;
+    quantumAdvantage: boolean;
+    queryId: string;
+  }> {
+    const queryId = `qaqi-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    
+    try {
+      if (this.config.enableQuantumAcceleration) {
+        const job = await this.qmac.submitClassificationJob(clusterData);
+        const completedJob = await this.qmac.waitForJob(job.jobId);
+        
+        if (completedJob.result) {
+          this.queryHistory.push({
+            query: JSON.stringify(clusterData),
+            result: completedJob.result,
+            timestamp: Date.now()
+          });
+          
+          return {
+            result: completedJob.result,
+            quantumAdvantage: true,
+            queryId
+          };
+        }
+      }
+      
+      // Classical fallback
+      const classifier = new VQCClassifier(Math.min(clusterData.length, 8));
+      const result = classifier.classify(clusterData);
+      
+      return {
+        result,
+        quantumAdvantage: false,
+        queryId
+      };
+    } catch (error) {
+      console.error('[QAQI] Query failed:', error);
+      throw error;
+    }
+  }
+
+  // Batch query for multiple clusters
+  async batchQuery(clusters: number[][]): Promise<Array<{
+    clusterId: number;
+    result: QuantumResult;
+  }>> {
+    const results = await this.qmac.analyzeClustersBatch(clusters);
+    return results.map((result, idx) => ({
+      clusterId: idx,
+      result
+    }));
+  }
+
+  getQueryHistory(): typeof this.queryHistory {
+    return [...this.queryHistory];
+  }
+
+  getStats(): {
+    totalQueries: number;
+    avgConfidence: number;
+    fraudDetections: number;
+  } {
+    const fraudCount = this.queryHistory.filter(
+      q => q.result.classification === 'fraud'
+    ).length;
+    
+    const avgConf = this.queryHistory.length > 0
+      ? this.queryHistory.reduce((sum, q) => sum + q.result.confidence, 0) / this.queryHistory.length
+      : 0;
+
+    return {
+      totalQueries: this.queryHistory.length,
+      avgConfidence: avgConf,
+      fraudDetections: fraudCount
+    };
+  }
+}
+
+// D-Wave Quantum Annealing Simulation for PoQ
+export interface AnnealingSchedule {
+  initialTemp: number;
+  finalTemp: number;
+  steps: number;
+  annealingTime: number; // microseconds
+}
+
+export class DWaveAnnealerSimulator {
+  private schedule: AnnealingSchedule;
+
+  constructor(schedule: Partial<AnnealingSchedule> = {}) {
+    this.schedule = {
+      initialTemp: schedule.initialTemp ?? 1.0,
+      finalTemp: schedule.finalTemp ?? 0.01,
+      steps: schedule.steps ?? 1000,
+      annealingTime: schedule.annealingTime ?? 20
+    };
+  }
+
+  // Simulate quantum annealing for optimization problems
+  simulateAnnealing(problemMatrix: number[][]): {
+    solution: number[];
+    energy: number;
+    success: boolean;
+    executionTime: number;
+  } {
+    const startTime = Date.now();
+    const n = problemMatrix.length;
+    let state = Array(n).fill(0).map(() => Math.random() < 0.5 ? -1 : 1);
+    let energy = this.calculateEnergy(state, problemMatrix);
+    
+    const tempDecay = (this.schedule.initialTemp - this.schedule.finalTemp) / this.schedule.steps;
+    let temp = this.schedule.initialTemp;
+    
+    for (let step = 0; step < this.schedule.steps; step++) {
+      // Random spin flip
+      const flipIdx = Math.floor(Math.random() * n);
+      const newState = [...state];
+      newState[flipIdx] *= -1;
+      
+      const newEnergy = this.calculateEnergy(newState, problemMatrix);
+      const deltaE = newEnergy - energy;
+      
+      // Metropolis criterion with quantum tunneling simulation
+      const quantumTunneling = Math.exp(-deltaE / temp) * (1 + 0.1 * Math.random());
+      
+      if (deltaE < 0 || Math.random() < quantumTunneling) {
+        state = newState;
+        energy = newEnergy;
+      }
+      
+      temp -= tempDecay;
+    }
+    
+    return {
+      solution: state.map(s => (s + 1) / 2), // Convert to 0/1
+      energy,
+      success: true,
+      executionTime: Date.now() - startTime
+    };
+  }
+
+  private calculateEnergy(state: number[], matrix: number[][]): number {
+    let energy = 0;
+    for (let i = 0; i < state.length; i++) {
+      for (let j = 0; j < state.length; j++) {
+        energy += matrix[i][j] * state[i] * state[j];
+      }
+    }
+    return -energy / 2;
+  }
+}
+
+// Export singletons
 export const ibmQMAC = new IBMQuantumMAC();
+export const qaqi = new QAQIInterface(ibmQMAC);
+export const dwaveSimulator = new DWaveAnnealerSimulator();
