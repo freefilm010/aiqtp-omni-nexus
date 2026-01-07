@@ -26,7 +26,18 @@ import {
   Target,
   ShoppingCart,
   Activity,
-  Crosshair
+  Crosshair,
+  Bot,
+  Atom,
+  Shield,
+  Cpu,
+  TrendingUp,
+  Layers,
+  BookOpen,
+  Newspaper,
+  Calendar,
+  LineChart,
+  FlaskConical
 } from "lucide-react";
 
 const Header = () => {
@@ -50,7 +61,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
                 <span>Markets</span>
@@ -61,6 +72,10 @@ const Header = () => {
                   <Activity className="mr-2 h-4 w-4" />
                   Trading Dashboard
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/advanced-trading')}>
+                  <LineChart className="mr-2 h-4 w-4" />
+                  Advanced Trading
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/exchange')}>
                   <Globe className="mr-2 h-4 w-4" />
                   Exchange Hub
@@ -68,6 +83,43 @@ const Header = () => {
                 <DropdownMenuItem onClick={() => navigate('/defi-sniper')}>
                   <Crosshair className="mr-2 h-4 w-4" />
                   DeFi Sniper
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/screener')}>
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Crypto Screener
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/derivatives')}>
+                  <Layers className="mr-2 h-4 w-4" />
+                  Derivatives
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
+                <span>AI & Quantum</span>
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => navigate('/qaqi')}>
+                  <Atom className="mr-2 h-4 w-4 text-purple-500" />
+                  QAQI Agent (Quantum)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/ai-lab')}>
+                  <Brain className="mr-2 h-4 w-4" />
+                  AI Research Lab
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/ml-predictions')}>
+                  <Cpu className="mr-2 h-4 w-4" />
+                  ML Predictions
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/quantum-lab')}>
+                  <FlaskConical className="mr-2 h-4 w-4" />
+                  Quantum Lab
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/titan-codex')}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Titan Codex
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -82,25 +134,55 @@ const Header = () => {
                   <Target className="mr-2 h-4 w-4" />
                   Strategy Studio
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/strategy-lab')}>
+                  <FlaskConical className="mr-2 h-4 w-4" />
+                  Strategy Lab
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/marketplace')}>
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   Marketplace
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/ml-predictions')}>
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  ML Predictions
+                <DropdownMenuItem onClick={() => navigate('/risk')}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Risk Management
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Link to="/ai-lab" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
-              <Brain className="w-4 h-4" />
-              <span>AI Lab</span>
-            </Link>
-            <Link to="/vault" className="flex items-center space-x-1 text-foreground hover:text-gold transition-smooth">
-              <span>Vault</span>
-              <Zap className="w-4 h-4" />
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
+                <span>More</span>
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => navigate('/vault')}>
+                  <Zap className="mr-2 h-4 w-4 text-gold" />
+                  Lightning Vault
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/nft-studio')}>
+                  <Layers className="mr-2 h-4 w-4" />
+                  NFT Studio
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/token-launchpad')}>
+                  <Zap className="mr-2 h-4 w-4" />
+                  Token Launchpad
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/education')}>
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Education
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/news')}>
+                  <Newspaper className="mr-2 h-4 w-4" />
+                  News Feed
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/calendar')}>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Economic Calendar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Link to="/analytics" className="text-foreground hover:text-gold cursor-pointer transition-smooth">
               Analytics
             </Link>
@@ -167,32 +249,44 @@ const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-white/20">
-            <nav className="space-y-4">
-              <div className="text-foreground hover:text-gold cursor-pointer transition-smooth py-2">
-                Markets
-              </div>
-              <Link to="/trading" className="block text-foreground hover:text-gold transition-smooth py-2">
-                Trading
+            <nav className="space-y-2">
+              <div className="text-xs text-muted-foreground uppercase px-3 py-1">Markets</div>
+              <Link to="/trading" className="block px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                Trading Dashboard
               </Link>
-              <Link to="/ai-lab" className="flex items-center space-x-2 text-foreground hover:text-gold transition-smooth py-2">
-                <Brain className="w-4 h-4" />
-                <span>AI Research Lab</span>
+              <Link to="/advanced-trading" className="block px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                Advanced Trading
               </Link>
-              <Link to="/vault" className="flex items-center space-x-2 text-foreground hover:text-gold transition-smooth py-2">
-                <Zap className="w-4 h-4" />
-                <span>Lightning Vault</span>
+              <Link to="/exchange" className="block px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                Exchange Hub
               </Link>
-              <div className="text-foreground hover:text-gold cursor-pointer transition-smooth py-2">
-                Security
-              </div>
-              <div className="text-foreground hover:text-gold cursor-pointer transition-smooth py-2">
-                Support
-              </div>
               
-              <div className="pt-4 space-y-3">
+              <div className="text-xs text-muted-foreground uppercase px-3 py-1 pt-3">AI & Quantum</div>
+              <Link to="/qaqi" className="flex items-center gap-2 px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                <Atom className="w-4 h-4 text-purple-500" />
+                QAQI Agent
+              </Link>
+              <Link to="/ai-lab" className="flex items-center gap-2 px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                <Brain className="w-4 h-4" />
+                AI Research Lab
+              </Link>
+              <Link to="/ml-predictions" className="block px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                ML Predictions
+              </Link>
+              
+              <div className="text-xs text-muted-foreground uppercase px-3 py-1 pt-3">Tools</div>
+              <Link to="/vault" className="flex items-center gap-2 px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                <Zap className="w-4 h-4 text-gold" />
+                Lightning Vault
+              </Link>
+              <Link to="/analytics" className="block px-3 py-2 text-foreground hover:text-gold hover:bg-muted/50 rounded transition-smooth">
+                Analytics
+              </Link>
+              
+              <div className="pt-4 space-y-3 border-t border-white/10">
                 {user ? (
                   <>
-                    <div className="text-sm text-muted-foreground px-3 py-2 border-b border-white/10">
+                    <div className="text-sm text-muted-foreground px-3 py-2">
                       {user.email}
                     </div>
                     <Button 

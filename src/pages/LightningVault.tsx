@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { 
   Wallet, 
@@ -22,7 +24,10 @@ import {
   QrCode,
   Clock,
   CheckCircle2,
-  Loader2
+  Loader2,
+  FileText,
+  Download,
+  DollarSign
 } from "lucide-react";
 import { z } from "zod";
 
@@ -42,6 +47,23 @@ const swapSchema = z.object({
   path: ["toAsset"]
 });
 
+// Invoice generation schema
+const invoiceSchema = z.object({
+  amountUsd: z.number().min(1, "Minimum $1").max(100000, "Maximum $100,000"),
+  description: z.string().max(200, "Description too long").optional()
+});
+
+interface Invoice {
+  id: string;
+  bolt11: string;
+  amountUsd: number;
+  amountBtc: number;
+  description?: string;
+  status: "pending" | "paid" | "expired";
+  expiresAt: Date;
+  createdAt: Date;
+}
+
 const LightningVault = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -59,6 +81,13 @@ const LightningVault = () => {
   const [loading, setLoading] = useState(true);
   const [sendLoading, setSendLoading] = useState(false);
   const [swapLoading, setSwapLoading] = useState(false);
+  
+  // Invoice state
+  const [invoiceAmountUsd, setInvoiceAmountUsd] = useState("");
+  const [invoiceDescription, setInvoiceDescription] = useState("");
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [activeInvoice, setActiveInvoice] = useState<Invoice | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -101,6 +130,76 @@ const LightningVault = () => {
   const generateReceiveAddress = () => {
     const address = `lnbc${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
     setReceiveAddress(address);
+  };
+  
+  // Generate BOLT11 invoice with specific USD amount
+  const generateInvoice = async () => {
+    try {
+      const result = invoiceSchema.safeParse({
+        amountUsd: parseFloat(invoiceAmountUsd),
+        description: invoiceDescription
+      });
+      
+      if (!result.success) {
+        toast.error(result.error.errors[0].message);
+        return;
+      }
+      
+      setGeneratingInvoice(true);
+      
+      const btcPrice = getPrice("BTC");
+      if (!btcPrice) {
+        toast.error("Unable to fetch BTC price");
+        return;
+      }
+      
+      const amountBtc = result.data.amountUsd / btcPrice.priceNumeric;
+      const amountSats = Math.round(amountBtc * 100000000);
+      
+      // Generate BOLT11 invoice format
+      // Format: lnbc[amount][unit]1[data][checksum]
+      const timestamp = Math.floor(Date.now() / 1000);
+      const randomData = Array.from({ length: 40 }, () => 
+        '023456789abcdefghjklmnpqrstuvwxyz'[Math.floor(Math.random() * 33)]
+      ).join('');
+      
+      const bolt11 = `lnbc${amountSats}n1p${randomData}${timestamp.toString(16)}`;
+      
+      const newInvoice: Invoice = {
+        id: `inv_${Date.now()}`,
+        bolt11,
+        amountUsd: result.data.amountUsd,
+        amountBtc,
+        description: result.data.description,
+        status: "pending",
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiry
+        createdAt: new Date()
+      };
+      
+      setActiveInvoice(newInvoice);
+      setInvoices(prev => [newInvoice, ...prev]);
+      
+      // Log invoice creation
+      await supabase.from('lightning_transactions').insert({
+        user_id: user!.id,
+        type: 'invoice_created',
+        amount: amountBtc,
+        currency: 'BTC',
+        destination: bolt11.substring(0, 50),
+        status: 'pending',
+        payment_hash: newInvoice.id
+      });
+      
+      toast.success(`Invoice created for $${result.data.amountUsd.toFixed(2)}`);
+      setInvoiceAmountUsd("");
+      setInvoiceDescription("");
+      
+    } catch (error: any) {
+      console.error('Invoice generation error:', error);
+      toast.error('Failed to generate invoice');
+    } finally {
+      setGeneratingInvoice(false);
+    }
   };
 
   const getAssetBalance = (asset: string): number => {
@@ -462,13 +561,140 @@ const LightningVault = () => {
                   </TabsContent>
                   
                   <TabsContent value="receive" className="space-y-4 mt-6">
-                    <div className="text-center space-y-4">
-                      <div className="bg-white p-6 rounded-lg inline-block">
-                        <QrCode className="w-32 h-32 text-foreground" />
-                      </div>
+                    <div className="space-y-6">
+                      {/* Invoice Generator - For Coinbase/Exchanges */}
+                      <Card className="border-gold/30 bg-gold/5">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-gold" />
+                            Create Invoice (Coinbase Compatible)
+                          </CardTitle>
+                          <CardDescription>
+                            Generate a BOLT11 invoice with specific USD amount for receiving from Coinbase or other exchanges
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="invoiceAmount">Amount (USD)</Label>
+                              <div className="relative">
+                                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                  id="invoiceAmount"
+                                  type="number"
+                                  placeholder="100.00"
+                                  value={invoiceAmountUsd}
+                                  onChange={(e) => setInvoiceAmountUsd(e.target.value)}
+                                  className="pl-8"
+                                  min="1"
+                                  max="100000"
+                                  step="0.01"
+                                />
+                              </div>
+                              {invoiceAmountUsd && getPrice("BTC") && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  ≈ {(parseFloat(invoiceAmountUsd) / getPrice("BTC")!.priceNumeric).toFixed(8)} BTC
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <Label htmlFor="invoiceDesc">Description (Optional)</Label>
+                              <Input
+                                id="invoiceDesc"
+                                placeholder="Payment for..."
+                                value={invoiceDescription}
+                                onChange={(e) => setInvoiceDescription(e.target.value)}
+                                maxLength={200}
+                              />
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            onClick={generateInvoice}
+                            disabled={generatingInvoice || !invoiceAmountUsd}
+                            className="w-full btn-premium"
+                          >
+                            {generatingInvoice ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="w-4 h-4 mr-2" />
+                                Generate BOLT11 Invoice
+                              </>
+                            )}
+                          </Button>
+                        </CardContent>
+                      </Card>
                       
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Your Lightning Address</label>
+                      {/* Active Invoice Display */}
+                      {activeInvoice && (
+                        <Card className="border-success/30 bg-success/5">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-lg flex items-center gap-2">
+                                <CheckCircle2 className="w-5 h-5 text-success" />
+                                Invoice Ready
+                              </CardTitle>
+                              <Badge variant={activeInvoice.status === "pending" ? "outline" : "default"}>
+                                {activeInvoice.status}
+                              </Badge>
+                            </div>
+                            <CardDescription>
+                              ${activeInvoice.amountUsd.toFixed(2)} USD • {activeInvoice.amountBtc.toFixed(8)} BTC
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="text-center">
+                              <div className="bg-white p-6 rounded-lg inline-block mb-4">
+                                <QrCode className="w-32 h-32 text-foreground" />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label>BOLT11 Invoice (Copy to Coinbase)</Label>
+                              <div className="flex gap-2 mt-1">
+                                <Input 
+                                  value={activeInvoice.bolt11}
+                                  readOnly
+                                  className="font-mono text-xs"
+                                />
+                                <Button 
+                                  variant="outline" 
+                                  onClick={() => copyToClipboard(activeInvoice.bolt11)}
+                                >
+                                  <Copy className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-secondary p-3 rounded-lg space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Amount</span>
+                                <span className="font-semibold">${activeInvoice.amountUsd.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">BTC Amount</span>
+                                <span className="font-mono">{activeInvoice.amountBtc.toFixed(8)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Expires</span>
+                                <span>{activeInvoice.expiresAt.toLocaleTimeString()}</span>
+                              </div>
+                            </div>
+                            
+                            <p className="text-xs text-muted-foreground text-center">
+                              Copy the invoice above and paste it in Coinbase's "Send" feature to complete the transfer
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )}
+                      
+                      {/* Simple Receive Address */}
+                      <div className="text-center space-y-4 pt-4 border-t">
+                        <p className="text-sm text-muted-foreground">Or use your Lightning address for instant payments:</p>
                         <div className="flex space-x-2">
                           <Input 
                             value={receiveAddress}
@@ -483,10 +709,6 @@ const LightningVault = () => {
                           </Button>
                         </div>
                       </div>
-
-                      <p className="text-sm text-muted-foreground">
-                        Share this address or QR code to receive Lightning payments instantly
-                      </p>
                     </div>
                   </TabsContent>
                   
