@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -20,10 +21,24 @@ import {
   Percent,
   Gift,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Users,
+  AlertTriangle
 } from "lucide-react";
 import { Explain } from "@/components/ui/explainer-tooltip";
-import { FEE_SUMMARY, PROFIT_TIERS, NFT_FEES, REAL_ESTATE_FEES, COLLECTIBLES_FEES, LUXURY_FEES, PRECIOUS_METALS_FEES, VIRTUAL_ASSETS_FEES, MIN_INVESTMENT } from "@/lib/fees/platformFees";
+import { 
+  FEE_SUMMARY, 
+  PROFIT_TIERS, 
+  NFT_FEES, 
+  REAL_ESTATE_FEES, 
+  COLLECTIBLES_FEES, 
+  LUXURY_FEES, 
+  PRECIOUS_METALS_FEES, 
+  VIRTUAL_ASSETS_FEES, 
+  MIN_INVESTMENT,
+  AFFILIATE_FEES,
+  calculateAffiliateEarnings
+} from "@/lib/fees/platformFees";
 
 interface PricingTier {
   name: string;
@@ -384,6 +399,67 @@ const PricingPage = () => {
           </div>
         </div>
 
+        {/* Affiliate Program */}
+        <Card className="mb-16 border-2 border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-purple-500/5">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mb-4">
+              <Users className="h-8 w-8 text-blue-400" />
+            </div>
+            <CardTitle className="text-2xl">Earn with Referrals</CardTitle>
+            <CardDescription className="text-base">
+              Invite others and earn a percentage of the platform's earnings from their trades. Lifetime rewards!
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 rounded-xl border-2 border-border text-center">
+                <div className="text-3xl font-bold mb-1">{AFFILIATE_FEES.baseTier.label}</div>
+                <div className="text-sm text-muted-foreground mb-2">of platform's cut</div>
+                <div className="text-xs font-medium bg-muted px-2 py-1 rounded">Base Tier</div>
+              </div>
+              {AFFILIATE_FEES.tierBonuses.map((tier, i) => (
+                <div 
+                  key={tier.minReferrals}
+                  className={`p-4 rounded-xl border-2 text-center transition-all hover:scale-105 ${
+                    i === 2 ? 'border-blue-500 bg-blue-500/10' : 'border-border'
+                  }`}
+                >
+                  <div className={`text-3xl font-bold mb-1 ${i === 2 ? 'text-blue-400' : ''}`}>
+                    {tier.label}
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-2">of platform's cut</div>
+                  <div className="text-xs font-medium bg-muted px-2 py-1 rounded">
+                    {tier.minReferrals}+ referrals
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Example Calculation */}
+            <div className="bg-muted/50 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold mb-2 text-sm">Example Earnings:</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>• Your referral profits <strong>$5,000</strong> → Platform takes <strong>$450</strong> (9%)</p>
+                <p>• At 0-9 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.base}</strong> ({AFFILIATE_FEES.baseTier.label} of $450)</p>
+                <p>• At 10-49 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier10}</strong> (15% of $450)</p>
+                <p>• At 50-99 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier50}</strong> (20% of $450)</p>
+                <p>• At 100+ referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier100}</strong> (25% of $450)</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground border-t pt-4">
+              <div className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-blue-400" />
+                <span>Lifetime earnings from all referrals</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-blue-400" />
+                <span>No cap on referral count</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* What's Free */}
         <Card className="mb-16 bg-success/5 border-success/30">
           <CardContent className="py-8">
@@ -401,6 +477,21 @@ const PricingPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Risk Warning */}
+        <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+            <div className="text-sm text-muted-foreground">
+              <p className="font-medium text-yellow-400 mb-1">Risk Warning</p>
+              <p>
+                Trading involves substantial risk of loss. Past performance is not indicative of future results. 
+                Not financial advice. All fees subject to actual network costs. 
+                <Link to="/legal" className="text-primary ml-1 hover:underline">Read full disclaimers →</Link>
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Enterprise CTA */}
         <Card className="bg-gradient-hero text-white">
