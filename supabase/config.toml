@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.ml-predictions]
 verify_jwt = false
+
+[functions.claude-assistant]
+verify_jwt = false
