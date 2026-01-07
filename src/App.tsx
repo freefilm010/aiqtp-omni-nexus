@@ -42,6 +42,7 @@ const TitanCodexPage = lazy(() => import("./pages/TitanCodexPage"));
 const QAQIPage = lazy(() => import("./pages/QAQIPage"));
 const ConnectionsPage = lazy(() => import("./pages/ConnectionsPage"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
+const AccessibilitySettingsPage = lazy(() => import("./pages/AccessibilitySettingsPage"));
 
 const queryClient = new QueryClient();
 
@@ -123,6 +124,7 @@ const App = () => (
               <Route path="/connections" element={<ProtectedRoute><ConnectionsPage /></ProtectedRoute>} />
               <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>

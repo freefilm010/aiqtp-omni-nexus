@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   Zap, 
@@ -9,7 +10,8 @@ import {
   Twitter, 
   Linkedin, 
   Youtube,
-  Github
+  Github,
+  Accessibility
 } from "lucide-react";
 
 const Footer = () => {
@@ -105,6 +107,12 @@ const Footer = () => {
                 <li><a href="#" className="hover:text-gold transition-smooth">Terms of Service</a></li>
                 <li><a href="#" className="hover:text-gold transition-smooth">Compliance</a></li>
                 <li><a href="#" className="hover:text-gold transition-smooth">Security</a></li>
+                <li>
+                  <Link to="/settings/accessibility" className="hover:text-gold transition-smooth flex items-center gap-1">
+                    <Accessibility className="w-3 h-3" />
+                    Accessibility
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
