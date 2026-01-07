@@ -15,9 +15,15 @@ import {
   Brain,
   Shield,
   Globe,
-  Headphones
+  Headphones,
+  DollarSign,
+  Percent,
+  Gift,
+  ArrowRight,
+  Sparkles
 } from "lucide-react";
 import { Explain } from "@/components/ui/explainer-tooltip";
+import { FEE_SUMMARY, PROFIT_TIERS, NFT_FEES, REAL_ESTATE_FEES, COLLECTIBLES_FEES, LUXURY_FEES, PRECIOUS_METALS_FEES, VIRTUAL_ASSETS_FEES, MIN_INVESTMENT } from "@/lib/fees/platformFees";
 
 interface PricingTier {
   name: string;
@@ -129,42 +135,6 @@ const PRICING_TIERS: PricingTier[] = [
   }
 ];
 
-// Bot Rental Fee Structure - This is how we make money
-const BOT_RENTAL_FEES = [
-  {
-    name: "Basic Bot",
-    description: "Proven strategies with 1.0+ Sharpe ratio",
-    monthlyFee: "$29/mo",
-    profitShare: "10% of profits",
-    minDeposit: "$500",
-    icon: <Bot className="h-5 w-5" />
-  },
-  {
-    name: "Advanced Bot",
-    description: "High-performance strategies, 1.5+ Sharpe",
-    monthlyFee: "$79/mo",
-    profitShare: "15% of profits",
-    minDeposit: "$2,000",
-    icon: <Zap className="h-5 w-5" />
-  },
-  {
-    name: "Elite Bot",
-    description: "Top 5% performers, 2.0+ Sharpe ratio",
-    monthlyFee: "$149/mo",
-    profitShare: "20% of profits",
-    minDeposit: "$5,000",
-    icon: <Crown className="h-5 w-5" />
-  },
-  {
-    name: "Quantum Bot",
-    description: "Quantum-enhanced AI with adaptive learning",
-    monthlyFee: "$299/mo",
-    profitShare: "25% of profits",
-    minDeposit: "$10,000",
-    icon: <Brain className="h-5 w-5" />
-  }
-];
-
 const PricingPage = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -173,14 +143,59 @@ const PricingPage = () => {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <Badge className="mb-4 bg-success/20 text-success border-success/30">100% Free Access</Badge>
-          <h1 className="text-4xl font-bold mb-4">
-            Free Platform. Pay Only for Profits.
-          </h1>
+          <h1 className="text-4xl font-bold mb-4">{FEE_SUMMARY.headline}</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Full platform access at $0/month. We only make money when you rent our 
-            <Explain term="aiTradingBots"> AI Trading Bots</Explain> and profit from them.
+            {FEE_SUMMARY.subheadline}
           </p>
         </div>
+
+        {/* Tiered Fee Structure - Main Revenue Model */}
+        <Card className="mb-12 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+              <Percent className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Profit-Based Tiered Fees</CardTitle>
+            <CardDescription className="text-base">
+              The more you profit, the less you pay. No profits = No fees.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
+              {FEE_SUMMARY.tiers.map((tier, i) => (
+                <div 
+                  key={tier.range}
+                  className={`p-4 rounded-xl border-2 text-center transition-all hover:scale-105 ${
+                    i === 3 ? 'border-primary bg-primary/10' : 'border-border'
+                  }`}
+                >
+                  <div className={`text-3xl font-bold mb-1 ${i === 3 ? 'text-primary' : ''}`}>
+                    {PROFIT_TIERS[i].label}
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-2">of profit</div>
+                  <div className="text-xs font-medium bg-muted px-2 py-1 rounded">
+                    {tier.range}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground border-t pt-4">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-success" />
+                <span><strong>${MIN_INVESTMENT}</strong> minimum investment</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-success" />
+                <span><strong>$0</strong> if bot doesn't profit</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-success" />
+                <span>Gas & transfer fees at cost</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
@@ -204,12 +219,8 @@ const PricingPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-success">
-                    FREE
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    No subscription required
-                  </div>
+                  <div className="text-4xl font-bold text-success">FREE</div>
+                  <div className="text-sm text-muted-foreground">No subscription required</div>
                 </div>
 
                 <div className="space-y-3 mb-6">
@@ -235,53 +246,161 @@ const PricingPage = () => {
                   className="w-full" 
                   variant={tier.popular ? "default" : "outline"}
                 >
-                  {tier.monthlyPrice === 0 ? "Start Free" : 
-                   tier.monthlyPrice === "Custom" ? "Contact Sales" : "Subscribe"}
+                  Start Free
                 </Button>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Bot Rental Fees Section - Revenue Model */}
+        {/* Marketplace Fee Comparisons */}
         <div className="mb-16">
           <div className="text-center mb-8">
-            <Badge variant="outline" className="mb-2">How We Make Money</Badge>
-            <h2 className="text-2xl font-bold">AI Bot Rental Fees</h2>
-            <p className="text-muted-foreground mt-2">Rent graduated strategies • Pay only when you profit</p>
+            <Badge variant="outline" className="mb-2">Beat the Competition</Badge>
+            <h2 className="text-2xl font-bold">Marketplace Fees vs Industry</h2>
+            <p className="text-muted-foreground mt-2">We match or beat every competitor across all asset classes</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {BOT_RENTAL_FEES.map((bot) => (
-              <Card key={bot.name} className="hover:shadow-lg transition-shadow border-2 hover:border-primary/50">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                      {bot.icon}
-                    </div>
-                    <div>
-                      <div className="font-bold">{bot.name}</div>
-                      <div className="text-lg text-primary font-semibold">{bot.monthlyFee}</div>
-                    </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* NFT Marketplace */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-500" />
+                  NFT Marketplace
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold text-success">{NFT_FEES.saleFee * 100}% sale fee</div>
+                <div className="text-sm text-muted-foreground mb-3">$0 listing fee</div>
+                {NFT_FEES.comparison.map(c => (
+                  <div key={c.platform} className={`flex justify-between text-sm py-1 ${'highlight' in c && c.highlight ? 'text-primary font-bold' : ''}`}>
+                    <span>{c.platform}</span>
+                    <span>{c.fee}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">{bot.description}</p>
-                  <div className="space-y-2 text-sm border-t pt-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Profit Share:</span>
-                      <span className="font-medium text-success">{bot.profitShare}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Min Deposit:</span>
-                      <span className="font-medium">{bot.minDeposit}</span>
-                    </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Real Estate */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-blue-500" />
+                  Real Estate
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold text-success">{REAL_ESTATE_FEES.transactionFee * 100}% finder's fee</div>
+                <div className="text-sm text-muted-foreground mb-3">$0 listing fee</div>
+                {REAL_ESTATE_FEES.comparison.map(c => (
+                  <div key={c.platform} className={`flex justify-between text-sm py-1 ${'highlight' in c && c.highlight ? 'text-primary font-bold' : ''}`}>
+                    <span>{c.platform}</span>
+                    <span>{c.fee}</span>
                   </div>
-                  <Button className="w-full mt-4" variant="outline">
-                    View Available Bots
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Collectibles */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-amber-500" />
+                  Collectibles
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold text-success">1-9% tiered</div>
+                <div className="text-sm text-muted-foreground mb-3">$0 listing, free auth</div>
+                {COLLECTIBLES_FEES.comparison.map(c => (
+                  <div key={c.platform} className={`flex justify-between text-sm py-1 ${'highlight' in c && c.highlight ? 'text-primary font-bold' : ''}`}>
+                    <span>{c.platform}</span>
+                    <span>{c.fee}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Luxury Goods */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Star className="h-5 w-5 text-gold" />
+                  Luxury Goods
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold text-success">1-9% tiered</div>
+                <div className="text-sm text-muted-foreground mb-3">Insurance included</div>
+                {LUXURY_FEES.comparison.map(c => (
+                  <div key={c.platform} className={`flex justify-between text-sm py-1 ${'highlight' in c && c.highlight ? 'text-primary font-bold' : ''}`}>
+                    <span>{c.platform}</span>
+                    <span>{c.fee}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Precious Metals */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-yellow-500" />
+                  Precious Metals
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold text-success">{PRECIOUS_METALS_FEES.spreadFee * 100}% spread</div>
+                <div className="text-sm text-muted-foreground mb-3">Free storage 1st year</div>
+                {PRECIOUS_METALS_FEES.comparison.map(c => (
+                  <div key={c.platform} className={`flex justify-between text-sm py-1 ${'highlight' in c && c.highlight ? 'text-primary font-bold' : ''}`}>
+                    <span>{c.platform}</span>
+                    <span>{c.fee}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Virtual Assets */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-cyan-500" />
+                  Virtual Assets
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-2xl font-bold text-success">{VIRTUAL_ASSETS_FEES.saleFee * 100}% sale fee</div>
+                <div className="text-sm text-muted-foreground mb-3">$0 listing fee</div>
+                {VIRTUAL_ASSETS_FEES.comparison.map(c => (
+                  <div key={c.platform} className={`flex justify-between text-sm py-1 ${'highlight' in c && c.highlight ? 'text-primary font-bold' : ''}`}>
+                    <span>{c.platform}</span>
+                    <span>{c.fee}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         </div>
+
+        {/* What's Free */}
+        <Card className="mb-16 bg-success/5 border-success/30">
+          <CardContent className="py-8">
+            <div className="text-center mb-6">
+              <Gift className="h-12 w-12 mx-auto text-success mb-2" />
+              <h2 className="text-2xl font-bold">Everything Free Includes</h2>
+            </div>
+            <div className="grid md:grid-cols-4 lg:grid-cols-7 gap-4">
+              {FEE_SUMMARY.freeIncludes.map(item => (
+                <div key={item} className="flex items-center gap-2 justify-center">
+                  <Check className="h-4 w-4 text-success" />
+                  <span className="text-sm">{item}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Enterprise CTA */}
         <Card className="bg-gradient-hero text-white">
@@ -309,7 +428,7 @@ const PricingPage = () => {
         <div className="mt-16 text-center">
           <h3 className="text-xl font-semibold mb-4">Questions?</h3>
           <p className="text-muted-foreground mb-4">
-            All plans come with a 14-day free trial. No credit card required for Explorer tier.
+            Full platform access is free. You only pay when your investments profit.
           </p>
           <Button variant="link">View Full FAQ →</Button>
         </div>

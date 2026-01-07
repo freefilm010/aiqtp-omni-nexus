@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NFT_FEES } from "@/lib/fees/platformFees";
 import {
   ShoppingCart,
   Search,
@@ -14,7 +15,9 @@ import {
   Clock,
   Filter,
   Grid3x3,
-  Sparkles
+  Sparkles,
+  Check,
+  DollarSign
 } from "lucide-react";
 
 interface NFTListing {
@@ -73,6 +76,32 @@ const NFTMarketplace = () => {
 
   return (
     <div className="space-y-6">
+      {/* Fee Banner */}
+      <Card className="border-success/30 bg-success/5">
+        <CardContent className="py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-success" />
+                <span className="font-medium">$0 to list</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-success" />
+                <span className="font-medium">{NFT_FEES.saleFee * 100}% sale fee</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-success" />
+                <span className="font-medium">Up to {NFT_FEES.royaltyMax * 100}% creator royalties</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>vs OpenSea 2.5%</span>
+              <Badge variant="outline" className="text-success border-success">We're cheaper</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Featured */}
       <Card className="bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-amber-500/20">
         <CardContent className="py-8">
