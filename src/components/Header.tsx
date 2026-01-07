@@ -46,7 +46,8 @@ import {
   Palette,
   Monitor,
   LayoutGrid,
-  DollarSign
+  DollarSign,
+  Music
 } from "lucide-react";
 
 const Header = () => {
@@ -208,6 +209,10 @@ const Header = () => {
                 <DropdownMenuItem onClick={() => navigate('/alerts')}>
                   <BellRing className="mr-2 h-4 w-4 text-red-500" />
                   Alerts Feed
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/media')}>
+                  <Music className="mr-2 h-4 w-4 text-pink-500" />
+                  Media Hub
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/pricing')}>
