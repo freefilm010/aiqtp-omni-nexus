@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.ai-copilot]
 verify_jwt = true
+
+[functions.ml-predictions]
+verify_jwt = false
