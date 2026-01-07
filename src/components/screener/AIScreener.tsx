@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,11 +91,12 @@ const AIScreener = () => {
             <p className="text-foreground text-lg">
               {query}
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 variant="outline" 
                 className="gap-2"
-                onClick={() => {}}
+                onClick={() => toast.info("Advanced filters coming soon!")}
+                aria-label="Open advanced filters"
               >
                 <Plus className="h-4 w-4" />
                 Filters
@@ -103,6 +105,7 @@ const AIScreener = () => {
                 className="gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                 onClick={handleRunScreener}
                 disabled={isRunning}
+                aria-label={isRunning ? "Screener is running" : "Run AI screener"}
               >
                 <Sparkles className="h-4 w-4" />
                 {isRunning ? 'Running...' : 'Run Screener'}
