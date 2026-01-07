@@ -23,6 +23,12 @@ import InstitutionalServices from "./pages/InstitutionalServices";
 import AdvancedTrading from "./pages/AdvancedTrading";
 import NFTStudio from "./pages/NFTStudio";
 import TokenLaunchpad from "./pages/TokenLaunchpad";
+import CryptoFaucetPage from "./pages/CryptoFaucetPage";
+import EducationPage from "./pages/EducationPage";
+import ScreenerPage from "./pages/ScreenerPage";
+import NewsFeedPage from "./pages/NewsFeedPage";
+import EconomicCalendarPage from "./pages/EconomicCalendarPage";
+import DerivativesPage from "./pages/DerivativesPage";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import AccessibilityToolbar from "./components/accessibility/AccessibilityToolbar";
@@ -59,6 +65,12 @@ const App = () => (
             <Route path="/advanced-trading" element={<ProtectedRoute><AdvancedTrading /></ProtectedRoute>} />
             <Route path="/nft-studio" element={<ProtectedRoute><NFTStudio /></ProtectedRoute>} />
             <Route path="/token-launchpad" element={<ProtectedRoute><TokenLaunchpad /></ProtectedRoute>} />
+            <Route path="/faucet" element={<CryptoFaucetPage />} />
+            <Route path="/education" element={<EducationPage />} />
+            <Route path="/screener" element={<ProtectedRoute><ScreenerPage /></ProtectedRoute>} />
+            <Route path="/news" element={<NewsFeedPage />} />
+            <Route path="/calendar" element={<EconomicCalendarPage />} />
+            <Route path="/derivatives" element={<ProtectedRoute><DerivativesPage /></ProtectedRoute>} />
             <Route path="/admin/*" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
