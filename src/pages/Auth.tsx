@@ -144,26 +144,36 @@ const Auth = () => {
   };
 
   const handleRequestPasswordReset = async () => {
+    // Check if email is provided BEFORE starting
+    if (!email || !email.trim()) {
+      toast.error("Please enter your email address first, then click 'Forgot password?'");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const validatedEmail = authSchema.shape.email.parse(email);
+      const validatedEmail = authSchema.shape.email.parse(email.trim());
 
       const { error } = await supabase.auth.resetPasswordForEmail(validatedEmail, {
         redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) {
-        toast.error(error.message);
+        if (error.message.toLowerCase().includes("rate limit")) {
+          toast.error("Too many attempts. Please wait a few minutes before trying again.");
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
 
-      toast.success("Password reset email sent. Open it to set a new password.");
+      toast.success("Password reset email sent! Check your inbox (and spam folder) to set a new password.");
     } catch (error) {
       if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
+        toast.error("Please enter a valid email address first.");
       } else {
-        toast.error("Enter your email first, then try again.");
+        toast.error("Enter your email address in the field above, then click 'Forgot password?'");
       }
     } finally {
       setIsLoading(false);
