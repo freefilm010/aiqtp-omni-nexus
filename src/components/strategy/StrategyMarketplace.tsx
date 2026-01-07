@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Explain, ExplainerTooltip } from "@/components/ui/explainer-tooltip";
+import { PROFIT_TIERS, MIN_INVESTMENT, calculatePlatformFee } from "@/lib/fees/platformFees";
 import {
   Search,
   Star,
@@ -24,7 +25,8 @@ import {
   Zap,
   BarChart3,
   Target,
-  Filter
+  Filter,
+  Gift
 } from "lucide-react";
 
 interface GraduatedStrategy {
@@ -237,6 +239,34 @@ const StrategyMarketplace = () => {
         </Card>
       </div>
 
+      {/* Fee Structure Info */}
+      <Card className="border-success/30 bg-success/5">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Gift className="h-5 w-5 text-success" />
+              <span className="font-medium">$0 to Start • ${MIN_INVESTMENT} Minimum Investment</span>
+            </div>
+            <div className="flex gap-4 text-sm">
+              {PROFIT_TIERS.map((tier, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <span className="font-bold text-primary">{tier.label}</span>
+                  <span className="text-muted-foreground">
+                    {tier.max === Infinity ? `$${(tier.min / 1000000).toFixed(0)}M+` : 
+                     tier.min >= 100000 ? `$${(tier.min / 1000).toFixed(0)}K-${(tier.max / 1000).toFixed(0)}K` :
+                     tier.min >= 10000 ? `$${(tier.min / 1000).toFixed(0)}K-${(tier.max / 1000).toFixed(0)}K` :
+                     `$0-$${(tier.max / 1000).toFixed(0)}K`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            No profits = No fees. Platform fee only applies to realized gains. Gas & transfer fees at cost.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Profit Split Info */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="py-4">
@@ -256,7 +286,7 @@ const StrategyMarketplace = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-primary" />
-                <span>Platform: <strong>20%</strong></span>
+                <span>Platform: <strong>20%</strong> (tiered fee applies)</span>
               </div>
             </div>
           </div>
