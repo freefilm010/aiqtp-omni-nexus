@@ -37,78 +37,78 @@ interface PricingTier {
 
 const PRICING_TIERS: PricingTier[] = [
   {
-    name: "Explorer",
-    description: "Perfect for learning and paper trading",
+    name: "Starter",
+    description: "Everything you need to begin trading",
     monthlyPrice: 0,
     annualPrice: 0,
     icon: <Star className="h-6 w-6" />,
     features: [
-      "Paper trading unlimited",
-      "3 saved strategies",
+      "Full platform access",
+      "Unlimited paper trading",
+      "5 saved strategies",
       "Basic AI signals",
       "Community access",
-      "Educational content",
-      "1 exchange connection"
+      "3 exchange connections",
+      "Mobile app access"
     ],
     limits: {
-      trades: "Paper only",
-      strategies: "3 max",
-      bots: "Demo bots",
-      api: "100 calls/day"
+      trades: "100/month live",
+      strategies: "5 max",
+      bots: "1 rental slot",
+      api: "1,000 calls/day"
     }
   },
   {
     name: "Trader",
-    description: "For active traders ready to profit",
-    monthlyPrice: 49,
-    annualPrice: 470,
+    description: "For active traders scaling up",
+    monthlyPrice: 0,
+    annualPrice: 0,
     icon: <TrendingUp className="h-6 w-6" />,
     features: [
-      "Live trading enabled",
-      "10 saved strategies",
+      "Everything in Starter",
+      "Unlimited live trading",
+      "Unlimited strategies",
       "Advanced AI signals",
       "Strategy backtesting",
-      "5 exchange connections",
-      "Priority email support",
-      "Mobile app access"
+      "10 exchange connections",
+      "Priority support"
     ],
     limits: {
-      trades: "500/month",
-      strategies: "10 max",
-      bots: "3 rental slots",
-      api: "5,000 calls/day"
+      trades: "Unlimited",
+      strategies: "Unlimited",
+      bots: "5 rental slots",
+      api: "10,000 calls/day"
     }
   },
   {
     name: "Professional",
     description: "Full power for serious traders",
-    monthlyPrice: 149,
-    annualPrice: 1430,
+    monthlyPrice: 0,
+    annualPrice: 0,
     icon: <Rocket className="h-6 w-6" />,
     popular: true,
     features: [
-      "Unlimited live trading",
-      "Unlimited strategies",
+      "Everything in Trader",
       "Quantum AI predictions",
       "Multi-window cockpit",
       "QuantScript editor",
       "All exchange connections",
-      "Strategy marketplace access",
+      "Strategy marketplace listing",
       "24/7 priority support",
-      "API access full"
+      "Full API access"
     ],
     limits: {
       trades: "Unlimited",
       strategies: "Unlimited",
-      bots: "10 rental slots",
-      api: "50,000 calls/day"
+      bots: "Unlimited rentals",
+      api: "100,000 calls/day"
     }
   },
   {
     name: "Institutional",
     description: "Enterprise-grade for funds & desks",
-    monthlyPrice: "Custom",
-    annualPrice: "Custom",
+    monthlyPrice: 0,
+    annualPrice: 0,
     icon: <Building2 className="h-6 w-6" />,
     features: [
       "Everything in Professional",
@@ -118,8 +118,7 @@ const PRICING_TIERS: PricingTier[] = [
       "Co-location services",
       "Custom AI model training",
       "SLA guarantees",
-      "Compliance reporting",
-      "Multi-seat licensing"
+      "Compliance reporting"
     ],
     limits: {
       trades: "Unlimited",
@@ -130,30 +129,39 @@ const PRICING_TIERS: PricingTier[] = [
   }
 ];
 
-const ADD_ONS = [
+// Bot Rental Fee Structure - This is how we make money
+const BOT_RENTAL_FEES = [
   {
-    name: "AI Bot Rental",
-    description: "Rent top-performing graduated strategies",
-    price: "From $29/mo",
+    name: "Basic Bot",
+    description: "Proven strategies with 1.0+ Sharpe ratio",
+    monthlyFee: "$29/mo",
+    profitShare: "10% of profits",
+    minDeposit: "$500",
     icon: <Bot className="h-5 w-5" />
   },
   {
-    name: "Quantum Computing",
-    description: "Access to quantum optimization algorithms",
-    price: "$99/mo",
-    icon: <Brain className="h-5 w-5" />
-  },
-  {
-    name: "DeFi Sniper Pro",
-    description: "Advanced mempool monitoring & frontrun protection",
-    price: "$79/mo",
+    name: "Advanced Bot",
+    description: "High-performance strategies, 1.5+ Sharpe",
+    monthlyFee: "$79/mo",
+    profitShare: "15% of profits",
+    minDeposit: "$2,000",
     icon: <Zap className="h-5 w-5" />
   },
   {
-    name: "Institutional Data",
-    description: "Level 3 order book, dark pool data, options flow",
-    price: "$199/mo",
-    icon: <Globe className="h-5 w-5" />
+    name: "Elite Bot",
+    description: "Top 5% performers, 2.0+ Sharpe ratio",
+    monthlyFee: "$149/mo",
+    profitShare: "20% of profits",
+    minDeposit: "$5,000",
+    icon: <Crown className="h-5 w-5" />
+  },
+  {
+    name: "Quantum Bot",
+    description: "Quantum-enhanced AI with adaptive learning",
+    monthlyFee: "$299/mo",
+    profitShare: "25% of profits",
+    minDeposit: "$10,000",
+    icon: <Brain className="h-5 w-5" />
   }
 ];
 
@@ -164,13 +172,13 @@ const PricingPage = () => {
       <main className="container mx-auto px-4 py-8 pt-24">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <Badge variant="secondary" className="mb-4">Transparent Pricing</Badge>
+          <Badge className="mb-4 bg-success/20 text-success border-success/30">100% Free Access</Badge>
           <h1 className="text-4xl font-bold mb-4">
-            Choose Your Trading Power
+            Free Platform. Pay Only for Profits.
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            From beginners to institutions, we have a plan that fits your trading style.
-            All plans include our core <Explain term="ai trading bots">AI-powered</Explain> features.
+            Full platform access at $0/month. We only make money when you rent our 
+            <Explain term="aiTradingBots"> AI Trading Bots</Explain> and profit from them.
           </p>
         </div>
 
@@ -196,21 +204,12 @@ const PricingPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-6">
-                  {typeof tier.monthlyPrice === "number" ? (
-                    <>
-                      <div className="text-4xl font-bold">
-                        ${tier.monthlyPrice}
-                        <span className="text-base font-normal text-muted-foreground">/mo</span>
-                      </div>
-                      {typeof tier.annualPrice === "number" && tier.annualPrice > 0 && (
-                        <div className="text-sm text-muted-foreground">
-                          ${tier.annualPrice}/year (save 20%)
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-3xl font-bold">Contact Sales</div>
-                  )}
+                  <div className="text-4xl font-bold text-success">
+                    FREE
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    No subscription required
+                  </div>
                 </div>
 
                 <div className="space-y-3 mb-6">
@@ -244,23 +243,40 @@ const PricingPage = () => {
           ))}
         </div>
 
-        {/* Add-ons Section */}
+        {/* Bot Rental Fees Section - Revenue Model */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6 text-center">Power Add-ons</h2>
+          <div className="text-center mb-8">
+            <Badge variant="outline" className="mb-2">How We Make Money</Badge>
+            <h2 className="text-2xl font-bold">AI Bot Rental Fees</h2>
+            <p className="text-muted-foreground mt-2">Rent graduated strategies • Pay only when you profit</p>
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {ADD_ONS.map((addon) => (
-              <Card key={addon.name} className="hover:shadow-lg transition-shadow">
+            {BOT_RENTAL_FEES.map((bot) => (
+              <Card key={bot.name} className="hover:shadow-lg transition-shadow border-2 hover:border-primary/50">
                 <CardContent className="pt-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
-                      {addon.icon}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                      {bot.icon}
                     </div>
                     <div>
-                      <div className="font-semibold">{addon.name}</div>
-                      <div className="text-sm text-primary font-medium">{addon.price}</div>
+                      <div className="font-bold">{bot.name}</div>
+                      <div className="text-lg text-primary font-semibold">{bot.monthlyFee}</div>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">{addon.description}</p>
+                  <p className="text-sm text-muted-foreground mb-4">{bot.description}</p>
+                  <div className="space-y-2 text-sm border-t pt-3">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Profit Share:</span>
+                      <span className="font-medium text-success">{bot.profitShare}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Min Deposit:</span>
+                      <span className="font-medium">{bot.minDeposit}</span>
+                    </div>
+                  </div>
+                  <Button className="w-full mt-4" variant="outline">
+                    View Available Bots
+                  </Button>
                 </CardContent>
               </Card>
             ))}
