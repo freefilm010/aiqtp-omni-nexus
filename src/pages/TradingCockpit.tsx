@@ -2,13 +2,14 @@ import { lazy, Suspense, useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   LayoutGrid, 
   Code, 
   Trophy,
   Monitor,
-  Zap,
-  Settings
+  Lock
 } from "lucide-react";
 
 const WorkspaceManager = lazy(() => import("@/components/workspace/WorkspaceManager"));
@@ -23,6 +24,7 @@ const TabLoader = () => (
 
 const TradingCockpit = () => {
   const [activeTab, setActiveTab] = useState("workspace");
+  const { isAdmin, loading } = useAdminAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,9 +71,19 @@ const TradingCockpit = () => {
           </TabsContent>
 
           <TabsContent value="competitive">
-            <Suspense fallback={<TabLoader />}>
-              <CompetitiveAnalysis />
-            </Suspense>
+            {isAdmin ? (
+              <Suspense fallback={<TabLoader />}>
+                <CompetitiveAnalysis />
+              </Suspense>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">Admin Access Required</h3>
+                  <p className="text-muted-foreground">Competitive analysis is restricted to administrators.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </main>
