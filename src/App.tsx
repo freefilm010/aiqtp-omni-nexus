@@ -24,6 +24,7 @@ import AdvancedTrading from "./pages/AdvancedTrading";
 import NFTStudio from "./pages/NFTStudio";
 import TokenLaunchpad from "./pages/TokenLaunchpad";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import AccessibilityToolbar from "./components/accessibility/AccessibilityToolbar";
 import SkipLinks from "./components/accessibility/SkipLinks";
 import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnouncer";
@@ -32,6 +33,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
     <AccessibilityProvider>
       <TooltipProvider>
         <Toaster />
@@ -79,6 +81,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </AccessibilityProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 
