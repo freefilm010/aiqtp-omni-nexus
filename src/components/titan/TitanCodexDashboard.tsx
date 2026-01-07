@@ -19,7 +19,8 @@ import {
   Cpu,
   Network,
   Battery,
-  Sun
+  Sun,
+  Target
 } from "lucide-react";
 import { toast } from "sonner";
 import { 
@@ -33,6 +34,7 @@ import {
   assessHNDLRisk,
   type PQCKeyPair
 } from "@/lib/crypto/postQuantumCrypto";
+import ForensicsPanel from "@/components/forensics/ForensicsPanel";
 import {
   quantumSentinel,
   type FraudDetectionResult,
@@ -149,7 +151,7 @@ const TitanCodexDashboard = () => {
 
   return (
     <Tabs defaultValue="quantum" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="quantum" className="flex items-center gap-2">
           <Atom className="h-4 w-4" />
           Quantum Core
@@ -161,6 +163,10 @@ const TitanCodexDashboard = () => {
         <TabsTrigger value="sentinel" className="flex items-center gap-2">
           <Shield className="h-4 w-4" />
           AI Sentinel
+        </TabsTrigger>
+        <TabsTrigger value="forensics" className="flex items-center gap-2">
+          <Target className="h-4 w-4" />
+          Forensics
         </TabsTrigger>
         <TabsTrigger value="grid" className="flex items-center gap-2">
           <Zap className="h-4 w-4" />
@@ -454,6 +460,11 @@ const TitanCodexDashboard = () => {
             </CardContent>
           </Card>
         </div>
+      </TabsContent>
+
+      {/* Forensics Panel */}
+      <TabsContent value="forensics">
+        <ForensicsPanel />
       </TabsContent>
 
       {/* WireFlux Grid */}
