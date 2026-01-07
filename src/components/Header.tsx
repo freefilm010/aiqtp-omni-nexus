@@ -176,66 +176,109 @@ const Header = () => {
                 <span>More</span>
                 <ChevronDown className="w-4 h-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => navigate('/cockpit')}>
-                  <LayoutGrid className="mr-2 h-4 w-4" />
-                  Trading Cockpit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/vault')}>
-                  <Zap className="mr-2 h-4 w-4 text-gold" />
-                  Lightning Vault
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/nft-studio')}>
-                  <Layers className="mr-2 h-4 w-4" />
-                  NFT Studio
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/token-launchpad')}>
-                  <Zap className="mr-2 h-4 w-4" />
-                  Token Launchpad
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/education')}>
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Education
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/news')}>
-                  <Newspaper className="mr-2 h-4 w-4" />
-                  News Feed
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/calendar')}>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Economic Calendar
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/alerts')}>
-                  <BellRing className="mr-2 h-4 w-4 text-red-500" />
-                  Alerts Feed
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/media')}>
-                  <Music className="mr-2 h-4 w-4 text-pink-500" />
-                  Media Hub
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/pricing')}>
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Pricing
-                </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Palette className="mr-2 h-4 w-4" />
-                    Theme
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {themeOptions.map((t) => (
-                      <DropdownMenuItem 
-                        key={t.id} 
-                        onClick={() => setTheme(t.id)}
-                        className={theme === t.id ? "bg-accent" : ""}
-                      >
-                        {t.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+              <DropdownMenuContent className="w-[420px] p-3 bg-popover">
+                <div className="grid grid-cols-2 gap-1">
+                  {/* Trading Tools */}
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold px-2 py-1">Trading</div>
+                    <DropdownMenuItem onClick={() => navigate('/cockpit')} className="py-1.5 text-sm">
+                      <LayoutGrid className="mr-2 h-3.5 w-3.5" />
+                      Cockpit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social')} className="py-1.5 text-sm">
+                      <Activity className="mr-2 h-3.5 w-3.5" />
+                      Copy Trading
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/vault')} className="py-1.5 text-sm">
+                      <Zap className="mr-2 h-3.5 w-3.5 text-gold" />
+                      Lightning
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/portfolio')} className="py-1.5 text-sm">
+                      <BarChart3 className="mr-2 h-3.5 w-3.5" />
+                      Portfolio
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/intelligence')} className="py-1.5 text-sm">
+                      <Brain className="mr-2 h-3.5 w-3.5" />
+                      Intel
+                    </DropdownMenuItem>
+                  </div>
+                  
+                  {/* Assets */}
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold px-2 py-1">Assets</div>
+                    <DropdownMenuItem onClick={() => navigate('/nft-studio')} className="py-1.5 text-sm">
+                      <Layers className="mr-2 h-3.5 w-3.5" />
+                      NFT Studio
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/token-launchpad')} className="py-1.5 text-sm">
+                      <Zap className="mr-2 h-3.5 w-3.5" />
+                      Tokens
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/faucet')} className="py-1.5 text-sm">
+                      <Crosshair className="mr-2 h-3.5 w-3.5" />
+                      Faucet
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/connections')} className="py-1.5 text-sm">
+                      <Globe className="mr-2 h-3.5 w-3.5" />
+                      Connections
+                    </DropdownMenuItem>
+                  </div>
+                  
+                  {/* Info & News */}
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold px-2 py-1">Info</div>
+                    <DropdownMenuItem onClick={() => navigate('/news')} className="py-1.5 text-sm">
+                      <Newspaper className="mr-2 h-3.5 w-3.5" />
+                      News
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/calendar')} className="py-1.5 text-sm">
+                      <Calendar className="mr-2 h-3.5 w-3.5" />
+                      Calendar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/alerts')} className="py-1.5 text-sm">
+                      <BellRing className="mr-2 h-3.5 w-3.5 text-red-500" />
+                      Alerts
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/education')} className="py-1.5 text-sm">
+                      <BookOpen className="mr-2 h-3.5 w-3.5" />
+                      Education
+                    </DropdownMenuItem>
+                  </div>
+                  
+                  {/* Media & Settings */}
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold px-2 py-1">More</div>
+                    <DropdownMenuItem onClick={() => navigate('/media')} className="py-1.5 text-sm">
+                      <Music className="mr-2 h-3.5 w-3.5 text-pink-500" />
+                      Media
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/pricing')} className="py-1.5 text-sm">
+                      <DollarSign className="mr-2 h-3.5 w-3.5" />
+                      Pricing
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/ai-assistant')} className="py-1.5 text-sm">
+                      <Bot className="mr-2 h-3.5 w-3.5" />
+                      AI Assistant
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="py-1.5 text-sm">
+                        <Palette className="mr-2 h-3.5 w-3.5" />
+                        Theme
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {themeOptions.map((t) => (
+                          <DropdownMenuItem 
+                            key={t.id} 
+                            onClick={() => setTheme(t.id)}
+                            className={`py-1.5 text-sm ${theme === t.id ? "bg-accent" : ""}`}
+                          >
+                            {t.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </div>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
 
