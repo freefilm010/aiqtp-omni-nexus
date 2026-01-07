@@ -338,9 +338,9 @@ const StrategyMarketplace = () => {
           </div>
 
           <ScrollArea className="h-[500px]">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredStrategies.length === 0 ? (
-                <Card className="col-span-2">
+                <Card className="col-span-1 lg:col-span-2">
                   <CardContent className="py-12 text-center">
                     <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">No graduated strategies available yet</p>
