@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Explain } from "@/components/ui/explainer-tooltip";
 import { toast } from "sonner";
 import { 
   Wallet, 
@@ -411,13 +412,15 @@ const LightningVault = () => {
         <div className="text-center mb-12 pt-8">
           <div className="inline-flex items-center space-x-2 bg-gold/10 px-4 py-2 rounded-full mb-4">
             <Zap className="w-4 h-4 text-gold" />
-            <span className="text-sm font-semibold text-gold">Lightning Network Powered</span>
+            <span className="text-sm font-semibold text-gold">
+              <Explain term="lightning">Lightning Network</Explain> Powered
+            </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
             Lightning Vault
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Instant, near-zero-fee transactions on the Lightning Network
+            Instant, near-zero-fee transactions on the <Explain term="lightning">Lightning Network</Explain>
           </p>
         </div>
 

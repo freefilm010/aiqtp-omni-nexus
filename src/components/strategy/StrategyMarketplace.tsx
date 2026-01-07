@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Explain, ExplainerTooltip } from "@/components/ui/explainer-tooltip";
 import {
   Search,
   Star,
@@ -193,7 +194,9 @@ const StrategyMarketplace = () => {
             <div className="flex items-center gap-3">
               <ShoppingCart className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Available Strategies</p>
+                <p className="text-sm text-muted-foreground">
+                  Available <Explain term="aiTradingBots">AI Trading Bots</Explain>
+                </p>
                 <p className="text-3xl font-bold">{strategies.length}</p>
               </div>
             </div>
@@ -401,7 +404,7 @@ const StrategyMarketplace = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Award className="h-5 w-5" />
-                Graduation Requirements
+                <Explain term="strategyGraduation">Graduation</Explain> Requirements
               </CardTitle>
               <CardDescription>
                 Strategies must meet these criteria to be listed on the marketplace
@@ -412,17 +415,35 @@ const StrategyMarketplace = () => {
                 <div className="text-center p-4 rounded-lg border">
                   <TrendingUp className="h-8 w-8 mx-auto text-green-500 mb-2" />
                   <p className="font-bold text-lg">{PROFITABILITY_THRESHOLD}%+</p>
-                  <p className="text-sm text-muted-foreground">Profitability Score</p>
+                  <p className="text-sm text-muted-foreground">
+                    <ExplainerTooltip
+                      term="Profitability Score"
+                      explanation="Measures the strategy's ability to generate positive returns over the testing period. Calculated from net profit, risk-adjusted returns, and consistency of gains across different market conditions."
+                      category="Performance Metrics"
+                    >
+                      Profitability Score
+                    </ExplainerTooltip>
+                  </p>
                 </div>
                 <div className="text-center p-4 rounded-lg border">
                   <Target className="h-8 w-8 mx-auto text-blue-500 mb-2" />
                   <p className="font-bold text-lg">{CONSISTENCY_THRESHOLD}%+</p>
-                  <p className="text-sm text-muted-foreground">Consistency Score</p>
+                  <p className="text-sm text-muted-foreground">
+                    <ExplainerTooltip
+                      term="Consistency Score"
+                      explanation="Measures how reliably the strategy performs across different time periods. A high score means the strategy doesn't rely on lucky streaks but produces steady, predictable results."
+                      category="Performance Metrics"
+                    >
+                      Consistency Score
+                    </ExplainerTooltip>
+                  </p>
                 </div>
                 <div className="text-center p-4 rounded-lg border">
                   <BarChart3 className="h-8 w-8 mx-auto text-amber-500 mb-2" />
                   <p className="font-bold text-lg">{MIN_BACKTEST_COUNT}+</p>
-                  <p className="text-sm text-muted-foreground">Backtests Completed</p>
+                  <p className="text-sm text-muted-foreground">
+                    <Explain term="backtesting">Backtests</Explain> Completed
+                  </p>
                 </div>
               </div>
             </CardContent>
