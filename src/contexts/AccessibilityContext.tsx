@@ -89,16 +89,18 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
 
   // Load available voices
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    
     const loadVoices = () => {
-      const voices = speechSynthesis.getVoices();
+      const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
     };
     
     loadVoices();
-    speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
     
     return () => {
-      speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+      window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
     };
   }, []);
 
@@ -193,9 +195,9 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
   }, []);
 
   const speak = useCallback((text: string, priority: 'polite' | 'assertive' = 'polite') => {
-    if (!settings.voiceEnabled) return;
+    if (!settings.voiceEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
     
-    speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
     
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = settings.voiceSpeed;
@@ -211,11 +213,13 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
     
-    speechSynthesis.speak(utterance);
+    window.speechSynthesis.speak(utterance);
   }, [settings, availableVoices]);
 
   const stopSpeaking = useCallback(() => {
-    speechSynthesis.cancel();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
     setIsSpeaking(false);
   }, []);
 
