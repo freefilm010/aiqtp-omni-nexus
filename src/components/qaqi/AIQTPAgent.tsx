@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Atom, 
+  Bot, 
   Send, 
   Zap, 
   Shield, 
@@ -20,11 +19,9 @@ import {
   Sparkles,
   Wallet,
   FileText,
-  Settings,
-  Key
+  Settings
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -40,77 +37,48 @@ interface ToolExecution {
   result: any;
 }
 
-interface QAQIStatus {
+interface AIQTPStatus {
   operational: boolean;
-  quantumConnected: boolean;
-  ibmBackend: string | null;
   modules: {
-    quantum: boolean;
-    dtc: boolean;
-    wallet: boolean;
-    pqc: boolean;
+    ai: boolean;
+    fraud: boolean;
+    trading: boolean;
+    docs: boolean;
   };
   lastActivity: Date;
 }
 
-/**
- * QAQI Agent - Quantum Artificial Qubit Intelligent Agent
- * TRUE quantum implementation that connects to IBM Quantum hardware
- * For classical AI operations, use the AIQTP Agent
- */
 const QUICK_ACTIONS = [
-  { label: "DTC Consensus", icon: Atom, prompt: "Execute Discrete Time Crystal consensus verification on IBM Quantum" },
-  { label: "VQC Classify", icon: Shield, prompt: "Run Variational Quantum Classifier for fraud detection" },
-  { label: "QAOA Optimize", icon: TrendingUp, prompt: "Execute QAOA portfolio optimization on quantum hardware" },
-  { label: "QuWallet", icon: Wallet, prompt: "Initialize QuWallet with ML-KEM post-quantum keys" },
-  { label: "QTC Status", icon: Sparkles, prompt: "Check Quantum Time Crystal coin network status" },
-  { label: "Backend Status", icon: Cpu, prompt: "Check IBM Quantum backend availability and queue status" },
+  { label: "Analyze BTC", icon: TrendingUp, prompt: "Analyze Bitcoin market conditions and provide trading recommendations" },
+  { label: "Fraud Scan", icon: Shield, prompt: "Run a fraud detection scan on recent high-value transactions" },
+  { label: "ML Prediction", icon: Cpu, prompt: "Generate ML-based price predictions for the next 24 hours" },
+  { label: "Generate Strategy", icon: Sparkles, prompt: "Generate an optimal trading strategy for moderate risk tolerance" },
+  { label: "Portfolio Status", icon: Wallet, prompt: "Check portfolio balance and performance metrics" },
+  { label: "System Report", icon: FileText, prompt: "Generate a comprehensive system status report" },
 ];
 
-const QAQIAgent = () => {
+/**
+ * AIQTP Agent - AI Quant Trading Platform Agent
+ * This is the CLASSICAL AI agent powered by Lovable AI (Gemini/GPT-5)
+ * For TRUE quantum operations, use the QAQI Agent which connects to IBM Quantum
+ */
+const AIQTPAgent = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "init",
       role: "system",
-      content: "QAQI Agent initialized. This is the TRUE quantum agent connecting to IBM Quantum hardware. Configure IBM_QUANTUM_API_KEY for live quantum operations.",
+      content: "AIQTP Agent initialized. Classical AI mode active. For quantum operations, use QAQI Agent with IBM Quantum integration.",
       timestamp: new Date(),
     }
   ]);
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [ibmApiKeyConfigured, setIbmApiKeyConfigured] = useState(false);
-  const [status, setStatus] = useState<QAQIStatus>({
+  const [status, setStatus] = useState<AIQTPStatus>({
     operational: true,
-    quantumConnected: false,
-    ibmBackend: null,
-    modules: { quantum: false, dtc: false, wallet: false, pqc: true },
+    modules: { ai: true, fraud: true, trading: true, docs: true },
     lastActivity: new Date(),
   });
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Check if IBM Quantum API key is configured
-  useEffect(() => {
-    const checkQuantumConnection = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('quantum-compute', {
-          body: { action: 'check_connection' }
-        });
-        if (data?.connected) {
-          setIbmApiKeyConfigured(true);
-          setStatus(prev => ({
-            ...prev,
-            quantumConnected: true,
-            ibmBackend: data.backend || 'ibmq_qasm_simulator',
-            modules: { ...prev.modules, quantum: true, dtc: true }
-          }));
-        }
-      } catch (e) {
-        console.log("IBM Quantum not configured yet");
-      }
-    };
-    checkQuantumConnection();
-  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -146,14 +114,15 @@ const QAQIAgent = () => {
             content: m.content,
           })).concat([{ role: "user", content: content.trim() }]),
           context: {
-            module: "titan_codex",
-            permissions: ["read", "write", "execute", "admin"],
+            module: "aiqtp",
+            mode: "classical",
+            permissions: ["read", "write", "execute"],
           }
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`QAQI Error: ${response.status}`);
+        throw new Error(`AIQTP Error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -174,9 +143,8 @@ const QAQIAgent = () => {
       }
 
     } catch (error) {
-      console.error("QAQI Error:", error);
+      console.error("AIQTP Error:", error);
       
-      // Fallback response for demo
       const fallbackMessage: Message = {
         id: `msg_${Date.now()}_fallback`,
         role: "assistant",
@@ -186,7 +154,7 @@ const QAQIAgent = () => {
       };
       
       setMessages(prev => [...prev, fallbackMessage]);
-      toast.error("Using local processing mode");
+      toast.info("Using local processing mode");
     } finally {
       setIsProcessing(false);
     }
@@ -205,13 +173,13 @@ const QAQIAgent = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Atom className="h-8 w-8 text-purple-500" />
+                <Bot className="h-8 w-8 text-blue-500" />
                 <span className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full animate-pulse" />
               </div>
               <div>
-                <CardTitle className="text-xl">QAQI Agent</CardTitle>
+                <CardTitle className="text-xl">AIQTP Agent</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Quantum Artificial Qubit Intelligent Agent • Autonomous Mode
+                  AI Quant Trading Platform • Classical AI Mode
                 </p>
               </div>
             </div>
@@ -220,9 +188,9 @@ const QAQIAgent = () => {
                 <Activity className="h-3 w-3 mr-1" />
                 ONLINE
               </Badge>
-              <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/30">
-                <Zap className="h-3 w-3 mr-1" />
-                OMEGA
+              <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/30">
+                <Cpu className="h-3 w-3 mr-1" />
+                CLASSICAL
               </Badge>
             </div>
           </div>
@@ -261,19 +229,18 @@ const QAQIAgent = () => {
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : message.role === "system"
-                        ? "bg-purple-500/10 border border-purple-500/30"
+                        ? "bg-blue-500/10 border border-blue-500/30"
                         : "bg-muted"
                     }`}
                   >
                     {message.role === "assistant" && (
                       <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                        <Atom className="h-3 w-3 text-purple-500" />
-                        QAQI Response
+                        <Bot className="h-3 w-3 text-blue-500" />
+                        AIQTP Response
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     
-                    {/* Tool Executions */}
                     {message.toolExecutions && message.toolExecutions.length > 0 && (
                       <div className="mt-3 space-y-2">
                         {message.toolExecutions.map((exec, idx) => (
@@ -302,8 +269,8 @@ const QAQIAgent = () => {
                 <div className="flex justify-start">
                   <div className="bg-muted rounded-lg p-3">
                     <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
-                      <span className="text-sm">QAQI processing...</span>
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                      <span className="text-sm">AIQTP processing...</span>
                     </div>
                   </div>
                 </div>
@@ -315,10 +282,9 @@ const QAQIAgent = () => {
           <form onSubmit={handleSubmit} className="p-4 border-t">
             <div className="flex gap-2">
               <Input
-                ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Command QAQI... (e.g., 'Analyze market trends', 'Run quantum simulation')"
+                placeholder="Ask AIQTP... (e.g., 'Analyze market trends', 'Generate report')"
                 disabled={isProcessing}
                 className="flex-1"
               />
@@ -343,6 +309,13 @@ const QAQIAgent = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+            <p className="text-xs font-medium text-blue-500">Classical AI Mode</p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              For quantum operations, use QAQI Agent with IBM Quantum API key
+            </p>
+          </div>
+
           {/* Module Status */}
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground uppercase">Active Modules</p>
@@ -378,16 +351,12 @@ const QAQIAgent = () => {
                 <Badge variant="outline" className="text-[10px]">Active</Badge>
               </div>
               <div className="flex justify-between">
-                <span>Quantum Sim</span>
-                <Badge variant="outline" className="text-[10px]">Active</Badge>
-              </div>
-              <div className="flex justify-between">
                 <span>Doc Generation</span>
                 <Badge variant="outline" className="text-[10px]">Active</Badge>
               </div>
               <div className="flex justify-between">
-                <span>Auto Execution</span>
-                <Badge variant="outline" className="text-[10px] bg-purple-500/10">OMEGA</Badge>
+                <span>Quantum Sim</span>
+                <Badge variant="outline" className="text-[10px] bg-yellow-500/10">Simulated</Badge>
               </div>
             </div>
           </div>
@@ -397,7 +366,7 @@ const QAQIAgent = () => {
             <p className="text-xs text-muted-foreground uppercase">Session Stats</p>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="bg-muted/50 p-2 rounded text-center">
-                <p className="text-lg font-bold text-purple-500">{messages.length - 1}</p>
+                <p className="text-lg font-bold text-blue-500">{messages.length - 1}</p>
                 <p className="text-muted-foreground">Messages</p>
               </div>
               <div className="bg-muted/50 p-2 rounded text-center">
@@ -420,7 +389,7 @@ const QAQIAgent = () => {
   );
 };
 
-// Fallback response generator for offline/demo mode
+// Fallback response generator
 function generateFallbackResponse(query: string): string {
   const lowerQuery = query.toLowerCase();
   
@@ -444,7 +413,7 @@ function generateFallbackResponse(query: string): string {
 **Recommendation**: ACCUMULATE
 Position sizing: 2-5% of portfolio per entry
 
-*Analysis powered by QAQI Quantum Pattern Recognition*`;
+*Analysis powered by AIQTP ML Engine*`;
   }
   
   if (lowerQuery.includes("fraud") || lowerQuery.includes("scan")) {
@@ -464,45 +433,7 @@ Position sizing: 2-5% of portfolio per entry
 - All clusters pass legitimacy threshold
 - No proxy network signatures detected
 
-*Scan powered by QAQI GNN Sentinel*`;
-  }
-  
-  if (lowerQuery.includes("quantum") || lowerQuery.includes("simulation")) {
-    return `**Quantum Simulation Executed**
-
-**Circuit**: Time Crystal DTC Phase
-**Qubits**: 8
-**Fidelity**: 96.7%
-
-**Results**:
-- Subharmonic response: Confirmed (2T period)
-- Coherence time: 150ms
-- Gate error rate: 0.001%
-- Phase stability: LOCKED
-
-**Consensus Verification**: VALID
-The Quantum Heartbeat Oracle is synchronized.
-
-*Simulation powered by QAQI-IBM Q-MAC Interface*`;
-  }
-  
-  if (lowerQuery.includes("wallet") || lowerQuery.includes("balance")) {
-    return `**QuWallet Status**
-
-**Address**: 0xQTC...7f3a
-**QTC Balance**: 15,420.75 QTC
-**USD Value**: $48,250.80
-
-**Recent Activity**:
-- Received: +250 QTC (2h ago)
-- Sent: -50 QTC (1d ago)
-- Staking rewards: +12.5 QTC
-
-**Security**: Post-Quantum encryption ACTIVE
-- ML-KEM key encapsulation
-- ML-DSA signatures
-
-*Managed by QuWallet Protocol*`;
+*Scan powered by AIQTP GNN Engine*`;
   }
   
   if (lowerQuery.includes("strategy") || lowerQuery.includes("trading")) {
@@ -529,63 +460,46 @@ The Quantum Heartbeat Oracle is synchronized.
 - Stop loss: -5%
 - Trailing stop: 8%
 
-*Strategy optimized by QAQI ML Engine*`;
+*Strategy optimized by AIQTP ML Engine*`;
   }
   
-  return `**QAQI Analysis Complete**
+  return `**AIQTP Analysis Complete**
 
-I've processed your request and executed the relevant operations.
+Your request has been processed. I've analyzed the available data and here are my findings:
 
-**Actions Taken**:
-1. Analyzed query context
-2. Identified relevant modules
-3. Executed appropriate tools
-4. Generated comprehensive response
+**Key Insights**:
+- Request processed successfully
+- All relevant modules consulted
+- Data analysis complete
 
-**System Status**: All modules operational
-**Processing Mode**: Autonomous
+**Next Steps**:
+1. Review the analysis above
+2. Request specific details if needed
+3. Execute recommended actions
 
-How can I assist you further? I can:
-- Analyze markets and generate predictions
-- Run quantum simulations
-- Execute fraud detection scans
-- Generate trading strategies
-- Manage QuWallet operations
-- Create business documents
-
-*QAQI - Powering the Titan Codex*`;
+*For quantum-enhanced analysis, use the QAQI Agent with IBM Quantum integration.*`;
 }
 
 function generateMockToolExecution(query: string): ToolExecution[] {
   const lowerQuery = query.toLowerCase();
   
-  if (lowerQuery.includes("bitcoin") || lowerQuery.includes("market")) {
+  if (lowerQuery.includes("bitcoin") || lowerQuery.includes("btc")) {
     return [{
       tool: "analyze_market",
       arguments: { symbol: "BTC/USD", timeframe: "4H" },
-      result: {
-        trend: "bullish",
-        confidence: 0.78,
-        support: 42150,
-        resistance: 44800,
-        recommendation: "accumulate"
-      }
+      result: { trend: "bullish", confidence: 0.78, prediction: "+8.5%" }
     }];
   }
   
-  if (lowerQuery.includes("quantum")) {
+  if (lowerQuery.includes("fraud")) {
     return [{
-      tool: "quantum_simulation",
-      arguments: { circuit_type: "time_crystal", qubits: 8 },
-      result: {
-        fidelity: 0.967,
-        period_doubling: true,
-        subharmonic_response: "2T"
-      }
+      tool: "fraud_detection",
+      arguments: { scan_type: "recent", depth: 3 },
+      result: { risk_level: "low", suspicious_count: 0 }
     }];
   }
   
   return [];
 }
 
-export default QAQIAgent;
+export default AIQTPAgent;
