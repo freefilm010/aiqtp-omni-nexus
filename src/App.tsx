@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import SkipLinks from "./components/accessibility/SkipLinks";
 import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnouncer";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -47,6 +48,7 @@ const AlertsFeedPage = lazy(() => import("./pages/AlertsFeedPage"));
 const MarketIntelligencePage = lazy(() => import("./pages/MarketIntelligencePage"));
 const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
 const TradingCockpit = lazy(() => import("./pages/TradingCockpit"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
 
 const queryClient = new QueryClient();
 
@@ -87,6 +89,7 @@ const AuthDeepLinkHandler = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
     <LanguageProvider>
     <AccessibilityProvider>
       <TooltipProvider>
@@ -100,6 +103,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/pricing" element={<PricingPage />} />
               <Route path="/trading" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
               <Route path="/vault" element={<ProtectedRoute><LightningVault /></ProtectedRoute>} />
               <Route path="/ai-lab" element={<ProtectedRoute><AIResearchLab /></ProtectedRoute>} />
@@ -113,8 +117,8 @@ const App = () => (
               <Route path="/social" element={<ProtectedRoute><SocialTrading /></ProtectedRoute>} />
               <Route path="/institutional" element={<ProtectedRoute><InstitutionalServices /></ProtectedRoute>} />
               <Route path="/advanced-trading" element={<ProtectedRoute><AdvancedTrading /></ProtectedRoute>} />
-              <Route path="/nft" element={<ProtectedRoute><NFTStudio /></ProtectedRoute>} />
-              <Route path="/token" element={<ProtectedRoute><TokenLaunchpad /></ProtectedRoute>} />
+              <Route path="/nft-studio" element={<ProtectedRoute><NFTStudio /></ProtectedRoute>} />
+              <Route path="/token-launchpad" element={<ProtectedRoute><TokenLaunchpad /></ProtectedRoute>} />
               <Route path="/faucet" element={<ProtectedRoute><CryptoFaucetPage /></ProtectedRoute>} />
               <Route path="/education" element={<ProtectedRoute><EducationPage /></ProtectedRoute>} />
               <Route path="/screener" element={<ProtectedRoute><ScreenerPage /></ProtectedRoute>} />
@@ -127,7 +131,7 @@ const App = () => (
               <Route path="/qaqi" element={<ProtectedRoute><QAQIPage /></ProtectedRoute>} />
               <Route path="/connections" element={<ProtectedRoute><ConnectionsPage /></ProtectedRoute>} />
               <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/*" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
               <Route path="/alerts" element={<ProtectedRoute><AlertsFeedPage /></ProtectedRoute>} />
               <Route path="/intelligence" element={<ProtectedRoute><MarketIntelligencePage /></ProtectedRoute>} />
@@ -140,6 +144,7 @@ const App = () => (
       </TooltipProvider>
     </AccessibilityProvider>
     </LanguageProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
