@@ -1,8 +1,9 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import TradingDashboard from "./pages/TradingDashboard";
 import LightningVault from "./pages/LightningVault";
@@ -41,6 +42,31 @@ import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnoun
 
 const queryClient = new QueryClient();
 
+const AuthDeepLinkHandler = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const url = `${location.search}${location.hash}`;
+    const isRecovery = url.includes("type=recovery");
+
+    // If the backend redirects recovery links to the site root, preserve the hash and
+    // forward the user to /auth so they can set a new password.
+    if (isRecovery && location.pathname !== "/auth") {
+      navigate(
+        {
+          pathname: "/auth",
+          search: location.search,
+          hash: location.hash,
+        },
+        { replace: true }
+      );
+    }
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
@@ -49,6 +75,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <AuthDeepLinkHandler />
           <SkipLinks />
           <ScreenReaderAnnouncer />
           <Routes>

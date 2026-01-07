@@ -22,6 +22,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [passwordResetSentTo, setPasswordResetSentTo] = useState<string | null>(null);
 
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -156,18 +157,22 @@ const Auth = () => {
       const validatedEmail = authSchema.shape.email.parse(email.trim());
 
       const { error } = await supabase.auth.resetPasswordForEmail(validatedEmail, {
+        // If your backend is configured to only allow the root URL, our App-level deep link handler
+        // will forward the recovery hash safely back to /auth.
         redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) {
-        if (error.message.toLowerCase().includes("rate limit")) {
-          toast.error("Too many attempts. Please wait a few minutes before trying again.");
+        const msg = error.message.toLowerCase();
+        if (msg.includes("rate limit") || msg.includes("for security purposes") || msg.includes("too many")) {
+          toast.error("Too many attempts. Please wait ~1 minute and try again.");
         } else {
           toast.error(error.message);
         }
         return;
       }
 
+      setPasswordResetSentTo(validatedEmail);
       toast.success("Password reset email sent! Check your inbox (and spam folder) to set a new password.");
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -292,7 +297,7 @@ const Auth = () => {
                   onClick={async () => {
                     const { error } = await supabase.auth.signInWithOAuth({
                       provider: "google",
-                      options: { redirectTo: `${window.location.origin}/trading` },
+                      options: { redirectTo: `${window.location.origin}/auth` },
                     });
 
                     if (error) {
@@ -338,7 +343,10 @@ const Auth = () => {
                           type="email"
                           placeholder="you@example.com"
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setPasswordResetSentTo(null);
+                          }}
                           required
                           disabled={isLoading}
                         />
@@ -365,6 +373,11 @@ const Auth = () => {
                           required
                           disabled={isLoading}
                         />
+                        {passwordResetSentTo ? (
+                          <p className="text-xs text-muted-foreground">
+                            Reset link sent to <span className="font-medium">{passwordResetSentTo}</span>. Open the email and return here to set a new password.
+                          </p>
+                        ) : null}
                       </div>
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? "Signing in…" : "Sign In"}
@@ -393,7 +406,10 @@ const Auth = () => {
                           type="email"
                           placeholder="you@example.com"
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setPasswordResetSentTo(null);
+                          }}
                           required
                           disabled={isLoading}
                         />
