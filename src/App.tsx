@@ -29,6 +29,8 @@ import ScreenerPage from "./pages/ScreenerPage";
 import NewsFeedPage from "./pages/NewsFeedPage";
 import EconomicCalendarPage from "./pages/EconomicCalendarPage";
 import DerivativesPage from "./pages/DerivativesPage";
+import QuantumLabPage from "./pages/QuantumLabPage";
+import StrategyLab from "./pages/StrategyLab";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import AccessibilityToolbar from "./components/accessibility/AccessibilityToolbar";
@@ -71,6 +73,8 @@ const App = () => (
             <Route path="/news" element={<NewsFeedPage />} />
             <Route path="/calendar" element={<EconomicCalendarPage />} />
             <Route path="/derivatives" element={<ProtectedRoute><DerivativesPage /></ProtectedRoute>} />
+            <Route path="/quantum-lab" element={<ProtectedRoute><QuantumLabPage /></ProtectedRoute>} />
+            <Route path="/strategy-lab" element={<ProtectedRoute><StrategyLab /></ProtectedRoute>} />
             <Route path="/admin/*" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
