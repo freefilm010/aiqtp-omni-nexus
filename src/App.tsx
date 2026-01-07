@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import AccessibilityToolbar from "./components/accessibility/AccessibilityToolbar";
 import SkipLinks from "./components/accessibility/SkipLinks";
 import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnouncer";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -126,8 +125,7 @@ const App = () => (
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </Suspense>
-          <AccessibilityToolbar />
+            </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AccessibilityProvider>
