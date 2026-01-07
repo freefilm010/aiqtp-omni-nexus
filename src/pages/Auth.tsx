@@ -29,37 +29,53 @@ const Auth = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   useEffect(() => {
-    // If user came from a password recovery email, show reset UI.
-    const url = `${window.location.search}${window.location.hash}`;
-    const isRecovery = url.includes("type=recovery");
+    // Parse both search params and hash for recovery token
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+    
+    const isRecoveryFromSearch = urlParams.get('type') === 'recovery';
+    const isRecoveryFromHash = hashParams.get('type') === 'recovery';
+    const hasAccessToken = hashParams.has('access_token') || urlParams.has('access_token');
+    
+    const isRecovery = isRecoveryFromSearch || isRecoveryFromHash;
+    
     if (isRecovery) {
       setRecoveryMode(true);
+      // Don't redirect even if there's a session during recovery
     }
 
     // Set up auth state listener FIRST (prevents missing events during init)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event, 'Recovery mode:', recoveryMode);
+      
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryMode(true);
         return;
       }
 
-      if (session) {
-        setRecoveryMode(false);
+      // Don't auto-redirect during password recovery flow
+      if (isRecovery || recoveryMode) {
+        return;
+      }
+
+      if (session && event === "SIGNED_IN") {
         navigate("/trading");
       }
     });
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && !isRecovery) {
-        navigate("/trading");
-      }
-    });
+    // THEN check for existing session - but NOT during recovery
+    if (!isRecovery) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          navigate("/trading");
+        }
+      });
+    }
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, recoveryMode]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
