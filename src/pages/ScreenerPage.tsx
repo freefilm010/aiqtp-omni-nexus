@@ -1,6 +1,9 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CryptoScreener from "@/components/screener/CryptoScreener";
+import AIScreener from "@/components/screener/AIScreener";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sparkles, Activity } from "lucide-react";
 
 const ScreenerPage = () => {
   return (
@@ -13,7 +16,27 @@ const ScreenerPage = () => {
             Filter assets by technical indicators • Find trading opportunities
           </p>
         </div>
-        <CryptoScreener />
+        
+        <Tabs defaultValue="ai" className="space-y-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="ai" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              AI Screener
+            </TabsTrigger>
+            <TabsTrigger value="standard" className="gap-2">
+              <Activity className="h-4 w-4" />
+              Screener
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="ai">
+            <AIScreener />
+          </TabsContent>
+
+          <TabsContent value="standard">
+            <CryptoScreener />
+          </TabsContent>
+        </Tabs>
       </main>
       <Footer />
     </div>

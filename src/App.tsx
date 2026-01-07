@@ -41,6 +41,8 @@ const QuantumLabPage = lazy(() => import("./pages/QuantumLabPage"));
 const StrategyLab = lazy(() => import("./pages/StrategyLab"));
 const TitanCodexPage = lazy(() => import("./pages/TitanCodexPage"));
 const QAQIPage = lazy(() => import("./pages/QAQIPage"));
+const ConnectionsPage = lazy(() => import("./pages/ConnectionsPage"));
+const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
 
 const queryClient = new QueryClient();
 
@@ -119,6 +121,8 @@ const App = () => (
               <Route path="/strategy-lab" element={<ProtectedRoute><StrategyLab /></ProtectedRoute>} />
               <Route path="/titan-codex" element={<ProtectedRoute><TitanCodexPage /></ProtectedRoute>} />
               <Route path="/qaqi" element={<ProtectedRoute><QAQIPage /></ProtectedRoute>} />
+              <Route path="/connections" element={<ProtectedRoute><ConnectionsPage /></ProtectedRoute>} />
+              <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
