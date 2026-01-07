@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Shield, Zap, Globe } from "lucide-react";
+import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Users } from "lucide-react";
 import heroImage from "@/assets/hero-marketplace.jpg";
 
 const Hero = () => {
@@ -22,25 +22,32 @@ const Hero = () => {
         <div className="animate-float absolute top-20 left-20 w-32 h-32 bg-gold/10 rounded-full blur-xl"></div>
         <div className="animate-float absolute top-40 right-32 w-24 h-24 bg-accent/10 rounded-full blur-lg" style={{ animationDelay: '1s' }}></div>
         <div className="animate-float absolute bottom-32 left-1/3 w-40 h-40 bg-primary/10 rounded-full blur-2xl" style={{ animationDelay: '2s' }}></div>
+        <div className="animate-float absolute top-1/3 right-1/4 w-20 h-20 bg-purple-500/10 rounded-full blur-xl" style={{ animationDelay: '1.5s' }}></div>
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
-        <Badge variant="outline" className="mb-6 glass-effect border-white/30 text-white">
-          <Shield className="w-4 h-4 mr-2" />
-          Institutional-Grade Security
-        </Badge>
+        <div className="flex justify-center gap-3 mb-6">
+          <Badge variant="outline" className="glass-effect border-purple-500/30 text-purple-400">
+            <Atom className="w-3 h-3 mr-1" />
+            Quantum AI
+          </Badge>
+          <Badge variant="outline" className="glass-effect border-gold/30 text-gold">
+            <Shield className="w-3 h-3 mr-1" />
+            Institutional-Grade
+          </Badge>
+        </div>
         
         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-white leading-tight">
           The World's Most
           <span className="text-gradient-gold block mt-2 animate-glow">
-            Comprehensive Marketplace
+            Advanced Trading Platform
           </span>
         </h1>
         
         <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-4xl mx-auto leading-relaxed">
-          Trade everything from crypto and real estate to collectibles and precious metals. 
-          <span className="text-gold font-semibold"> One platform. Infinite possibilities.</span>
+          Trade crypto, stocks, derivatives, and more with AI-powered insights and quantum-secure infrastructure.
+          <span className="text-gold font-semibold"> Outperforming top-tier competitors.</span>
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -50,27 +57,61 @@ const Hero = () => {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
+          <Link to="/qaqi">
+            <Button variant="glass" size="xl" className="group">
+              <Atom className="w-5 h-5 mr-2 text-purple-400 group-hover:animate-spin" />
+              QAQI Agent
+            </Button>
+          </Link>
           <Link to="/vault">
             <Button variant="glass" size="xl">
-              <Zap className="w-5 h-5 mr-2" />
+              <Zap className="w-5 h-5 mr-2 text-gold" />
               Lightning Vault
             </Button>
           </Link>
         </div>
 
+        {/* Live Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-12">
+          <div className="glass-effect rounded-lg p-4">
+            <div className="text-2xl md:text-3xl font-bold text-gold">$2.4B+</div>
+            <div className="text-xs text-white/60">24h Volume</div>
+          </div>
+          <div className="glass-effect rounded-lg p-4">
+            <div className="text-2xl md:text-3xl font-bold text-white">50K+</div>
+            <div className="text-xs text-white/60">Active Traders</div>
+          </div>
+          <div className="glass-effect rounded-lg p-4">
+            <div className="text-2xl md:text-3xl font-bold text-accent">200+</div>
+            <div className="text-xs text-white/60">Trading Pairs</div>
+          </div>
+          <div className="glass-effect rounded-lg p-4">
+            <div className="text-2xl md:text-3xl font-bold text-purple-400">&lt;10ms</div>
+            <div className="text-xs text-white/60">Execution Speed</div>
+          </div>
+        </div>
+
         {/* Trust Indicators */}
-        <div className="flex flex-wrap justify-center items-center gap-8 text-white/80">
+        <div className="flex flex-wrap justify-center items-center gap-6 text-white/80 text-sm">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-gold" />
-            <span>SHA-3 2048-bit Encryption</span>
+            <Shield className="w-4 h-4 text-gold" />
+            <span>Post-Quantum Encryption</span>
           </div>
           <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-accent" />
-            <span>Global SWIFT Integration</span>
+            <Globe className="w-4 h-4 text-accent" />
+            <span>200+ Countries</span>
           </div>
           <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-gold" />
+            <Zap className="w-4 h-4 text-gold" />
             <span>Lightning Network</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Bot className="w-4 h-4 text-purple-400" />
+            <span>AI Trading Bots</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-success" />
+            <span>ML Predictions</span>
           </div>
         </div>
       </div>

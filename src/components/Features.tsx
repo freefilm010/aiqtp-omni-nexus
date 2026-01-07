@@ -1,5 +1,7 @@
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Zap, 
   Shield, 
@@ -10,51 +12,90 @@ import {
   Users,
   RefreshCw,
   Eye,
-  Smartphone
+  Smartphone,
+  Bot,
+  Atom,
+  LineChart,
+  Wallet,
+  Target,
+  BarChart3,
+  Layers,
+  Cpu
 } from "lucide-react";
 
 const features = [
   {
-    icon: Zap,
-    title: "Lightning Vault",
-    description: "Revolutionary wallet technology powered by Lightning Network for instant, secure transactions across all asset classes.",
-    benefits: ["Instant settlements", "Cross-chain compatibility", "Zero gas fees"],
-    color: "gold"
+    icon: Atom,
+    title: "QAQI Quantum Agent",
+    description: "Autonomous quantum-enhanced AI for $QTC development, QuWallet operations, and self-learning capabilities.",
+    benefits: ["Quantum computing", "$QTC blockchain", "Self-enhancement"],
+    color: "purple",
+    link: "/qaqi",
+    badge: "NEW"
   },
   {
-    icon: Brain,
-    title: "AI-Powered Trading",
-    description: "Advanced machine learning algorithms provide market insights, automated trading, and risk management.",
-    benefits: ["Predictive analytics", "Automated strategies", "Risk optimization"],
-    color: "accent"
+    icon: Bot,
+    title: "AI Trading Bots",
+    description: "Deploy sophisticated trading bots with ML-powered strategies, arbitrage detection, and 24/7 automation.",
+    benefits: ["Auto-trading", "Arbitrage scanning", "Strategy marketplace"],
+    color: "blue",
+    link: "/strategy-studio"
+  },
+  {
+    icon: Zap,
+    title: "Lightning Vault",
+    description: "Revolutionary wallet with BOLT11 invoices for instant, secure transactions. Coinbase-compatible.",
+    benefits: ["Instant settlements", "USD invoices", "Zero gas fees"],
+    color: "gold",
+    link: "/vault"
+  },
+  {
+    icon: LineChart,
+    title: "Advanced Trading",
+    description: "Professional-grade charts, Level II order books, pattern recognition, and smart order routing.",
+    benefits: ["TradingView charts", "Pattern detection", "Smart orders"],
+    color: "accent",
+    link: "/advanced-trading"
   },
   {
     icon: Shield,
-    title: "Military-Grade Security",
-    description: "SHA-3 2048-bit encryption with FIPS 204-206 standards ensuring your assets are completely secure.",
-    benefits: ["Quantum-resistant", "Multi-layer protection", "Insurance coverage"],
-    color: "primary"
+    title: "Post-Quantum Security",
+    description: "ML-KEM-768 encryption with FIPS 204-206 standards. Military-grade protection for all assets.",
+    benefits: ["Quantum-resistant", "Multi-sig support", "Insurance coverage"],
+    color: "primary",
+    link: "/titan-codex"
+  },
+  {
+    icon: BarChart3,
+    title: "ML Predictions",
+    description: "Deep learning models for price prediction, sentiment analysis, and regime detection.",
+    benefits: ["78% accuracy", "Real-time signals", "Multi-model ensemble"],
+    color: "accent",
+    link: "/ml-predictions"
+  },
+  {
+    icon: Target,
+    title: "Risk Management",
+    description: "Value-at-Risk, Monte Carlo simulations, and portfolio optimization tools.",
+    benefits: ["VaR analytics", "Stress testing", "Correlation matrix"],
+    color: "primary",
+    link: "/risk"
+  },
+  {
+    icon: Layers,
+    title: "DeFi & Derivatives",
+    description: "Access DEX aggregation, yield farming, options, futures, and credit derivatives.",
+    benefits: ["DEX sniper", "Yield optimizer", "Options trading"],
+    color: "gold",
+    link: "/derivatives"
   },
   {
     icon: Globe,
-    title: "Global Integration",
-    description: "Seamlessly connect with SWIFT networks, international exchanges, and regulatory frameworks worldwide.",
-    benefits: ["200+ countries", "Regulatory compliance", "Local payment methods"],
-    color: "accent"
-  },
-  {
-    icon: Users,
-    title: "One Account System",
-    description: "Single KYC verification per SSN/EIN eliminates fake accounts and ensures marketplace integrity.",
-    benefits: ["Verified users only", "Anti-fraud protection", "Trust scores"],
-    color: "primary"
-  },
-  {
-    icon: Eye,
-    title: "Transparent Trading",
-    description: "Real-time market data, authentic user reviews, and complete transaction transparency.",
-    benefits: ["Live market data", "User verification", "Transaction history"],
-    color: "gold"
+    title: "Multi-Exchange",
+    description: "Connect to 50+ exchanges with unified order book, cross-exchange arbitrage, and smart routing.",
+    benefits: ["50+ exchanges", "Unified trading", "Best execution"],
+    color: "accent",
+    link: "/exchange"
   }
 ];
 
@@ -63,79 +104,124 @@ const Features = () => {
     <section className="py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
+          <Badge variant="outline" className="mb-4 bg-purple-500/10 text-purple-500 border-purple-500/30">
+            <Cpu className="w-3 h-3 mr-1" />
+            Industry-Leading Technology
+          </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            Next-Generation
-            <span className="text-gradient-gold block mt-2">Trading Technology</span>
+            Outperforming
+            <span className="text-gradient-gold block mt-2">Top-Tier Competitors</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Built for institutional traders and individual investors alike, 
-            our platform combines cutting-edge technology with uncompromising security.
+            Every feature institutional traders demand, with AI and quantum capabilities 
+            that set us apart from Binance, Coinbase, and traditional platforms.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             const colorClass = feature.color === 'gold' ? 'text-gold' : 
-                             feature.color === 'accent' ? 'text-accent' : 'text-primary';
+                             feature.color === 'accent' ? 'text-accent' : 
+                             feature.color === 'purple' ? 'text-purple-500' :
+                             feature.color === 'blue' ? 'text-blue-500' : 'text-primary';
+            const bgClass = feature.color === 'gold' ? 'bg-gold/10' : 
+                          feature.color === 'accent' ? 'bg-accent/10' : 
+                          feature.color === 'purple' ? 'bg-purple-500/10' :
+                          feature.color === 'blue' ? 'bg-blue-500/10' : 'bg-primary/10';
             
             return (
               <Card 
                 key={feature.title}
-                className="card-premium p-8 h-full border-none group"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className="card-premium p-6 h-full border-none group hover:scale-[1.02] transition-all duration-300"
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="text-center space-y-6">
-                  <div className={`inline-flex p-4 rounded-full bg-gradient-premium group-hover:shadow-gold transition-smooth`}>
-                    <Icon className={`w-10 h-10 ${colorClass}`} />
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className={`inline-flex p-3 rounded-xl ${bgClass} group-hover:shadow-lg transition-smooth`}>
+                      <Icon className={`w-7 h-7 ${colorClass}`} />
+                    </div>
+                    {feature.badge && (
+                      <Badge variant="outline" className="text-[10px] bg-purple-500/20 text-purple-500 border-purple-500/30">
+                        {feature.badge}
+                      </Badge>
+                    )}
                   </div>
                   
                   <div>
-                    <h3 className="text-2xl font-bold mb-4 text-foreground">
+                    <h3 className="text-xl font-bold mb-2 text-foreground">
                       {feature.title}
                     </h3>
                     
-                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                    <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
                     {feature.benefits.map((benefit, i) => (
-                      <div key={i} className="flex items-center text-sm text-muted-foreground">
-                        <div className={`w-2 h-2 rounded-full ${colorClass === 'text-gold' ? 'bg-gold' : colorClass === 'text-accent' ? 'bg-accent' : 'bg-primary'} mr-3`}></div>
+                      <Badge key={i} variant="secondary" className="text-xs">
                         {benefit}
-                      </div>
+                      </Badge>
                     ))}
                   </div>
                   
-                  <Button variant="outline" className="w-full mt-6 group-hover:border-gold transition-smooth">
-                    Learn More
-                  </Button>
+                  <Link to={feature.link}>
+                    <Button variant="ghost" size="sm" className="w-full mt-2 group-hover:bg-muted transition-smooth">
+                      Explore →
+                    </Button>
+                  </Link>
                 </div>
               </Card>
             );
           })}
         </div>
 
+        {/* Comparison Section */}
+        <div className="mt-20">
+          <h3 className="text-2xl font-bold text-center mb-8">Why Choose AIQTP?</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <Card className="p-6 text-center border-gold/30 bg-gold/5">
+              <div className="text-3xl font-bold text-gold mb-2">15+</div>
+              <div className="text-sm text-muted-foreground">AI Tools & Agents</div>
+            </Card>
+            <Card className="p-6 text-center border-purple-500/30 bg-purple-500/5">
+              <div className="text-3xl font-bold text-purple-500 mb-2">Quantum</div>
+              <div className="text-sm text-muted-foreground">Post-Quantum Security</div>
+            </Card>
+            <Card className="p-6 text-center border-accent/30 bg-accent/5">
+              <div className="text-3xl font-bold text-accent mb-2">$0</div>
+              <div className="text-sm text-muted-foreground">Lightning Network Fees</div>
+            </Card>
+          </div>
+        </div>
+
         {/* Call to Action */}
         <div className="text-center mt-16">
           <Card className="card-premium p-12 bg-gradient-hero text-white border-none max-w-4xl mx-auto">
             <div className="space-y-6">
-              <Smartphone className="w-16 h-16 text-gold mx-auto" />
+              <div className="flex justify-center gap-4">
+                <Atom className="w-10 h-10 text-purple-400" />
+                <Bot className="w-10 h-10 text-blue-400" />
+                <Zap className="w-10 h-10 text-gold" />
+              </div>
               <h3 className="text-3xl font-bold">
-                Ready to revolutionize your trading experience?
+                Ready to trade with AI & Quantum power?
               </h3>
               <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                Join thousands of traders who've already discovered the future of asset management.
+                Join the most advanced trading platform with autonomous AI agents, quantum security, and institutional-grade infrastructure.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button variant="gold" size="lg">
-                  Create Account
-                </Button>
-                <Button variant="glass" size="lg">
-                  Request Demo
-                </Button>
+                <Link to="/auth">
+                  <Button variant="gold" size="lg">
+                    Create Free Account
+                  </Button>
+                </Link>
+                <Link to="/qaqi">
+                  <Button variant="glass" size="lg">
+                    Try QAQI Agent
+                  </Button>
+                </Link>
               </div>
             </div>
           </Card>
