@@ -22,7 +22,11 @@ import {
   Podcast,
   Mic2,
   Volume2,
-  Sparkles
+  Sparkles,
+  Facebook,
+  Video,
+  Ghost,
+  Camera
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -196,6 +200,36 @@ const MediaHub = () => {
       connected: false,
       category: "social",
       url: "https://instagram.com"
+    },
+    {
+      id: "tiktok",
+      name: "TikTok",
+      description: "Short-form trading content and tips",
+      icon: <Video className="h-6 w-6" />,
+      color: "bg-black",
+      connected: false,
+      category: "social",
+      url: "https://tiktok.com"
+    },
+    {
+      id: "facebook",
+      name: "Facebook",
+      description: "Trading groups and communities",
+      icon: <Facebook className="h-6 w-6" />,
+      color: "bg-blue-600",
+      connected: false,
+      category: "social",
+      url: "https://facebook.com"
+    },
+    {
+      id: "snapchat",
+      name: "Snapchat",
+      description: "Trading stories and updates",
+      icon: <Ghost className="h-6 w-6" />,
+      color: "bg-yellow-400",
+      connected: false,
+      category: "social",
+      url: "https://snapchat.com"
     },
   ]);
 
