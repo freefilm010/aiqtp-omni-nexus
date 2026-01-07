@@ -31,6 +31,7 @@ import EconomicCalendarPage from "./pages/EconomicCalendarPage";
 import DerivativesPage from "./pages/DerivativesPage";
 import QuantumLabPage from "./pages/QuantumLabPage";
 import StrategyLab from "./pages/StrategyLab";
+import TitanCodexPage from "./pages/TitanCodexPage";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import AccessibilityToolbar from "./components/accessibility/AccessibilityToolbar";
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/derivatives" element={<ProtectedRoute><DerivativesPage /></ProtectedRoute>} />
             <Route path="/quantum-lab" element={<ProtectedRoute><QuantumLabPage /></ProtectedRoute>} />
             <Route path="/strategy-lab" element={<ProtectedRoute><StrategyLab /></ProtectedRoute>} />
+            <Route path="/titan-codex" element={<ProtectedRoute><TitanCodexPage /></ProtectedRoute>} />
             <Route path="/admin/*" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
