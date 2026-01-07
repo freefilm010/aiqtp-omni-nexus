@@ -332,17 +332,136 @@ export class ProxyClusterHunter {
 
   // Generate quantum-ready fingerprint for IBM Q-MAC
   getQuantumFingerprint(cluster: ProxyCluster): number[] {
-    // Encode cluster features as quantum-ready vector
     return [
-      cluster.nodes.length / 100, // Normalized node count
-      cluster.totalVolume / 1000000, // Normalized volume
+      cluster.nodes.length / 100,
+      cluster.totalVolume / 1000000,
       cluster.riskScore,
       cluster.pattern === 'mixer' ? 1 : 0,
       cluster.pattern === 'layering' ? 1 : 0,
       cluster.pattern === 'peel_chain' ? 1 : 0,
-      (cluster.lastSeen - cluster.firstSeen) / 86400000, // Duration in days
+      (cluster.lastSeen - cluster.firstSeen) / 86400000,
       cluster.connectedExchanges.length / 10
     ];
+  }
+
+  // Advanced chain analysis for stolen funds recovery
+  traceChainHopping(originAddress: string, targetChains: string[] = ['ethereum', 'polygon', 'bsc']): Map<string, string[]> {
+    const crossChainTraces = new Map<string, string[]>();
+    
+    for (const chain of targetChains) {
+      // Simulate cross-chain detection
+      const relatedAddresses: string[] = [];
+      const edges = this.graph.getOutEdges(originAddress);
+      
+      for (const edge of edges) {
+        // Check for bridge patterns
+        if (edge.amount > 10000) {
+          relatedAddresses.push(edge.target);
+        }
+      }
+      
+      if (relatedAddresses.length > 0) {
+        crossChainTraces.set(chain, relatedAddresses);
+        this.createAlert('high', 'chain_hopping',
+          `Potential chain-hopping detected to ${chain}`,
+          relatedAddresses, 'Monitor target chain for funds');
+      }
+    }
+    
+    return crossChainTraces;
+  }
+
+  // Common Input Ownership Heuristic (CIOH)
+  applyCIOH(): Map<string, Set<string>> {
+    const entityClusters = new Map<string, Set<string>>();
+    let entityId = 0;
+    
+    // Find addresses used as inputs together
+    const nodes = this.graph.getAllNodes();
+    const processed = new Set<string>();
+    
+    for (const node of nodes) {
+      if (processed.has(node)) continue;
+      
+      const outEdges = this.graph.getOutEdges(node);
+      if (outEdges.length === 0) continue;
+      
+      // Find co-spent addresses
+      const coSpenders = new Set<string>([node]);
+      
+      for (const edge of outEdges) {
+        const incomingToSameTarget = this.getIncomingAddresses(edge.target);
+        for (const addr of incomingToSameTarget) {
+          if (!processed.has(addr)) {
+            coSpenders.add(addr);
+          }
+        }
+      }
+      
+      if (coSpenders.size > 1) {
+        entityClusters.set(`entity-${entityId++}`, coSpenders);
+        for (const addr of coSpenders) {
+          processed.add(addr);
+        }
+      }
+    }
+    
+    console.log(`[CIOH] Identified ${entityClusters.size} entities from ${nodes.length} addresses`);
+    return entityClusters;
+  }
+
+  private getIncomingAddresses(target: string): string[] {
+    const incoming: string[] = [];
+    const nodes = this.graph.getAllNodes();
+    
+    for (const node of nodes) {
+      const edges = this.graph.getOutEdges(node);
+      if (edges.some(e => e.target === target)) {
+        incoming.push(node);
+      }
+    }
+    
+    return incoming;
+  }
+
+  // Generate forensic report for legal proceedings
+  generateForensicReport(targetAddress: string): {
+    summary: string;
+    riskAssessment: string;
+    taintedFunds: Map<string, number>;
+    relatedClusters: ProxyCluster[];
+    recommendedActions: string[];
+    timestamp: number;
+  } {
+    const taintMap = this.taintAnalysis(targetAddress);
+    const clusters = this.clusterProxies();
+    const peelChains = this.detectPeelChains();
+    
+    const relatedClusters = clusters.filter(c => 
+      c.nodes.some(n => taintMap.has(n))
+    );
+    
+    const isPeelChain = peelChains.includes(targetAddress);
+    const maxTaint = Math.max(...Array.from(taintMap.values()));
+    
+    let riskLevel = 'LOW';
+    if (maxTaint > 0.7) riskLevel = 'CRITICAL';
+    else if (maxTaint > 0.4) riskLevel = 'HIGH';
+    else if (maxTaint > 0.1) riskLevel = 'MEDIUM';
+    
+    return {
+      summary: `Analysis of address ${targetAddress}: ${taintMap.size} connected addresses, ${relatedClusters.length} related clusters`,
+      riskAssessment: riskLevel,
+      taintedFunds: taintMap,
+      relatedClusters,
+      recommendedActions: [
+        maxTaint > 0.5 ? 'FREEZE: Notify exchanges immediately' : 'MONITOR: Continue surveillance',
+        isPeelChain ? 'ALERT: Peel chain detected - track all outputs' : 'Standard monitoring',
+        relatedClusters.length > 0 ? 'EXPAND: Investigate related clusters' : 'No cluster expansion needed',
+        'DOCUMENT: Preserve all evidence for legal proceedings'
+      ],
+      timestamp: Date.now()
+    };
   }
 }
 
