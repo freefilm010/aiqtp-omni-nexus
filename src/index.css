@@ -137,6 +137,171 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* ============= TRADING THEMES ============= */
+  
+  /* Hacker Theme - Classic green terminal */
+  .theme-hacker {
+    --background: 0 0% 4%;
+    --foreground: 120 100% 50%;
+    --card: 0 0% 6%;
+    --card-foreground: 120 100% 50%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 120 100% 50%;
+    --primary: 120 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 120 30% 10%;
+    --secondary-foreground: 120 100% 50%;
+    --muted: 120 20% 12%;
+    --muted-foreground: 120 60% 40%;
+    --accent: 120 100% 40%;
+    --accent-foreground: 0 0% 0%;
+    --border: 120 50% 20%;
+    --input: 120 30% 15%;
+    --ring: 120 100% 50%;
+    --success: 120 100% 50%;
+    --destructive: 0 100% 50%;
+  }
+
+  /* Matrix Theme - Digital rain */
+  .theme-matrix {
+    --background: 0 0% 0%;
+    --foreground: 120 100% 25%;
+    --card: 120 100% 2%;
+    --card-foreground: 120 100% 35%;
+    --popover: 120 100% 2%;
+    --popover-foreground: 120 100% 35%;
+    --primary: 120 100% 35%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 120 50% 8%;
+    --secondary-foreground: 120 100% 35%;
+    --muted: 120 30% 6%;
+    --muted-foreground: 120 80% 25%;
+    --accent: 120 100% 30%;
+    --accent-foreground: 0 0% 0%;
+    --border: 120 80% 15%;
+    --input: 120 50% 8%;
+    --ring: 120 100% 35%;
+    --success: 120 100% 45%;
+    --destructive: 0 100% 40%;
+  }
+
+  /* Cyberpunk Theme - Neon pink/cyan */
+  .theme-cyberpunk {
+    --background: 270 50% 5%;
+    --foreground: 180 100% 50%;
+    --card: 270 50% 8%;
+    --card-foreground: 180 100% 50%;
+    --popover: 270 50% 8%;
+    --popover-foreground: 180 100% 50%;
+    --primary: 300 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 270 40% 15%;
+    --secondary-foreground: 180 100% 50%;
+    --muted: 270 30% 12%;
+    --muted-foreground: 180 60% 40%;
+    --accent: 180 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --border: 300 60% 30%;
+    --input: 270 40% 12%;
+    --ring: 300 100% 50%;
+    --success: 120 100% 50%;
+    --destructive: 0 100% 50%;
+    --gold: 300 100% 50%;
+  }
+
+  /* Terminal Theme - Orange on dark */
+  .theme-terminal {
+    --background: 0 0% 8%;
+    --foreground: 30 100% 50%;
+    --card: 0 0% 10%;
+    --card-foreground: 30 100% 50%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 30 100% 50%;
+    --primary: 30 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 30 30% 15%;
+    --secondary-foreground: 30 100% 50%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 30 60% 40%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --border: 30 50% 25%;
+    --input: 30 20% 12%;
+    --ring: 30 100% 50%;
+    --success: 120 100% 40%;
+    --destructive: 0 100% 50%;
+  }
+
+  /* Bloomberg Theme - Professional orange */
+  .theme-bloomberg {
+    --background: 240 30% 10%;
+    --foreground: 0 0% 88%;
+    --card: 240 30% 12%;
+    --card-foreground: 0 0% 88%;
+    --popover: 240 30% 12%;
+    --popover-foreground: 0 0% 88%;
+    --primary: 22 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 240 20% 18%;
+    --secondary-foreground: 0 0% 88%;
+    --muted: 240 20% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 22 100% 55%;
+    --accent-foreground: 0 0% 0%;
+    --border: 240 20% 20%;
+    --input: 240 20% 15%;
+    --ring: 22 100% 50%;
+    --success: 142 71% 45%;
+    --destructive: 0 84% 60%;
+  }
+
+  /* Midnight Theme - Deep blue */
+  .theme-midnight {
+    --background: 210 50% 8%;
+    --foreground: 195 100% 90%;
+    --card: 210 50% 10%;
+    --card-foreground: 195 100% 90%;
+    --popover: 210 50% 10%;
+    --popover-foreground: 195 100% 90%;
+    --primary: 195 100% 50%;
+    --primary-foreground: 210 50% 8%;
+    --secondary: 210 40% 15%;
+    --secondary-foreground: 195 100% 90%;
+    --muted: 210 30% 12%;
+    --muted-foreground: 195 50% 60%;
+    --accent: 195 100% 45%;
+    --accent-foreground: 210 50% 8%;
+    --border: 210 40% 20%;
+    --input: 210 40% 12%;
+    --ring: 195 100% 50%;
+    --success: 142 71% 45%;
+    --destructive: 0 84% 60%;
+  }
+
+  /* Neon Theme - Synthwave */
+  .theme-neon {
+    --background: 280 80% 5%;
+    --foreground: 175 100% 50%;
+    --card: 280 70% 8%;
+    --card-foreground: 175 100% 50%;
+    --popover: 280 70% 8%;
+    --popover-foreground: 175 100% 50%;
+    --primary: 330 100% 60%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 280 50% 15%;
+    --secondary-foreground: 175 100% 50%;
+    --muted: 280 40% 12%;
+    --muted-foreground: 175 60% 40%;
+    --accent: 175 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --border: 330 60% 30%;
+    --input: 280 50% 10%;
+    --ring: 330 100% 60%;
+    --success: 120 100% 50%;
+    --destructive: 0 100% 50%;
+    --gold: 330 100% 60%;
+  }
 }
 
 @layer base {

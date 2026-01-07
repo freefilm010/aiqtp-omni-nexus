@@ -43,7 +43,7 @@ const TradingCockpit = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsList className={`grid w-full max-w-lg ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="workspace" className="gap-2">
               <LayoutGrid className="h-4 w-4" />
               Multi-Window
@@ -52,10 +52,12 @@ const TradingCockpit = () => {
               <Code className="h-4 w-4" />
               QuantScript
             </TabsTrigger>
-            <TabsTrigger value="competitive" className="gap-2">
-              <Trophy className="h-4 w-4" />
-              vs Competitors
-            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="competitive" className="gap-2">
+                <Trophy className="h-4 w-4" />
+                vs Competitors
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="workspace">
@@ -70,21 +72,13 @@ const TradingCockpit = () => {
             </Suspense>
           </TabsContent>
 
-          <TabsContent value="competitive">
-            {isAdmin ? (
+          {isAdmin && (
+            <TabsContent value="competitive">
               <Suspense fallback={<TabLoader />}>
                 <CompetitiveAnalysis />
               </Suspense>
-            ) : (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Admin Access Required</h3>
-                  <p className="text-muted-foreground">Competitive analysis is restricted to administrators.</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
       <Footer />

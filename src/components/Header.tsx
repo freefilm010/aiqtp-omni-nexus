@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme, ThemeType } from "@/contexts/ThemeContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
@@ -38,13 +42,29 @@ import {
   Calendar,
   LineChart,
   FlaskConical,
-  BellRing
+  BellRing,
+  Palette,
+  Monitor,
+  LayoutGrid,
+  DollarSign
 } from "lucide-react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+
+  const themeOptions: { id: ThemeType; name: string }[] = [
+    { id: "default", name: "Professional" },
+    { id: "hacker", name: "Hacker" },
+    { id: "matrix", name: "Matrix" },
+    { id: "cyberpunk", name: "Cyberpunk" },
+    { id: "terminal", name: "Terminal" },
+    { id: "bloomberg", name: "Bloomberg" },
+    { id: "midnight", name: "Midnight" },
+    { id: "neon", name: "Neon" },
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
@@ -156,6 +176,10 @@ const Header = () => {
                 <ChevronDown className="w-4 h-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => navigate('/cockpit')}>
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Trading Cockpit
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/vault')}>
                   <Zap className="mr-2 h-4 w-4 text-gold" />
                   Lightning Vault
@@ -185,6 +209,28 @@ const Header = () => {
                   <BellRing className="mr-2 h-4 w-4 text-red-500" />
                   Alerts Feed
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/pricing')}>
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Pricing
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Palette className="mr-2 h-4 w-4" />
+                    Theme
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {themeOptions.map((t) => (
+                      <DropdownMenuItem 
+                        key={t.id} 
+                        onClick={() => setTheme(t.id)}
+                        className={theme === t.id ? "bg-accent" : ""}
+                      >
+                        {t.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
 
