@@ -45,6 +45,7 @@ const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
 const AccessibilitySettingsPage = lazy(() => import("./pages/AccessibilitySettingsPage"));
 const AlertsFeedPage = lazy(() => import("./pages/AlertsFeedPage"));
 const MarketIntelligencePage = lazy(() => import("./pages/MarketIntelligencePage"));
+const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
 
 const queryClient = new QueryClient();
 
@@ -129,6 +130,7 @@ const App = () => (
               <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
               <Route path="/alerts" element={<ProtectedRoute><AlertsFeedPage /></ProtectedRoute>} />
               <Route path="/intelligence" element={<ProtectedRoute><MarketIntelligencePage /></ProtectedRoute>} />
+              <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>
