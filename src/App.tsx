@@ -50,6 +50,7 @@ const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
 const TradingCockpit = lazy(() => import("./pages/TradingCockpit"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const MediaHub = lazy(() => import("./pages/MediaHub"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 
 const queryClient = new QueryClient();
 
@@ -139,6 +140,7 @@ const App = () => (
               <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
               <Route path="/cockpit" element={<ProtectedRoute><TradingCockpit /></ProtectedRoute>} />
               <Route path="/media" element={<ProtectedRoute><MediaHub /></ProtectedRoute>} />
+              <Route path="/legal" element={<LegalPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>

@@ -11,13 +11,26 @@ import {
   Linkedin, 
   Youtube,
   Github,
-  Accessibility
+  Accessibility,
+  AlertTriangle
 } from "lucide-react";
+import { LEGAL_DISCLAIMERS } from "@/lib/fees/platformFees";
 
 const Footer = () => {
   return (
     <footer className="bg-gradient-hero text-white">
       <div className="max-w-7xl mx-auto px-4">
+        {/* Risk Warning Banner */}
+        <div className="py-4 border-b border-white/10">
+          <div className="flex items-start gap-3 text-xs text-white/70 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+            <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+            <p>
+              <strong className="text-yellow-400">RISK WARNING:</strong> Trading cryptocurrencies, digital assets, and other financial instruments involves substantial risk. 
+              Past performance is not indicative of future results. Not financial advice. Never invest more than you can afford to lose.
+            </p>
+          </div>
+        </div>
+
         {/* Main Footer Content */}
         <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Company Info */}
@@ -105,6 +118,7 @@ const Footer = () => {
               <ul className="space-y-2 text-sm text-white/70">
                 <li><a href="#" className="hover:text-gold transition-smooth">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-gold transition-smooth">Terms of Service</a></li>
+                <li><Link to="/legal" className="hover:text-gold transition-smooth">Risk Disclaimers</Link></li>
                 <li><a href="#" className="hover:text-gold transition-smooth">Compliance</a></li>
                 <li><a href="#" className="hover:text-gold transition-smooth">Security</a></li>
                 <li>
@@ -118,10 +132,31 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* Full Legal Disclaimer Section */}
+        <div className="py-6 border-t border-white/10 space-y-4">
+          <div className="text-[10px] text-white/50 leading-relaxed space-y-3">
+            <p>
+              <strong>⚠️ RISK DISCLOSURE:</strong> Trading cryptocurrencies, digital assets, NFTs, and other financial instruments involves substantial risk of loss and is not suitable for all investors. The possibility exists that you could sustain a loss of some or all of your initial investment.
+            </p>
+            <p>
+              <strong>📋 NOT FINANCIAL ADVICE:</strong> AIQTP does not provide investment, legal, or tax advice. All content is for informational purposes only. We are not a registered broker-dealer, investment adviser, or financial institution.
+            </p>
+            <p>
+              <strong>🖼️ VISUAL PURPOSES:</strong> All images, charts, and visual representations are for illustrative purposes only and do not represent actual trading results or guaranteed outcomes.
+            </p>
+            <p>
+              <strong>💰 FEES:</strong> All fees subject to change. Actual costs may vary based on network conditions, gas fees, and third-party services. $20 minimum investment. Platform earns 9%/6%/3%/1% on profits only.
+            </p>
+            <p>
+              <strong>🤖 AI DISCLAIMER:</strong> AI predictions are experimental technologies and may produce inaccurate results. Do not use as sole basis for trading decisions.
+            </p>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="py-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center">
           <div className="text-white/70 text-sm mb-4 md:mb-0">
-            © 2024 AIQTP Global Marketplace. All rights reserved.
+            © {new Date().getFullYear()} AIQTP Global Marketplace. All rights reserved.
           </div>
           
           <div className="flex flex-wrap items-center gap-6 text-sm text-white/70">
