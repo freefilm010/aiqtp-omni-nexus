@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface AccessibilitySettings {
+  // Toolbar settings
+  toolbarVisible: boolean;
+  toolbarPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  toolbarMinimized: boolean;
+  
   // Voice settings
   voiceEnabled: boolean;
   voiceSpeed: number;
@@ -43,6 +48,9 @@ interface AccessibilityContextType {
 }
 
 const defaultSettings: AccessibilitySettings = {
+  toolbarVisible: true,
+  toolbarPosition: 'bottom-right',
+  toolbarMinimized: false,
   voiceEnabled: false,
   voiceSpeed: 1,
   voicePitch: 1,
