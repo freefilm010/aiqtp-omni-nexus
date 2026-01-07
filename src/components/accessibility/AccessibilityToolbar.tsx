@@ -30,7 +30,11 @@ import {
   Maximize2,
   Settings,
   Eye,
-  EyeOff
+  EyeOff,
+  Move,
+  Pin,
+  PinOff,
+  RotateCcw
 } from 'lucide-react';
 import {
   Tooltip,
@@ -43,6 +47,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const AccessibilityToolbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -70,6 +82,16 @@ const AccessibilityToolbar: React.FC = () => {
 
   const toggleHighContrast = () => {
     updateSettings({ highContrast: !settings.highContrast });
+  };
+
+  const resetSettings = () => {
+    updateSettings({
+      highContrast: false,
+      fontSize: 'normal',
+      reducedMotion: false,
+      screenReaderOptimized: false,
+      voiceEnabled: false,
+    });
   };
 
   const positionClasses = {
@@ -159,22 +181,26 @@ const AccessibilityToolbar: React.FC = () => {
         role="toolbar"
         aria-label="Accessibility toolbar"
       >
-        {/* Quick action buttons */}
-        <div className="flex items-center gap-1 bg-background/95 backdrop-blur border rounded-lg p-1 shadow-lg">
+        {/* Main Toolbar */}
+        <div className="flex items-center gap-1 bg-background/95 backdrop-blur border rounded-lg p-2 shadow-lg">
+          {/* Voice Control */}
           <VoiceControl onOpenAccessibilityPanel={() => setIsOpen(true)} />
           
           <div className="w-px h-6 bg-border mx-1" />
           
+          {/* High Contrast Toggle Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant={settings.highContrast ? "default" : "ghost"}
-                size="icon"
+                size="sm"
                 onClick={toggleHighContrast}
                 aria-label={settings.highContrast ? 'Disable high contrast' : 'Enable high contrast'}
                 aria-pressed={settings.highContrast}
+                className="gap-1"
               >
                 <Contrast className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs">Contrast</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -182,72 +208,91 @@ const AccessibilityToolbar: React.FC = () => {
             </TooltipContent>
           </Tooltip>
 
+          {/* Font Size Toggle Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={toggleFontSize}
                 aria-label={`Font size: ${settings.fontSize}`}
+                className="gap-1"
               >
                 <Type className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs capitalize">{settings.fontSize}</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Toggle font size ({settings.fontSize})</p>
+              <p>Toggle font size (current: {settings.fontSize})</p>
             </TooltipContent>
           </Tooltip>
 
           <div className="w-px h-6 bg-border mx-1" />
 
-          {/* Toolbar position settings */}
-          <Popover>
-            <PopoverTrigger asChild>
+          {/* Position & Settings Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 aria-label="Toolbar settings"
+                className="gap-1"
               >
                 <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs">Settings</span>
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 bg-background border" align="end">
-              <div className="space-y-4">
-                <div className="font-medium text-sm">Toolbar Settings</div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="toolbar-position" className="text-xs">Position</Label>
-                  <Select
-                    value={settings.toolbarPosition}
-                    onValueChange={(value: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left') => 
-                      updateSettings({ toolbarPosition: value })
-                    }
-                  >
-                    <SelectTrigger id="toolbar-position" className="h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border z-[60]">
-                      <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                      <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                      <SelectItem value="top-right">Top Right</SelectItem>
-                      <SelectItem value="top-left">Top Left</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Toolbar Position</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => updateSettings({ toolbarPosition: 'bottom-right' })}
+                className={settings.toolbarPosition === 'bottom-right' ? 'bg-primary/10' : ''}
+              >
+                <Move className="h-4 w-4 mr-2" />
+                Bottom Right
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => updateSettings({ toolbarPosition: 'bottom-left' })}
+                className={settings.toolbarPosition === 'bottom-left' ? 'bg-primary/10' : ''}
+              >
+                <Move className="h-4 w-4 mr-2" />
+                Bottom Left
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => updateSettings({ toolbarPosition: 'top-right' })}
+                className={settings.toolbarPosition === 'top-right' ? 'bg-primary/10' : ''}
+              >
+                <Move className="h-4 w-4 mr-2" />
+                Top Right
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => updateSettings({ toolbarPosition: 'top-left' })}
+                className={settings.toolbarPosition === 'top-left' ? 'bg-primary/10' : ''}
+              >
+                <Move className="h-4 w-4 mr-2" />
+                Top Left
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Display Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => updateSettings({ toolbarMinimized: true })}>
+                <Minimize2 className="h-4 w-4 mr-2" />
+                Minimize Toolbar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => updateSettings({ toolbarVisible: false })}>
+                <EyeOff className="h-4 w-4 mr-2" />
+                Hide Toolbar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={resetSettings}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Reset All Settings
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="always-show" className="text-xs">Always visible</Label>
-                  <Switch
-                    id="always-show"
-                    checked={settings.toolbarVisible}
-                    onCheckedChange={(checked) => updateSettings({ toolbarVisible: checked })}
-                  />
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Minimize button */}
+          {/* Minimize Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -260,11 +305,11 @@ const AccessibilityToolbar: React.FC = () => {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Minimize toolbar</p>
+              <p>Minimize</p>
             </TooltipContent>
           </Tooltip>
 
-          {/* Hide button */}
+          {/* Hide Button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -277,20 +322,23 @@ const AccessibilityToolbar: React.FC = () => {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Hide toolbar (press Alt+A to show)</p>
+              <p>Hide (Alt+A to show)</p>
             </TooltipContent>
           </Tooltip>
 
           <div className="w-px h-6 bg-border mx-1" />
 
+          {/* Full Settings Panel */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                aria-label="Open accessibility settings"
+                size="sm"
+                aria-label="Open full accessibility settings"
+                className="gap-1"
               >
                 <Accessibility className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs">More</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
@@ -308,16 +356,82 @@ const AccessibilityToolbar: React.FC = () => {
         {(settings.voiceEnabled || settings.screenReaderOptimized || settings.brailleDisplayMode) && (
           <div className="flex gap-1 text-xs">
             {settings.voiceEnabled && (
-              <span className="px-2 py-1 bg-green-500/20 text-green-500 rounded">Voice</span>
+              <span className="px-2 py-1 bg-green-500/20 text-green-500 rounded flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                Voice
+              </span>
             )}
             {settings.screenReaderOptimized && (
-              <span className="px-2 py-1 bg-blue-500/20 text-blue-500 rounded">Screen Reader</span>
+              <span className="px-2 py-1 bg-blue-500/20 text-blue-500 rounded flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                Screen Reader
+              </span>
             )}
             {settings.brailleDisplayMode && (
-              <span className="px-2 py-1 bg-purple-500/20 text-purple-500 rounded">Braille</span>
+              <span className="px-2 py-1 bg-purple-500/20 text-purple-500 rounded flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
+                Braille
+              </span>
             )}
           </div>
         )}
+
+        {/* Quick Toggle Panel */}
+        <div className="flex gap-1 bg-background/95 backdrop-blur border rounded-lg p-1 shadow-lg">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={settings.reducedMotion ? "default" : "ghost"}
+                size="icon"
+                onClick={() => updateSettings({ reducedMotion: !settings.reducedMotion })}
+                aria-label="Toggle reduced motion"
+                aria-pressed={settings.reducedMotion}
+                className="h-8 w-8"
+              >
+                <span className="text-xs">🎬</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Reduced Motion: {settings.reducedMotion ? 'On' : 'Off'}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={settings.screenReaderOptimized ? "default" : "ghost"}
+                size="icon"
+                onClick={() => updateSettings({ screenReaderOptimized: !settings.screenReaderOptimized })}
+                aria-label="Toggle screen reader mode"
+                aria-pressed={settings.screenReaderOptimized}
+                className="h-8 w-8"
+              >
+                <span className="text-xs">👁️</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Screen Reader: {settings.screenReaderOptimized ? 'On' : 'Off'}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={settings.voiceEnabled ? "default" : "ghost"}
+                size="icon"
+                onClick={() => updateSettings({ voiceEnabled: !settings.voiceEnabled })}
+                aria-label="Toggle voice control"
+                aria-pressed={settings.voiceEnabled}
+                className="h-8 w-8"
+              >
+                <span className="text-xs">🎤</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Voice Control: {settings.voiceEnabled ? 'On' : 'Off'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     </TooltipProvider>
   );
