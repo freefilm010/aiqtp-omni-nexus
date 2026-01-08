@@ -274,14 +274,32 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
   const showVisualAlert = (message: string) => {
     const alert = document.createElement('div');
     alert.className = 'fixed top-4 right-4 z-[9999] bg-primary text-primary-foreground p-4 rounded-lg shadow-lg animate-pulse max-w-md';
-    alert.innerHTML = `
-      <div class="flex items-center gap-2">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-        </svg>
-        <span>${message}</span>
-      </div>
-    `;
+    
+    // Create container using safe DOM manipulation (prevents XSS)
+    const container = document.createElement('div');
+    container.className = 'flex items-center gap-2';
+    
+    // Create SVG element safely
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'w-6 h-6');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('d', 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9');
+    svg.appendChild(path);
+    
+    // Create message span using textContent (safe - prevents XSS)
+    const span = document.createElement('span');
+    span.textContent = message;
+    
+    container.appendChild(svg);
+    container.appendChild(span);
+    alert.appendChild(container);
     document.body.appendChild(alert);
     
     setTimeout(() => {
