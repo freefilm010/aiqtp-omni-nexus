@@ -24,8 +24,10 @@ import {
   Activity,
   Target,
   Shield,
-  Zap
+  Zap,
+  Lock
 } from "lucide-react";
+import { BlurredCode, ProtectedCodeBadge } from "@/components/ui/blurred-code";
 
 interface Rule {
   id: string;
@@ -477,20 +479,25 @@ ${strategy.exitRules.map(r => `      (dataframe['${r.indicator}'] ${r.condition 
           </CardContent>
         </Card>
 
-        {/* Generated Code */}
+        {/* Generated Code - Protected for non-owners */}
         {showCode && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Code className="h-4 w-4" />
-                Generated Strategy Code
+              <CardTitle className="flex items-center justify-between text-base">
+                <span className="flex items-center gap-2">
+                  <Code className="h-4 w-4" />
+                  Generated Strategy Code
+                </span>
+                <ProtectedCodeBadge />
               </CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
-                <pre className="text-xs font-mono bg-muted p-4 rounded-lg overflow-x-auto">
-                  {generateCode()}
-                </pre>
+                <BlurredCode 
+                  code={generateCode()}
+                  isOwner={true} 
+                  className="p-4"
+                />
               </ScrollArea>
             </CardContent>
           </Card>

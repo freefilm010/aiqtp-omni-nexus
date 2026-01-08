@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_definitions: {
+        Row: {
+          category: string
+          created_at: string | null
+          criteria: Json
+          description: string
+          icon: string | null
+          id: string
+          name: string
+          points: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          criteria: Json
+          description: string
+          icon?: string | null
+          id: string
+          name: string
+          points?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          criteria?: Json
+          description?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          points?: number | null
+        }
+        Relationships: []
+      }
       admin_automation_logs: {
         Row: {
           action: string
@@ -153,6 +186,7 @@ export type Database = {
         Row: {
           category: string | null
           code: string
+          code_protected: boolean | null
           created_at: string
           description: string | null
           factor_type: Database["public"]["Enums"]["ai_factor_type"]
@@ -171,6 +205,7 @@ export type Database = {
         Insert: {
           category?: string | null
           code: string
+          code_protected?: boolean | null
           created_at?: string
           description?: string | null
           factor_type: Database["public"]["Enums"]["ai_factor_type"]
@@ -189,6 +224,7 @@ export type Database = {
         Update: {
           category?: string | null
           code?: string
+          code_protected?: boolean | null
           created_at?: string
           description?: string | null
           factor_type?: Database["public"]["Enums"]["ai_factor_type"]
@@ -229,11 +265,14 @@ export type Database = {
       }
       ai_strategies: {
         Row: {
+          admin_approved: boolean | null
           backtest_count: number | null
           code: string | null
+          code_protected: boolean | null
           consistency_score: number | null
           created_at: string
           creator_earnings: number | null
+          creator_profit_share: number | null
           description: string | null
           entry_rules: Json
           exit_rules: Json
@@ -252,11 +291,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_approved?: boolean | null
           backtest_count?: number | null
           code?: string | null
+          code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string
           creator_earnings?: number | null
+          creator_profit_share?: number | null
           description?: string | null
           entry_rules: Json
           exit_rules: Json
@@ -275,11 +317,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_approved?: boolean | null
           backtest_count?: number | null
           code?: string | null
+          code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string
           creator_earnings?: number | null
+          creator_profit_share?: number | null
           description?: string | null
           entry_rules?: Json
           exit_rules?: Json
@@ -295,6 +340,98 @@ export type Database = {
           status?: Database["public"]["Enums"]["strategy_status"]
           total_rentals?: number | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bot_training_queue: {
+        Row: {
+          consistency_score: number | null
+          created_at: string | null
+          error_message: string | null
+          graduation_eligible: boolean | null
+          id: string
+          profitability_score: number | null
+          status: string | null
+          strategy_id: string | null
+          test_results: Json | null
+          training_completed_at: string | null
+          training_started_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          consistency_score?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          graduation_eligible?: boolean | null
+          id?: string
+          profitability_score?: number | null
+          status?: string | null
+          strategy_id?: string | null
+          test_results?: Json | null
+          training_completed_at?: string | null
+          training_started_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          consistency_score?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          graduation_eligible?: boolean | null
+          id?: string
+          profitability_score?: number | null
+          status?: string | null
+          strategy_id?: string | null
+          test_results?: Json | null
+          training_completed_at?: string | null
+          training_started_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_training_queue_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elite_club_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          joined_at: string | null
+          lifetime_earnings: number | null
+          perks: Json | null
+          tier: string | null
+          total_strategies_graduated: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          joined_at?: string | null
+          lifetime_earnings?: number | null
+          perks?: Json | null
+          tier?: string | null
+          total_strategies_graduated?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          joined_at?: string | null
+          lifetime_earnings?: number | null
+          perks?: Json | null
+          tier?: string | null
+          total_strategies_graduated?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1072,6 +1209,45 @@ export type Database = {
           symbol?: string
           total?: number
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_name: string
+          achievement_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          points: number | null
+          tier: string | null
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_name: string
+          achievement_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          points?: number | null
+          tier?: string | null
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_name?: string
+          achievement_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          points?: number | null
+          tier?: string | null
+          unlocked_at?: string | null
           user_id?: string
         }
         Relationships: []

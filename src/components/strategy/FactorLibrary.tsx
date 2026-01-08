@@ -24,11 +24,15 @@ import {
   Sparkles,
   Copy,
   Trash2,
-  Edit
+  Edit,
+  Lock
 } from "lucide-react";
+import { BlurredCode, ProtectedCodeBadge } from "@/components/ui/blurred-code";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 interface Factor {
   id: string;
+  user_id: string;
   name: string;
   description: string | null;
   factor_type: 'technical' | 'fundamental' | 'sentiment' | 'alternative';
@@ -61,6 +65,7 @@ const FACTOR_TYPE_COLORS: Record<string, string> = {
 
 const FactorLibrary = () => {
   const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const [factors, setFactors] = useState<Factor[]>([]);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -434,19 +439,23 @@ const FactorLibrary = () => {
                 </CardContent>
               </Card>
 
-              {/* Code Preview */}
+              {/* Code Preview - Protected */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Code2 className="h-4 w-4" />
-                    Factor Code
+                  <CardTitle className="text-sm flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Code2 className="h-4 w-4" />
+                      Factor Code
+                    </span>
+                    <ProtectedCodeBadge />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[200px]">
-                    <pre className="text-xs bg-muted/50 p-3 rounded overflow-x-auto">
-                      <code>{selectedFactor.code}</code>
-                    </pre>
+                    <BlurredCode 
+                      code={selectedFactor.code}
+                      isOwner={selectedFactor.user_id === user?.id}
+                    />
                   </ScrollArea>
                 </CardContent>
               </Card>
