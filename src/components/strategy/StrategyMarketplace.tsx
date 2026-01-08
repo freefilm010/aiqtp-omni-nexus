@@ -47,6 +47,9 @@ interface GraduatedStrategy {
   backtest_count: number;
   created_at: string;
   is_available_for_rent?: boolean;
+  admin_approved?: boolean;
+  code_protected?: boolean;
+  creator_profit_share?: number;
 }
 
 interface StrategyRental {
@@ -78,12 +81,13 @@ const StrategyMarketplace = () => {
 
   const fetchMarketplaceData = async () => {
     try {
-      // Fetch graduated strategies available for rent
+      // Fetch graduated strategies available for rent (only admin-approved ones for regular users)
       const { data: graduated, error: gradError } = await supabase
         .from('ai_strategies')
         .select('*')
         .eq('is_graduated', true)
-        .eq('is_available_for_rent', true);
+        .eq('is_available_for_rent', true)
+        .eq('admin_approved', true);
 
       if (gradError) throw gradError;
       setStrategies((graduated as GraduatedStrategy[]) || []);

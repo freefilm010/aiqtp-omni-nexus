@@ -47,7 +47,8 @@ import {
   Monitor,
   LayoutGrid,
   DollarSign,
-  Music
+  Music,
+  Trophy
 } from "lucide-react";
 
 const Header = () => {
@@ -308,6 +309,10 @@ const Header = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/achievements')}>
+                    <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                    Achievements
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/trading')}>
                     <User className="mr-2 h-4 w-4" />
                     Dashboard
