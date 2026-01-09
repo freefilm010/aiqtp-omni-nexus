@@ -660,6 +660,298 @@ export type Database = {
         }
         Relationships: []
       }
+      exchange_balances: {
+        Row: {
+          available_balance: number | null
+          created_at: string
+          currency: string
+          id: string
+          locked_balance: number | null
+          total_deposited: number | null
+          total_withdrawn: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_balance?: number | null
+          created_at?: string
+          currency: string
+          id?: string
+          locked_balance?: number | null
+          total_deposited?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_balance?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          locked_balance?: number | null
+          total_deposited?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exchange_liquidity_pools: {
+        Row: {
+          auto_market_make: boolean | null
+          base_token_reserve: number
+          created_at: string
+          fee_percent: number | null
+          id: string
+          is_active: boolean | null
+          pair_id: string
+          quote_reserve: number
+          spread_percent: number | null
+          total_liquidity: number | null
+          updated_at: string
+        }
+        Insert: {
+          auto_market_make?: boolean | null
+          base_token_reserve?: number
+          created_at?: string
+          fee_percent?: number | null
+          id?: string
+          is_active?: boolean | null
+          pair_id: string
+          quote_reserve?: number
+          spread_percent?: number | null
+          total_liquidity?: number | null
+          updated_at?: string
+        }
+        Update: {
+          auto_market_make?: boolean | null
+          base_token_reserve?: number
+          created_at?: string
+          fee_percent?: number | null
+          id?: string
+          is_active?: boolean | null
+          pair_id?: string
+          quote_reserve?: number
+          spread_percent?: number | null
+          total_liquidity?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_liquidity_pools_pair_id_fkey"
+            columns: ["pair_id"]
+            isOneToOne: true
+            referencedRelation: "exchange_pairs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exchange_orders: {
+        Row: {
+          created_at: string
+          filled_at: string | null
+          filled_quantity: number | null
+          id: string
+          order_type: string
+          pair_id: string
+          price: number | null
+          quantity: number
+          remaining_quantity: number | null
+          side: string
+          status: string | null
+          stop_price: number | null
+          time_in_force: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filled_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          order_type: string
+          pair_id: string
+          price?: number | null
+          quantity: number
+          remaining_quantity?: number | null
+          side: string
+          status?: string | null
+          stop_price?: number | null
+          time_in_force?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filled_at?: string | null
+          filled_quantity?: number | null
+          id?: string
+          order_type?: string
+          pair_id?: string
+          price?: number | null
+          quantity?: number
+          remaining_quantity?: number | null
+          side?: string
+          status?: string | null
+          stop_price?: number | null
+          time_in_force?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_orders_pair_id_fkey"
+            columns: ["pair_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_pairs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exchange_pairs: {
+        Row: {
+          ask_price: number | null
+          base_token_id: string | null
+          bid_price: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_price: number | null
+          maker_fee_percent: number | null
+          max_order_size: number | null
+          min_order_size: number | null
+          pair_symbol: string
+          price_precision: number | null
+          quantity_precision: number | null
+          quote_currency: string
+          spread_percent: number | null
+          taker_fee_percent: number | null
+          trades_24h: number | null
+          updated_at: string
+          volume_24h: number | null
+        }
+        Insert: {
+          ask_price?: number | null
+          base_token_id?: string | null
+          bid_price?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_price?: number | null
+          maker_fee_percent?: number | null
+          max_order_size?: number | null
+          min_order_size?: number | null
+          pair_symbol: string
+          price_precision?: number | null
+          quantity_precision?: number | null
+          quote_currency: string
+          spread_percent?: number | null
+          taker_fee_percent?: number | null
+          trades_24h?: number | null
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Update: {
+          ask_price?: number | null
+          base_token_id?: string | null
+          bid_price?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_price?: number | null
+          maker_fee_percent?: number | null
+          max_order_size?: number | null
+          min_order_size?: number | null
+          pair_symbol?: string
+          price_precision?: number | null
+          quantity_precision?: number | null
+          quote_currency?: string
+          spread_percent?: number | null
+          taker_fee_percent?: number | null
+          trades_24h?: number | null
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_pairs_base_token_id_fkey"
+            columns: ["base_token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exchange_trades: {
+        Row: {
+          buy_order_id: string | null
+          buyer_fee: number | null
+          buyer_user_id: string
+          created_at: string
+          id: string
+          is_maker_buy: boolean | null
+          pair_id: string
+          price: number
+          quantity: number
+          sell_order_id: string | null
+          seller_fee: number | null
+          seller_user_id: string
+          total: number
+        }
+        Insert: {
+          buy_order_id?: string | null
+          buyer_fee?: number | null
+          buyer_user_id: string
+          created_at?: string
+          id?: string
+          is_maker_buy?: boolean | null
+          pair_id: string
+          price: number
+          quantity: number
+          sell_order_id?: string | null
+          seller_fee?: number | null
+          seller_user_id: string
+          total: number
+        }
+        Update: {
+          buy_order_id?: string | null
+          buyer_fee?: number | null
+          buyer_user_id?: string
+          created_at?: string
+          id?: string
+          is_maker_buy?: boolean | null
+          pair_id?: string
+          price?: number
+          quantity?: number
+          sell_order_id?: string | null
+          seller_fee?: number | null
+          seller_user_id?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_trades_buy_order_id_fkey"
+            columns: ["buy_order_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_trades_pair_id_fkey"
+            columns: ["pair_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_pairs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_trades_sell_order_id_fkey"
+            columns: ["sell_order_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faucet_claims: {
         Row: {
           amount: number
@@ -2365,6 +2657,109 @@ export type Database = {
           },
         ]
       }
+      token_price_feeds: {
+        Row: {
+          base_currency: string
+          change_24h_percent: number | null
+          high_24h: number | null
+          id: string
+          last_updated: string
+          low_24h: number | null
+          market_cap: number | null
+          price: number
+          price_24h_ago: number | null
+          source: string | null
+          token_id: string | null
+          volume_24h: number | null
+        }
+        Insert: {
+          base_currency: string
+          change_24h_percent?: number | null
+          high_24h?: number | null
+          id?: string
+          last_updated?: string
+          low_24h?: number | null
+          market_cap?: number | null
+          price: number
+          price_24h_ago?: number | null
+          source?: string | null
+          token_id?: string | null
+          volume_24h?: number | null
+        }
+        Update: {
+          base_currency?: string
+          change_24h_percent?: number | null
+          high_24h?: number | null
+          id?: string
+          last_updated?: string
+          low_24h?: number | null
+          market_cap?: number | null
+          price?: number
+          price_24h_ago?: number | null
+          source?: string | null
+          token_id?: string | null
+          volume_24h?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_price_feeds_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      token_price_history: {
+        Row: {
+          close_price: number
+          created_at: string
+          high_price: number
+          id: string
+          interval_start: string
+          interval_type: string
+          low_price: number
+          open_price: number
+          pair_id: string | null
+          trades_count: number | null
+          volume: number | null
+        }
+        Insert: {
+          close_price: number
+          created_at?: string
+          high_price: number
+          id?: string
+          interval_start: string
+          interval_type: string
+          low_price: number
+          open_price: number
+          pair_id?: string | null
+          trades_count?: number | null
+          volume?: number | null
+        }
+        Update: {
+          close_price?: number
+          created_at?: string
+          high_price?: number
+          id?: string
+          interval_start?: string
+          interval_type?: string
+          low_price?: number
+          open_price?: number
+          pair_id?: string | null
+          trades_count?: number | null
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_price_history_pair_id_fkey"
+            columns: ["pair_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_pairs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       token_revenue: {
         Row: {
           created_at: string
@@ -2576,6 +2971,14 @@ export type Database = {
           p_transaction_type: string
         }
         Returns: string
+      }
+      update_token_price: {
+        Args: {
+          p_base_currency: string
+          p_new_price: number
+          p_token_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

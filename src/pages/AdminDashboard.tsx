@@ -19,6 +19,7 @@ import TokenFactory from "@/components/admin/TokenFactory";
 import InfluencerProgram from "@/components/admin/InfluencerProgram";
 import ContestManager from "@/components/admin/ContestManager";
 import OperatorManager from "@/components/admin/OperatorManager";
+import ExchangeManager from "@/components/admin/ExchangeManager";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +74,7 @@ const AdminDashboard = () => {
             <Route path="influencers" element={<InfluencerProgram />} />
             <Route path="contests" element={<ContestManager />} />
             <Route path="operators" element={<OperatorManager />} />
+            <Route path="exchange" element={<ExchangeManager />} />
             <Route path="users" element={<AdminOverview />} />
             <Route path="logs" element={<AdminOverview />} />
             <Route path="settings" element={<AdminOverview />} />
