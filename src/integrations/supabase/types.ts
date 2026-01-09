@@ -400,6 +400,89 @@ export type Database = {
           },
         ]
       }
+      chat_conversations: {
+        Row: {
+          agent_type: string
+          created_at: string | null
+          folder: string | null
+          id: string
+          is_archived: boolean | null
+          is_shared: boolean | null
+          message_count: number | null
+          model_used: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_type: string
+          created_at?: string | null
+          folder?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_shared?: boolean | null
+          message_count?: number | null
+          model_used?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string | null
+          folder?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_shared?: boolean | null
+          message_count?: number | null
+          model_used?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          model_used: string | null
+          role: string
+          tool_executions: Json | null
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          model_used?: string | null
+          role: string
+          tool_executions?: Json | null
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          model_used?: string | null
+          role?: string
+          tool_executions?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elite_club_members: {
         Row: {
           created_at: string | null
@@ -432,6 +515,27 @@ export type Database = {
           tier?: string | null
           total_strategies_graduated?: number | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      elite_club_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
           user_id?: string
         }
         Relationships: []
@@ -984,6 +1088,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      qaqi_learning_data: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          id: string
+          pattern_data: Json
+          pattern_type: string
+          times_used: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          pattern_data: Json
+          pattern_type: string
+          times_used?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          pattern_data?: Json
+          pattern_type?: string
+          times_used?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      qaqi_performance_metrics: {
+        Row: {
+          id: string
+          metric_name: string
+          metric_value: number
+          recorded_at: string | null
+        }
+        Insert: {
+          id?: string
+          metric_name: string
+          metric_value: number
+          recorded_at?: string | null
+        }
+        Update: {
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          recorded_at?: string | null
+        }
+        Relationships: []
       }
       rental_profit_splits: {
         Row: {

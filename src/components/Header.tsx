@@ -48,7 +48,8 @@ import {
   LayoutGrid,
   DollarSign,
   Music,
-  Trophy
+  Trophy,
+  Percent
 } from "lucide-react";
 
 const Header = () => {
@@ -256,6 +257,10 @@ const Header = () => {
                     <DropdownMenuItem onClick={() => navigate('/pricing')} className="py-1.5 text-sm">
                       <DollarSign className="mr-2 h-3.5 w-3.5" />
                       Pricing
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/fees')} className="py-1.5 text-sm">
+                      <Percent className="mr-2 h-3.5 w-3.5" />
+                      Fees
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/ai-assistant')} className="py-1.5 text-sm">
                       <Bot className="mr-2 h-3.5 w-3.5" />
