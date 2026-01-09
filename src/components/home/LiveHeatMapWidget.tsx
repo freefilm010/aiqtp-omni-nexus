@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,14 +17,13 @@ interface HeatMapAsset {
 
 const LiveHeatMapWidget = () => {
   const navigate = useNavigate();
-  const { data, loading, lastSync, refresh, syncFromCoinGecko, getTopGainers, getTopLosers } = useRealMarketData({ 
+  const { data, loading, syncFromCoinGecko } = useRealMarketData({ 
     limit: 50,
     autoRefresh: true,
     refreshInterval: 30000
   });
   const [syncing, setSyncing] = useState(false);
 
-  // Transform real data to heat map format
   const assets: HeatMapAsset[] = data.slice(0, 12).map(coin => ({
     symbol: coin.symbol,
     name: coin.name,
@@ -106,7 +105,6 @@ const LiveHeatMapWidget = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Heat Map */}
           <Card className="lg:col-span-3 border-2">
             <CardContent className="p-4">
               <div className="grid grid-cols-6 gap-2 auto-rows-[80px]">
@@ -135,7 +133,6 @@ const LiveHeatMapWidget = () => {
             </CardContent>
           </Card>
 
-          {/* Side Panel - Top Movers */}
           <div className="space-y-4">
             <Card className="border-emerald-500/30">
               <CardHeader className="py-3 pb-2">
@@ -181,7 +178,6 @@ const LiveHeatMapWidget = () => {
               </CardContent>
             </Card>
 
-            {/* Color Legend */}
             <Card>
               <CardContent className="py-3">
                 <p className="text-xs text-muted-foreground mb-2">24h Change Scale</p>
