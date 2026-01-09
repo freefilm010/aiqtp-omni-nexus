@@ -23,7 +23,8 @@ import {
   ArrowRight,
   Sparkles,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  CreditCard
 } from "lucide-react";
 import { Explain } from "@/components/ui/explainer-tooltip";
 import { 
@@ -39,6 +40,7 @@ import {
   AFFILIATE_FEES,
   calculateAffiliateEarnings
 } from "@/lib/fees/platformFees";
+import { QuickPayment } from "@/components/payments/QuickPayment";
 
 interface PricingTier {
   name: string;
@@ -211,6 +213,20 @@ const PricingPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Premium Plans - Quick Checkout */}
+        <div className="mb-16">
+          <div className="text-center mb-8">
+            <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">
+              <CreditCard className="h-3 w-3 mr-1" />
+              Instant Checkout
+            </Badge>
+            <h2 className="text-2xl font-bold">Premium Plans</h2>
+            <p className="text-muted-foreground mt-2">Unlock advanced features and maximize your trading potential</p>
+          </div>
+          
+          <QuickPayment />
+        </div>
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">

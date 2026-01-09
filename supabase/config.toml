@@ -17,3 +17,15 @@ verify_jwt = false
 
 [functions.quantum-compute]
 verify_jwt = false
+
+[functions.stripe-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.aiqtp-agent]
+verify_jwt = false
+
+[functions.qaqi-agent]
+verify_jwt = false
