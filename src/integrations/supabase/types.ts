@@ -344,6 +344,79 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_clones: {
+        Row: {
+          clone_name: string | null
+          clone_operator_id: string
+          configuration: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          master_strategy_id: string
+          performance_metrics: Json | null
+          rental_id: string | null
+          renter_user_id: string
+          total_fees_generated: number | null
+          total_profit: number | null
+          total_trades: number | null
+          updated_at: string
+        }
+        Insert: {
+          clone_name?: string | null
+          clone_operator_id: string
+          configuration?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          master_strategy_id: string
+          performance_metrics?: Json | null
+          rental_id?: string | null
+          renter_user_id: string
+          total_fees_generated?: number | null
+          total_profit?: number | null
+          total_trades?: number | null
+          updated_at?: string
+        }
+        Update: {
+          clone_name?: string | null
+          clone_operator_id?: string
+          configuration?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          master_strategy_id?: string
+          performance_metrics?: Json | null
+          rental_id?: string | null
+          renter_user_id?: string
+          total_fees_generated?: number | null
+          total_profit?: number | null
+          total_trades?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_clones_clone_operator_id_fkey"
+            columns: ["clone_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_clones_master_strategy_id_fkey"
+            columns: ["master_strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_clones_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_rentals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bot_training_queue: {
         Row: {
           consistency_score: number | null
@@ -868,6 +941,283 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      operator_territories: {
+        Row: {
+          active_operators: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          name: string
+          territory_type: string
+          total_expenses: number | null
+          total_revenue: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_operators?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name: string
+          territory_type: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_operators?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string
+          territory_type?: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      operator_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          from_operator_id: string | null
+          from_wallet_id: string | null
+          id: string
+          metadata: Json | null
+          reference_id: string | null
+          reference_type: string | null
+          status: string | null
+          to_operator_id: string | null
+          to_wallet_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          description?: string | null
+          from_operator_id?: string | null
+          from_wallet_id?: string | null
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          to_operator_id?: string | null
+          to_wallet_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          from_operator_id?: string | null
+          from_wallet_id?: string | null
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          to_operator_id?: string | null
+          to_wallet_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_transactions_from_operator_id_fkey"
+            columns: ["from_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_transactions_from_wallet_id_fkey"
+            columns: ["from_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "operator_wallets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_transactions_to_operator_id_fkey"
+            columns: ["to_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operator_transactions_to_wallet_id_fkey"
+            columns: ["to_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "operator_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operator_wallets: {
+        Row: {
+          available_balance: number | null
+          balance: number | null
+          created_at: string
+          currency: string
+          id: string
+          last_transaction_at: string | null
+          locked_balance: number | null
+          operator_id: string
+          total_deposited: number | null
+          total_fees_collected: number | null
+          total_fees_paid: number | null
+          total_withdrawn: number | null
+          updated_at: string
+        }
+        Insert: {
+          available_balance?: number | null
+          balance?: number | null
+          created_at?: string
+          currency: string
+          id?: string
+          last_transaction_at?: string | null
+          locked_balance?: number | null
+          operator_id: string
+          total_deposited?: number | null
+          total_fees_collected?: number | null
+          total_fees_paid?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+        }
+        Update: {
+          available_balance?: number | null
+          balance?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          last_transaction_at?: string | null
+          locked_balance?: number | null
+          operator_id?: string
+          total_deposited?: number | null
+          total_fees_collected?: number | null
+          total_fees_paid?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_wallets_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operators: {
+        Row: {
+          commission_rate: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_admin_owned: boolean | null
+          is_clone: boolean | null
+          linked_influencer_id: string | null
+          linked_rental_id: string | null
+          linked_strategy_id: string | null
+          name: string
+          operator_type: string
+          owner_user_id: string | null
+          parent_operator_id: string | null
+          performance_metrics: Json | null
+          reinvestment_rate: number | null
+          status: string | null
+          territory_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_admin_owned?: boolean | null
+          is_clone?: boolean | null
+          linked_influencer_id?: string | null
+          linked_rental_id?: string | null
+          linked_strategy_id?: string | null
+          name: string
+          operator_type: string
+          owner_user_id?: string | null
+          parent_operator_id?: string | null
+          performance_metrics?: Json | null
+          reinvestment_rate?: number | null
+          status?: string | null
+          territory_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_admin_owned?: boolean | null
+          is_clone?: boolean | null
+          linked_influencer_id?: string | null
+          linked_rental_id?: string | null
+          linked_strategy_id?: string | null
+          name?: string
+          operator_type?: string
+          owner_user_id?: string | null
+          parent_operator_id?: string | null
+          performance_metrics?: Json | null
+          reinvestment_rate?: number | null
+          status?: string | null
+          territory_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operators_linked_influencer_id_fkey"
+            columns: ["linked_influencer_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operators_linked_rental_id_fkey"
+            columns: ["linked_rental_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_rentals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operators_linked_strategy_id_fkey"
+            columns: ["linked_strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operators_parent_operator_id_fkey"
+            columns: ["parent_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operators_territory_id_fkey"
+            columns: ["territory_id"]
+            isOneToOne: false
+            referencedRelation: "operator_territories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_processors: {
         Row: {
@@ -2190,6 +2540,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_operator_with_wallet: {
+        Args: {
+          p_currencies?: string[]
+          p_is_admin_owned?: boolean
+          p_name: string
+          p_operator_type: string
+          p_owner_user_id?: string
+          p_territory_id: string
+        }
+        Returns: string
+      }
       get_factor_code: { Args: { factor_id: string }; Returns: string }
       get_strategy_code: { Args: { strategy_id: string }; Returns: string }
       has_role: {
@@ -2202,6 +2563,19 @@ export type Database = {
       process_profit_distribution: {
         Args: { p_revenue_id: string }
         Returns: undefined
+      }
+      record_operator_transaction: {
+        Args: {
+          p_amount: number
+          p_currency: string
+          p_description?: string
+          p_from_operator_id: string
+          p_reference_id?: string
+          p_reference_type?: string
+          p_to_operator_id: string
+          p_transaction_type: string
+        }
+        Returns: string
       }
     }
     Enums: {
