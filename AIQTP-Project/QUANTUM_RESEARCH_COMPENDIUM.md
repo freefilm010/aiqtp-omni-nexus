@@ -560,15 +560,136 @@ interface LegacyAPIEndpoints {
 
 ---
 
+## 9. ACADEMIC RESEARCH LIBRARY
+
+### 9.1 Post-Quantum Blockchain Security
+
+**[1] A New Lattice-Based Signature Scheme in Post-Quantum Blockchain Network**
+- *Authors:* Chao-Yang Li, Xiu-Bo Chen, Yu-Ling Chen, Yan-Yan Hou, Jian Li
+- *Published:* IEEE Access (2018), DOI: 10.1109/ACCESS.2018.2886554
+- *Location:* `research-papers/lattice-signature-pqb.pdf`
+- *Key Contributions:*
+  - Lattice-based signature scheme for quantum-resistant blockchain
+  - Bonsai Trees technology with RandBasis algorithm for key generation
+  - Lightweight nondeterministic wallet construction
+  - Proven secure in random oracle model
+- *Relevance to AIQTP:* Core foundation for QuWallet's post-quantum signature implementation
+
+**[2] Quantum Bitcoin: An Anonymous and Distributed Currency Secured by the No-Cloning Theorem**
+- *Author:* Jonathan Jogenfors (Linköping University)
+- *Published:* arXiv:1604.01383v1 (2016)
+- *Location:* `research-papers/quantum-bitcoin.pdf`
+- *Key Contributions:*
+  - First distributed quantum money system proposal
+  - Uses quantum no-cloning theorem for copy protection
+  - Quantum shards and dual blockchain architecture
+  - Immediate local verification (no mining required)
+  - Full anonymity with no transaction fees
+- *Relevance to AIQTP:* Theoretical foundation for $QTC's quantum verification layer
+
+### 9.2 Time Crystal Physics & Computing
+
+**[3] Thermodynamic Quantum Time Crystals**
+- *Author:* Konstantin B. Efetov (Ruhr University Bochum)
+- *Published:* arXiv:1902.07520v4 (2019)
+- *Location:* `research-papers/thermodynamic-time-crystals.pdf`
+- *Key Contributions:*
+  - Proves thermodynamically stable macroscopic time crystals CAN exist
+  - Order parameter periodic in both real and imaginary time
+  - Correlation functions oscillate without decay
+  - Connects to cuprate superconductor physics
+- *Relevance to AIQTP:* Validates long-term stability of DTC-based consensus
+
+**[4] Solid-State Continuous Time Crystal with a Built-in Clock**
+- *Authors:* I. Carraro Haddad, D. L. Chafatinos, et al.
+- *Published:* arXiv:2401.06246v1 (2024)
+- *Location:* `research-papers/solid-state-time-crystal.pdf`
+- *Key Contributions:*
+  - First solid-state continuous time crystal (CTC) demonstration
+  - Uses microcavity exciton-polaritons
+  - Three controllable phases: Larmor precession, locked frequency, period doubling
+  - Spontaneous formation from incoherent particle bath
+- *Relevance to AIQTP:* Potential hardware platform for future QTC infrastructure
+
+**[5] A Robust Large-Period Discrete Time Crystal and its Signature in a Digital Quantum Computer**
+- *Authors:* Tianqi Chen, Ruizhe Shen, Ching Hua Lee, Bo Yang, Raditya Weda Bomantara
+- *Published:* arXiv:2309.11560v5 (2025)
+- *Location:* `research-papers/large-period-dtc.pdf`
+- *Key Contributions:*
+  - Period-quadrupling DTCs (4T-DTCs) on qubits
+  - Implemented on NISQ-era digital quantum computers
+  - Variational algorithm for DTC observation
+  - Extends beyond standard period-doubling dynamics
+- *Relevance to AIQTP:* Advanced DTC patterns for enhanced consensus mechanisms
+
+**[6] Quantum Time Crystal Computing (QTCC)**
+- *Authors:* Hikaru Wakaura, Andriyan B. Suksmono
+- *Published:* CS&IT (2025)
+- *Location:* `research-papers/time-crystal-computing.pdf`
+- *Key Contributions:*
+  - Proposes controlling Time Crystals via Hamiltonian modification
+  - Demonstrates Grover's and QFT algorithms using Time Crystals
+  - Adiabatic quantum computation with DTCs
+  - Many-body localization for quantum state preservation
+- *Relevance to AIQTP:* Framework for QAQI's quantum algorithm execution
+
+### 9.3 Quantum Walk & Entanglement
+
+**[7] Robustness and Classical Proxy of Entanglement in Variants of Quantum Walk**
+- *Authors:* Christopher Mastandrea, Chih-Chun Chien (UC Merced)
+- *Published:* arXiv:2408.05597v2 (2024)
+- *Location:* `research-papers/quantum-walk-entanglement.pdf`
+- *Key Contributions:*
+  - Single-particle entanglement (SPE) in quantum walks
+  - Entanglement robust against classical randomness
+  - "Overlap" metric as classical proxy for entanglement
+  - Localization transitions in quantum walks
+- *Relevance to AIQTP:* Quantum walk algorithms for portfolio optimization
+
+**[8] Revivals in Quantum Walks with Quasi-Periodically Time-Dependent Coin**
+- *Authors:* C. Cedzich, R. F. Werner (Leibniz Universität Hannover)
+- *Published:* arXiv:1510.08905v2 (2016)
+- *Location:* `research-papers/quantum-walk-revivals.pdf`
+- *Key Contributions:*
+  - Full revivals in time-dependent quantum walks
+  - Quasi-periodic behavior analysis
+  - Spectral analysis methods for quantum dynamics
+  - Exponentially sharp revivals phenomenon
+- *Relevance to AIQTP:* Timing precision for Proof of Temporal Resonance
+
+### 9.4 Bitcoin & Cryptocurrency Economics
+
+**[9] The Dual Nature of Bitcoin as Payment Network and Money**
+- *Author:* Paolo Tasca
+- *Published:* SSRN (2015)
+- *Location:* `research-papers/bitcoin-dual-nature.pdf`
+- *Key Contributions:*
+  - Bitcoin as both payment system and currency
+  - Comparison with VISA, Mastercard, Western Union
+  - Transaction volume analysis and growth patterns
+  - Blockchain technology fundamentals
+- *Relevance to AIQTP:* Economic model for QTC token design
+
+---
+
 ## REFERENCES
 
+### Platform Documentation
 1. IBM Quantum Platform Documentation: https://docs.quantum.ibm.com/
 2. Qiskit SDK: https://qiskit.org/
-3. "Realization of a discrete time crystal on 57 qubits" - Science Advances (2022)
-4. NIST Post-Quantum Cryptography: https://csrc.nist.gov/projects/post-quantum-cryptography
-5. Google Quantum AI Time Crystal: https://quantumai.google/research/time-crystals
-6. D-Wave Quantum Annealing: https://docs.dwavesys.com/
+3. NIST Post-Quantum Cryptography: https://csrc.nist.gov/projects/post-quantum-cryptography
+4. D-Wave Quantum Annealing: https://docs.dwavesys.com/
+
+### Key Papers (External)
+5. "Realization of a discrete time crystal on 57 qubits" - Science Advances (2022)
+6. Google Quantum AI Time Crystal: https://quantumai.google/research/time-crystals
+7. Shor, P. "Algorithms for quantum computation" - FOCS (1994)
+8. Grover, L. "A fast quantum mechanical algorithm for database search" - STOC (1996)
+
+### Project Research Library (Local)
+See Section 9 for full paper index: `AIQTP-Project/research-papers/`
 
 ---
 
 *This document is a living resource. Update as quantum hardware capabilities evolve.*
+*Last Updated: 2026-01-09*
