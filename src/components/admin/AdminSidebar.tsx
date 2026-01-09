@@ -20,7 +20,8 @@ import {
   BookOpen,
   Coins,
   Trophy,
-  Building2
+  Building2,
+  ArrowUpDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { title: "Investments", href: "/admin/investments", icon: TrendingUp },
   { title: "Operators", href: "/admin/operators", icon: Building2, section: "Growth" },
   { title: "Token Factory", href: "/admin/tokens", icon: Coins },
+  { title: "Exchange", href: "/admin/exchange", icon: ArrowUpDown },
   { title: "Contests & Airdrops", href: "/admin/contests", icon: Trophy },
   { title: "Influencers", href: "/admin/influencers", icon: Users },
   { title: "Chat Management", href: "/admin/chats", icon: Bot },
