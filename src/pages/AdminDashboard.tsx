@@ -3,6 +3,8 @@ import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminOverview from "@/components/admin/AdminOverview";
+import AdminFinancials from "@/components/admin/AdminFinancials";
+import ChatManagement from "@/components/admin/ChatManagement";
 import RevenueManager from "@/components/admin/RevenueManager";
 import InvestmentManager from "@/components/admin/InvestmentManager";
 import PaymentProcessors from "@/components/admin/PaymentProcessors";
@@ -50,6 +52,8 @@ const AdminDashboard = () => {
         <div className="container max-w-7xl py-6 px-4 md:px-6">
           <Routes>
             <Route index element={<AdminOverview />} />
+            <Route path="financials" element={<AdminFinancials />} />
+            <Route path="chats" element={<ChatManagement />} />
             <Route path="revenue" element={<RevenueManager />} />
             <Route path="investments" element={<InvestmentManager />} />
             <Route path="payments" element={<PaymentProcessors />} />
