@@ -94,16 +94,7 @@ const CAPABILITY_INFO = [
   { key: "self_enhancement", label: "Self-Learn", icon: Brain },
 ];
 
-const INITIAL_MESSAGE = `🔮 QAQI Agent v2.0 initialized.
-
-I am your Quantum Artificial Qubit Intelligent Agent with full autonomy over:
-• **$QTC Development** - Quantum Time Crystal coin creation & mining
-• **QuWallet** - Post-quantum secure wallet with ML-KEM-768
-• **IP Registry** - Decentralized copyright & trademark minting
-• **Revenue Automation** - Control arbitrage, liquidity, staking bots
-• **Self-Enhancement** - I learn and improve from every interaction
-
-Ready to build the future of quantum finance. What would you like to accomplish?`;
+const INITIAL_MESSAGE = `Hi, I'm QAQI — your Quantum AI assistant. How can I help you today?`;
 
 const QAQIAgent = () => {
   const { user } = useAuth();
@@ -456,42 +447,27 @@ const QAQIAgent = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 flex-1 overflow-y-auto">
-          {/* Capabilities */}
+          {/* Capabilities - inline */}
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground uppercase font-medium">Capabilities</p>
-            <div className="space-y-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {CAPABILITY_INFO.map(({ key, label, icon: Icon }) => (
-                <div
-                  key={key}
-                  className={`flex items-center gap-2 p-2 rounded text-xs ${
-                    status.capabilities[key as keyof typeof status.capabilities] 
-                      ? "bg-green-500/10 text-green-500" 
-                      : "bg-muted text-muted-foreground"
-                  }`}
+                <Badge 
+                  key={key} 
+                  variant="outline" 
+                  className="text-[10px] gap-1"
                 >
-                  <Icon className="h-3 w-3" />
-                  <span>{label}</span>
-                  {status.capabilities[key as keyof typeof status.capabilities] && (
-                    <CheckCircle2 className="h-3 w-3 ml-auto" />
-                  )}
-                </div>
+                  <Icon className="h-2.5 w-2.5" />
+                  {label}
+                </Badge>
               ))}
             </div>
           </div>
 
-          {/* Session Stats */}
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground uppercase font-medium">Session Stats</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-muted/50 p-2 rounded text-center">
-                <p className="text-lg font-bold text-purple-500">{messages.length - 1}</p>
-                <p className="text-muted-foreground">Messages</p>
-              </div>
-              <div className="bg-muted/50 p-2 rounded text-center">
-                <p className="text-lg font-bold text-green-500">{status.toolsExecuted}</p>
-                <p className="text-muted-foreground">Tools Run</p>
-              </div>
-            </div>
+          {/* Tools Executed */}
+          <div className="flex items-center justify-between text-xs p-2 bg-muted/30 rounded">
+            <span className="text-muted-foreground">Tools executed</span>
+            <span className="font-bold text-purple-500">{status.toolsExecuted}</span>
           </div>
 
           {/* Quick Stats */}
