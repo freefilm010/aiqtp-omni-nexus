@@ -344,6 +344,66 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_nft_generations: {
+        Row: {
+          attributes: Json | null
+          buyer_address: string | null
+          chain: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          generated_at: string | null
+          id: string
+          image_url: string | null
+          list_price: number | null
+          mint_status: string | null
+          minted_at: string | null
+          name: string
+          prompt: string
+          royalty_percent: number | null
+          sale_price: number | null
+          sold_at: string | null
+        }
+        Insert: {
+          attributes?: Json | null
+          buyer_address?: string | null
+          chain?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          generated_at?: string | null
+          id?: string
+          image_url?: string | null
+          list_price?: number | null
+          mint_status?: string | null
+          minted_at?: string | null
+          name: string
+          prompt: string
+          royalty_percent?: number | null
+          sale_price?: number | null
+          sold_at?: string | null
+        }
+        Update: {
+          attributes?: Json | null
+          buyer_address?: string | null
+          chain?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          generated_at?: string | null
+          id?: string
+          image_url?: string | null
+          list_price?: number | null
+          mint_status?: string | null
+          minted_at?: string | null
+          name?: string
+          prompt?: string
+          royalty_percent?: number | null
+          sale_price?: number | null
+          sold_at?: string | null
+        }
+        Relationships: []
+      }
       bot_clones: {
         Row: {
           clone_name: string | null
@@ -599,6 +659,113 @@ export type Database = {
             columns: ["contest_id"]
             isOneToOne: false
             referencedRelation: "token_contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_products: {
+        Row: {
+          category: string
+          compliance_tags: string[] | null
+          contains_pii: boolean | null
+          created_at: string | null
+          currency: string | null
+          data_type: string
+          description: string | null
+          format: string | null
+          id: string
+          is_active: boolean | null
+          is_anonymized: boolean | null
+          name: string
+          price: number
+          sample_size: number | null
+          total_revenue: number | null
+          total_sales: number | null
+          update_frequency: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          compliance_tags?: string[] | null
+          contains_pii?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          data_type: string
+          description?: string | null
+          format?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_anonymized?: boolean | null
+          name: string
+          price: number
+          sample_size?: number | null
+          total_revenue?: number | null
+          total_sales?: number | null
+          update_frequency?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          compliance_tags?: string[] | null
+          contains_pii?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          data_type?: string
+          description?: string | null
+          format?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_anonymized?: boolean | null
+          name?: string
+          price?: number
+          sample_size?: number | null
+          total_revenue?: number | null
+          total_sales?: number | null
+          update_frequency?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      data_sales: {
+        Row: {
+          amount: number
+          buyer_name: string | null
+          buyer_type: string | null
+          created_at: string | null
+          currency: string | null
+          delivered_at: string | null
+          delivery_method: string | null
+          id: string
+          product_id: string | null
+        }
+        Insert: {
+          amount: number
+          buyer_name?: string | null
+          buyer_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          delivered_at?: string | null
+          delivery_method?: string | null
+          id?: string
+          product_id?: string | null
+        }
+        Update: {
+          amount?: number
+          buyer_name?: string | null
+          buyer_type?: string | null
+          created_at?: string | null
+          currency?: string | null
+          delivered_at?: string | null
+          delivery_method?: string | null
+          id?: string
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "data_products"
             referencedColumns: ["id"]
           },
         ]
@@ -1511,6 +1678,51 @@ export type Database = {
           started_at?: string | null
           status?: string | null
           sync_type?: string
+        }
+        Relationships: []
+      }
+      nft_generation_queue: {
+        Row: {
+          base_price: number | null
+          batch_name: string | null
+          chain: string | null
+          completed_at: string | null
+          completed_count: number | null
+          created_at: string | null
+          id: string
+          started_at: string | null
+          status: string | null
+          style: string | null
+          theme: string | null
+          total_count: number | null
+        }
+        Insert: {
+          base_price?: number | null
+          batch_name?: string | null
+          chain?: string | null
+          completed_at?: string | null
+          completed_count?: number | null
+          created_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          style?: string | null
+          theme?: string | null
+          total_count?: number | null
+        }
+        Update: {
+          base_price?: number | null
+          batch_name?: string | null
+          chain?: string | null
+          completed_at?: string | null
+          completed_count?: number | null
+          created_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string | null
+          style?: string | null
+          theme?: string | null
+          total_count?: number | null
         }
         Relationships: []
       }

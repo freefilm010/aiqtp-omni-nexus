@@ -21,7 +21,9 @@ import {
   Coins,
   Trophy,
   Building2,
-  ArrowUpDown
+  ArrowUpDown,
+  Palette,
+  Database
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -39,6 +41,8 @@ const navItems: NavItem[] = [
   { title: "Treasury Wallets", href: "/admin/treasury", icon: Wallet },
   { title: "Profit Automation", href: "/admin/profit-automation", icon: RefreshCw },
   { title: "Investments", href: "/admin/investments", icon: TrendingUp },
+  { title: "Auto NFT Generator", href: "/admin/nft-generator", icon: Palette, section: "Revenue" },
+  { title: "Data Marketplace", href: "/admin/data-marketplace", icon: Database },
   { title: "Operators", href: "/admin/operators", icon: Building2, section: "Growth" },
   { title: "Token Factory", href: "/admin/tokens", icon: Coins },
   { title: "Exchange", href: "/admin/exchange", icon: ArrowUpDown },
