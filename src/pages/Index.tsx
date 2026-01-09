@@ -4,6 +4,7 @@ import MarketplaceCategories from "@/components/MarketplaceCategories";
 import Features from "@/components/Features";
 import Security from "@/components/Security";
 import Footer from "@/components/Footer";
+import LiveHeatMapWidget from "@/components/home/LiveHeatMapWidget";
 
 const Index = () => {
   return (
@@ -11,6 +12,7 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
+        <LiveHeatMapWidget />
         <MarketplaceCategories />
         <Features />
         <Security />
