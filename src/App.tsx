@@ -56,6 +56,7 @@ const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
 const FeesPage = lazy(() => import("./pages/FeesPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const PopoutTool = lazy(() => import("./pages/PopoutTool"));
+const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 
 const queryClient = new QueryClient();
 
@@ -152,6 +153,7 @@ const App = () => (
                 <Route path="/fees" element={<FeesPage />} />
                 <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
                 <Route path="/watchlist" element={<WatchlistPage />} />
+                <Route path="/revenue" element={<ProtectedRoute><RevenueCommandCenter /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
