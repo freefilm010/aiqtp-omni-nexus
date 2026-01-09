@@ -20,6 +20,8 @@ const buttonVariants = cva(
         accent: "bg-gradient-accent text-accent-foreground hover:shadow-hover transform hover:scale-105 shadow-card",
         hero: "bg-gradient-hero text-primary-foreground hover:shadow-premium transform hover:scale-105 shadow-premium font-semibold",
         glass: "glass-effect text-foreground hover:bg-white/20 border-white/20",
+        quantum: "bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-400 text-white hover:shadow-lg hover:shadow-purple-500/30 transform hover:scale-105 font-semibold animate-shimmer bg-[length:200%_100%]",
+        success: "bg-success text-success-foreground hover:bg-success/90 shadow-card",
       },
       size: {
         default: "h-10 px-4 py-2",

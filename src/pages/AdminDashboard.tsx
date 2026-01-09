@@ -14,6 +14,7 @@ import AutomationCenter from "@/components/admin/AutomationCenter";
 import TreasuryWallets from "@/components/admin/TreasuryWallets";
 import ProfitAutomation from "@/components/admin/ProfitAutomation";
 import ProfitDistributionRules from "@/components/admin/ProfitDistributionRules";
+import PlatformDocumentation from "@/components/admin/PlatformDocumentation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -63,6 +64,7 @@ const AdminDashboard = () => {
             <Route path="profit-automation" element={<ProfitDistributionRules />} />
             <Route path="security" element={<SecurityCenter />} />
             <Route path="copilot" element={<AICopilot />} />
+            <Route path="documentation" element={<PlatformDocumentation />} />
             <Route path="users" element={<AdminOverview />} />
             <Route path="logs" element={<AdminOverview />} />
             <Route path="settings" element={<AdminOverview />} />
