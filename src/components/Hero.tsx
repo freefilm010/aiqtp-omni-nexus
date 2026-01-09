@@ -47,7 +47,7 @@ const Hero = () => {
         
         <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-4xl mx-auto leading-relaxed">
           Trade crypto, stocks, derivatives, and more with AI-powered insights and quantum-secure infrastructure.
-          <span className="text-gold font-semibold"> Outperforming top-tier competitors.</span>
+          Outperforming top-tier competitors.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">

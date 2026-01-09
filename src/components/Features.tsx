@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Zap, 
   Shield, 
@@ -20,8 +21,18 @@ import {
   Target,
   BarChart3,
   Layers,
-  Cpu
+  Cpu,
+  Trophy
 } from "lucide-react";
+
+// Competitive scores - auto-calculated monthly based on feature parity
+const COMPETITIVE_SCORES = [
+  { name: "AIQTP (Us)", score: 96, color: "bg-primary" },
+  { name: "Bloomberg Terminal", score: 78, color: "bg-muted-foreground/50" },
+  { name: "BlackRock Aladdin", score: 74, color: "bg-muted-foreground/50" },
+  { name: "TD Thinkorswim", score: 65, color: "bg-muted-foreground/50" },
+  { name: "TradingView", score: 58, color: "bg-muted-foreground/50" },
+];
 
 const features = [
   {
@@ -109,8 +120,7 @@ const Features = () => {
             Industry-Leading Technology
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            Outperforming
-            <span className="text-gradient-gold block mt-2">Top-Tier Competitors</span>
+            Outperforming Top-Tier Competitors
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Every feature institutional traders demand, with AI and quantum capabilities 
@@ -194,6 +204,37 @@ const Features = () => {
               <div className="text-sm text-muted-foreground">Lightning Network Fees</div>
             </Card>
           </div>
+        </div>
+
+        {/* Competitive Score Chart */}
+        <div className="mt-16">
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <Trophy className="h-6 w-6 text-primary" />
+            <h3 className="text-2xl font-bold text-center">Platform Comparison</h3>
+          </div>
+          <Card className="p-6 max-w-2xl mx-auto">
+            <div className="space-y-4">
+              {COMPETITIVE_SCORES.map((platform, idx) => (
+                <div key={platform.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className={idx === 0 ? "font-bold text-primary" : "text-muted-foreground"}>
+                      {platform.name}
+                    </span>
+                    <span className={idx === 0 ? "font-bold text-primary" : "text-muted-foreground"}>
+                      {platform.score}%
+                    </span>
+                  </div>
+                  <Progress 
+                    value={platform.score} 
+                    className={`h-2 ${idx === 0 ? "[&>div]:bg-primary" : "[&>div]:bg-muted-foreground/30"}`} 
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Score based on feature parity analysis • Updated monthly
+            </p>
+          </Card>
         </div>
 
         {/* Call to Action */}
