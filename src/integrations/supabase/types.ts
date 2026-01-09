@@ -607,6 +607,7 @@ export type Database = {
         Row: {
           base_symbol: string
           base_token_address: string
+          base_token_coingecko_id: string | null
           chain: string
           created_at: string | null
           dex_name: string
@@ -620,12 +621,14 @@ export type Database = {
           price_usd: number | null
           quote_symbol: string
           quote_token_address: string
+          quote_token_coingecko_id: string | null
           updated_at: string | null
           volume_24h: number | null
         }
         Insert: {
           base_symbol: string
           base_token_address: string
+          base_token_coingecko_id?: string | null
           chain?: string
           created_at?: string | null
           dex_name: string
@@ -639,12 +642,14 @@ export type Database = {
           price_usd?: number | null
           quote_symbol: string
           quote_token_address: string
+          quote_token_coingecko_id?: string | null
           updated_at?: string | null
           volume_24h?: number | null
         }
         Update: {
           base_symbol?: string
           base_token_address?: string
+          base_token_coingecko_id?: string | null
           chain?: string
           created_at?: string | null
           dex_name?: string
@@ -658,6 +663,7 @@ export type Database = {
           price_usd?: number | null
           quote_symbol?: string
           quote_token_address?: string
+          quote_token_coingecko_id?: string | null
           updated_at?: string | null
           volume_24h?: number | null
         }
@@ -2859,6 +2865,7 @@ export type Database = {
       solana_wallets: {
         Row: {
           balance_sol: number | null
+          chain: string | null
           created_at: string | null
           encrypted_private_key: string | null
           id: string
@@ -2873,6 +2880,7 @@ export type Database = {
         }
         Insert: {
           balance_sol?: number | null
+          chain?: string | null
           created_at?: string | null
           encrypted_private_key?: string | null
           id?: string
@@ -2887,6 +2895,7 @@ export type Database = {
         }
         Update: {
           balance_sol?: number | null
+          chain?: string | null
           created_at?: string | null
           encrypted_private_key?: string | null
           id?: string
@@ -3017,6 +3026,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      supported_chains: {
+        Row: {
+          chain_type: string
+          created_at: string | null
+          explorer_url: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_evm_compatible: boolean | null
+          logo_url: string | null
+          name: string
+          native_token_coingecko_id: string | null
+          rpc_url: string | null
+          symbol: string
+        }
+        Insert: {
+          chain_type: string
+          created_at?: string | null
+          explorer_url?: string | null
+          features?: Json | null
+          id: string
+          is_active?: boolean | null
+          is_evm_compatible?: boolean | null
+          logo_url?: string | null
+          name: string
+          native_token_coingecko_id?: string | null
+          rpc_url?: string | null
+          symbol: string
+        }
+        Update: {
+          chain_type?: string
+          created_at?: string | null
+          explorer_url?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_evm_compatible?: boolean | null
+          logo_url?: string | null
+          name?: string
+          native_token_coingecko_id?: string | null
+          rpc_url?: string | null
+          symbol?: string
+        }
+        Relationships: []
+      }
+      supported_exchanges: {
+        Row: {
+          api_url: string | null
+          created_at: string | null
+          exchange_type: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          requires_api_key: boolean | null
+          supported_chains: string[] | null
+          trading_pairs_count: number | null
+          websocket_url: string | null
+        }
+        Insert: {
+          api_url?: string | null
+          created_at?: string | null
+          exchange_type: string
+          features?: Json | null
+          id: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          requires_api_key?: boolean | null
+          supported_chains?: string[] | null
+          trading_pairs_count?: number | null
+          websocket_url?: string | null
+        }
+        Update: {
+          api_url?: string | null
+          created_at?: string | null
+          exchange_type?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          requires_api_key?: boolean | null
+          supported_chains?: string[] | null
+          trading_pairs_count?: number | null
+          websocket_url?: string | null
+        }
+        Relationships: []
       }
       token_airdrops: {
         Row: {

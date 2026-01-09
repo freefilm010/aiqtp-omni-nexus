@@ -9,6 +9,20 @@ const corsHeaders = {
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const COINGECKO_PRO_API = 'https://pro-api.coingecko.com/api/v3';
 
+// Priority coins to always track with full data
+const PRIORITY_COINS = [
+  'bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple', 'cardano', 
+  'dogecoin', 'avalanche-2', 'polkadot', 'chainlink', 'polygon', 
+  'stellar', 'algorand', 'monero', 'zcash', 'dash', 'litecoin',
+  'cosmos', 'near', 'fantom', 'arbitrum', 'optimism', 'starknet',
+  'sui', 'aptos', 'sei-network', 'injective-protocol', 'ravencoin',
+  'tron', 'uniswap', 'aave', 'maker', 'compound-governance-token',
+  'lido-dao', 'rocket-pool', 'frax', 'curve-dao-token', 'convex-finance',
+  'pepe', 'dogwifcoin', 'bonk', 'shiba-inu', 'floki',
+  'render-token', 'fetch-ai', 'ocean-protocol', 'singularitynet',
+  'the-graph', 'filecoin', 'arweave', 'helium', 'akash-network'
+];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -25,6 +39,8 @@ serve(async (req) => {
     const baseUrl = apiKey ? COINGECKO_PRO_API : COINGECKO_API;
     const headers: Record<string, string> = { 'Accept': 'application/json' };
     if (apiKey) headers['x-cg-pro-api-key'] = apiKey;
+
+    console.log(`Market data sync action: ${action}`);
 
     // Log sync start
     const logSync = async (syncType: string) => {
