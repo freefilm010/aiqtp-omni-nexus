@@ -12,7 +12,9 @@ import {
   Youtube,
   Github,
   Accessibility,
-  AlertTriangle
+  AlertTriangle,
+  MessageCircle,
+  Send
 } from "lucide-react";
 import { LEGAL_DISCLAIMERS } from "@/lib/fees/platformFees";
 
@@ -50,18 +52,36 @@ const Footer = () => {
               finance with cutting-edge blockchain technology.
             </p>
             
-            <div className="flex space-x-4">
-              <Button variant="glass" size="icon">
-                <Twitter className="w-4 h-4" />
+            <div className="flex flex-wrap gap-2">
+              <Button variant="glass" size="icon" asChild>
+                <a href="https://twitter.com/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                  <Twitter className="w-4 h-4" />
+                </a>
               </Button>
-              <Button variant="glass" size="icon">
-                <Linkedin className="w-4 h-4" />
+              <Button variant="glass" size="icon" asChild>
+                <a href="https://discord.gg/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+                  <MessageCircle className="w-4 h-4" />
+                </a>
               </Button>
-              <Button variant="glass" size="icon">
-                <Youtube className="w-4 h-4" />
+              <Button variant="glass" size="icon" asChild>
+                <a href="https://t.me/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
+                  <Send className="w-4 h-4" />
+                </a>
               </Button>
-              <Button variant="glass" size="icon">
-                <Github className="w-4 h-4" />
+              <Button variant="glass" size="icon" asChild>
+                <a href="https://youtube.com/@aiqtp" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                  <Youtube className="w-4 h-4" />
+                </a>
+              </Button>
+              <Button variant="glass" size="icon" asChild>
+                <a href="https://github.com/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                  <Github className="w-4 h-4" />
+                </a>
+              </Button>
+              <Button variant="glass" size="icon" asChild>
+                <a href="https://linkedin.com/company/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                  <Linkedin className="w-4 h-4" />
+                </a>
               </Button>
             </div>
           </div>
