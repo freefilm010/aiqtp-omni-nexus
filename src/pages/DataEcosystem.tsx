@@ -18,12 +18,14 @@ import {
   BarChart3,
   Layers,
   Rocket,
-  Lock
+  Lock,
+  Network
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DataBotBuilder from "@/components/data/DataBotBuilder";
+import { TokenEcosystem } from "@/components/data/TokenEcosystem";
 
 interface DataToken {
   id: string;
@@ -199,8 +201,12 @@ const DataEcosystem = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="bots" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="tokens" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="tokens" className="flex items-center gap-2">
+              <Network className="h-4 w-4" />
+              Token Hierarchy
+            </TabsTrigger>
             <TabsTrigger value="bots" className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
               Data Bots
@@ -218,6 +224,10 @@ const DataEcosystem = () => {
               Roadmap
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="tokens">
+            <TokenEcosystem />
+          </TabsContent>
 
           <TabsContent value="bots">
             <DataBotBuilder />

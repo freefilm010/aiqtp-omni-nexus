@@ -873,6 +873,64 @@ export type Database = {
           },
         ]
       }
+      data_mining_rewards: {
+        Row: {
+          amount_mined: number
+          bot_id: string | null
+          created_at: string | null
+          id: string
+          mining_source: string | null
+          parent_boost_earned: number
+          parent_token_id: string | null
+          token_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_mined?: number
+          bot_id?: string | null
+          created_at?: string | null
+          id?: string
+          mining_source?: string | null
+          parent_boost_earned?: number
+          parent_token_id?: string | null
+          token_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_mined?: number
+          bot_id?: string | null
+          created_at?: string | null
+          id?: string
+          mining_source?: string | null
+          parent_boost_earned?: number
+          parent_token_id?: string | null
+          token_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_mining_rewards_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_mining_rewards_parent_token_id_fkey"
+            columns: ["parent_token_id"]
+            isOneToOne: false
+            referencedRelation: "data_tokens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_mining_rewards_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "data_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_products: {
         Row: {
           category: string
@@ -980,6 +1038,51 @@ export type Database = {
           },
         ]
       }
+      data_token_boosts: {
+        Row: {
+          boost_amount: number
+          boost_type: string | null
+          child_token_id: string | null
+          created_at: string | null
+          id: string
+          miners_contributing: number | null
+          parent_token_id: string | null
+        }
+        Insert: {
+          boost_amount: number
+          boost_type?: string | null
+          child_token_id?: string | null
+          created_at?: string | null
+          id?: string
+          miners_contributing?: number | null
+          parent_token_id?: string | null
+        }
+        Update: {
+          boost_amount?: number
+          boost_type?: string | null
+          child_token_id?: string | null
+          created_at?: string | null
+          id?: string
+          miners_contributing?: number | null
+          parent_token_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_token_boosts_child_token_id_fkey"
+            columns: ["child_token_id"]
+            isOneToOne: false
+            referencedRelation: "data_tokens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_token_boosts_parent_token_id_fkey"
+            columns: ["parent_token_id"]
+            isOneToOne: false
+            referencedRelation: "data_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_token_holdings: {
         Row: {
           balance: number | null
@@ -1015,42 +1118,77 @@ export type Database = {
       }
       data_tokens: {
         Row: {
+          boost_multiplier: number | null
           circulating_supply: number | null
           created_at: string | null
+          data_category: string | null
           description: string | null
+          emission_rate: number | null
           id: string
+          is_active: boolean | null
           market_cap: number | null
+          miners_count: number | null
+          mining_power: number | null
           name: string
+          parent_token_id: string | null
           price_usd: number | null
           symbol: string
+          token_type: string | null
+          total_mined: number | null
           total_supply: number | null
           use_cases: Json | null
         }
         Insert: {
+          boost_multiplier?: number | null
           circulating_supply?: number | null
           created_at?: string | null
+          data_category?: string | null
           description?: string | null
+          emission_rate?: number | null
           id?: string
+          is_active?: boolean | null
           market_cap?: number | null
+          miners_count?: number | null
+          mining_power?: number | null
           name?: string
+          parent_token_id?: string | null
           price_usd?: number | null
           symbol?: string
+          token_type?: string | null
+          total_mined?: number | null
           total_supply?: number | null
           use_cases?: Json | null
         }
         Update: {
+          boost_multiplier?: number | null
           circulating_supply?: number | null
           created_at?: string | null
+          data_category?: string | null
           description?: string | null
+          emission_rate?: number | null
           id?: string
+          is_active?: boolean | null
           market_cap?: number | null
+          miners_count?: number | null
+          mining_power?: number | null
           name?: string
+          parent_token_id?: string | null
           price_usd?: number | null
           symbol?: string
+          token_type?: string | null
+          total_mined?: number | null
           total_supply?: number | null
           use_cases?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "data_tokens_parent_token_id_fkey"
+            columns: ["parent_token_id"]
+            isOneToOne: false
+            referencedRelation: "data_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dex_pairs: {
         Row: {
