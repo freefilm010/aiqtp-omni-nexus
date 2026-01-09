@@ -58,6 +58,7 @@ const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const PopoutTool = lazy(() => import("./pages/PopoutTool"));
 const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
 
 const queryClient = new QueryClient();
 
@@ -155,6 +156,7 @@ const App = () => (
                 <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
                 <Route path="/watchlist" element={<WatchlistPage />} />
                 <Route path="/revenue" element={<ProtectedRoute><RevenueCommandCenter /></ProtectedRoute>} />
+                <Route path="/data-ecosystem" element={<ProtectedRoute><DataEcosystem /></ProtectedRoute>} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

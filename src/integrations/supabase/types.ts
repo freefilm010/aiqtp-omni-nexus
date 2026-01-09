@@ -663,6 +663,216 @@ export type Database = {
           },
         ]
       }
+      data_aggregator_bots: {
+        Row: {
+          admin_approved: boolean | null
+          aggregation_rules: Json | null
+          bot_type: string
+          code: string | null
+          code_protected: boolean | null
+          collection_frequency: string | null
+          created_at: string | null
+          creator_profit_share: number | null
+          data_category: string
+          description: string | null
+          graduation_date: string | null
+          id: string
+          is_active: boolean | null
+          is_graduated: boolean | null
+          last_collection_at: string | null
+          name: string
+          output_format: string | null
+          quality_score: number | null
+          reliability_score: number | null
+          sources: Json | null
+          total_data_sold: number | null
+          total_earnings: number | null
+          total_records_collected: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_approved?: boolean | null
+          aggregation_rules?: Json | null
+          bot_type?: string
+          code?: string | null
+          code_protected?: boolean | null
+          collection_frequency?: string | null
+          created_at?: string | null
+          creator_profit_share?: number | null
+          data_category: string
+          description?: string | null
+          graduation_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_graduated?: boolean | null
+          last_collection_at?: string | null
+          name: string
+          output_format?: string | null
+          quality_score?: number | null
+          reliability_score?: number | null
+          sources?: Json | null
+          total_data_sold?: number | null
+          total_earnings?: number | null
+          total_records_collected?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_approved?: boolean | null
+          aggregation_rules?: Json | null
+          bot_type?: string
+          code?: string | null
+          code_protected?: boolean | null
+          collection_frequency?: string | null
+          created_at?: string | null
+          creator_profit_share?: number | null
+          data_category?: string
+          description?: string | null
+          graduation_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_graduated?: boolean | null
+          last_collection_at?: string | null
+          name?: string
+          output_format?: string | null
+          quality_score?: number | null
+          reliability_score?: number | null
+          sources?: Json | null
+          total_data_sold?: number | null
+          total_earnings?: number | null
+          total_records_collected?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      data_bot_marketplace: {
+        Row: {
+          bot_id: string | null
+          featured: boolean | null
+          id: string
+          is_available: boolean | null
+          listed_at: string | null
+          rental_price_monthly: number | null
+          total_rentals: number | null
+          total_revenue: number | null
+        }
+        Insert: {
+          bot_id?: string | null
+          featured?: boolean | null
+          id?: string
+          is_available?: boolean | null
+          listed_at?: string | null
+          rental_price_monthly?: number | null
+          total_rentals?: number | null
+          total_revenue?: number | null
+        }
+        Update: {
+          bot_id?: string | null
+          featured?: boolean | null
+          id?: string
+          is_available?: boolean | null
+          listed_at?: string | null
+          rental_price_monthly?: number | null
+          total_rentals?: number | null
+          total_revenue?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_bot_marketplace_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_bot_rentals: {
+        Row: {
+          bot_id: string | null
+          created_at: string | null
+          id: string
+          monthly_price: number
+          rental_end: string | null
+          rental_start: string | null
+          renter_user_id: string
+          status: string | null
+        }
+        Insert: {
+          bot_id?: string | null
+          created_at?: string | null
+          id?: string
+          monthly_price: number
+          rental_end?: string | null
+          rental_start?: string | null
+          renter_user_id: string
+          status?: string | null
+        }
+        Update: {
+          bot_id?: string | null
+          created_at?: string | null
+          id?: string
+          monthly_price?: number
+          rental_end?: string | null
+          rental_start?: string | null
+          renter_user_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_bot_rentals_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_collection_jobs: {
+        Row: {
+          bot_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          data_size_bytes: number | null
+          error_message: string | null
+          id: string
+          records_collected: number | null
+          started_at: string | null
+          status: string | null
+        }
+        Insert: {
+          bot_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          data_size_bytes?: number | null
+          error_message?: string | null
+          id?: string
+          records_collected?: number | null
+          started_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          bot_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          data_size_bytes?: number | null
+          error_message?: string | null
+          id?: string
+          records_collected?: number | null
+          started_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_collection_jobs_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_products: {
         Row: {
           category: string
@@ -769,6 +979,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      data_token_holdings: {
+        Row: {
+          balance: number | null
+          created_at: string | null
+          earned_from_bots: number | null
+          earned_from_data_sales: number | null
+          id: string
+          staked_balance: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string | null
+          earned_from_bots?: number | null
+          earned_from_data_sales?: number | null
+          id?: string
+          staked_balance?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string | null
+          earned_from_bots?: number | null
+          earned_from_data_sales?: number | null
+          id?: string
+          staked_balance?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      data_tokens: {
+        Row: {
+          circulating_supply: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          market_cap: number | null
+          name: string
+          price_usd: number | null
+          symbol: string
+          total_supply: number | null
+          use_cases: Json | null
+        }
+        Insert: {
+          circulating_supply?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          market_cap?: number | null
+          name?: string
+          price_usd?: number | null
+          symbol?: string
+          total_supply?: number | null
+          use_cases?: Json | null
+        }
+        Update: {
+          circulating_supply?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          market_cap?: number | null
+          name?: string
+          price_usd?: number | null
+          symbol?: string
+          total_supply?: number | null
+          use_cases?: Json | null
+        }
+        Relationships: []
       }
       dex_pairs: {
         Row: {
