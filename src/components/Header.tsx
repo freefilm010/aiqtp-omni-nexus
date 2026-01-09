@@ -287,6 +287,10 @@ const Header = () => {
                       <Music className="mr-2 h-3.5 w-3.5 text-pink-500" />
                       Media
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/revenue')} className="py-1.5 text-sm">
+                      <Coins className="mr-2 h-3.5 w-3.5 text-green-500" />
+                      Revenue Center
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/pricing')} className="py-1.5 text-sm">
                       <DollarSign className="mr-2 h-3.5 w-3.5" />
                       Pricing
