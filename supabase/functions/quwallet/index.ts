@@ -641,6 +641,208 @@ serve(async (req) => {
         });
       }
 
+      case 'get_treasury_status': {
+        // Get admin treasury holdings
+        const { data: treasuryWallets, error: treasuryError } = await supabase
+          .from('qtc_ledger')
+          .select('*')
+          .in('wallet_type', ['treasury', 'rewards_pool', 'staking_pool']);
+
+        if (treasuryError) throw treasuryError;
+
+        const { data: config } = await supabase
+          .from('qtc_treasury_config')
+          .select('*');
+
+        const { data: recentDistributions } = await supabase
+          .from('qtc_transactions')
+          .select('*')
+          .eq('from_address', 'qu_treasury_aiqtp_genesis_000000000000000000000000000000')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        const totalTreasury = treasuryWallets?.reduce((acc, w) => acc + Number(w.balance), 0) || 0;
+        const totalSupply = 1000000000;
+
+        return new Response(JSON.stringify({
+          success: true,
+          treasury: {
+            total_supply: totalSupply,
+            treasury_holdings: totalTreasury,
+            circulating_supply: totalSupply - totalTreasury,
+            circulation_percentage: ((totalSupply - totalTreasury) / totalSupply * 100).toFixed(4),
+            wallets: treasuryWallets?.map(w => ({
+              address: w.wallet_address,
+              type: w.wallet_type,
+              balance: w.balance,
+              controlled_by: w.controlled_by
+            })),
+            config: config?.reduce((acc, c) => ({ ...acc, [c.config_key]: c.config_value }), {}),
+            recent_distributions: recentDistributions
+          }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      case 'admin_transfer': {
+        // Admin-only treasury transfers
+        if (!userId) {
+          return new Response(JSON.stringify({ error: 'Authentication required' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Check if user is admin
+        const { data: adminRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .eq('role', 'admin')
+          .single();
+
+        if (!adminRole) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const { from_treasury, to_address, amount, memo } = params;
+        if (!from_treasury || !to_address || !amount) {
+          throw new Error('from_treasury, to_address, and amount required');
+        }
+
+        // Verify treasury wallet is controlled by admin
+        const { data: treasuryLedger } = await supabase
+          .from('qtc_ledger')
+          .select('*')
+          .eq('wallet_address', from_treasury)
+          .eq('controlled_by', userId)
+          .single();
+
+        if (!treasuryLedger) {
+          throw new Error('Treasury wallet not found or not controlled by this admin');
+        }
+
+        if (Number(treasuryLedger.balance) < Number(amount)) {
+          throw new Error(`Insufficient treasury balance. Available: ${treasuryLedger.balance} QTC`);
+        }
+
+        const txHash = await generateTxHash({ from: from_treasury, to: to_address, amount, memo, admin: userId });
+
+        // Create transaction
+        await supabase
+          .from('qtc_transactions')
+          .insert({
+            tx_hash: txHash,
+            block_height: Math.floor(Date.now() / 8000),
+            from_address: from_treasury,
+            to_address,
+            amount,
+            fee: 0,
+            nonce: treasuryLedger.nonce + 1,
+            signature: 'admin_treasury_transfer',
+            status: 'confirmed',
+            tx_type: 'treasury_distribution',
+            metadata: { memo, admin_id: userId }
+          });
+
+        // Update treasury balance
+        await supabase
+          .from('qtc_ledger')
+          .update({ 
+            balance: Number(treasuryLedger.balance) - Number(amount),
+            nonce: treasuryLedger.nonce + 1
+          })
+          .eq('wallet_address', from_treasury);
+
+        // Update/create recipient balance
+        const { data: recipientLedger } = await supabase
+          .from('qtc_ledger')
+          .select('balance')
+          .eq('wallet_address', to_address)
+          .single();
+
+        if (recipientLedger) {
+          await supabase
+            .from('qtc_ledger')
+            .update({ balance: Number(recipientLedger.balance) + Number(amount) })
+            .eq('wallet_address', to_address);
+        } else {
+          await supabase
+            .from('qtc_ledger')
+            .insert({ wallet_address: to_address, balance: amount, wallet_type: 'user' });
+        }
+
+        console.log(`Admin treasury transfer: ${amount} QTC from ${from_treasury} to ${to_address}`);
+
+        return new Response(JSON.stringify({
+          success: true,
+          transfer: {
+            tx_hash: txHash,
+            from: from_treasury,
+            to: to_address,
+            amount,
+            memo,
+            status: 'confirmed',
+            admin_id: userId
+          }
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      case 'update_treasury_config': {
+        if (!userId) {
+          return new Response(JSON.stringify({ error: 'Authentication required' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Check admin
+        const { data: adminCheck } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .eq('role', 'admin')
+          .single();
+
+        if (!adminCheck) {
+          return new Response(JSON.stringify({ error: 'Admin access required' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const { config_key, config_value } = params;
+        if (!config_key || !config_value) {
+          throw new Error('config_key and config_value required');
+        }
+
+        const { data: updated, error } = await supabase
+          .from('qtc_treasury_config')
+          .upsert({
+            config_key,
+            config_value,
+            updated_by: userId,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'config_key' })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        return new Response(JSON.stringify({
+          success: true,
+          config: updated
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
           status: 400,
