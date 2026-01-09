@@ -238,10 +238,10 @@ const Auth = () => {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-background p-4">
       <h1 className="sr-only">AIQTP Platform Sign In</h1>
 
-      <section className="w-full max-w-md">
+      <section className="w-full max-w-md relative z-10">
         <Card>
           <CardHeader className="space-y-1 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
