@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Zap, Crown, Rocket, TrendingUp, Loader2, CheckCircle } from "lucide-react";
+import { Zap, Crown, Rocket, TrendingUp, Loader2, CheckCircle, Gift, Atom } from "lucide-react";
 
 interface PricingPlan {
   id: string;
@@ -17,6 +17,8 @@ interface PricingPlan {
   icon: React.ReactNode;
   popular?: boolean;
   badge?: string;
+  freeMonths?: number;
+  monthlyEquivalent?: number;
 }
 
 const PRICING_PLANS: PricingPlan[] = [
@@ -30,6 +32,31 @@ const PRICING_PLANS: PricingPlan[] = [
     icon: <Zap className="h-6 w-6" />,
   },
   {
+    id: "qaqi-monthly",
+    name: "QAQI Monthly",
+    description: "Month-to-month quantum AI access",
+    price: 12,
+    mode: "subscription",
+    interval: "month",
+    features: ["QAQI Quantum Agent Access", "QuWallet Integration", "$QTC Mining Rewards", "Priority Support", "Cancel Anytime"],
+    icon: <Atom className="h-6 w-6" />,
+    monthlyEquivalent: 12,
+  },
+  {
+    id: "qaqi-annual",
+    name: "QAQI Annual",
+    description: "Best value - 2 months FREE",
+    price: 100,
+    mode: "subscription",
+    interval: "year",
+    features: ["Everything in Monthly", "2 Months FREE ($44 savings)", "Early Feature Access", "1-on-1 Onboarding Call", "Exclusive Discord Role"],
+    icon: <Crown className="h-6 w-6" />,
+    popular: true,
+    badge: "Best Value",
+    freeMonths: 2,
+    monthlyEquivalent: 8.33,
+  },
+  {
     id: "pro-monthly",
     name: "Pro Trader",
     description: "For serious traders",
@@ -38,8 +65,6 @@ const PRICING_PLANS: PricingPlan[] = [
     interval: "month",
     features: ["Unlimited Strategies", "Advanced Backtesting", "Real-time Signals", "Priority Support", "Strategy Marketplace Access"],
     icon: <TrendingUp className="h-6 w-6" />,
-    popular: true,
-    badge: "Most Popular",
   },
   {
     id: "elite-monthly",
@@ -48,9 +73,8 @@ const PRICING_PLANS: PricingPlan[] = [
     price: 299,
     mode: "subscription",
     interval: "month",
-    features: ["Everything in Pro", "Quantum Computing Access", "1-on-1 Strategy Consulting", "Custom Indicators", "White-label Solutions", "API Access"],
+    features: ["Everything in Pro", "Full Quantum Computing Access", "1-on-1 Strategy Consulting", "Custom Indicators", "White-label Solutions", "API Access"],
     icon: <Crown className="h-6 w-6" />,
-    badge: "Best Value",
   },
   {
     id: "institutional",
@@ -102,7 +126,7 @@ export const QuickPayment = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {PRICING_PLANS.map((plan) => (
         <Card 
           key={plan.id} 
@@ -112,6 +136,15 @@ export const QuickPayment = () => {
             <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
               {plan.badge}
             </Badge>
+          )}
+          
+          {plan.freeMonths && (
+            <div className="absolute -top-2 -right-2">
+              <Badge variant="secondary" className="bg-green-500 text-white">
+                <Gift className="h-3 w-3 mr-1" />
+                {plan.freeMonths} Months FREE
+              </Badge>
+            </div>
           )}
           
           <CardHeader className="text-center pb-2">
@@ -127,6 +160,11 @@ export const QuickPayment = () => {
               <span className="text-4xl font-bold">${plan.price}</span>
               {plan.mode === "subscription" && (
                 <span className="text-muted-foreground">/{plan.interval}</span>
+              )}
+              {plan.monthlyEquivalent && plan.interval === "year" && (
+                <div className="text-sm text-green-500 mt-1">
+                  Only ${plan.monthlyEquivalent.toFixed(2)}/month
+                </div>
               )}
             </div>
             
