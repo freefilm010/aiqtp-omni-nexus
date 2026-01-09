@@ -10,7 +10,6 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import SkipLinks from "./components/accessibility/SkipLinks";
 import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnouncer";
 import ProtectedRoute from "./components/ProtectedRoute";
-import FloatingToolbar from "./components/FloatingToolbar";
 import FloatingWindowsLayer from "./components/floating/FloatingWindowsLayer";
 import { FloatingWindowsProvider } from "./contexts/FloatingWindowsContext";
 // Lazy load all page components for code-splitting
@@ -56,6 +55,7 @@ const LegalPage = lazy(() => import("./pages/LegalPage"));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
 const FeesPage = lazy(() => import("./pages/FeesPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
+const PopoutTool = lazy(() => import("./pages/PopoutTool"));
 
 const queryClient = new QueryClient();
 
@@ -107,7 +107,6 @@ const App = () => (
             <AuthDeepLinkHandler />
             <SkipLinks />
             <ScreenReaderAnnouncer />
-            <FloatingToolbar />
             <FloatingWindowsLayer />
             <Suspense fallback={<PageLoader />}>
               <Routes>
@@ -148,6 +147,7 @@ const App = () => (
                 <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
                 <Route path="/cockpit" element={<ProtectedRoute><TradingCockpit /></ProtectedRoute>} />
                 <Route path="/media" element={<ProtectedRoute><MediaHub /></ProtectedRoute>} />
+                <Route path="/popout/:tool" element={<ProtectedRoute><PopoutTool /></ProtectedRoute>} />
                 <Route path="/legal" element={<LegalPage />} />
                 <Route path="/fees" element={<FeesPage />} />
                 <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
