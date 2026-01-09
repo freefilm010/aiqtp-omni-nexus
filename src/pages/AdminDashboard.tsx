@@ -15,6 +15,9 @@ import TreasuryWallets from "@/components/admin/TreasuryWallets";
 import ProfitAutomation from "@/components/admin/ProfitAutomation";
 import ProfitDistributionRules from "@/components/admin/ProfitDistributionRules";
 import PlatformDocumentation from "@/components/admin/PlatformDocumentation";
+import TokenFactory from "@/components/admin/TokenFactory";
+import InfluencerProgram from "@/components/admin/InfluencerProgram";
+import ContestManager from "@/components/admin/ContestManager";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,6 +68,9 @@ const AdminDashboard = () => {
             <Route path="security" element={<SecurityCenter />} />
             <Route path="copilot" element={<AICopilot />} />
             <Route path="documentation" element={<PlatformDocumentation />} />
+            <Route path="tokens" element={<TokenFactory />} />
+            <Route path="influencers" element={<InfluencerProgram />} />
+            <Route path="contests" element={<ContestManager />} />
             <Route path="users" element={<AdminOverview />} />
             <Route path="logs" element={<AdminOverview />} />
             <Route path="settings" element={<AdminOverview />} />
