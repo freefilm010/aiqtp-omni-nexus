@@ -52,6 +52,7 @@ const PricingPage = lazy(() => import("./pages/PricingPage"));
 const MediaHub = lazy(() => import("./pages/MediaHub"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage"));
+const FeesPage = lazy(() => import("./pages/FeesPage"));
 
 const queryClient = new QueryClient();
 
@@ -142,6 +143,7 @@ const App = () => (
               <Route path="/cockpit" element={<ProtectedRoute><TradingCockpit /></ProtectedRoute>} />
               <Route path="/media" element={<ProtectedRoute><MediaHub /></ProtectedRoute>} />
               <Route path="/legal" element={<LegalPage />} />
+              <Route path="/fees" element={<FeesPage />} />
               <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

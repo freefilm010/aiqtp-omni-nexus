@@ -235,7 +235,7 @@ Ready to build the future of quantum finance. What would you like to accomplish?
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-12rem)]">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-16rem)] min-h-[500px]">
       {/* Main Chat Interface */}
       <Card className="lg:col-span-3 flex flex-col">
         <CardHeader className="border-b pb-3">
@@ -324,7 +324,7 @@ Ready to build the future of quantum finance. What would you like to accomplish?
                         QAQI Response
                       </div>
                     )}
-                    <div className="text-sm whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none">
+                    <div className="text-sm whitespace-pre-wrap break-words">
                       {message.content.split('\n').map((line, i) => (
                         <p key={i} className="mb-1">{line}</p>
                       ))}
@@ -376,7 +376,7 @@ Ready to build the future of quantum finance. What would you like to accomplish?
           </ScrollArea>
 
           {/* Input */}
-          <form onSubmit={handleSubmit} className="p-4 border-t">
+          <form onSubmit={handleSubmit} className="p-4 border-t bg-background sticky bottom-0 z-10">
             <div className="flex gap-2">
               <Input
                 ref={inputRef}
