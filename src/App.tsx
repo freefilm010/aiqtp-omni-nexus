@@ -10,7 +10,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import SkipLinks from "./components/accessibility/SkipLinks";
 import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnouncer";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import FloatingToolbar from "./components/FloatingToolbar";
 // Lazy load all page components for code-splitting
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -103,6 +103,7 @@ const App = () => (
           <AuthDeepLinkHandler />
           <SkipLinks />
           <ScreenReaderAnnouncer />
+          <FloatingToolbar />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Index />} />
