@@ -603,6 +603,66 @@ export type Database = {
           },
         ]
       }
+      dex_pairs: {
+        Row: {
+          base_symbol: string
+          base_token_address: string
+          chain: string
+          created_at: string | null
+          dex_name: string
+          fee_percent: number | null
+          id: string
+          is_verified: boolean | null
+          liquidity_usd: number | null
+          pair_address: string
+          price: number | null
+          price_change_24h: number | null
+          price_usd: number | null
+          quote_symbol: string
+          quote_token_address: string
+          updated_at: string | null
+          volume_24h: number | null
+        }
+        Insert: {
+          base_symbol: string
+          base_token_address: string
+          chain?: string
+          created_at?: string | null
+          dex_name: string
+          fee_percent?: number | null
+          id?: string
+          is_verified?: boolean | null
+          liquidity_usd?: number | null
+          pair_address: string
+          price?: number | null
+          price_change_24h?: number | null
+          price_usd?: number | null
+          quote_symbol: string
+          quote_token_address: string
+          updated_at?: string | null
+          volume_24h?: number | null
+        }
+        Update: {
+          base_symbol?: string
+          base_token_address?: string
+          chain?: string
+          created_at?: string | null
+          dex_name?: string
+          fee_percent?: number | null
+          id?: string
+          is_verified?: boolean | null
+          liquidity_usd?: number | null
+          pair_address?: string
+          price?: number | null
+          price_change_24h?: number | null
+          price_usd?: number | null
+          quote_symbol?: string
+          quote_token_address?: string
+          updated_at?: string | null
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
       elite_club_members: {
         Row: {
           created_at: string | null
@@ -1231,6 +1291,220 @@ export type Database = {
           status?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      market_coins: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          large_url: string | null
+          market_cap_rank: number | null
+          name: string
+          platforms: Json | null
+          symbol: string
+          thumb_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          is_active?: boolean | null
+          large_url?: string | null
+          market_cap_rank?: number | null
+          name: string
+          platforms?: Json | null
+          symbol: string
+          thumb_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          large_url?: string | null
+          market_cap_rank?: number | null
+          name?: string
+          platforms?: Json | null
+          symbol?: string
+          thumb_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      market_ohlcv: {
+        Row: {
+          close: number
+          close_time: string | null
+          coin_id: string
+          created_at: string | null
+          high: number
+          id: string
+          low: number
+          open: number
+          open_time: string
+          timeframe: string
+          volume: number | null
+        }
+        Insert: {
+          close: number
+          close_time?: string | null
+          coin_id: string
+          created_at?: string | null
+          high: number
+          id?: string
+          low: number
+          open: number
+          open_time: string
+          timeframe: string
+          volume?: number | null
+        }
+        Update: {
+          close?: number
+          close_time?: string | null
+          coin_id?: string
+          created_at?: string | null
+          high?: number
+          id?: string
+          low?: number
+          open?: number
+          open_time?: string
+          timeframe?: string
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_ohlcv_coin_id_fkey"
+            columns: ["coin_id"]
+            isOneToOne: false
+            referencedRelation: "market_coins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_prices: {
+        Row: {
+          ath: number | null
+          ath_change_percentage: number | null
+          ath_date: string | null
+          atl: number | null
+          atl_change_percentage: number | null
+          atl_date: string | null
+          circulating_supply: number | null
+          coin_id: string
+          fully_diluted_valuation: number | null
+          high_24h: number | null
+          id: string
+          last_updated: string | null
+          low_24h: number | null
+          market_cap: number | null
+          market_cap_change_24h: number | null
+          market_cap_rank: number | null
+          max_supply: number | null
+          price_btc: number | null
+          price_change_24h: number | null
+          price_change_percentage_24h: number | null
+          price_change_percentage_30d: number | null
+          price_change_percentage_7d: number | null
+          price_eth: number | null
+          price_usd: number
+          total_supply: number | null
+          total_volume: number | null
+        }
+        Insert: {
+          ath?: number | null
+          ath_change_percentage?: number | null
+          ath_date?: string | null
+          atl?: number | null
+          atl_change_percentage?: number | null
+          atl_date?: string | null
+          circulating_supply?: number | null
+          coin_id: string
+          fully_diluted_valuation?: number | null
+          high_24h?: number | null
+          id?: string
+          last_updated?: string | null
+          low_24h?: number | null
+          market_cap?: number | null
+          market_cap_change_24h?: number | null
+          market_cap_rank?: number | null
+          max_supply?: number | null
+          price_btc?: number | null
+          price_change_24h?: number | null
+          price_change_percentage_24h?: number | null
+          price_change_percentage_30d?: number | null
+          price_change_percentage_7d?: number | null
+          price_eth?: number | null
+          price_usd: number
+          total_supply?: number | null
+          total_volume?: number | null
+        }
+        Update: {
+          ath?: number | null
+          ath_change_percentage?: number | null
+          ath_date?: string | null
+          atl?: number | null
+          atl_change_percentage?: number | null
+          atl_date?: string | null
+          circulating_supply?: number | null
+          coin_id?: string
+          fully_diluted_valuation?: number | null
+          high_24h?: number | null
+          id?: string
+          last_updated?: string | null
+          low_24h?: number | null
+          market_cap?: number | null
+          market_cap_change_24h?: number | null
+          market_cap_rank?: number | null
+          max_supply?: number | null
+          price_btc?: number | null
+          price_change_24h?: number | null
+          price_change_percentage_24h?: number | null
+          price_change_percentage_30d?: number | null
+          price_change_percentage_7d?: number | null
+          price_eth?: number | null
+          price_usd?: number
+          total_supply?: number | null
+          total_volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_prices_coin_id_fkey"
+            columns: ["coin_id"]
+            isOneToOne: true
+            referencedRelation: "market_coins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_sync_logs: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          records_synced: number | null
+          started_at: string | null
+          status: string | null
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_type?: string
         }
         Relationships: []
       }
@@ -2424,6 +2698,217 @@ export type Database = {
         }
         Relationships: []
       }
+      solana_token_balances: {
+        Row: {
+          balance: number | null
+          id: string
+          last_updated: string | null
+          token_id: string
+          value_usd: number | null
+          wallet_id: string
+        }
+        Insert: {
+          balance?: number | null
+          id?: string
+          last_updated?: string | null
+          token_id: string
+          value_usd?: number | null
+          wallet_id: string
+        }
+        Update: {
+          balance?: number | null
+          id?: string
+          last_updated?: string | null
+          token_id?: string
+          value_usd?: number | null
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solana_token_balances_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "solana_tokens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solana_token_balances_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "solana_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solana_tokens: {
+        Row: {
+          coingecko_id: string | null
+          created_at: string | null
+          daily_volume: number | null
+          decimals: number | null
+          holder_count: number | null
+          id: string
+          is_platform_token: boolean | null
+          is_verified: boolean | null
+          liquidity_usd: number | null
+          logo_uri: string | null
+          mint_address: string
+          name: string
+          price_change_24h: number | null
+          price_usd: number | null
+          symbol: string
+          total_supply: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          coingecko_id?: string | null
+          created_at?: string | null
+          daily_volume?: number | null
+          decimals?: number | null
+          holder_count?: number | null
+          id?: string
+          is_platform_token?: boolean | null
+          is_verified?: boolean | null
+          liquidity_usd?: number | null
+          logo_uri?: string | null
+          mint_address: string
+          name: string
+          price_change_24h?: number | null
+          price_usd?: number | null
+          symbol: string
+          total_supply?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          coingecko_id?: string | null
+          created_at?: string | null
+          daily_volume?: number | null
+          decimals?: number | null
+          holder_count?: number | null
+          id?: string
+          is_platform_token?: boolean | null
+          is_verified?: boolean | null
+          liquidity_usd?: number | null
+          logo_uri?: string | null
+          mint_address?: string
+          name?: string
+          price_change_24h?: number | null
+          price_usd?: number | null
+          symbol?: string
+          total_supply?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solana_tokens_coingecko_id_fkey"
+            columns: ["coingecko_id"]
+            isOneToOne: false
+            referencedRelation: "market_coins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solana_transactions: {
+        Row: {
+          amount: number
+          block_time: string | null
+          created_at: string | null
+          fee_lamports: number | null
+          from_wallet: string
+          id: string
+          metadata: Json | null
+          signature: string
+          slot: number | null
+          status: string | null
+          to_wallet: string
+          token_mint: string | null
+          tx_type: string
+        }
+        Insert: {
+          amount: number
+          block_time?: string | null
+          created_at?: string | null
+          fee_lamports?: number | null
+          from_wallet: string
+          id?: string
+          metadata?: Json | null
+          signature: string
+          slot?: number | null
+          status?: string | null
+          to_wallet: string
+          token_mint?: string | null
+          tx_type: string
+        }
+        Update: {
+          amount?: number
+          block_time?: string | null
+          created_at?: string | null
+          fee_lamports?: number | null
+          from_wallet?: string
+          id?: string
+          metadata?: Json | null
+          signature?: string
+          slot?: number | null
+          status?: string | null
+          to_wallet?: string
+          token_mint?: string | null
+          tx_type?: string
+        }
+        Relationships: []
+      }
+      solana_wallets: {
+        Row: {
+          balance_sol: number | null
+          created_at: string | null
+          encrypted_private_key: string | null
+          id: string
+          is_active: boolean | null
+          label: string | null
+          last_activity: string | null
+          operator_id: string | null
+          owner_user_id: string | null
+          updated_at: string | null
+          wallet_address: string
+          wallet_type: string
+        }
+        Insert: {
+          balance_sol?: number | null
+          created_at?: string | null
+          encrypted_private_key?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string | null
+          last_activity?: string | null
+          operator_id?: string | null
+          owner_user_id?: string | null
+          updated_at?: string | null
+          wallet_address: string
+          wallet_type: string
+        }
+        Update: {
+          balance_sol?: number | null
+          created_at?: string | null
+          encrypted_private_key?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string | null
+          last_activity?: string | null
+          operator_id?: string | null
+          owner_user_id?: string | null
+          updated_at?: string | null
+          wallet_address?: string
+          wallet_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solana_wallets_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strategy_performance: {
         Row: {
           created_at: string
@@ -2971,6 +3456,21 @@ export type Database = {
           p_transaction_type: string
         }
         Returns: string
+      }
+      update_market_price: {
+        Args: {
+          p_change_24h?: number
+          p_change_7d?: number
+          p_coin_id: string
+          p_high_24h?: number
+          p_low_24h?: number
+          p_market_cap?: number
+          p_price_btc?: number
+          p_price_eth?: number
+          p_price_usd: number
+          p_volume?: number
+        }
+        Returns: undefined
       }
       update_token_price: {
         Args: {
