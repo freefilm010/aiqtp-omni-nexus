@@ -123,17 +123,29 @@ const mockGenerators: RevenueGenerator[] = [
 
 const RevenueAutomation = () => {
   const [generators, setGenerators] = useState<RevenueGenerator[]>(mockGenerators);
-  const [isAdminVerified, setIsAdminVerified] = useState(true); // Would be verified via secure auth
+  const [isAdminVerified, setIsAdminVerified] = useState(true);
   const [selectedGenerator, setSelectedGenerator] = useState<RevenueGenerator | null>(null);
   const [riskTolerance, setRiskTolerance] = useState([50]);
   const [autoReinvest, setAutoReinvest] = useState(true);
-  const [reinvestPercent, setReinvestPercent] = useState([20]);
+  const [reinvestPercent, setReinvestPercent] = useState([90]); // 90% reinvestment as requested
+  const [topStrategiesCount, setTopStrategiesCount] = useState([3]); // Top 3 strategies
 
   const totalDailyRevenue = generators
     .filter(g => g.status === "active")
     .reduce((sum, g) => sum + g.dailyRevenue, 0);
 
   const totalRevenue = generators.reduce((sum, g) => sum + g.totalRevenue, 0);
+  
+  // Auto-add revenue to admin wallet (simulated - would be real Supabase call)
+  useEffect(() => {
+    if (autoReinvest && totalDailyRevenue > 0) {
+      const adminShare = totalDailyRevenue * ((100 - reinvestPercent[0]) / 100);
+      const reinvestAmount = totalDailyRevenue * (reinvestPercent[0] / 100);
+      
+      // This would be a real Supabase call to update admin_revenue
+      console.log(`Daily distribution: Admin gets $${adminShare.toFixed(2)}, Reinvesting $${reinvestAmount.toFixed(2)} into top ${topStrategiesCount[0]} strategies`);
+    }
+  }, [totalDailyRevenue, autoReinvest, reinvestPercent, topStrategiesCount]);
 
   const handleApprove = (generatorId: string) => {
     if (!isAdminVerified) {
@@ -420,17 +432,48 @@ const RevenueAutomation = () => {
               </div>
 
               {autoReinvest && (
-                <div className="space-y-3 pl-4 border-l-2 border-primary/20">
-                  <div className="flex justify-between">
-                    <Label>Reinvestment Percentage</Label>
-                    <span className="text-sm text-muted-foreground">{reinvestPercent[0]}%</span>
+                <div className="space-y-6 pl-4 border-l-2 border-primary/20">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label>Reinvestment Percentage</Label>
+                      <span className="text-sm font-medium text-green-500">{reinvestPercent[0]}%</span>
+                    </div>
+                    <Slider
+                      value={reinvestPercent}
+                      onValueChange={setReinvestPercent}
+                      max={95}
+                      min={50}
+                      step={5}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {reinvestPercent[0]}% reinvested • {100 - reinvestPercent[0]}% to admin wallet
+                    </p>
                   </div>
-                  <Slider
-                    value={reinvestPercent}
-                    onValueChange={setReinvestPercent}
-                    max={80}
-                    step={5}
-                  />
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label>Top Strategies to Reinvest Into</Label>
+                      <span className="text-sm font-medium">{topStrategiesCount[0]}</span>
+                    </div>
+                    <Slider
+                      value={topStrategiesCount}
+                      onValueChange={setTopStrategiesCount}
+                      max={10}
+                      min={1}
+                      step={1}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Profits distributed to top {topStrategiesCount[0]} performing trading strategies
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                    <p className="text-sm text-green-500">
+                      <strong>Current Setup:</strong> {reinvestPercent[0]}% of daily revenue ($
+                      {(totalDailyRevenue * reinvestPercent[0] / 100).toFixed(2)}) reinvested into top {topStrategiesCount[0]} strategies.
+                      Admin receives ${(totalDailyRevenue * (100 - reinvestPercent[0]) / 100).toFixed(2)}/day.
+                    </p>
+                  </div>
                 </div>
               )}
 
