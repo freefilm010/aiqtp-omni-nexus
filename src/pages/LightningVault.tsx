@@ -94,10 +94,54 @@ const LightningVault = () => {
     if (!authLoading && !user) {
       navigate('/auth');
     } else if (user) {
-      fetchVaultData();
+      initializeAndFetchVaultData();
       generateReceiveAddress();
     }
   }, [user, authLoading]);
+
+  // Initialize user's Lightning channel if none exists
+  const initializeUserChannel = async () => {
+    if (!user) return;
+    
+    try {
+      // Check if user has any channels
+      const { data: existingChannels } = await supabase
+        .from('lightning_channels')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      
+      // Create initial channel if none exists
+      if (!existingChannels || existingChannels.length === 0) {
+        const channelId = `ln_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+        const initialCapacity = 10000000; // 0.1 BTC in sats as starting capacity
+        
+        const { error } = await supabase
+          .from('lightning_channels')
+          .insert({
+            user_id: user.id,
+            channel_id: channelId,
+            capacity: initialCapacity,
+            local_balance: initialCapacity, // User gets full balance initially
+            remote_balance: 0,
+            status: 'active'
+          });
+        
+        if (error) {
+          console.error('Error creating initial channel:', error);
+        } else {
+          toast.success('Lightning channel initialized! Ready for testing.');
+        }
+      }
+    } catch (error) {
+      console.error('Channel initialization error:', error);
+    }
+  };
+
+  const initializeAndFetchVaultData = async () => {
+    await initializeUserChannel();
+    await fetchVaultData();
+  };
 
   const fetchVaultData = async () => {
     try {
