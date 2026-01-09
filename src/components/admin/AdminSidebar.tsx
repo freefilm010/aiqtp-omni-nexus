@@ -28,10 +28,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Overview", href: "/admin", icon: LayoutDashboard },
-  { title: "Revenue", href: "/admin/revenue", icon: DollarSign },
+  { title: "Financials", href: "/admin/financials", icon: DollarSign },
+  { title: "Revenue", href: "/admin/revenue", icon: TrendingUp },
   { title: "Treasury Wallets", href: "/admin/treasury", icon: Wallet },
   { title: "Profit Automation", href: "/admin/profit-automation", icon: RefreshCw },
   { title: "Investments", href: "/admin/investments", icon: TrendingUp },
+  { title: "Chat Management", href: "/admin/chats", icon: Bot },
   { title: "Payments", href: "/admin/payments", icon: CreditCard },
   { title: "Automation", href: "/admin/automation", icon: Zap },
   { title: "Users", href: "/admin/users", icon: Users },
