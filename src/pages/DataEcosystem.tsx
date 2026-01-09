@@ -26,6 +26,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import DataBotBuilder from "@/components/data/DataBotBuilder";
 import { TokenEcosystem } from "@/components/data/TokenEcosystem";
+import { BlockchainEcosystemLab } from "@/components/research/BlockchainEcosystemLab";
 
 interface DataToken {
   id: string;
@@ -202,10 +203,14 @@ const DataEcosystem = () => {
 
         {/* Main Content */}
         <Tabs defaultValue="tokens" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="tokens" className="flex items-center gap-2">
               <Network className="h-4 w-4" />
               Token Hierarchy
+            </TabsTrigger>
+            <TabsTrigger value="research" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              AI Research
             </TabsTrigger>
             <TabsTrigger value="bots" className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
@@ -227,6 +232,10 @@ const DataEcosystem = () => {
 
           <TabsContent value="tokens">
             <TokenEcosystem />
+          </TabsContent>
+
+          <TabsContent value="research">
+            <BlockchainEcosystemLab />
           </TabsContent>
 
           <TabsContent value="bots">
