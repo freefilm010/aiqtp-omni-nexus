@@ -12,14 +12,19 @@ import {
   Shield,
   DollarSign,
   Settings,
-  Loader2
+  Loader2,
+  PanelLeftClose,
+  PanelLeft
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ChatHistory } from "@/components/chat/ChatHistory";
+import { useChatPersistence } from "@/hooks/useChatPersistence";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
 }
@@ -31,15 +36,24 @@ const quickActions = [
   { label: "Strategy Recommendations", icon: Sparkles, prompt: "Recommend trading strategies based on current market conditions" },
 ];
 
+const INITIAL_MESSAGE = "Hello! I'm your AI Copilot, powered by Lovable AI. I can help you manage your platform, analyze data, optimize investments, and more. What would you like to do today?";
+
 const AICopilot = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Hello! I'm your AI Copilot, powered by Lovable AI. I can help you manage your platform, analyze data, optimize investments, and more. What would you like to do today?",
-      timestamp: new Date()
-    }
-  ]);
+  const { user } = useAuth();
+  const [showHistory, setShowHistory] = useState(true);
+  const {
+    messages,
+    conversationId,
+    isLoading: historyLoading,
+    addMessage,
+    selectConversation,
+    startNewConversation,
+    ensureConversation,
+  } = useChatPersistence({ 
+    agentType: "copilot", 
+    initialSystemMessage: INITIAL_MESSAGE 
+  });
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,6 +67,8 @@ const AICopilot = () => {
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
+    await ensureConversation(content);
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -60,12 +76,11 @@ const AICopilot = () => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    addMessage(userMessage);
     setInput("");
     setIsLoading(true);
 
     try {
-      // Call the AI copilot edge function
       const { data, error } = await supabase.functions.invoke('ai-copilot', {
         body: { message: content, context: "admin_dashboard" }
       });
@@ -79,11 +94,10 @@ const AICopilot = () => {
         timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      addMessage(assistantMessage, data?.model_used);
     } catch (error) {
       console.error('AI Copilot error:', error);
       
-      // Fallback response when edge function isn't available
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -91,7 +105,7 @@ const AICopilot = () => {
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, fallbackMessage]);
+      addMessage(fallbackMessage);
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +132,16 @@ const AICopilot = () => {
     
     return `I understand you're asking about "${query}". As your AI Copilot, I can help with:\n\n- **Portfolio Management**: Analysis, rebalancing, optimization\n- **Revenue Tracking**: Streams, distribution, forecasting\n- **Security**: Audits, threat detection, compliance\n- **Trading Strategies**: Signals, backtesting, automation\n- **User Management**: Analytics, engagement, retention\n\nWhat specific aspect would you like me to focus on?`;
   };
+
+  if (!user) {
+    return (
+      <Card className="p-8 text-center">
+        <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h2 className="text-xl font-bold mb-2">Sign In Required</h2>
+        <p className="text-muted-foreground">Please sign in to access AI Copilot and save your chat history.</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -153,78 +177,107 @@ const AICopilot = () => {
         ))}
       </div>
 
-      {/* Chat Interface */}
-      <Card className="h-[500px] flex flex-col">
-        <CardHeader className="pb-3 border-b">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Chat with AI
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col p-0">
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+      {/* Main content with chat history */}
+      <div className="flex gap-4 h-[500px]">
+        {/* Chat History Sidebar */}
+        {showHistory && (
+          <div className="w-64 shrink-0 hidden md:block">
+            <Card className="h-full">
+              <ChatHistory
+                agentType="copilot"
+                activeConversationId={conversationId}
+                onSelectConversation={selectConversation}
+                onNewConversation={startNewConversation}
+              />
+            </Card>
+          </div>
+        )}
+
+        {/* Chat Interface */}
+        <Card className="flex-1 flex flex-col">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                Chat with AI
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hidden md:flex"
+                onClick={() => setShowHistory(!showHistory)}
+              >
+                {showHistory ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col p-0">
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              <div className="space-y-4">
+                {messages.map((message) => (
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
+                    key={message.id}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    {message.role === 'assistant' && (
-                      <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                        <Bot className="h-3 w-3" />
-                        AI Copilot
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : message.role === 'system'
+                          ? 'bg-muted/50 border'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+                          <Bot className="h-3 w-3" />
+                          AI Copilot
+                        </div>
+                      )}
+                      <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+                      <div className="text-xs opacity-50 mt-1">
+                        {message.timestamp.toLocaleTimeString()}
                       </div>
-                    )}
-                    <div className="whitespace-pre-wrap text-sm">{message.content}</div>
-                    <div className="text-xs opacity-50 mt-1">
-                      {message.timestamp.toLocaleTimeString()}
                     </div>
                   </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg p-3">
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-lg p-3">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-
-          <div className="p-4 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendMessage(input);
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me anything about your platform..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button type="submit" disabled={isLoading || !input.trim()}>
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
                 )}
-              </Button>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
+            </ScrollArea>
+
+            <div className="p-4 border-t bg-background sticky bottom-0 z-10">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendMessage(input);
+                }}
+                className="flex gap-2"
+              >
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Ask me anything about your platform..."
+                  disabled={isLoading}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={isLoading || !input.trim()}>
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </form>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
