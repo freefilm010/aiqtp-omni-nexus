@@ -49,7 +49,9 @@ import {
   DollarSign,
   Music,
   Trophy,
-  Percent
+  Percent,
+  ExternalLink,
+  Coins
 } from "lucide-react";
 
 const Header = () => {
@@ -57,6 +59,11 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+
+  const openPopout = (tool: string) => {
+    // Open a separate browser window/tab so users can move it to another monitor.
+    window.open(`/popout/${tool}`, "_blank", "noopener,noreferrer");
+  };
 
   const themeOptions: { id: ThemeType; name: string }[] = [
     { id: "default", name: "Professional" },
@@ -203,6 +210,24 @@ const Header = () => {
                       <Brain className="mr-2 h-3.5 w-3.5" />
                       Intel
                     </DropdownMenuItem>
+
+                    <div className="text-[10px] uppercase text-muted-foreground font-semibold px-2 py-2">Multi‑Monitor</div>
+                    <DropdownMenuItem onClick={() => openPopout('heatmap')} className="py-1.5 text-sm">
+                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                      Pop‑out Heat Map
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openPopout('calendar')} className="py-1.5 text-sm">
+                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                      Pop‑out Calendar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openPopout('watchlist')} className="py-1.5 text-sm">
+                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                      Pop‑out Watchlist
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openPopout('screener')} className="py-1.5 text-sm">
+                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                      Pop‑out Screener
+                    </DropdownMenuItem>
                   </div>
                   
                   {/* Assets */}
@@ -215,6 +240,14 @@ const Header = () => {
                     <DropdownMenuItem onClick={() => navigate('/token-launchpad')} className="py-1.5 text-sm">
                       <Zap className="mr-2 h-3.5 w-3.5" />
                       Tokens
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openPopout('token-creator')} className="py-1.5 text-sm">
+                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                      Pop‑out Token Creator
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openPopout('nft-creator')} className="py-1.5 text-sm">
+                      <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                      Pop‑out NFT Creator
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/faucet')} className="py-1.5 text-sm">
                       <Crosshair className="mr-2 h-3.5 w-3.5" />
