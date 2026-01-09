@@ -17,7 +17,10 @@ import {
   Zap,
   Wallet,
   RefreshCw,
-  BookOpen
+  BookOpen,
+  Coins,
+  Trophy,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +28,7 @@ interface NavItem {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  section?: string;
 }
 
 const navItems: NavItem[] = [
@@ -34,6 +38,10 @@ const navItems: NavItem[] = [
   { title: "Treasury Wallets", href: "/admin/treasury", icon: Wallet },
   { title: "Profit Automation", href: "/admin/profit-automation", icon: RefreshCw },
   { title: "Investments", href: "/admin/investments", icon: TrendingUp },
+  { title: "Operators", href: "/admin/operators", icon: Building2, section: "Growth" },
+  { title: "Token Factory", href: "/admin/tokens", icon: Coins },
+  { title: "Contests & Airdrops", href: "/admin/contests", icon: Trophy },
+  { title: "Influencers", href: "/admin/influencers", icon: Users },
   { title: "Chat Management", href: "/admin/chats", icon: Bot },
   { title: "Payments", href: "/admin/payments", icon: CreditCard },
   { title: "Automation", href: "/admin/automation", icon: Zap },
