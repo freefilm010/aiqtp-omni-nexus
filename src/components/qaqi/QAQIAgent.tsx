@@ -27,10 +27,15 @@ import {
   Copyright,
   RefreshCw,
   BarChart3,
-  Bot
+  Bot,
+  PanelLeftClose,
+  PanelLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ChatHistory } from "@/components/chat/ChatHistory";
+import { useChatPersistence } from "@/hooks/useChatPersistence";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
   id: string;
@@ -89,12 +94,7 @@ const CAPABILITY_INFO = [
   { key: "self_enhancement", label: "Self-Learn", icon: Brain },
 ];
 
-const QAQIAgent = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "init",
-      role: "system",
-      content: `🔮 QAQI Agent v2.0 initialized.
+const INITIAL_MESSAGE = `🔮 QAQI Agent v2.0 initialized.
 
 I am your Quantum Artificial Qubit Intelligent Agent with full autonomy over:
 • **$QTC Development** - Quantum Time Crystal coin creation & mining
@@ -103,10 +103,25 @@ I am your Quantum Artificial Qubit Intelligent Agent with full autonomy over:
 • **Revenue Automation** - Control arbitrage, liquidity, staking bots
 • **Self-Enhancement** - I learn and improve from every interaction
 
-Ready to build the future of quantum finance. What would you like to accomplish?`,
-      timestamp: new Date(),
-    }
-  ]);
+Ready to build the future of quantum finance. What would you like to accomplish?`;
+
+const QAQIAgent = () => {
+  const { user } = useAuth();
+  const [showHistory, setShowHistory] = useState(true);
+  const {
+    messages,
+    setMessages,
+    conversationId,
+    isLoading: historyLoading,
+    addMessage,
+    selectConversation,
+    startNewConversation,
+    ensureConversation,
+  } = useChatPersistence({ 
+    agentType: "qaqi", 
+    initialSystemMessage: INITIAL_MESSAGE 
+  });
+
   const [input, setInput] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<QAQIStatus>({
@@ -135,6 +150,9 @@ Ready to build the future of quantum finance. What would you like to accomplish?
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isProcessing) return;
 
+    // Ensure we have a conversation before sending
+    const convId = await ensureConversation(content);
+
     const userMessage: Message = {
       id: `msg_${Date.now()}`,
       role: "user",
@@ -142,7 +160,7 @@ Ready to build the future of quantum finance. What would you like to accomplish?
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    addMessage(userMessage);
     setInput("");
     setIsProcessing(true);
 
@@ -162,7 +180,7 @@ Ready to build the future of quantum finance. What would you like to accomplish?
           context: {
             module: "qaqi_autonomous",
             permissions: ["read", "write", "execute", "admin", "automate"],
-            adminApproval: true, // Full autonomy enabled
+            adminApproval: true,
           }
         }),
       });
@@ -191,9 +209,8 @@ Ready to build the future of quantum finance. What would you like to accomplish?
         toolExecutions: data.tool_executions,
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      addMessage(assistantMessage, data.model_used);
       
-      // Update status with capabilities from response
       setStatus(prev => ({ 
         ...prev, 
         lastActivity: new Date(),
@@ -211,7 +228,6 @@ Ready to build the future of quantum finance. What would you like to accomplish?
     } catch (error) {
       console.error("QAQI Error:", error);
       
-      // Fallback response for offline/demo mode
       const fallbackMessage: Message = {
         id: `msg_${Date.now()}_fallback`,
         role: "assistant",
@@ -220,24 +236,49 @@ Ready to build the future of quantum finance. What would you like to accomplish?
         toolExecutions: generateMockToolExecution(content),
       };
       
-      setMessages(prev => [...prev, fallbackMessage]);
+      addMessage(fallbackMessage);
       if (!(error instanceof Error && error.message.includes("Rate"))) {
         toast.info("Using local processing mode");
       }
     } finally {
       setIsProcessing(false);
     }
-  }, [messages, isProcessing]);
+  }, [messages, isProcessing, addMessage, ensureConversation]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
   };
 
+  if (!user) {
+    return (
+      <Card className="p-8 text-center">
+        <Atom className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h2 className="text-xl font-bold mb-2">Sign In Required</h2>
+        <p className="text-muted-foreground">Please sign in to access QAQI Agent and save your chat history.</p>
+      </Card>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-16rem)] min-h-[500px]">
-      {/* Main Chat Interface */}
-      <Card className="lg:col-span-3 flex flex-col">
+    <div className="flex h-[calc(100vh-12rem)] min-h-[500px] gap-4">
+      {/* Chat History Sidebar */}
+      {showHistory && (
+        <div className="w-64 shrink-0 hidden md:block">
+          <Card className="h-full">
+            <ChatHistory
+              agentType="qaqi"
+              activeConversationId={conversationId}
+              onSelectConversation={selectConversation}
+              onNewConversation={startNewConversation}
+            />
+          </Card>
+        </div>
+      )}
+      
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Main Chat Interface */}
+        <Card className="lg:col-span-3 flex flex-col">
         <CardHeader className="border-b pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -260,6 +301,14 @@ Ready to build the future of quantum finance. What would you like to accomplish?
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hidden md:flex"
+                onClick={() => setShowHistory(!showHistory)}
+              >
+                {showHistory ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+              </Button>
               <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
                 <Activity className="h-3 w-3 mr-1" />
                 ONLINE
@@ -482,6 +531,7 @@ Ready to build the future of quantum finance. What would you like to accomplish?
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
