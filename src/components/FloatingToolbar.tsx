@@ -60,7 +60,7 @@ const ALL_TOOLS: ToolItem[] = [
   // Trading
   { id: 'heatmap', name: 'Heat Map', icon: LayoutGrid, path: '/advanced-trading', description: 'Market heat visualization', category: 'Trading', badge: 'Live' },
   { id: 'calendar', name: 'Economic Calendar', icon: Calendar, path: '/calendar', description: 'Global events & data releases', category: 'Trading' },
-  { id: 'watchlist', name: 'Watchlist', icon: TrendingUp, path: '/portfolio', description: 'Track your favorite assets', category: 'Trading' },
+  { id: 'watchlist', name: 'Watchlist', icon: TrendingUp, path: '/watchlist', description: 'Track your favorite assets', category: 'Trading' },
   { id: 'screener', name: 'Screener', icon: Search, path: '/screener', description: 'Find trading opportunities', category: 'Trading' },
   { id: 'orderbook', name: 'Level II Data', icon: Layers, path: '/advanced-trading', description: 'Order book depth', category: 'Trading' },
   { id: 'charts', name: 'Advanced Charts', icon: LineChart, path: '/advanced-trading', description: 'Technical analysis', category: 'Trading' },
