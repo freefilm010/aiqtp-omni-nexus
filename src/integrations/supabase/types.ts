@@ -1140,6 +1140,280 @@ export type Database = {
         }
         Relationships: []
       }
+      qtc_blocks: {
+        Row: {
+          block_hash: string
+          block_height: number
+          block_reward: number
+          created_at: string
+          id: string
+          merkle_root: string
+          previous_hash: string
+          resonance_proof: Json
+          total_fees: number
+          transaction_count: number
+          validator_id: string
+        }
+        Insert: {
+          block_hash: string
+          block_height: number
+          block_reward?: number
+          created_at?: string
+          id?: string
+          merkle_root: string
+          previous_hash: string
+          resonance_proof: Json
+          total_fees?: number
+          transaction_count?: number
+          validator_id: string
+        }
+        Update: {
+          block_hash?: string
+          block_height?: number
+          block_reward?: number
+          created_at?: string
+          id?: string
+          merkle_root?: string
+          previous_hash?: string
+          resonance_proof?: Json
+          total_fees?: number
+          transaction_count?: number
+          validator_id?: string
+        }
+        Relationships: []
+      }
+      qtc_ledger: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          locked_balance: number
+          nonce: number
+          staked_balance: number
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          locked_balance?: number
+          nonce?: number
+          staked_balance?: number
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          locked_balance?: number
+          nonce?: number
+          staked_balance?: number
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      qtc_transactions: {
+        Row: {
+          amount: number
+          block_height: number
+          confirmed_at: string | null
+          created_at: string
+          fee: number
+          from_address: string
+          id: string
+          metadata: Json | null
+          nonce: number
+          proof_hash: string | null
+          signature: string
+          status: string
+          to_address: string
+          tx_hash: string
+          tx_type: string
+        }
+        Insert: {
+          amount: number
+          block_height: number
+          confirmed_at?: string | null
+          created_at?: string
+          fee?: number
+          from_address: string
+          id?: string
+          metadata?: Json | null
+          nonce: number
+          proof_hash?: string | null
+          signature: string
+          status?: string
+          to_address: string
+          tx_hash: string
+          tx_type?: string
+        }
+        Update: {
+          amount?: number
+          block_height?: number
+          confirmed_at?: string | null
+          created_at?: string
+          fee?: number
+          from_address?: string
+          id?: string
+          metadata?: Json | null
+          nonce?: number
+          proof_hash?: string | null
+          signature?: string
+          status?: string
+          to_address?: string
+          tx_hash?: string
+          tx_type?: string
+        }
+        Relationships: []
+      }
+      qtc_validators: {
+        Row: {
+          blocks_validated: number
+          created_at: string
+          id: string
+          is_active: boolean | null
+          quantum_backend: string | null
+          reputation_score: number
+          stake_amount: number
+          total_rewards: number
+          updated_at: string
+          validator_key: string
+          wallet_address: string
+        }
+        Insert: {
+          blocks_validated?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          quantum_backend?: string | null
+          reputation_score?: number
+          stake_amount?: number
+          total_rewards?: number
+          updated_at?: string
+          validator_key: string
+          wallet_address: string
+        }
+        Update: {
+          blocks_validated?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          quantum_backend?: string | null
+          reputation_score?: number
+          stake_amount?: number
+          total_rewards?: number
+          updated_at?: string
+          validator_key?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qtc_validators_wallet_address_fkey"
+            columns: ["wallet_address"]
+            isOneToOne: false
+            referencedRelation: "qtc_ledger"
+            referencedColumns: ["wallet_address"]
+          },
+        ]
+      }
+      quwallet_addresses: {
+        Row: {
+          address: string
+          address_type: string
+          created_at: string
+          derivation_path: string | null
+          id: string
+          network: string
+          wallet_id: string | null
+        }
+        Insert: {
+          address: string
+          address_type?: string
+          created_at?: string
+          derivation_path?: string | null
+          id?: string
+          network: string
+          wallet_id?: string | null
+        }
+        Update: {
+          address?: string
+          address_type?: string
+          created_at?: string
+          derivation_path?: string | null
+          id?: string
+          network?: string
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quwallet_addresses_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "quwallet_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quwallet_wallets: {
+        Row: {
+          created_at: string
+          dilithium_public_key: string
+          ecdsa_public_key: string | null
+          encrypted_private_keys: string
+          hardware_type: string | null
+          id: string
+          is_active: boolean | null
+          is_hardware: boolean | null
+          key_derivation_salt: string
+          kyber_public_key: string
+          multi_sig_config: Json | null
+          updated_at: string
+          user_id: string
+          wallet_address: string
+          wallet_name: string
+          wallet_type: string
+        }
+        Insert: {
+          created_at?: string
+          dilithium_public_key: string
+          ecdsa_public_key?: string | null
+          encrypted_private_keys: string
+          hardware_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hardware?: boolean | null
+          key_derivation_salt: string
+          kyber_public_key: string
+          multi_sig_config?: Json | null
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+          wallet_name: string
+          wallet_type?: string
+        }
+        Update: {
+          created_at?: string
+          dilithium_public_key?: string
+          ecdsa_public_key?: string | null
+          encrypted_private_keys?: string
+          hardware_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_hardware?: boolean | null
+          key_derivation_salt?: string
+          kyber_public_key?: string
+          multi_sig_config?: Json | null
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+          wallet_name?: string
+          wallet_type?: string
+        }
+        Relationships: []
+      }
       rental_profit_splits: {
         Row: {
           created_at: string | null

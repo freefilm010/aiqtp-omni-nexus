@@ -1,18 +1,31 @@
 project_id = "msgzfkcqnkzdnlvuhnmn"
 
-[functions.generate-factors]
-verify_jwt = true
-
-[functions.generate-strategy]
-verify_jwt = true
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
 
 [functions.ai-copilot]
-verify_jwt = true
+verify_jwt = false
+
+[functions.aiqtp-agent]
+verify_jwt = false
+
+[functions.claude-assistant]
+verify_jwt = false
+
+[functions.generate-factors]
+verify_jwt = false
+
+[functions.generate-strategy]
+verify_jwt = false
 
 [functions.ml-predictions]
 verify_jwt = false
 
-[functions.claude-assistant]
+[functions.qaqi-agent]
 verify_jwt = false
 
 [functions.quantum-compute]
@@ -22,6 +35,12 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.stripe-webhook]
+verify_jwt = false
+
+[functions.quwallet]
+verify_jwt = false
+
+[functions.qtc-network]
 verify_jwt = false
 
 [functions.aiqtp-agent]
