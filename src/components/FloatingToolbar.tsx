@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,13 +38,13 @@ import {
   Cpu,
   FlaskConical,
   ShoppingCart,
-  Wallet,
-  DollarSign,
-  ExternalLink,
   Grip,
   X,
+  Coins,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFloatingWindows, type FloatingWindowKey } from "@/contexts/FloatingWindowsContext";
 
 interface ToolItem {
   id: string;
@@ -54,54 +54,69 @@ interface ToolItem {
   description: string;
   category: string;
   badge?: string;
+  windowKey?: FloatingWindowKey;
 }
 
 const ALL_TOOLS: ToolItem[] = [
   // Trading
-  { id: 'heatmap', name: 'Heat Map', icon: LayoutGrid, path: '/advanced-trading', description: 'Market heat visualization', category: 'Trading', badge: 'Live' },
-  { id: 'calendar', name: 'Economic Calendar', icon: Calendar, path: '/calendar', description: 'Global events & data releases', category: 'Trading' },
-  { id: 'watchlist', name: 'Watchlist', icon: TrendingUp, path: '/watchlist', description: 'Track your favorite assets', category: 'Trading' },
+  { id: 'heatmap', name: 'Heat Map', icon: LayoutGrid, path: '/advanced-trading', description: 'Market heat visualization', category: 'Trading', badge: 'Live', windowKey: 'heat_map' },
+  { id: 'calendar', name: 'Economic Calendar', icon: Calendar, path: '/calendar', description: 'Global events & data releases', category: 'Trading', windowKey: 'economic_calendar' },
+  { id: 'watchlist', name: 'Watchlist', icon: TrendingUp, path: '/watchlist', description: 'Track your favorite assets', category: 'Trading', windowKey: 'watchlist' },
   { id: 'screener', name: 'Screener', icon: Search, path: '/screener', description: 'Find trading opportunities', category: 'Trading' },
   { id: 'orderbook', name: 'Level II Data', icon: Layers, path: '/advanced-trading', description: 'Order book depth', category: 'Trading' },
   { id: 'charts', name: 'Advanced Charts', icon: LineChart, path: '/advanced-trading', description: 'Technical analysis', category: 'Trading' },
   { id: 'patterns', name: 'Pattern Recognition', icon: Activity, path: '/advanced-trading', description: 'AI pattern detection', category: 'Trading' },
   { id: 'smartorders', name: 'Smart Orders', icon: Target, path: '/advanced-trading', description: 'TWAP, VWAP, Iceberg', category: 'Trading' },
-  
+
+  // Assets
+  { id: 'tokens', name: 'Token Launchpad', icon: Coins, path: '/token-launchpad', description: 'Create & launch tokens', category: 'Assets', badge: 'Create', windowKey: 'token_creator' },
+  { id: 'nfts', name: 'NFT Studio', icon: Palette, path: '/nft-studio', description: 'Create & deploy NFTs', category: 'Assets', badge: 'Create', windowKey: 'nft_creator' },
+
   // Intelligence
   { id: 'news', name: 'News Feed', icon: Newspaper, path: '/news', description: 'Real-time market news', category: 'Intel' },
   { id: 'alerts', name: 'Alerts', icon: BellRing, path: '/alerts', description: 'Price & event alerts', category: 'Intel', badge: 'New' },
   { id: 'intel', name: 'Market Intelligence', icon: Globe, path: '/intelligence', description: 'Options flow, on-chain', category: 'Intel' },
   { id: 'defi', name: 'DeFi Sniper', icon: Crosshair, path: '/defi-sniper', description: 'New token launches', category: 'Intel' },
-  
+
   // AI & Quantum
   { id: 'qaqi', name: 'QAQI Agent', icon: Atom, path: '/qaqi', description: 'Quantum AI assistant', category: 'AI', badge: 'Quantum' },
   { id: 'ml', name: 'ML Predictions', icon: Cpu, path: '/ml-predictions', description: 'AI price forecasts', category: 'AI' },
   { id: 'quantum', name: 'Quantum Lab', icon: FlaskConical, path: '/quantum-lab', description: 'Quantum research', category: 'AI' },
-  
+
   // Strategy
   { id: 'strategies', name: 'Strategy Lab', icon: Target, path: '/strategy-lab', description: 'Build & backtest', category: 'Strategy' },
   { id: 'marketplace', name: 'Marketplace', icon: ShoppingCart, path: '/marketplace', description: 'Rent strategies', category: 'Strategy' },
   { id: 'risk', name: 'Risk Manager', icon: Shield, path: '/risk', description: 'Portfolio risk analysis', category: 'Strategy' },
-  
+
   // Portfolio
   { id: 'portfolio', name: 'Portfolio', icon: BarChart3, path: '/portfolio', description: 'Holdings & performance', category: 'Portfolio' },
   { id: 'vault', name: 'Lightning Vault', icon: Zap, path: '/vault', description: 'Instant settlements', category: 'Portfolio' },
   { id: 'analytics', name: 'Analytics', icon: Activity, path: '/analytics', description: 'Deep analysis tools', category: 'Portfolio' },
-  
+
   // Learn
   { id: 'education', name: 'Education', icon: BookOpen, path: '/education', description: 'Tutorials & guides', category: 'Learn' },
 ];
 
 // Quick access tools shown in collapsed bar
-const QUICK_ACCESS_IDS = ['heatmap', 'calendar', 'watchlist', 'screener', 'news', 'alerts', 'qaqi'];
+const QUICK_ACCESS_IDS = ['heatmap', 'calendar', 'watchlist', 'tokens', 'nfts', 'news', 'qaqi'];
 
 const FloatingToolbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { openWindow } = useFloatingWindows();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [position, setPosition] = useState<'right' | 'left'>('right');
-  
+
+  const activateTool = (tool: ToolItem, e?: React.MouseEvent) => {
+    const forceNavigate = !!(e && (e.shiftKey || e.metaKey || e.ctrlKey));
+    if (tool.windowKey && !forceNavigate) {
+      openWindow(tool.windowKey);
+      return;
+    }
+    navigate(tool.path);
+  };
+
   // Hide on auth page
   if (location.pathname === '/auth') return null;
 
@@ -174,7 +189,7 @@ const FloatingToolbar = () => {
                   size="icon"
                   variant={location.pathname === tool.path ? 'default' : 'ghost'}
                   className="h-10 w-10 relative"
-                  onClick={() => navigate(tool.path)}
+                  onClick={(e) => activateTool(tool, e)}
                 >
                   <tool.icon className="h-5 w-5" />
                   {tool.badge && (
@@ -188,6 +203,9 @@ const FloatingToolbar = () => {
                 <div>
                   <p className="font-semibold">{tool.name}</p>
                   <p className="text-xs text-muted-foreground">{tool.description}</p>
+                  {tool.windowKey && (
+                    <p className="text-[11px] text-muted-foreground mt-1">Click: floating window • Shift+Click: full page</p>
+                  )}
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -210,7 +228,7 @@ const FloatingToolbar = () => {
                   All Platform Tools
                 </SheetTitle>
               </SheetHeader>
-              
+
               <div className="mt-6 space-y-6">
                 {categories.map(category => (
                   <div key={category}>
@@ -221,7 +239,7 @@ const FloatingToolbar = () => {
                           key={tool.id}
                           variant={location.pathname === tool.path ? 'default' : 'outline'}
                           className="h-auto py-3 px-3 flex flex-col items-start gap-1 justify-start"
-                          onClick={() => navigate(tool.path)}
+                          onClick={(e) => activateTool(tool, e as any)}
                         >
                           <div className="flex items-center gap-2 w-full">
                             <tool.icon className="h-4 w-4 flex-shrink-0" />
@@ -235,6 +253,9 @@ const FloatingToolbar = () => {
                           <p className="text-[11px] text-muted-foreground text-left line-clamp-1">
                             {tool.description}
                           </p>
+                          {tool.windowKey && (
+                            <p className="text-[11px] text-muted-foreground text-left">Click opens window • Shift+Click opens page</p>
+                          )}
                         </Button>
                       ))}
                     </div>
@@ -244,7 +265,7 @@ const FloatingToolbar = () => {
 
               <div className="mt-8 p-4 bg-muted/50 rounded-lg">
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
+                  <Grip className="h-4 w-4" />
                   Quick Links
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -257,8 +278,8 @@ const FloatingToolbar = () => {
                   <Button variant="ghost" size="sm" className="justify-start" onClick={() => navigate('/derivatives')}>
                     Derivatives
                   </Button>
-                  <Button variant="ghost" size="sm" className="justify-start" onClick={() => navigate('/social')}>
-                    Copy Trading
+                  <Button variant="ghost" size="sm" className="justify-start" onClick={() => navigate('/token-launchpad')}>
+                    Token Launchpad
                   </Button>
                 </div>
               </div>
