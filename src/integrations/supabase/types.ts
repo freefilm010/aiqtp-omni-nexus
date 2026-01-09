@@ -483,6 +483,53 @@ export type Database = {
           },
         ]
       }
+      contest_participants: {
+        Row: {
+          contest_id: string | null
+          created_at: string
+          entry_data: Json | null
+          id: string
+          prize_paid: boolean | null
+          prize_won: number | null
+          rank: number | null
+          score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contest_id?: string | null
+          created_at?: string
+          entry_data?: Json | null
+          id?: string
+          prize_paid?: boolean | null
+          prize_won?: number | null
+          rank?: number | null
+          score?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contest_id?: string | null
+          created_at?: string
+          entry_data?: Json | null
+          id?: string
+          prize_paid?: boolean | null
+          prize_won?: number | null
+          rank?: number | null
+          score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_participants_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "token_contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elite_club_members: {
         Row: {
           created_at: string | null
@@ -540,6 +587,53 @@ export type Database = {
         }
         Relationships: []
       }
+      faucet_claims: {
+        Row: {
+          amount: number
+          chain: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          status: string | null
+          token_id: string | null
+          tx_hash: string | null
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          chain: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          status?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          chain?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          status?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faucet_claims_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       graduation_tests: {
         Row: {
           consistency_score: number | null
@@ -589,6 +683,113 @@ export type Database = {
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      influencer_partners: {
+        Row: {
+          commission_rate: number | null
+          contract_terms: Json | null
+          created_at: string
+          email: string | null
+          follower_count: number | null
+          handle: string
+          id: string
+          name: string
+          onboarded_at: string | null
+          platform: string
+          referral_code: string | null
+          status: string | null
+          tier: string | null
+          tokens_allocated: Json | null
+          total_earnings: number | null
+          total_referrals: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          commission_rate?: number | null
+          contract_terms?: Json | null
+          created_at?: string
+          email?: string | null
+          follower_count?: number | null
+          handle: string
+          id?: string
+          name: string
+          onboarded_at?: string | null
+          platform: string
+          referral_code?: string | null
+          status?: string | null
+          tier?: string | null
+          tokens_allocated?: Json | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          commission_rate?: number | null
+          contract_terms?: Json | null
+          created_at?: string
+          email?: string | null
+          follower_count?: number | null
+          handle?: string
+          id?: string
+          name?: string
+          onboarded_at?: string | null
+          platform?: string
+          referral_code?: string | null
+          status?: string | null
+          tier?: string | null
+          tokens_allocated?: Json | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      influencer_referrals: {
+        Row: {
+          commission_earned: number | null
+          created_at: string
+          first_trade_completed: boolean | null
+          id: string
+          influencer_id: string | null
+          referral_code: string
+          referred_user_id: string
+          signup_completed: boolean | null
+          tokens_gifted: Json | null
+        }
+        Insert: {
+          commission_earned?: number | null
+          created_at?: string
+          first_trade_completed?: boolean | null
+          id?: string
+          influencer_id?: string | null
+          referral_code: string
+          referred_user_id: string
+          signup_completed?: boolean | null
+          tokens_gifted?: Json | null
+        }
+        Update: {
+          commission_earned?: number | null
+          created_at?: string
+          first_trade_completed?: boolean | null
+          id?: string
+          influencer_id?: string | null
+          referral_code?: string
+          referred_user_id?: string
+          signup_completed?: boolean | null
+          tokens_gifted?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_referrals_influencer_id_fkey"
+            columns: ["influencer_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_partners"
             referencedColumns: ["id"]
           },
         ]
@@ -862,6 +1063,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_tokens: {
+        Row: {
+          chain: string
+          circulating_supply: number
+          contract_address: string | null
+          created_at: string
+          decimals: number
+          faucet_pool: number
+          id: string
+          is_active: boolean | null
+          is_native: boolean | null
+          logo_url: string | null
+          name: string
+          symbol: string
+          total_supply: number
+          treasury_supply: number
+          updated_at: string
+        }
+        Insert: {
+          chain: string
+          circulating_supply?: number
+          contract_address?: string | null
+          created_at?: string
+          decimals?: number
+          faucet_pool?: number
+          id?: string
+          is_active?: boolean | null
+          is_native?: boolean | null
+          logo_url?: string | null
+          name: string
+          symbol: string
+          total_supply?: number
+          treasury_supply?: number
+          updated_at?: string
+        }
+        Update: {
+          chain?: string
+          circulating_supply?: number
+          contract_address?: string | null
+          created_at?: string
+          decimals?: number
+          faucet_pool?: number
+          id?: string
+          is_active?: boolean | null
+          is_native?: boolean | null
+          logo_url?: string | null
+          name?: string
+          symbol?: string
+          total_supply?: number
+          treasury_supply?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       platform_wallets: {
         Row: {
@@ -1632,6 +1887,174 @@ export type Database = {
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      token_airdrops: {
+        Row: {
+          amount_per_user: number
+          claimed_count: number | null
+          created_at: string
+          created_by: string | null
+          distribution_type: string
+          eligibility_criteria: Json | null
+          end_date: string | null
+          id: string
+          max_recipients: number | null
+          name: string
+          recipient_list: string[] | null
+          start_date: string
+          status: string | null
+          token_id: string | null
+          total_amount: number
+        }
+        Insert: {
+          amount_per_user: number
+          claimed_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          distribution_type: string
+          eligibility_criteria?: Json | null
+          end_date?: string | null
+          id?: string
+          max_recipients?: number | null
+          name: string
+          recipient_list?: string[] | null
+          start_date: string
+          status?: string | null
+          token_id?: string | null
+          total_amount: number
+        }
+        Update: {
+          amount_per_user?: number
+          claimed_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          distribution_type?: string
+          eligibility_criteria?: Json | null
+          end_date?: string | null
+          id?: string
+          max_recipients?: number | null
+          name?: string
+          recipient_list?: string[] | null
+          start_date?: string
+          status?: string | null
+          token_id?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_airdrops_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      token_contests: {
+        Row: {
+          contest_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string
+          id: string
+          max_participants: number | null
+          prize_distribution: Json
+          prize_pool: number
+          rules: Json | null
+          start_date: string
+          status: string | null
+          title: string
+          token_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          contest_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          max_participants?: number | null
+          prize_distribution: Json
+          prize_pool: number
+          rules?: Json | null
+          start_date: string
+          status?: string | null
+          title: string
+          token_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contest_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          max_participants?: number | null
+          prize_distribution?: Json
+          prize_pool?: number
+          rules?: Json | null
+          start_date?: string
+          status?: string | null
+          title?: string
+          token_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_contests_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      token_revenue: {
+        Row: {
+          created_at: string
+          distributed_at: string | null
+          distribution_status: string | null
+          gross_amount: number
+          id: string
+          metadata: Json | null
+          platform_share: number
+          source_type: string
+          token_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          distributed_at?: string | null
+          distribution_status?: string | null
+          gross_amount: number
+          id?: string
+          metadata?: Json | null
+          platform_share: number
+          source_type: string
+          token_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          distributed_at?: string | null
+          distribution_status?: string | null
+          gross_amount?: number
+          id?: string
+          metadata?: Json | null
+          platform_share?: number
+          source_type?: string
+          token_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_revenue_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
             referencedColumns: ["id"]
           },
         ]
