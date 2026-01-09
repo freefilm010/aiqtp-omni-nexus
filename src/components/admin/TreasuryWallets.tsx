@@ -10,6 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -29,7 +31,9 @@ import {
   Plus,
   RefreshCw,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Send,
+  AlertTriangle
 } from "lucide-react";
 import {
   Table,
@@ -82,6 +86,11 @@ const TreasuryWallets = () => {
   const [distributionLogs, setDistributionLogs] = useState<DistributionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [newWalletOpen, setNewWalletOpen] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<PlatformWallet | null>(null);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawAddress, setWithdrawAddress] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
   const [newWallet, setNewWallet] = useState({
     wallet_type: 'crypto',
     currency: '',
@@ -152,6 +161,75 @@ const TreasuryWallets = () => {
     } catch (error) {
       console.error('Error adding wallet:', error);
       toast.error('Failed to add wallet');
+    }
+  };
+
+  const openWithdraw = (wallet: PlatformWallet) => {
+    setSelectedWallet(wallet);
+    setWithdrawAmount("");
+    setWithdrawAddress("");
+    setWithdrawOpen(true);
+  };
+
+  const executeWithdrawal = async () => {
+    if (!selectedWallet || !withdrawAmount || !withdrawAddress) {
+      toast.error('Please fill all fields');
+      return;
+    }
+
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Invalid amount');
+      return;
+    }
+
+    if (amount > Number(selectedWallet.available_balance)) {
+      toast.error('Insufficient available balance');
+      return;
+    }
+
+    setWithdrawing(true);
+    try {
+      // Update wallet balance
+      const newAvailable = Number(selectedWallet.available_balance) - amount;
+      const newBalance = Number(selectedWallet.balance) - amount;
+
+      const { error: walletError } = await supabase
+        .from('platform_wallets')
+        .update({
+          balance: newBalance,
+          available_balance: newAvailable,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedWallet.id);
+
+      if (walletError) throw walletError;
+
+      // Log the distribution
+      const { error: logError } = await supabase
+        .from('profit_distribution_log')
+        .insert({
+          from_wallet_id: selectedWallet.id,
+          amount: amount,
+          currency: selectedWallet.currency,
+          status: 'completed',
+          metadata: { 
+            type: 'admin_withdrawal',
+            destination: withdrawAddress 
+          }
+        });
+
+      if (logError) throw logError;
+
+      toast.success(`Withdrawal of ${amount} ${selectedWallet.currency} initiated`);
+      setWithdrawOpen(false);
+      fetchWallets();
+      fetchDistributionLogs();
+    } catch (error) {
+      console.error('Withdrawal error:', error);
+      toast.error('Failed to process withdrawal');
+    } finally {
+      setWithdrawing(false);
     }
   };
 
@@ -291,7 +369,7 @@ const TreasuryWallets = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {typeWallets.map((wallet) => (
+                        {typeWallets.map((wallet) => (
                         <div
                           key={wallet.id}
                           className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
@@ -321,6 +399,16 @@ const TreasuryWallets = () => {
                               {wallet.wallet_address}
                             </p>
                           )}
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full mt-3"
+                            onClick={() => openWithdraw(wallet)}
+                            disabled={Number(wallet.available_balance) <= 0}
+                          >
+                            <Send className="h-3 w-3 mr-2" />
+                            Withdraw
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -380,6 +468,64 @@ const TreasuryWallets = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Withdrawal Dialog */}
+      <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Withdraw {selectedWallet?.currency}
+            </DialogTitle>
+            <DialogDescription>
+              Available: {selectedWallet ? Number(selectedWallet.available_balance).toLocaleString() : 0} {selectedWallet?.currency}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Amount</label>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Destination Address</label>
+              <Input
+                placeholder="Wallet address or bank details..."
+                value={withdrawAddress}
+                onChange={(e) => setWithdrawAddress(e.target.value)}
+              />
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5" />
+              <p className="text-xs text-amber-500">
+                Withdrawals are irreversible. Double-check the destination address.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWithdrawOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={executeWithdrawal} disabled={withdrawing}>
+              {withdrawing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Confirm Withdrawal
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
