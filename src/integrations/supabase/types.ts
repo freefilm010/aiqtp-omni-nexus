@@ -1185,6 +1185,7 @@ export type Database = {
       qtc_ledger: {
         Row: {
           balance: number
+          controlled_by: string | null
           created_at: string
           id: string
           locked_balance: number
@@ -1192,9 +1193,11 @@ export type Database = {
           staked_balance: number
           updated_at: string
           wallet_address: string
+          wallet_type: string | null
         }
         Insert: {
           balance?: number
+          controlled_by?: string | null
           created_at?: string
           id?: string
           locked_balance?: number
@@ -1202,9 +1205,11 @@ export type Database = {
           staked_balance?: number
           updated_at?: string
           wallet_address: string
+          wallet_type?: string | null
         }
         Update: {
           balance?: number
+          controlled_by?: string | null
           created_at?: string
           id?: string
           locked_balance?: number
@@ -1212,6 +1217,7 @@ export type Database = {
           staked_balance?: number
           updated_at?: string
           wallet_address?: string
+          wallet_type?: string | null
         }
         Relationships: []
       }
@@ -1266,6 +1272,30 @@ export type Database = {
           to_address?: string
           tx_hash?: string
           tx_type?: string
+        }
+        Relationships: []
+      }
+      qtc_treasury_config: {
+        Row: {
+          config_key: string
+          config_value: Json
+          id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: Json
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: Json
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -1366,6 +1396,7 @@ export type Database = {
           hardware_type: string | null
           id: string
           is_active: boolean | null
+          is_admin_controlled: boolean | null
           is_hardware: boolean | null
           key_derivation_salt: string
           kyber_public_key: string
@@ -1384,6 +1415,7 @@ export type Database = {
           hardware_type?: string | null
           id?: string
           is_active?: boolean | null
+          is_admin_controlled?: boolean | null
           is_hardware?: boolean | null
           key_derivation_salt: string
           kyber_public_key: string
@@ -1402,6 +1434,7 @@ export type Database = {
           hardware_type?: string | null
           id?: string
           is_active?: boolean | null
+          is_admin_controlled?: boolean | null
           is_hardware?: boolean | null
           key_derivation_salt?: string
           kyber_public_key?: string
