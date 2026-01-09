@@ -16,7 +16,8 @@ import {
   FileText,
   Zap,
   Wallet,
-  RefreshCw
+  RefreshCw,
+  BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Security", href: "/admin/security", icon: Shield },
   { title: "AI Copilot", href: "/admin/copilot", icon: Bot },
+  { title: "Documentation", href: "/admin/documentation", icon: BookOpen },
   { title: "Logs", href: "/admin/logs", icon: FileText },
   { title: "Settings", href: "/admin/settings", icon: Settings },
 ];
