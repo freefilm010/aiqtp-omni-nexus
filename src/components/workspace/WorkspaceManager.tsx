@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   LayoutGrid,
   Plus,
@@ -43,9 +49,25 @@ import {
   Grid3X3,
   Square,
   Columns,
-  Rows
+  Rows,
+  ExternalLink,
+  MonitorPlay,
+  Tv,
+  PanelTop,
+  Copy
 } from "lucide-react";
 import { toast } from "sonner";
+
+// Track popup windows for multi-monitor support
+interface PopupWindow {
+  id: string;
+  widgetType: string;
+  symbol?: string;
+  windowRef: Window | null;
+}
+
+// State to track detached windows
+const popupWindows = new Map<string, Window>();
 
 // Widget types available for the workspace
 const WIDGET_TYPES = [
@@ -72,7 +94,83 @@ const LAYOUT_PRESETS = [
   { id: '3x2', name: '3×2 Grid', icon: LayoutGrid, grid: { cols: 3, rows: 2 } },
   { id: '3x3', name: '3×3 Grid', icon: LayoutGrid, grid: { cols: 3, rows: 3 } },
   { id: '4x3', name: '4×3 Grid', icon: LayoutGrid, grid: { cols: 4, rows: 3 } },
+  { id: '4x4', name: '4×4 Grid', icon: LayoutGrid, grid: { cols: 4, rows: 4 } },
 ];
+
+// Helper to generate HTML content for popup windows
+function getWidgetHtmlContent(widget: WorkspaceWidget): string {
+  const symbol = widget.symbol || 'BTC';
+  const basePrice = symbol === 'BTC' ? 67500 : symbol === 'ETH' ? 3400 : symbol === 'SOL' ? 142 : 450;
+  
+  switch (widget.type) {
+    case 'chart':
+      return `
+        <div class="price-display">
+          <div class="price-value">$${basePrice.toLocaleString()}</div>
+          <div class="price-change">+2.34% ($${(basePrice * 0.0234).toFixed(2)})</div>
+        </div>
+        <div class="chart-container">
+          ${Array.from({ length: 50 }, () => 
+            `<div class="chart-bar" style="height: ${20 + Math.random() * 60}%"></div>`
+          ).join('')}
+        </div>
+      `;
+    case 'orderbook':
+      return `
+        <div class="data-grid" style="grid-template-columns: 1fr 1fr;">
+          <div>
+            <div style="text-align:center;font-weight:bold;color:#22c55e;margin-bottom:8px;">BIDS</div>
+            ${[67500, 67495, 67490, 67485, 67480, 67475, 67470].map(p => 
+              `<div class="data-item bid"><span class="data-label">${(Math.random() * 5).toFixed(3)}</span><span class="data-value bid">$${p.toLocaleString()}</span></div>`
+            ).join('')}
+          </div>
+          <div>
+            <div style="text-align:center;font-weight:bold;color:#ef4444;margin-bottom:8px;">ASKS</div>
+            ${[67510, 67515, 67520, 67525, 67530, 67535, 67540].map(p => 
+              `<div class="data-item ask"><span class="data-label">${(Math.random() * 5).toFixed(3)}</span><span class="data-value ask">$${p.toLocaleString()}</span></div>`
+            ).join('')}
+          </div>
+        </div>
+      `;
+    case 'positions':
+      return `
+        <div style="space-y:8px;">
+          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span>BTC Long</span><span class="bid">+1.2% (+$847)</span>
+          </div>
+          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span>ETH Short</span><span class="ask">-0.4% (-$136)</span>
+          </div>
+          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span>SOL Long</span><span class="bid">+5.1% (+$728)</span>
+          </div>
+          <div style="margin-top:20px;padding:12px;background:rgba(34,197,94,0.1);border-radius:8px;">
+            <div class="data-label">Total P&L</div>
+            <div class="data-value bid" style="font-size:24px;">+$1,439.00</div>
+          </div>
+        </div>
+      `;
+    case 'alerts':
+      return `
+        <div style="space-y:8px;">
+          <div style="padding:12px;background:rgba(251,191,36,0.2);border-radius:8px;margin-bottom:8px;">
+            <div style="font-weight:600;">⚠️ BTC RSI > 70</div>
+            <div class="data-label">Overbought territory - consider taking profits</div>
+          </div>
+          <div style="padding:12px;background:rgba(59,130,246,0.2);border-radius:8px;margin-bottom:8px;">
+            <div style="font-weight:600;">📊 ETH Volume Spike</div>
+            <div class="data-label">3x average volume detected</div>
+          </div>
+          <div style="padding:12px;background:rgba(139,92,246,0.2);border-radius:8px;margin-bottom:8px;">
+            <div style="font-weight:600;">📅 Fed Speech 2:00 PM</div>
+            <div class="data-label">High impact event - volatility expected</div>
+          </div>
+        </div>
+      `;
+    default:
+      return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#71717a;">Widget content loading...</div>`;
+  }
+}
 
 interface WorkspaceWidget {
   id: string;
@@ -327,8 +425,208 @@ const WorkspaceManager = () => {
   const [workspaceName, setWorkspaceName] = useState('My Workspace');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
+  const [detachedWidgets, setDetachedWidgets] = useState<Set<string>>(new Set());
+  const [multiMonitorMode, setMultiMonitorMode] = useState(false);
 
   const totalCells = layout.cols * layout.rows;
+
+  // Cleanup popup windows on unmount
+  useEffect(() => {
+    return () => {
+      popupWindows.forEach((win) => {
+        if (win && !win.closed) win.close();
+      });
+      popupWindows.clear();
+    };
+  }, []);
+
+  // Pop out widget to separate window (multi-monitor support)
+  const popOutWidget = useCallback((widget: WorkspaceWidget, index: number) => {
+    const widgetInfo = WIDGET_TYPES.find((w) => w.id === widget.type);
+    const windowId = `widget_${widget.id}_${Date.now()}`;
+    
+    // Calculate window size and position for multi-monitor
+    const width = 800;
+    const height = 600;
+    const left = (window.screen.width - width) / 2 + (index * 50);
+    const top = (window.screen.height - height) / 2 + (index * 50);
+    
+    const popup = window.open(
+      '',
+      windowId,
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`
+    );
+    
+    if (popup) {
+      popupWindows.set(widget.id, popup);
+      setDetachedWidgets(prev => new Set(prev).add(widget.id));
+      
+      // Build popup HTML with same styling
+      const popupContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${widgetInfo?.name || 'Widget'} - ${widget.symbol || 'AIQTP'}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: system-ui, -apple-system, sans-serif;
+              background: #0a0a0f;
+              color: #e4e4e7;
+              height: 100vh;
+              overflow: hidden;
+            }
+            .widget-container {
+              height: 100vh;
+              display: flex;
+              flex-direction: column;
+            }
+            .widget-header {
+              padding: 12px 16px;
+              background: linear-gradient(180deg, rgba(139, 92, 246, 0.1), transparent);
+              border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+            .widget-title {
+              font-weight: 600;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .widget-badge {
+              background: rgba(34, 197, 94, 0.2);
+              color: #22c55e;
+              padding: 2px 8px;
+              border-radius: 4px;
+              font-size: 11px;
+            }
+            .widget-content {
+              flex: 1;
+              padding: 16px;
+              overflow: auto;
+            }
+            .chart-container {
+              height: 100%;
+              display: flex;
+              align-items: flex-end;
+              justify-content: space-around;
+              gap: 2px;
+              padding-bottom: 20px;
+            }
+            .chart-bar {
+              background: linear-gradient(180deg, #8b5cf6, #6366f1);
+              border-radius: 2px 2px 0 0;
+              min-width: 8px;
+              transition: height 0.3s ease;
+            }
+            .price-display {
+              position: absolute;
+              top: 60px;
+              right: 20px;
+              text-align: right;
+            }
+            .price-value {
+              font-size: 28px;
+              font-weight: bold;
+              color: #22c55e;
+            }
+            .price-change {
+              font-size: 14px;
+              color: #22c55e;
+            }
+            .data-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 8px;
+            }
+            .data-item {
+              padding: 8px 12px;
+              background: rgba(255,255,255,0.05);
+              border-radius: 4px;
+            }
+            .data-label { font-size: 11px; color: #71717a; }
+            .data-value { font-size: 14px; font-weight: 600; }
+            .bid { color: #22c55e; }
+            .ask { color: #ef4444; }
+          </style>
+        </head>
+        <body>
+          <div class="widget-container">
+            <div class="widget-header">
+              <div class="widget-title">
+                <span>${widgetInfo?.name || 'Widget'}</span>
+                ${widget.symbol ? `<span style="color:#8b5cf6;font-size:13px;">${widget.symbol}/USD</span>` : ''}
+              </div>
+              <span class="widget-badge">● LIVE</span>
+            </div>
+            <div class="widget-content" id="content">
+              ${getWidgetHtmlContent(widget)}
+            </div>
+          </div>
+          <script>
+            // Simulate live data updates
+            function updateData() {
+              const bars = document.querySelectorAll('.chart-bar');
+              bars.forEach(bar => {
+                bar.style.height = (20 + Math.random() * 60) + '%';
+              });
+              
+              const priceEl = document.querySelector('.price-value');
+              if (priceEl) {
+                const base = ${widget.symbol === 'BTC' ? 67500 : widget.symbol === 'ETH' ? 3400 : 142};
+                const change = (Math.random() - 0.5) * 100;
+                priceEl.textContent = '$' + (base + change).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+              }
+            }
+            setInterval(updateData, 2000);
+            
+            // Notify parent when closed
+            window.onbeforeunload = () => {
+              window.opener?.postMessage({ type: 'WIDGET_CLOSED', widgetId: '${widget.id}' }, '*');
+            };
+          </script>
+        </body>
+        </html>
+      `;
+      
+      popup.document.write(popupContent);
+      popup.document.close();
+      
+      toast.success(`${widgetInfo?.name} popped out to new window`, {
+        description: "Drag to another monitor for multi-screen trading"
+      });
+    } else {
+      toast.error("Popup blocked! Please allow popups for multi-monitor support.");
+    }
+  }, []);
+  
+  // Listen for popup close messages
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'WIDGET_CLOSED') {
+        const widgetId = event.data.widgetId;
+        popupWindows.delete(widgetId);
+        setDetachedWidgets(prev => {
+          const next = new Set(prev);
+          next.delete(widgetId);
+          return next;
+        });
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Pop out all widgets to separate windows
+  const popOutAllWidgets = useCallback(() => {
+    widgets.slice(0, totalCells).forEach((widget, index) => {
+      setTimeout(() => popOutWidget(widget, index), index * 200);
+    });
+    setMultiMonitorMode(true);
+  }, [widgets, totalCells, popOutWidget]);
 
   const handleLayoutChange = (preset: typeof LAYOUT_PRESETS[0]) => {
     setLayout(preset.grid);
@@ -464,6 +762,25 @@ const WorkspaceManager = () => {
                 </DialogContent>
               </Dialog>
 
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant={multiMonitorMode ? "default" : "outline"} 
+                      size="sm"
+                      onClick={popOutAllWidgets}
+                      className={multiMonitorMode ? "bg-purple-600 hover:bg-purple-700" : ""}
+                    >
+                      <Tv className="h-4 w-4 mr-2" />
+                      Multi-Monitor
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Pop out all panels to separate windows for multi-monitor setups</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               <Button variant="outline" size="sm" onClick={toggleFullscreen}>
                 {isFullscreen ? (
                   <Minimize2 className="h-4 w-4" />
@@ -520,6 +837,25 @@ const WorkspaceManager = () => {
                       </SelectContent>
                     </Select>
                   )}
+                  {/* Pop-out button for multi-monitor */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-5 w-5"
+                          onClick={() => popOutWidget(widget, index)}
+                          disabled={detachedWidgets.has(widget.id)}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Pop out to separate window</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-5 w-5">

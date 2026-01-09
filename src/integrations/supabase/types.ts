@@ -1460,6 +1460,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_factor_code: { Args: { factor_id: string }; Returns: string }
+      get_strategy_code: { Args: { strategy_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
