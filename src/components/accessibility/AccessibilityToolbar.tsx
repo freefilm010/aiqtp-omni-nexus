@@ -60,6 +60,11 @@ const AccessibilityToolbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { settings, updateSettings } = useAccessibility();
 
+  // Hide on auth page to prevent visual overlap
+  if (typeof window !== 'undefined' && window.location.pathname === '/auth') {
+    return null;
+  }
+
   // Keyboard shortcut to toggle toolbar visibility (Alt+A)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
