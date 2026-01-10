@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Rocket,
   TrendingUp,
@@ -16,12 +17,10 @@ import {
   ArrowUpRight,
   ChevronRight,
   Sparkles,
-  BarChart2
+  BarChart2,
+  AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-// Combined AI Screener: Best of Tickeron + AInvest + TrendSpider
-// Magic Signals + Pattern Detection + ML Predictions
 
 interface ScreenerResult {
   id: string;
@@ -43,91 +42,9 @@ interface ScreenerResult {
 
 const UltimateAIScreener = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [results, setResults] = useState<ScreenerResult[]>([
-    {
-      id: '1',
-      symbol: 'SOL',
-      name: 'Solana',
-      type: 'crypto',
-      signal: 'strong_buy',
-      confidence: 94,
-      patterns: ['Bull Flag', 'Golden Cross'],
-      triggers: ['Whale Accumulation', 'DeFi TVL Surge', 'RSI Bullish Divergence'],
-      priceTarget: 245.00,
-      currentPrice: 189.34,
-      change24h: 5.23,
-      volume24h: 3240000000,
-      aiScore: 96,
-      isHot: true,
-      category: 'defi'
-    },
-    {
-      id: '2',
-      symbol: 'NVDA',
-      name: 'NVIDIA',
-      type: 'stock',
-      signal: 'strong_buy',
-      confidence: 91,
-      patterns: ['Ascending Triangle', 'Cup & Handle'],
-      triggers: ['AI Chip Demand', 'Earnings Beat', 'Institutional Buying'],
-      priceTarget: 165.00,
-      currentPrice: 142.50,
-      change24h: 3.21,
-      volume24h: 45000000,
-      aiScore: 94,
-      isHot: true,
-      category: 'tech'
-    },
-    {
-      id: '3',
-      symbol: 'BTC',
-      name: 'Bitcoin',
-      type: 'crypto',
-      signal: 'buy',
-      confidence: 87,
-      patterns: ['Higher Low Formation'],
-      triggers: ['ETF Inflows', 'Halving Effect'],
-      priceTarget: 115000,
-      currentPrice: 97234,
-      change24h: 2.34,
-      volume24h: 28500000000,
-      aiScore: 89,
-      category: 'blue_chip'
-    },
-    {
-      id: '4',
-      symbol: 'PEPE',
-      name: 'Pepe',
-      type: 'crypto',
-      signal: 'buy',
-      confidence: 72,
-      patterns: ['Breakout'],
-      triggers: ['Social Volume Spike', 'Whale Buy'],
-      priceTarget: 0.000025,
-      currentPrice: 0.000018,
-      change24h: 15.67,
-      volume24h: 890000000,
-      aiScore: 78,
-      isHot: true,
-      category: 'meme'
-    },
-    {
-      id: '5',
-      symbol: 'XRP',
-      name: 'Ripple',
-      type: 'crypto',
-      signal: 'sell',
-      confidence: 68,
-      patterns: ['Head & Shoulders'],
-      triggers: ['Overbought RSI', 'Resistance Rejection'],
-      priceTarget: 1.85,
-      currentPrice: 2.34,
-      change24h: -3.45,
-      volume24h: 1200000000,
-      aiScore: 45,
-      category: 'blue_chip'
-    },
-  ]);
+  const [results, setResults] = useState<ScreenerResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = [
     { id: 'all', label: 'All Signals', icon: Activity },
@@ -136,6 +53,51 @@ const UltimateAIScreener = () => {
     { id: 'meme', label: 'Meme Coins', icon: Flame },
     { id: 'tech', label: 'Tech Stocks', icon: BarChart2 },
   ];
+
+  useEffect(() => {
+    fetchScreenerResults();
+  }, []);
+
+  const fetchScreenerResults = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('screener_results')
+        .select('*')
+        .eq('is_active', true)
+        .order('ai_score', { ascending: false })
+        .limit(20);
+
+      if (fetchError) throw fetchError;
+
+      const mappedResults: ScreenerResult[] = (data || []).map(r => ({
+        id: r.id,
+        symbol: r.symbol,
+        name: r.name,
+        type: r.asset_type as 'crypto' | 'stock' | 'forex',
+        signal: r.signal as 'strong_buy' | 'buy' | 'hold' | 'sell' | 'strong_sell',
+        confidence: r.confidence,
+        patterns: r.patterns || [],
+        triggers: r.triggers || [],
+        priceTarget: Number(r.price_target) || 0,
+        currentPrice: Number(r.current_price) || 0,
+        change24h: Number(r.change_24h) || 0,
+        volume24h: Number(r.volume_24h) || 0,
+        aiScore: r.ai_score || 0,
+        isHot: r.is_hot,
+        category: r.category
+      }));
+
+      setResults(mappedResults);
+    } catch (err: any) {
+      console.error('Error fetching screener results:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredResults = activeCategory === 'all' 
     ? results 
@@ -159,8 +121,24 @@ const UltimateAIScreener = () => {
   };
 
   const calculateUpside = (current: number, target: number) => {
+    if (!current || !target) return '0.0';
     return ((target - current) / current * 100).toFixed(1);
   };
+
+  const formatPrice = (price: number) => {
+    if (!price) return '$0';
+    if (price < 0.01) return `$${price.toFixed(6)}`;
+    if (price < 1) return `$${price.toFixed(4)}`;
+    return `$${price.toLocaleString()}`;
+  };
+
+  // Count signals by type
+  const strongBuyCount = results.filter(r => r.signal === 'strong_buy').length;
+  const buyCount = results.filter(r => r.signal === 'buy').length;
+  const sellCount = results.filter(r => r.signal === 'sell' || r.signal === 'strong_sell').length;
+  const avgAccuracy = results.length > 0 
+    ? Math.round(results.reduce((sum, r) => sum + r.confidence, 0) / results.length)
+    : 0;
 
   return (
     <Card className="p-5 bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
@@ -209,143 +187,149 @@ const UltimateAIScreener = () => {
         })}
       </div>
 
-      {/* Results Grid */}
-      <div className="space-y-3">
-        {filteredResults.map((result) => {
-          const signalStyle = getSignalColor(result.signal);
-          const upside = calculateUpside(result.currentPrice, result.priceTarget);
-          
-          return (
-            <div 
-              key={result.id}
-              className={`relative p-4 rounded-xl bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,15%)] hover:border-[hsl(222,14%,25%)] transition-all ${
-                result.isHot ? 'ring-1 ring-[hsl(355,88%,58%,0.2)]' : ''
-              }`}
-            >
-              {/* Hot Badge */}
-              {result.isHot && (
-                <div className="absolute top-2 right-2">
-                  <Badge className="bg-[hsl(355,88%,58%,0.15)] text-[hsl(355,88%,58%)] text-[8px] animate-pulse">
-                    <Flame className="w-2.5 h-2.5 mr-0.5" />
-                    HOT
-                  </Badge>
-                </div>
-              )}
-
-              <div className="flex items-start gap-4">
-                {/* Symbol & Signal */}
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 rounded-xl bg-[hsl(223,18%,15%)] flex items-center justify-center">
-                    <span className="font-mono text-sm font-bold text-foreground">{result.symbol}</span>
+      {/* Results */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : error ? (
+        <div className="flex items-center gap-2 text-destructive py-8 justify-center">
+          <AlertCircle className="h-5 w-5" />
+          <span>Error loading screener data</span>
+        </div>
+      ) : filteredResults.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p className="font-medium">No Screener Results</p>
+          <p className="text-sm">AI screener results will appear here when generated.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredResults.map((result) => {
+            const signalStyle = getSignalColor(result.signal);
+            const upside = calculateUpside(result.currentPrice, result.priceTarget);
+            
+            return (
+              <div 
+                key={result.id}
+                className={`relative p-4 rounded-xl bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,15%)] hover:border-[hsl(222,14%,25%)] transition-all ${
+                  result.isHot ? 'ring-1 ring-[hsl(355,88%,58%,0.2)]' : ''
+                }`}
+              >
+                {result.isHot && (
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-[hsl(355,88%,58%,0.15)] text-[hsl(355,88%,58%)] text-[8px] animate-pulse">
+                      <Flame className="w-2.5 h-2.5 mr-0.5" />
+                      HOT
+                    </Badge>
                   </div>
-                  <Badge className={`text-[8px] font-bold ${signalStyle.bg} ${signalStyle.text}`}>
-                    {signalStyle.label}
-                  </Badge>
-                </div>
+                )}
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-foreground">{result.name}</span>
-                    <Badge className="text-[8px] bg-[hsl(222,14%,20%)] text-muted-foreground uppercase">
-                      {result.type}
+                <div className="flex items-start gap-4">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 rounded-xl bg-[hsl(223,18%,15%)] flex items-center justify-center">
+                      <span className="font-mono text-sm font-bold text-foreground">{result.symbol}</span>
+                    </div>
+                    <Badge className={`text-[8px] font-bold ${signalStyle.bg} ${signalStyle.text}`}>
+                      {signalStyle.label}
                     </Badge>
                   </div>
 
-                  {/* Patterns & Triggers */}
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {result.patterns.map((pattern, i) => (
-                      <Badge key={i} className="text-[8px] bg-[hsl(224,100%,58%,0.1)] text-[hsl(224,100%,58%)]">
-                        {pattern}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-bold text-foreground">{result.name}</span>
+                      <Badge className="text-[8px] bg-[hsl(222,14%,20%)] text-muted-foreground uppercase">
+                        {result.type}
                       </Badge>
-                    ))}
-                    {result.triggers.slice(0, 2).map((trigger, i) => (
-                      <Badge key={i} className="text-[8px] bg-[hsl(43,96%,56%,0.1)] text-[hsl(43,96%,56%)]">
-                        {trigger}
-                      </Badge>
-                    ))}
-                    {result.triggers.length > 2 && (
-                      <Badge className="text-[8px] bg-[hsl(222,14%,20%)] text-muted-foreground">
-                        +{result.triggers.length - 2} more
-                      </Badge>
-                    )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {result.patterns.map((pattern, i) => (
+                        <Badge key={i} className="text-[8px] bg-[hsl(224,100%,58%,0.1)] text-[hsl(224,100%,58%)]">
+                          {pattern}
+                        </Badge>
+                      ))}
+                      {result.triggers.slice(0, 2).map((trigger, i) => (
+                        <Badge key={i} className="text-[8px] bg-[hsl(43,96%,56%,0.1)] text-[hsl(43,96%,56%)]">
+                          {trigger}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-3">
+                      <div>
+                        <div className="font-mono text-sm font-bold text-foreground">
+                          {formatPrice(result.currentPrice)}
+                        </div>
+                        <div className="text-[8px] text-muted-foreground">Current</div>
+                      </div>
+                      <div>
+                        <div className={`font-mono text-sm font-bold ${result.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+                          {result.change24h >= 0 ? '+' : ''}{result.change24h.toFixed(2)}%
+                        </div>
+                        <div className="text-[8px] text-muted-foreground">24h Change</div>
+                      </div>
+                      <div>
+                        <div className="font-mono text-sm font-bold text-[hsl(162,91%,32%)]">
+                          +{upside}%
+                        </div>
+                        <div className="text-[8px] text-muted-foreground">Upside</div>
+                      </div>
+                      <div>
+                        <div className={`font-mono text-sm font-bold ${getAIScoreColor(result.aiScore)}`}>
+                          {result.aiScore}
+                        </div>
+                        <div className="text-[8px] text-muted-foreground">AI Score</div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Stats Row */}
-                  <div className="grid grid-cols-4 gap-3">
-                    <div>
-                      <div className="font-mono text-sm font-bold text-foreground">
-                        ${result.currentPrice < 1 ? result.currentPrice.toFixed(6) : result.currentPrice.toLocaleString()}
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-right">
+                      <div className="flex items-center gap-1">
+                        <Target className="w-3 h-3 text-[hsl(162,91%,32%)]" />
+                        <span className="font-mono text-xs text-[hsl(162,91%,32%)] font-bold">
+                          {formatPrice(result.priceTarget)}
+                        </span>
                       </div>
-                      <div className="text-[8px] text-muted-foreground">Current</div>
+                      <div className="text-[9px] text-muted-foreground">Target</div>
                     </div>
-                    <div>
-                      <div className={`font-mono text-sm font-bold ${result.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
-                        {result.change24h >= 0 ? '+' : ''}{result.change24h}%
-                      </div>
-                      <div className="text-[8px] text-muted-foreground">24h Change</div>
+                    <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                      <Activity className="w-3 h-3" />
+                      {result.confidence}% conf.
                     </div>
-                    <div>
-                      <div className="font-mono text-sm font-bold text-[hsl(162,91%,32%)]">
-                        +{upside}%
-                      </div>
-                      <div className="text-[8px] text-muted-foreground">Upside</div>
-                    </div>
-                    <div>
-                      <div className={`font-mono text-sm font-bold ${getAIScoreColor(result.aiScore)}`}>
-                        {result.aiScore}
-                      </div>
-                      <div className="text-[8px] text-muted-foreground">AI Score</div>
-                    </div>
+                    <Button 
+                      size="sm" 
+                      className="h-7 px-3 text-[10px] bg-[hsl(270,91%,65%)] hover:bg-[hsl(270,91%,70%)] text-white"
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Analyze
+                    </Button>
                   </div>
-                </div>
-
-                {/* CTA */}
-                <div className="flex flex-col items-end gap-2">
-                  <div className="text-right">
-                    <div className="flex items-center gap-1">
-                      <Target className="w-3 h-3 text-[hsl(162,91%,32%)]" />
-                      <span className="font-mono text-xs text-[hsl(162,91%,32%)] font-bold">
-                        ${result.priceTarget < 1 ? result.priceTarget.toFixed(6) : result.priceTarget.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="text-[9px] text-muted-foreground">Target</div>
-                  </div>
-                  <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                    <Activity className="w-3 h-3" />
-                    {result.confidence}% conf.
-                  </div>
-                  <Button 
-                    size="sm" 
-                    className="h-7 px-3 text-[10px] bg-[hsl(270,91%,65%)] hover:bg-[hsl(270,91%,70%)] text-white"
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    Analyze
-                  </Button>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-3 mt-5 pt-4 border-t border-[hsl(222,14%,15%)]">
         <div className="text-center">
-          <div className="font-mono text-lg font-bold text-[hsl(162,91%,32%)]">23</div>
+          <div className="font-mono text-lg font-bold text-[hsl(162,91%,32%)]">{strongBuyCount}</div>
           <div className="text-[9px] text-muted-foreground uppercase">Strong Buys</div>
         </div>
         <div className="text-center">
-          <div className="font-mono text-lg font-bold text-[hsl(43,96%,56%)]">47</div>
+          <div className="font-mono text-lg font-bold text-[hsl(43,96%,56%)]">{buyCount}</div>
           <div className="text-[9px] text-muted-foreground uppercase">Buy Signals</div>
         </div>
         <div className="text-center">
-          <div className="font-mono text-lg font-bold text-[hsl(355,88%,58%)]">12</div>
+          <div className="font-mono text-lg font-bold text-[hsl(355,88%,58%)]">{sellCount}</div>
           <div className="text-[9px] text-muted-foreground uppercase">Sell Signals</div>
         </div>
         <div className="text-center">
-          <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)]">87%</div>
-          <div className="text-[9px] text-muted-foreground uppercase">Avg Accuracy</div>
+          <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)]">{avgAccuracy}%</div>
+          <div className="text-[9px] text-muted-foreground uppercase">Avg Confidence</div>
         </div>
       </div>
     </Card>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Bot, 
   Sparkles, 
@@ -18,68 +19,29 @@ import {
   Target,
   BarChart2,
   ArrowUpRight,
-  Star,
-  Crown
+  Crown,
+  AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// AInvest-inspired "Aime" AI Quick Actions + Magic Signals
-// Combined with Microsoft Copilot UX patterns
-
 interface MagicSignal {
+  id: string;
   type: 'buy' | 'sell' | 'alert';
   asset: string;
   confidence: number;
   reason: string;
-  priceTarget?: string;
-  stopLoss?: string;
+  priceTarget?: number;
+  stopLoss?: number;
   timestamp: Date;
 }
 
 const AimeStyleAIPanel = () => {
-  const [activeTab, setActiveTab] = useState<'signals' | 'research' | 'portfolio'>('signals');
-  const [isTyping, setIsTyping] = useState(false);
   const [currentSignalIndex, setCurrentSignalIndex] = useState(0);
+  const [signals, setSignals] = useState<MagicSignal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // AInvest-style Magic Signals
-  const magicSignals: MagicSignal[] = [
-    { 
-      type: 'buy', 
-      asset: 'BTC', 
-      confidence: 94, 
-      reason: 'Bullish divergence on RSI + whale accumulation detected',
-      priceTarget: '$105,000',
-      stopLoss: '$92,500',
-      timestamp: new Date()
-    },
-    { 
-      type: 'sell', 
-      asset: 'DOGE', 
-      confidence: 87, 
-      reason: 'Overbought RSI(14) at 78 + declining volume',
-      priceTarget: '$0.32',
-      stopLoss: '$0.42',
-      timestamp: new Date()
-    },
-    { 
-      type: 'alert', 
-      asset: 'ETH', 
-      confidence: 91, 
-      reason: 'Breaking out of 30-day consolidation pattern',
-      timestamp: new Date()
-    },
-    { 
-      type: 'buy', 
-      asset: 'SOL', 
-      confidence: 89, 
-      reason: 'Smart money inflow + DeFi TVL surge',
-      priceTarget: '$220',
-      stopLoss: '$175',
-      timestamp: new Date()
-    },
-  ];
-
-  // AInvest-style Quick Prompts (Aime AI copilot)
+  // Quick prompts for AI interaction
   const quickPrompts = [
     { icon: TrendingUp, label: "Top Gainers", query: "Show me today's top performing crypto" },
     { icon: Brain, label: "Deep Research", query: "Analyze BTC for the next 30 days" },
@@ -89,20 +51,52 @@ const AimeStyleAIPanel = () => {
     { icon: Zap, label: "Quick Trade", query: "Execute my top AI signal" },
   ];
 
-  // Thematic Screeners (AInvest-inspired)
-  const thematicScreeners = [
-    { name: "Congress Trades", description: "Tracks politician investments", color: "gold", count: 23 },
-    { name: "Meme Momentum", description: "Top viral tokens", color: "purple", count: 47 },
-    { name: "Fed Sensitive", description: "Rate-sensitive assets", color: "blue", count: 18 },
-    { name: "Whale Moves", description: "Large holder activity", color: "green", count: 156 },
-  ];
+  useEffect(() => {
+    fetchSignals();
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSignalIndex(prev => (prev + 1) % magicSignals.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+    if (signals.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentSignalIndex(prev => (prev + 1) % signals.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [signals.length]);
+
+  const fetchSignals = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('ai_signals')
+        .select('*')
+        .eq('is_active', true)
+        .order('triggered_at', { ascending: false })
+        .limit(10);
+
+      if (fetchError) throw fetchError;
+
+      const mappedSignals: MagicSignal[] = (data || []).map(s => ({
+        id: s.id,
+        type: s.signal_type as 'buy' | 'sell' | 'alert',
+        asset: s.symbol,
+        confidence: s.confidence,
+        reason: s.reason,
+        priceTarget: s.target_price ? Number(s.target_price) : undefined,
+        stopLoss: s.stop_loss ? Number(s.stop_loss) : undefined,
+        timestamp: new Date(s.triggered_at)
+      }));
+
+      setSignals(mappedSignals);
+    } catch (err: any) {
+      console.error('Error fetching signals:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getSignalColor = (type: string) => {
     switch (type) {
@@ -122,15 +116,20 @@ const AimeStyleAIPanel = () => {
     }
   };
 
+  const formatPrice = (price: number | undefined) => {
+    if (!price) return 'N/A';
+    if (price >= 1000) return `$${price.toLocaleString()}`;
+    if (price >= 1) return `$${price.toFixed(2)}`;
+    return `$${price.toFixed(6)}`;
+  };
+
   return (
     <div className="space-y-6">
-      {/* AI Copilot Header - Microsoft Copilot + AInvest Aime hybrid */}
+      {/* AI Copilot Header */}
       <Card className="relative overflow-hidden p-6 bg-gradient-to-br from-[hsl(223,18%,9%)] to-[hsl(223,18%,7%)] border-[hsl(270,91%,65%,0.3)]">
-        {/* Mesh Gradient Background */}
         <div className="absolute inset-0 bg-mesh-card opacity-30 pointer-events-none" />
         
         <div className="relative flex items-start gap-4">
-          {/* AI Avatar - AInvest style */}
           <div className="relative">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(270,91%,65%)] to-[hsl(224,100%,58%)] flex items-center justify-center shadow-lg"
               style={{ boxShadow: '0 0 30px hsl(270,91%,65%,0.3)' }}>
@@ -151,7 +150,6 @@ const AimeStyleAIPanel = () => {
               Your personal AI trading mentor. Ask me anything about markets, trades, or get instant analysis.
             </p>
             
-            {/* Copilot-style Quick Input */}
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[hsl(223,18%,12%)] border border-[hsl(222,14%,20%)] group focus-within:border-[hsl(270,91%,65%,0.5)] transition-colors">
               <Search className="w-4 h-4 text-muted-foreground" />
               <input 
@@ -170,7 +168,6 @@ const AimeStyleAIPanel = () => {
           </div>
         </div>
         
-        {/* Quick Prompts Grid - AInvest style */}
         <div className="relative grid grid-cols-3 md:grid-cols-6 gap-2 mt-4">
           {quickPrompts.map((prompt) => {
             const Icon = prompt.icon;
@@ -187,7 +184,7 @@ const AimeStyleAIPanel = () => {
         </div>
       </Card>
 
-      {/* Magic Signals Section - AInvest inspired */}
+      {/* Magic Signals Section */}
       <Card className="p-5 bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -204,122 +201,109 @@ const AimeStyleAIPanel = () => {
           </Link>
         </div>
 
-        {/* Featured Signal - Large Display */}
-        <div className={`relative p-4 rounded-xl ${getSignalBgColor(magicSignals[currentSignalIndex].type)} border border-[${getSignalColor(magicSignals[currentSignalIndex].type)}20] mb-4 transition-all duration-500`}>
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Badge 
-                className="text-[10px] font-bold uppercase"
-                style={{ 
-                  backgroundColor: `${getSignalColor(magicSignals[currentSignalIndex].type)}20`,
-                  color: getSignalColor(magicSignals[currentSignalIndex].type)
-                }}
-              >
-                {magicSignals[currentSignalIndex].type}
-              </Badge>
-              <span className="font-mono text-lg font-bold text-foreground">{magicSignals[currentSignalIndex].asset}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: getSignalColor(magicSignals[currentSignalIndex].type) }} />
-              <span className="font-mono text-xs font-bold" style={{ color: getSignalColor(magicSignals[currentSignalIndex].type) }}>
-                {magicSignals[currentSignalIndex].confidence}% confidence
-              </span>
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-          
-          <p className="text-sm text-foreground/80 mb-3">{magicSignals[currentSignalIndex].reason}</p>
-          
-          {magicSignals[currentSignalIndex].priceTarget && (
-            <div className="flex items-center gap-4 text-xs font-mono">
-              <div className="flex items-center gap-1">
-                <ArrowUpRight className="w-3 h-3 text-[hsl(162,91%,32%)]" />
-                <span className="text-muted-foreground">Target:</span>
-                <span className="text-[hsl(162,91%,32%)] font-bold">{magicSignals[currentSignalIndex].priceTarget}</span>
+        ) : error ? (
+          <div className="flex items-center gap-2 text-destructive py-8 justify-center">
+            <AlertCircle className="h-5 w-5" />
+            <span>Error loading signals</span>
+          </div>
+        ) : signals.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="font-medium">No Active Signals</p>
+            <p className="text-sm">AI signals will appear here when generated by the system.</p>
+          </div>
+        ) : (
+          <>
+            {/* Featured Signal */}
+            <div className={`relative p-4 rounded-xl ${getSignalBgColor(signals[currentSignalIndex].type)} mb-4 transition-all duration-500`}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    className="text-[10px] font-bold uppercase"
+                    style={{ 
+                      backgroundColor: `${getSignalColor(signals[currentSignalIndex].type)}20`,
+                      color: getSignalColor(signals[currentSignalIndex].type)
+                    }}
+                  >
+                    {signals[currentSignalIndex].type}
+                  </Badge>
+                  <span className="font-mono text-lg font-bold text-foreground">{signals[currentSignalIndex].asset}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: getSignalColor(signals[currentSignalIndex].type) }} />
+                  <span className="font-mono text-xs font-bold" style={{ color: getSignalColor(signals[currentSignalIndex].type) }}>
+                    {signals[currentSignalIndex].confidence}% confidence
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3 text-[hsl(355,88%,58%)]" />
-                <span className="text-muted-foreground">Stop:</span>
-                <span className="text-[hsl(355,88%,58%)] font-bold">{magicSignals[currentSignalIndex].stopLoss}</span>
+              
+              <p className="text-sm text-foreground/80 mb-3">{signals[currentSignalIndex].reason}</p>
+              
+              {(signals[currentSignalIndex].priceTarget || signals[currentSignalIndex].stopLoss) && (
+                <div className="flex items-center gap-4 text-xs font-mono">
+                  {signals[currentSignalIndex].priceTarget && (
+                    <div className="flex items-center gap-1">
+                      <ArrowUpRight className="w-3 h-3 text-[hsl(162,91%,32%)]" />
+                      <span className="text-muted-foreground">Target:</span>
+                      <span className="text-[hsl(162,91%,32%)] font-bold">{formatPrice(signals[currentSignalIndex].priceTarget)}</span>
+                    </div>
+                  )}
+                  {signals[currentSignalIndex].stopLoss && (
+                    <div className="flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 text-[hsl(355,88%,58%)]" />
+                      <span className="text-muted-foreground">Stop:</span>
+                      <span className="text-[hsl(355,88%,58%)] font-bold">{formatPrice(signals[currentSignalIndex].stopLoss)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-1 mt-4">
+                {signals.map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${i === currentSignalIndex ? 'bg-[hsl(270,91%,65%)]' : 'bg-[hsl(222,14%,20%)]'}`}
+                  />
+                ))}
               </div>
             </div>
-          )}
 
-          {/* Signal Progress Indicator */}
-          <div className="flex gap-1 mt-4">
-            {magicSignals.map((_, i) => (
-              <div 
-                key={i}
-                className={`h-1 flex-1 rounded-full transition-all duration-300 ${i === currentSignalIndex ? 'bg-[hsl(270,91%,65%)]' : 'bg-[hsl(222,14%,20%)]'}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Signal List */}
-        <div className="space-y-2">
-          {magicSignals.slice(0, 3).map((signal, i) => (
-            <div 
-              key={i}
-              className={`flex items-center justify-between p-3 rounded-lg bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,15%)] hover:border-[hsl(222,14%,25%)] transition-colors cursor-pointer ${i === currentSignalIndex ? 'ring-1 ring-[hsl(270,91%,65%,0.3)]' : ''}`}
-              onClick={() => setCurrentSignalIndex(i)}
-            >
-              <div className="flex items-center gap-3">
-                <Badge 
-                  className="text-[8px] font-bold w-10 justify-center"
-                  style={{ 
-                    backgroundColor: `${getSignalColor(signal.type)}20`,
-                    color: getSignalColor(signal.type)
-                  }}
+            {/* Signal List */}
+            <div className="space-y-2">
+              {signals.slice(0, 3).map((signal, i) => (
+                <div 
+                  key={signal.id}
+                  className={`flex items-center justify-between p-3 rounded-lg bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,15%)] hover:border-[hsl(222,14%,25%)] transition-colors cursor-pointer ${i === currentSignalIndex ? 'ring-1 ring-[hsl(270,91%,65%,0.3)]' : ''}`}
+                  onClick={() => setCurrentSignalIndex(i)}
                 >
-                  {signal.type.toUpperCase()}
-                </Badge>
-                <span className="font-mono text-sm font-bold text-foreground">{signal.asset}</span>
-                <span className="text-xs text-muted-foreground truncate max-w-[200px]">{signal.reason}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold" style={{ color: getSignalColor(signal.type) }}>
-                  {signal.confidence}%
-                </span>
-              </div>
+                  <div className="flex items-center gap-3">
+                    <Badge 
+                      className="text-[8px] font-bold w-10 justify-center"
+                      style={{ 
+                        backgroundColor: `${getSignalColor(signal.type)}20`,
+                        color: getSignalColor(signal.type)
+                      }}
+                    >
+                      {signal.type.toUpperCase()}
+                    </Badge>
+                    <span className="font-mono text-sm font-bold text-foreground">{signal.asset}</span>
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">{signal.reason}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold" style={{ color: getSignalColor(signal.type) }}>
+                      {signal.confidence}%
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </Card>
-
-      {/* Thematic Screeners - AInvest Congress/Meme/Fed screeners */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {thematicScreeners.map((screener) => {
-          const colorMap: Record<string, string> = {
-            gold: 'hsl(43,96%,56%)',
-            purple: 'hsl(270,91%,65%)',
-            blue: 'hsl(224,100%,58%)',
-            green: 'hsl(162,91%,32%)',
-          };
-          const bgColorMap: Record<string, string> = {
-            gold: 'bg-[hsl(43,96%,56%,0.1)]',
-            purple: 'bg-[hsl(270,91%,65%,0.1)]',
-            blue: 'bg-[hsl(224,100%,58%,0.1)]',
-            green: 'bg-[hsl(162,91%,32%,0.1)]',
-          };
-          
-          return (
-            <Card 
-              key={screener.name}
-              className={`p-4 ${bgColorMap[screener.color]} border-[${colorMap[screener.color]}30] hover:border-[${colorMap[screener.color]}50] transition-all cursor-pointer group`}
-              style={{ borderColor: `${colorMap[screener.color]}30` }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <Crown className="w-4 h-4" style={{ color: colorMap[screener.color] }} />
-                <Badge className="text-[8px]" style={{ backgroundColor: `${colorMap[screener.color]}20`, color: colorMap[screener.color] }}>
-                  {screener.count} signals
-                </Badge>
-              </div>
-              <h4 className="font-bold text-sm text-foreground group-hover:text-white transition-colors">{screener.name}</h4>
-              <p className="text-[10px] text-muted-foreground">{screener.description}</p>
-            </Card>
-          );
-        })}
-      </div>
     </div>
   );
 };

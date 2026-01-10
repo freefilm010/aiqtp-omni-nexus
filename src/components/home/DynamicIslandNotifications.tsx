@@ -1,21 +1,16 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   TrendingUp, 
-  TrendingDown, 
-  Zap, 
   Bell,
   CheckCircle2,
-  AlertTriangle,
-  ArrowUpRight,
-  Coins,
-  Target,
   Bot,
-  Clock
+  Coins,
+  Clock,
+  ArrowUpRight
 } from "lucide-react";
-
-// iOS Dynamic Island-inspired notification component
-// Live Activities for real-time trade updates
 
 interface Notification {
   id: string;
@@ -32,54 +27,61 @@ interface Notification {
 const DynamicIslandNotifications = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeNotification, setActiveNotification] = useState(0);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'trade_executed',
-      title: 'Trade Executed',
-      message: 'BUY 0.5 BTC @ $97,234',
-      asset: 'BTC',
-      value: '+$48,617',
-      timestamp: new Date(),
-      isLive: true
-    },
-    {
-      id: '2',
-      type: 'price_alert',
-      title: 'Price Alert',
-      message: 'ETH crossed $3,500 resistance',
-      asset: 'ETH',
-      change: 2.34,
-      timestamp: new Date(Date.now() - 60000)
-    },
-    {
-      id: '3',
-      type: 'signal',
-      title: 'AI Signal',
-      message: 'STRONG BUY signal for SOL',
-      asset: 'SOL',
-      change: 5.67,
-      timestamp: new Date(Date.now() - 120000)
-    },
-    {
-      id: '4',
-      type: 'whale_alert',
-      title: 'Whale Alert',
-      message: '2,500 BTC moved from Binance',
-      value: '$243M',
-      timestamp: new Date(Date.now() - 180000)
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveNotification(prev => (prev + 1) % notifications.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    if (user) {
+      fetchNotifications();
+    } else {
+      setNotifications([]);
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (notifications.length > 1) {
+      const interval = setInterval(() => {
+        setActiveNotification(prev => (prev + 1) % notifications.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
   }, [notifications.length]);
 
-  // Only auto-expand on first load, not on every notification change
-  // This prevents the "jumping" effect from constant expansion/collapse
+  const fetchNotifications = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_read', false)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const mapped: Notification[] = (data || []).map(n => ({
+        id: n.id,
+        type: n.notification_type as Notification['type'],
+        title: n.title,
+        message: n.message,
+        asset: n.asset || undefined,
+        value: n.value || undefined,
+        change: n.change_percent ? Number(n.change_percent) : undefined,
+        timestamp: new Date(n.created_at),
+        isLive: n.is_live
+      }));
+
+      setNotifications(mapped);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -101,11 +103,15 @@ const DynamicIslandNotifications = () => {
     }
   };
 
+  // Don't render if no notifications or loading
+  if (loading || notifications.length === 0) {
+    return null;
+  }
+
   const currentNotification = notifications[activeNotification];
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
-      {/* Dynamic Island Container */}
       <div 
         className={`
           relative overflow-hidden cursor-pointer
@@ -140,7 +146,6 @@ const DynamicIslandNotifications = () => {
         {/* Expanded State */}
         {isExpanded && (
           <div className={`p-4 bg-gradient-to-br ${getNotificationColor(currentNotification.type)}`}>
-            {/* Header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-[hsl(223,18%,15%)]">
@@ -169,7 +174,6 @@ const DynamicIslandNotifications = () => {
               )}
             </div>
 
-            {/* Content */}
             <div className="space-y-2">
               <p className="text-sm text-foreground/90">{currentNotification.message}</p>
               
@@ -192,7 +196,6 @@ const DynamicIslandNotifications = () => {
               )}
             </div>
 
-            {/* Progress Dots */}
             <div className="flex justify-center gap-1.5 mt-4">
               {notifications.map((_, i) => (
                 <button
@@ -212,7 +215,6 @@ const DynamicIslandNotifications = () => {
           </div>
         )}
 
-        {/* Shimmer Effect */}
         <div 
           className="absolute inset-0 pointer-events-none opacity-30"
           style={{
