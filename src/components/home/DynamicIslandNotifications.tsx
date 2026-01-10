@@ -78,12 +78,8 @@ const DynamicIslandNotifications = () => {
     return () => clearInterval(interval);
   }, [notifications.length]);
 
-  // Auto-expand briefly when notification changes
-  useEffect(() => {
-    setIsExpanded(true);
-    const timer = setTimeout(() => setIsExpanded(false), 3000);
-    return () => clearTimeout(timer);
-  }, [activeNotification]);
+  // Only auto-expand on first load, not on every notification change
+  // This prevents the "jumping" effect from constant expansion/collapse
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
