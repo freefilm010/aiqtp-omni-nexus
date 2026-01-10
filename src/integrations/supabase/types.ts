@@ -670,6 +670,48 @@ export type Database = {
           },
         ]
       }
+      connected_accounts: {
+        Row: {
+          account_name: string
+          account_type: string
+          api_key_encrypted: string | null
+          balance: number | null
+          change_24h: number | null
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_name: string
+          account_type: string
+          api_key_encrypted?: string | null
+          balance?: number | null
+          change_24h?: number | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string
+          account_type?: string
+          api_key_encrypted?: string | null
+          balance?: number | null
+          change_24h?: number | null
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       contest_participants: {
         Row: {
           contest_id: string | null
@@ -716,6 +758,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      copy_trading_leaders: {
+        Row: {
+          aum: number | null
+          avatar: string | null
+          copiers_count: number | null
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean | null
+          is_hot: boolean | null
+          is_verified: boolean | null
+          max_drawdown: number | null
+          pnl_30d: number | null
+          pnl_all_time: number | null
+          risk_score: number | null
+          sharpe_ratio: number | null
+          strategy_description: string | null
+          tier: string
+          updated_at: string
+          user_id: string
+          win_rate: number | null
+        }
+        Insert: {
+          aum?: number | null
+          avatar?: string | null
+          copiers_count?: number | null
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          is_verified?: boolean | null
+          max_drawdown?: number | null
+          pnl_30d?: number | null
+          pnl_all_time?: number | null
+          risk_score?: number | null
+          sharpe_ratio?: number | null
+          strategy_description?: string | null
+          tier?: string
+          updated_at?: string
+          user_id: string
+          win_rate?: number | null
+        }
+        Update: {
+          aum?: number | null
+          avatar?: string | null
+          copiers_count?: number | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          is_verified?: boolean | null
+          max_drawdown?: number | null
+          pnl_30d?: number | null
+          pnl_all_time?: number | null
+          risk_score?: number | null
+          sharpe_ratio?: number | null
+          strategy_description?: string | null
+          tier?: string
+          updated_at?: string
+          user_id?: string
+          win_rate?: number | null
+        }
+        Relationships: []
       }
       course_ratings: {
         Row: {
@@ -1342,6 +1450,51 @@ export type Database = {
           quote_token_coingecko_id?: string | null
           updated_at?: string | null
           volume_24h?: number | null
+        }
+        Relationships: []
+      }
+      economic_calendar_events: {
+        Row: {
+          actual: string | null
+          asset: string | null
+          created_at: string
+          event_time: string
+          event_type: string
+          forecast: string | null
+          id: string
+          impact: string
+          is_active: boolean | null
+          is_live: boolean | null
+          previous: string | null
+          title: string
+        }
+        Insert: {
+          actual?: string | null
+          asset?: string | null
+          created_at?: string
+          event_time: string
+          event_type: string
+          forecast?: string | null
+          id?: string
+          impact: string
+          is_active?: boolean | null
+          is_live?: boolean | null
+          previous?: string | null
+          title: string
+        }
+        Update: {
+          actual?: string | null
+          asset?: string | null
+          created_at?: string
+          event_time?: string
+          event_type?: string
+          forecast?: string | null
+          id?: string
+          impact?: string
+          is_active?: boolean | null
+          is_live?: boolean | null
+          previous?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -1979,6 +2132,51 @@ export type Database = {
           },
         ]
       }
+      investment_portfolio: {
+        Row: {
+          asset_name: string
+          asset_type: string
+          created_at: string
+          current_percent: number | null
+          current_price: number | null
+          entry_price: number | null
+          id: string
+          pnl_percent: number | null
+          symbol: string
+          target_percent: number
+          updated_at: string
+          value_usd: number | null
+        }
+        Insert: {
+          asset_name: string
+          asset_type: string
+          created_at?: string
+          current_percent?: number | null
+          current_price?: number | null
+          entry_price?: number | null
+          id?: string
+          pnl_percent?: number | null
+          symbol: string
+          target_percent: number
+          updated_at?: string
+          value_usd?: number | null
+        }
+        Update: {
+          asset_name?: string
+          asset_type?: string
+          created_at?: string
+          current_percent?: number | null
+          current_price?: number | null
+          entry_price?: number | null
+          id?: string
+          pnl_percent?: number | null
+          symbol?: string
+          target_percent?: number
+          updated_at?: string
+          value_usd?: number | null
+        }
+        Relationships: []
+      }
       lightning_channels: {
         Row: {
           capacity: number
@@ -2142,6 +2340,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      market_ohlcv_cache: {
+        Row: {
+          close: number
+          created_at: string
+          high: number
+          id: string
+          low: number
+          open: number
+          open_time: string
+          symbol: string
+          timeframe: string
+          volume: number | null
+        }
+        Insert: {
+          close: number
+          created_at?: string
+          high: number
+          id?: string
+          low: number
+          open: number
+          open_time: string
+          symbol: string
+          timeframe: string
+          volume?: number | null
+        }
+        Update: {
+          close?: number
+          created_at?: string
+          high?: number
+          id?: string
+          low?: number
+          open?: number
+          open_time?: string
+          symbol?: string
+          timeframe?: string
+          volume?: number | null
+        }
+        Relationships: []
       }
       market_prices: {
         Row: {
@@ -2965,6 +3202,80 @@ export type Database = {
           quantity?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      portfolio_holdings: {
+        Row: {
+          account_id: string | null
+          allocation_percent: number | null
+          change_24h: number | null
+          created_at: string
+          id: string
+          name: string
+          quantity: number
+          symbol: string
+          updated_at: string
+          user_id: string
+          value_usd: number | null
+        }
+        Insert: {
+          account_id?: string | null
+          allocation_percent?: number | null
+          change_24h?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          quantity?: number
+          symbol: string
+          updated_at?: string
+          user_id: string
+          value_usd?: number | null
+        }
+        Update: {
+          account_id?: string | null
+          allocation_percent?: number | null
+          change_24h?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          quantity?: number
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+          value_usd?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_holdings_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "connected_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_performance: {
+        Row: {
+          id: string
+          is_positive: boolean | null
+          metric_name: string
+          metric_value: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          is_positive?: boolean | null
+          metric_name: string
+          metric_value: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          is_positive?: boolean | null
+          metric_name?: string
+          metric_value?: number
+          updated_at?: string
         }
         Relationships: []
       }
