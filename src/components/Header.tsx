@@ -156,7 +156,7 @@ const Header = () => {
             </div>
             <div>
               <div className="text-xl font-bold text-foreground">AIQTP™</div>
-              <div className="text-xs text-muted-foreground">AI Quantum Trading Platform</div>
+              <div className="text-xs text-muted-foreground">AI Quantum Trading Portal</div>
             </div>
           </Link>
 

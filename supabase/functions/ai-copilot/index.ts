@@ -44,7 +44,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an AI Copilot for the AIQTP trading platform admin dashboard. You help the admin manage:
+            content: `You are an AI Copilot for the AIQTP™ AI Quantum Trading Portal admin dashboard. You help the admin manage:
 - Portfolio optimization (aggressive 30% stable / 70% growth strategy)
 - Revenue streams and distribution
 - Payment processor configuration
