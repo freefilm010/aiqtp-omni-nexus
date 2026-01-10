@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity, ChevronDown, Wifi, BarChart2, Crosshair, Minus, TrendingDown, Square, Circle, PenTool } from "lucide-react";
+import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity, ChevronDown, Wifi, BarChart2, Crosshair, Minus, TrendingDown, Square, Circle, PenTool, Search, FileCode, FlaskConical, SlidersHorizontal, Eye, Maximize2, Layout, Terminal, Cpu, LineChart, CandlestickChart } from "lucide-react";
 import { useState, useEffect } from "react";
 
 // TradingView-style Live Price Ticker
@@ -30,10 +30,10 @@ const LiveTicker = () => {
   }, []);
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-7 bg-[hsl(223,18%,12%)] border-b border-[hsl(222,14%,19%)] overflow-hidden z-20">
+    <div className="absolute top-0 left-0 right-0 h-7 bg-[hsl(223,18%,9%)] border-b border-[hsl(222,14%,17%)] overflow-hidden z-20">
       <div className="flex animate-ticker whitespace-nowrap h-full">
         {[...prices, ...prices].map((ticker, i) => (
-          <div key={i} className="flex items-center px-3 h-full border-r border-[hsl(222,14%,19%)] gap-2">
+          <div key={i} className="flex items-center px-3 h-full border-r border-[hsl(222,14%,17%)] gap-2">
             <span className="font-mono text-[11px] font-medium text-foreground/90">{ticker.symbol}</span>
             <span className={`font-mono text-[11px] font-semibold ${ticker.positive ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
               {ticker.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -50,156 +50,160 @@ const LiveTicker = () => {
 
 // TradingView-style Left Toolbar
 const LeftToolbar = () => (
-  <div className="absolute left-0 top-7 bottom-6 w-11 bg-[hsl(223,18%,12%)] border-r border-[hsl(222,14%,19%)] flex flex-col items-center py-2 gap-1 z-20">
-    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,22%)] text-muted-foreground hover:text-foreground transition-colors">
+  <div className="absolute left-0 top-7 bottom-9 w-11 bg-[hsl(223,18%,9%)] border-r border-[hsl(222,14%,17%)] flex flex-col items-center py-2 gap-1 z-20">
+    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,20%)] text-muted-foreground hover:text-foreground transition-colors">
       <Crosshair className="w-4 h-4" />
     </button>
     <button className="w-8 h-8 flex items-center justify-center rounded bg-[hsl(224,100%,58%,0.15)] text-[hsl(224,100%,58%)]">
       <Minus className="w-4 h-4" />
     </button>
-    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,22%)] text-muted-foreground hover:text-foreground transition-colors">
+    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,20%)] text-muted-foreground hover:text-foreground transition-colors">
       <TrendingUp className="w-4 h-4" />
     </button>
-    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,22%)] text-muted-foreground hover:text-foreground transition-colors">
+    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,20%)] text-muted-foreground hover:text-foreground transition-colors">
       <Square className="w-4 h-4" />
     </button>
-    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,22%)] text-muted-foreground hover:text-foreground transition-colors">
+    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,20%)] text-muted-foreground hover:text-foreground transition-colors">
       <Circle className="w-4 h-4" />
     </button>
-    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,22%)] text-muted-foreground hover:text-foreground transition-colors">
+    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,20%)] text-muted-foreground hover:text-foreground transition-colors">
       <PenTool className="w-4 h-4" />
     </button>
     <div className="flex-1" />
-    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,22%)] text-muted-foreground hover:text-foreground transition-colors">
+    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-[hsl(222,14%,20%)] text-muted-foreground hover:text-foreground transition-colors">
       <BarChart2 className="w-4 h-4" />
     </button>
   </div>
 );
 
-// TradingView-style Top Toolbar
-const TopToolbar = () => (
-  <div className="absolute left-11 top-7 right-0 h-9 bg-[hsl(223,18%,12%)] border-b border-[hsl(222,14%,19%)] flex items-center px-3 gap-1 z-20">
-    <div className="flex items-center gap-1 border-r border-[hsl(222,14%,22%)] pr-3 mr-2">
-      <span className="font-mono text-sm font-semibold text-foreground">BTCUSD</span>
-      <ChevronDown className="w-3 h-3 text-muted-foreground" />
-    </div>
-    <div className="flex items-center gap-0.5">
-      {['1m', '5m', '15m', '1H', '4H', 'D', 'W'].map((tf, i) => (
-        <button 
-          key={tf}
-          className={`px-2 py-1 text-[11px] font-medium rounded ${tf === 'D' ? 'bg-[hsl(224,100%,58%,0.15)] text-[hsl(224,100%,58%)]' : 'text-muted-foreground hover:text-foreground hover:bg-[hsl(222,14%,22%)]'} transition-colors`}
-        >
-          {tf}
-        </button>
-      ))}
-    </div>
-    <div className="flex-1" />
-    <div className="flex items-center gap-2">
-      <button className="px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-        <BarChart2 className="w-3 h-3" />
-        Indicators
-      </button>
-      <button className="px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors">
-        Templates
-      </button>
-    </div>
-  </div>
-);
-
-// TradingView Candlestick Chart
-const TradingViewChart = () => {
-  const candles = [
-    { o: 42, c: 48, h: 52, l: 40 }, { o: 48, c: 45, h: 50, l: 43 },
-    { o: 45, c: 52, h: 55, l: 44 }, { o: 52, c: 49, h: 54, l: 47 },
-    { o: 49, c: 56, h: 59, l: 48 }, { o: 56, c: 52, h: 58, l: 50 },
-    { o: 52, c: 58, h: 61, l: 51 }, { o: 58, c: 55, h: 60, l: 53 },
-    { o: 55, c: 62, h: 66, l: 54 }, { o: 62, c: 59, h: 64, l: 57 },
-    { o: 59, c: 66, h: 70, l: 58 }, { o: 66, c: 63, h: 68, l: 61 },
-    { o: 63, c: 70, h: 74, l: 62 }, { o: 70, c: 67, h: 72, l: 65 },
-    { o: 67, c: 74, h: 78, l: 66 }, { o: 74, c: 71, h: 76, l: 69 },
-    { o: 71, c: 78, h: 82, l: 70 }, { o: 78, c: 75, h: 80, l: 73 },
-    { o: 75, c: 82, h: 86, l: 74 }, { o: 82, c: 79, h: 84, l: 77 },
-    { o: 79, c: 86, h: 90, l: 78 }, { o: 86, c: 84, h: 88, l: 82 },
-    { o: 84, c: 90, h: 94, l: 83 }, { o: 90, c: 88, h: 92, l: 86 },
-  ];
-
-  const priceScale = [100, 90, 80, 70, 60, 50, 40];
+// Mini Chart Panel for Multi-Chart Grid
+const MiniChartPanel = ({ symbol, price, change, timeframe, positive }: { symbol: string; price: string; change: string; timeframe: string; positive: boolean }) => {
+  // Generate random candles for each mini chart
+  const candles = Array.from({ length: 12 }, () => ({
+    o: 40 + Math.random() * 30,
+    c: 40 + Math.random() * 30,
+    h: 60 + Math.random() * 20,
+    l: 30 + Math.random() * 15
+  }));
 
   return (
-    <div className="absolute left-11 top-16 right-0 bottom-6 overflow-hidden pointer-events-none">
-      {/* Grid */}
-      <svg className="absolute inset-0 w-full h-full opacity-40">
-        <defs>
-          <pattern id="tvGrid" width="80" height="50" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 L 0 0 0 50" fill="none" stroke="hsl(222,14%,18%)" strokeWidth="0.5"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#tvGrid)" />
-      </svg>
-
-      {/* Price Scale on Right */}
-      <div className="absolute right-0 top-0 bottom-20 w-14 flex flex-col justify-between py-4 opacity-50">
-        {priceScale.map(price => (
-          <span key={price} className="font-mono text-[10px] text-muted-foreground text-right pr-2">{price.toLocaleString()}</span>
-        ))}
+    <div className="relative bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,15%)] overflow-hidden group hover:border-[hsl(224,100%,58%,0.4)] transition-all">
+      {/* Header */}
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-[hsl(222,14%,15%)] bg-[hsl(223,18%,9%)]">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs font-semibold text-foreground">{symbol}</span>
+          <span className="font-mono text-[10px] text-muted-foreground">{timeframe}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`font-mono text-[10px] ${positive ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+            {change}
+          </span>
+        </div>
+      </div>
+      
+      {/* OHLC Data */}
+      <div className="flex items-center gap-3 px-2 py-1 bg-[hsl(223,18%,8%)] border-b border-[hsl(222,14%,12%)]">
+        <span className="font-mono text-[9px] text-muted-foreground">O <span className="text-foreground/80">{(Math.random() * 100 + 50).toFixed(2)}</span></span>
+        <span className="font-mono text-[9px] text-muted-foreground">H <span className="text-[hsl(162,91%,32%)]">{(Math.random() * 100 + 60).toFixed(2)}</span></span>
+        <span className="font-mono text-[9px] text-muted-foreground">L <span className="text-[hsl(355,88%,58%)]">{(Math.random() * 50 + 40).toFixed(2)}</span></span>
+        <span className="font-mono text-[9px] text-muted-foreground">C <span className="text-foreground/80">{price}</span></span>
       </div>
 
-      {/* Volume Bars */}
-      <div className="absolute left-4 right-16 bottom-4 h-16 flex items-end justify-center gap-[5px] opacity-60">
-        {candles.map((c, i) => (
-          <div
-            key={`vol-${i}`}
-            className={`w-[10px] rounded-t-[1px] ${c.c > c.o ? 'bg-[hsl(162,91%,32%,0.4)]' : 'bg-[hsl(355,88%,58%,0.4)]'}`}
-            style={{ height: `${15 + Math.random() * 70}%` }}
+      {/* Chart Area */}
+      <div className="relative h-28 p-1">
+        {/* Grid */}
+        <svg className="absolute inset-0 w-full h-full opacity-30">
+          <defs>
+            <pattern id={`miniGrid-${symbol}`} width="30" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 30 0 L 0 0 0 20" fill="none" stroke="hsl(222,14%,14%)" strokeWidth="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill={`url(#miniGrid-${symbol})`} />
+        </svg>
+
+        {/* Candles */}
+        <div className="absolute inset-2 flex items-end justify-around gap-0.5">
+          {candles.map((candle, i) => {
+            const isBull = candle.c > candle.o;
+            const bodyHeight = Math.abs(candle.c - candle.o) * 1.2;
+            return (
+              <div key={i} className="relative flex flex-col items-center h-full justify-end">
+                <div 
+                  className={`w-1.5 ${isBull ? 'bg-[hsl(162,91%,32%)]' : 'bg-[hsl(355,88%,58%)]'}`}
+                  style={{ height: `${Math.max(bodyHeight, 3)}px` }}
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Moving Average */}
+        <svg className="absolute inset-2 opacity-50" preserveAspectRatio="none" viewBox="0 0 100 50">
+          <path d={`M 0 ${30 + Math.random() * 10} Q ${25 + Math.random() * 10} ${25 + Math.random() * 15} 50 ${20 + Math.random() * 10} T 100 ${15 + Math.random() * 10}`} 
+            stroke="hsl(43,96%,56%)" strokeWidth="1" fill="none" />
+        </svg>
+
+        {/* Price Label */}
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-[hsl(224,100%,58%)] rounded-sm">
+          <span className="font-mono text-[9px] font-bold text-white">{price}</span>
+        </div>
+      </div>
+
+      {/* Volume */}
+      <div className="absolute bottom-0 left-0 right-0 h-6 px-1 flex items-end gap-0.5 opacity-40">
+        {Array.from({ length: 12 }, (_, i) => (
+          <div 
+            key={i} 
+            className={`flex-1 ${i % 2 === 0 ? 'bg-[hsl(162,91%,32%,0.5)]' : 'bg-[hsl(355,88%,58%,0.5)]'}`}
+            style={{ height: `${20 + Math.random() * 80}%` }}
           />
         ))}
       </div>
-
-      {/* Candlesticks */}
-      <div className="absolute left-4 right-16 top-8 bottom-24 flex items-end justify-center gap-[5px]">
-        {candles.map((candle, i) => {
-          const isBull = candle.c > candle.o;
-          const scale = 3;
-          const bodyHeight = Math.abs(candle.c - candle.o) * scale;
-          const wickTop = (candle.h - Math.max(candle.o, candle.c)) * scale;
-          const wickBottom = (Math.min(candle.o, candle.c) - candle.l) * scale;
-          const bodyBottom = (Math.min(candle.o, candle.c) - 35) * scale;
-          
-          return (
-            <div key={i} className="relative flex flex-col items-center" style={{ height: '100%' }}>
-              <div 
-                className={`w-[1px] ${isBull ? 'bg-[hsl(162,91%,32%)]' : 'bg-[hsl(355,88%,58%)]'}`}
-                style={{ height: `${wickTop}px`, position: 'absolute', bottom: `${bodyBottom + bodyHeight}px` }}
-              />
-              <div 
-                className={`w-[10px] ${isBull ? 'bg-[hsl(162,91%,32%)]' : 'bg-[hsl(355,88%,58%)]'}`}
-                style={{ 
-                  height: `${Math.max(bodyHeight, 2)}px`,
-                  position: 'absolute',
-                  bottom: `${bodyBottom}px`,
-                }}
-              />
-              <div 
-                className={`w-[1px] ${isBull ? 'bg-[hsl(162,91%,32%)]' : 'bg-[hsl(355,88%,58%)]'}`}
-                style={{ height: `${wickBottom}px`, position: 'absolute', bottom: `${bodyBottom - wickBottom}px` }}
-              />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Moving Average Lines */}
-      <svg className="absolute left-4 right-16 top-8 bottom-24 opacity-60" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <path d="M 0 70 Q 15 65 30 55 T 60 40 T 90 25 T 100 20" stroke="hsl(43,96%,56%)" strokeWidth="0.5" fill="none" />
-        <path d="M 0 75 Q 20 72 35 62 T 65 48 T 95 32 T 100 28" stroke="hsl(270,91%,65%)" strokeWidth="0.5" fill="none" />
-      </svg>
-
-      {/* Crosshair */}
-      <div className="absolute left-[60%] top-0 bottom-20 w-[1px] bg-[hsl(220,10%,50%,0.3)]" />
-      <div className="absolute left-4 right-16 top-[40%] h-[1px] bg-[hsl(220,10%,50%,0.3)]" />
     </div>
   );
 };
+
+// TradingView Bottom Toolbar
+const BottomToolbar = () => (
+  <div className="absolute bottom-0 left-0 right-0 h-9 bg-[hsl(223,18%,9%)] border-t border-[hsl(222,14%,17%)] flex items-center px-3 z-20">
+    <div className="flex items-center gap-1">
+      <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-[hsl(222,14%,15%)] rounded transition-colors">
+        <Search className="w-3.5 h-3.5" />
+        Stock Screener
+        <ChevronDown className="w-3 h-3 opacity-50" />
+      </button>
+      <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-[hsl(222,14%,15%)] rounded transition-colors">
+        <Terminal className="w-3.5 h-3.5" />
+        Text Notes
+      </button>
+      <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium bg-[hsl(270,91%,65%,0.1)] text-[hsl(270,91%,65%)] rounded transition-colors">
+        <FileCode className="w-3.5 h-3.5" />
+        Pine Editor
+      </button>
+      <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-[hsl(222,14%,15%)] rounded transition-colors">
+        <FlaskConical className="w-3.5 h-3.5" />
+        Strategy Tester
+      </button>
+      <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-[hsl(162,91%,32%)] bg-[hsl(162,91%,32%,0.1)] rounded transition-colors">
+        <LineChart className="w-3.5 h-3.5" />
+        Paper Trading ▲
+      </button>
+    </div>
+    <div className="flex-1" />
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full bg-[hsl(162,91%,32%)] animate-pulse" />
+        <span className="font-mono text-[10px] text-[hsl(162,91%,32%)] font-medium">LIVE</span>
+      </div>
+      <span className="font-mono text-[10px] text-muted-foreground">AIQTP™ Terminal v3.0</span>
+      <div className="flex items-center gap-1.5">
+        <Wifi className="w-3 h-3 text-[hsl(162,91%,32%)]" />
+        <span className="font-mono text-[10px] text-muted-foreground">Connected</span>
+      </div>
+      <span className="font-mono text-[10px] text-muted-foreground">UTC {new Date().toISOString().slice(11, 19)}</span>
+    </div>
+  </div>
+);
 
 // AI Bot Minion
 const AIBotMinion = ({ className, delay = 0, color = 'purple' }: { className?: string; delay?: number; color?: 'purple' | 'gold' | 'green' | 'blue' }) => {
@@ -211,11 +215,11 @@ const AIBotMinion = ({ className, delay = 0, color = 'purple' }: { className?: s
   };
 
   return (
-    <div className={`absolute opacity-35 hover:opacity-60 transition-opacity ${className}`} style={{ animationDelay: `${delay}s` }}>
+    <div className={`absolute opacity-40 hover:opacity-70 transition-opacity ${className}`} style={{ animationDelay: `${delay}s` }}>
       <div className="relative animate-float">
-        <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${colorMap[color].bg} flex items-center justify-center`}
-          style={{ boxShadow: `0 0 12px hsl(${colorMap[color].glow}, 0.4)` }}>
-          <Bot className="w-3.5 h-3.5 text-white" />
+        <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${colorMap[color].bg} flex items-center justify-center`}
+          style={{ boxShadow: `0 0 10px hsl(${colorMap[color].glow}, 0.4)` }}>
+          <Bot className="w-3 h-3 text-white" />
         </div>
         <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[hsl(162,91%,32%)] animate-pulse" />
       </div>
@@ -223,146 +227,128 @@ const AIBotMinion = ({ className, delay = 0, color = 'purple' }: { className?: s
   );
 };
 
-// TradingView Status Bar
-const StatusBar = () => (
-  <div className="absolute bottom-0 left-0 right-0 h-6 bg-[hsl(223,18%,12%)] border-t border-[hsl(222,14%,19%)] flex items-center justify-between px-3 z-20">
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full bg-[hsl(162,91%,32%)] animate-pulse" style={{ boxShadow: '0 0 6px hsl(162,91%,32%)' }} />
-        <span className="font-mono text-[10px] text-[hsl(162,91%,32%)] font-medium">LIVE</span>
-      </div>
-      <span className="font-mono text-[10px] text-muted-foreground">AIQTP™ Terminal v3.0</span>
-    </div>
-    <div className="flex items-center gap-4">
-      <div className="flex items-center gap-1.5">
-        <Wifi className="w-3 h-3 text-[hsl(162,91%,32%)]" />
-        <span className="font-mono text-[10px] text-muted-foreground">Connected</span>
-      </div>
-      <span className="font-mono text-[10px] text-muted-foreground">UTC {new Date().toISOString().slice(11, 19)}</span>
-    </div>
-  </div>
-);
-
 const Hero = () => {
+  const miniCharts = [
+    { symbol: 'Tesla, Inc.', price: '668.05', change: '-5.57 (-0.82%)', timeframe: '1D · NASDAQ', positive: false },
+    { symbol: 'Apple Inc', price: '144.82', change: '+0.53 (+0.36%)', timeframe: '1h · NASDAQ', positive: true },
+    { symbol: 'Netflix, Inc.', price: '531.05', change: '+0.29 (+0.05%)', timeframe: '1D · NASDAQ', positive: true },
+    { symbol: 'Bitcoin / USD', price: '33553.76', change: '+109.29 (+0.33%)', timeframe: '1h · BITSTAMP', positive: true },
+    { symbol: 'Ethereum/USD', price: '2341.82', change: '-12.45 (-0.53%)', timeframe: '4h · COINBASE', positive: false },
+    { symbol: 'SPY ETF', price: '478.23', change: '+3.21 (+0.67%)', timeframe: '1D · NYSE', positive: true },
+  ];
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[hsl(225,20%,10%)]">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[hsl(225,20%,7%)]">
       {/* TradingView-style Interface */}
       <LiveTicker />
       <LeftToolbar />
-      <TopToolbar />
-      <TradingViewChart />
-      <StatusBar />
+      <BottomToolbar />
       
       {/* Subtle Ambient Glow */}
-      <div className="absolute top-[30%] right-[20%] w-[350px] h-[350px] bg-[hsl(270,91%,65%,0.03)] rounded-full blur-[120px]" />
-      <div className="absolute bottom-[30%] left-[15%] w-[300px] h-[300px] bg-[hsl(162,91%,32%,0.025)] rounded-full blur-[100px]" />
+      <div className="absolute top-[20%] right-[10%] w-[400px] h-[400px] bg-[hsl(355,88%,58%,0.03)] rounded-full blur-[150px]" />
+      <div className="absolute bottom-[30%] left-[10%] w-[350px] h-[350px] bg-[hsl(224,100%,58%,0.03)] rounded-full blur-[120px]" />
       
       {/* AI Bot Minions */}
-      <AIBotMinion className="top-[18%] left-[15%]" delay={0} color="purple" />
-      <AIBotMinion className="top-[25%] right-[18%]" delay={0.5} color="gold" />
-      <AIBotMinion className="bottom-[35%] left-[18%]" delay={1} color="green" />
-      <AIBotMinion className="bottom-[30%] right-[15%]" delay={1.5} color="blue" />
+      <AIBotMinion className="top-[12%] left-[8%]" delay={0} color="purple" />
+      <AIBotMinion className="top-[15%] right-[12%]" delay={0.5} color="gold" />
+      <AIBotMinion className="bottom-[25%] left-[12%]" delay={1} color="green" />
+      <AIBotMinion className="bottom-[20%] right-[8%]" delay={1.5} color="blue" />
 
-      {/* Main Content - Overlay */}
-      <div className="relative z-10 text-center px-4 max-w-5xl mx-auto ml-16">
-        {/* Feature Badges - TradingView Style */}
-        <div className="flex justify-center gap-2 mb-6 flex-wrap">
-          <Badge variant="outline" className="bg-[hsl(223,18%,14%,0.9)] backdrop-blur border-[hsl(43,96%,56%,0.3)] text-[hsl(43,96%,56%)] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider">
-            <Crown className="w-3 h-3 mr-1" />
-            Institutional Grade
-          </Badge>
-          <Badge variant="outline" className="bg-[hsl(223,18%,14%,0.9)] backdrop-blur border-[hsl(270,91%,65%,0.3)] text-[hsl(270,91%,65%)] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider">
-            <Atom className="w-3 h-3 mr-1" />
-            QAQI™ Quantum AI
-          </Badge>
-          <Badge variant="outline" className="bg-[hsl(223,18%,14%,0.9)] backdrop-blur border-[hsl(162,91%,32%,0.3)] text-[hsl(162,91%,32%)] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider">
-            <Activity className="w-3 h-3 mr-1" />
-            Real-Time Data
-          </Badge>
-        </div>
+      {/* Main Content - Centered */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 pt-16 pb-12 ml-11">
         
-        {/* Main Heading */}
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-5 text-foreground leading-tight tracking-tight">
-          <span className="text-gradient-gold">AIQTP™</span>
-          <span className="block mt-1.5 text-foreground/95 text-3xl md:text-4xl lg:text-5xl font-semibold">
-            Professional Trading Terminal
-          </span>
-        </h1>
-        
-        {/* Subtitle */}
-        <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-          <span className="text-[hsl(270,91%,65%)]">Quantum AI</span> meets institutional-grade analytics. 
-          Real-time charting, <span className="text-[hsl(43,96%,56%)]">advanced execution</span>, 
-          and <span className="text-[hsl(162,91%,32%)]">ML-powered signals</span>.
-        </p>
+        {/* TradingView-style Gradient Header */}
+        <div className="text-center mb-8">
+          {/* Gradient Title like TradingView Desktop */}
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-2 tracking-tight">
+            <span className="bg-gradient-to-r from-white via-[hsl(270,91%,75%)] to-[hsl(355,88%,65%)] bg-clip-text text-transparent">
+              AIQTP™
+            </span>
+          </h1>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 tracking-tight">
+            <span className="bg-gradient-to-r from-[hsl(270,91%,70%)] via-[hsl(320,85%,60%)] to-[hsl(355,88%,58%)] bg-clip-text text-transparent">
+              Terminal
+            </span>
+          </h2>
+          
+          {/* Subtitle */}
+          <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-xl mx-auto">
+            Experience quantum-powered trading, AI pattern recognition and institutional analytics,
+            all with the professional UX you know and love.
+          </p>
 
-        {/* Action Buttons - TradingView Style */}
-        <div className="flex flex-col sm:flex-row gap-2.5 justify-center mb-10">
-          <Link to="/auth">
-            <Button size="lg" className="bg-[hsl(162,91%,32%)] hover:bg-[hsl(162,91%,38%)] text-white font-semibold shadow-[0_0_20px_hsl(162,91%,32%,0.3)] hover:shadow-[0_0_30px_hsl(162,91%,32%,0.4)] transition-all">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Start Trading
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
-          <Link to="/qaqi">
-            <Button variant="outline" size="lg" className="border-[hsl(270,91%,65%,0.4)] bg-[hsl(223,18%,14%,0.8)] hover:border-[hsl(270,91%,65%)] hover:bg-[hsl(270,91%,65%,0.1)] transition-all">
-              <Atom className="w-4 h-4 mr-2 text-[hsl(270,91%,65%)]" />
-              <span className="text-[hsl(270,91%,65%)]">QAQI™ Agent</span>
-            </Button>
-          </Link>
-          <Link to="/vault">
-            <Button variant="outline" size="lg" className="border-[hsl(43,96%,56%,0.4)] bg-[hsl(223,18%,14%,0.8)] hover:border-[hsl(43,96%,56%)] hover:bg-[hsl(43,96%,56%,0.1)] transition-all">
-              <Zap className="w-4 h-4 mr-2 text-[hsl(43,96%,56%)]" />
-              <span className="text-[hsl(43,96%,56%)]">Lightning Vault®</span>
-            </Button>
-          </Link>
+          {/* Action Buttons - TradingView Style Download Buttons */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <Link to="/auth">
+              <Button size="lg" className="bg-[hsl(223,18%,15%)] hover:bg-[hsl(223,18%,20%)] border border-[hsl(222,14%,25%)] text-foreground font-medium gap-2">
+                <Terminal className="w-4 h-4" />
+                Launch Terminal
+              </Button>
+            </Link>
+            <Link to="/qaqi">
+              <Button size="lg" className="bg-[hsl(223,18%,15%)] hover:bg-[hsl(223,18%,20%)] border border-[hsl(222,14%,25%)] text-foreground font-medium gap-2">
+                <Cpu className="w-4 h-4 text-[hsl(270,91%,65%)]" />
+                QAQI™ Agent
+              </Button>
+            </Link>
+            <Link to="/vault">
+              <Button size="lg" className="bg-[hsl(223,18%,15%)] hover:bg-[hsl(223,18%,20%)] border border-[hsl(222,14%,25%)] text-foreground font-medium gap-2">
+                <Zap className="w-4 h-4 text-[hsl(43,96%,56%)]" />
+                Lightning Vault
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        {/* Stats Grid - TradingView Panel Style */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-3xl mx-auto mb-8">
-          <div className="bg-[hsl(223,18%,14%)] border border-[hsl(222,14%,19%)] p-3 hover:border-[hsl(43,96%,56%,0.3)] transition-colors">
-            <div className="font-mono text-xl md:text-2xl font-bold text-[hsl(43,96%,56%)] mb-0.5">$2.4B+</div>
+        {/* Multi-Chart Grid - TradingView Desktop Style */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-1 mb-6">
+          {miniCharts.map((chart, i) => (
+            <MiniChartPanel key={i} {...chart} />
+          ))}
+        </div>
+
+        {/* Feature Badges */}
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+            <Shield className="w-3 h-3 mr-1.5 text-[hsl(270,91%,65%)]" />
+            Post-Quantum Security
+          </Badge>
+          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+            <Globe className="w-3 h-3 mr-1.5 text-[hsl(224,100%,58%)]" />
+            200+ Countries
+          </Badge>
+          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+            <Zap className="w-3 h-3 mr-1.5 text-[hsl(43,96%,56%)]" />
+            Lightning Network
+          </Badge>
+          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+            <Bot className="w-3 h-3 mr-1.5 text-[hsl(162,91%,32%)]" />
+            AI Trading Bots™
+          </Badge>
+        </div>
+
+        {/* Stats Row */}
+        <div className="flex justify-center gap-6 text-center">
+          <div>
+            <div className="font-mono text-lg font-bold text-[hsl(43,96%,56%)]">$2.4B+</div>
             <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">24h Volume</div>
           </div>
-          <div className="bg-[hsl(223,18%,14%)] border border-[hsl(222,14%,19%)] p-3 hover:border-[hsl(162,91%,32%,0.3)] transition-colors">
-            <div className="font-mono text-xl md:text-2xl font-bold text-[hsl(162,91%,32%)] mb-0.5">50K+</div>
-            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Active Traders</div>
+          <div className="w-px bg-[hsl(222,14%,20%)]" />
+          <div>
+            <div className="font-mono text-lg font-bold text-[hsl(162,91%,32%)]">50K+</div>
+            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Traders</div>
           </div>
-          <div className="bg-[hsl(223,18%,14%)] border border-[hsl(222,14%,19%)] p-3 hover:border-[hsl(224,100%,58%,0.3)] transition-colors">
-            <div className="font-mono text-xl md:text-2xl font-bold text-[hsl(224,100%,58%)] mb-0.5">200+</div>
-            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Trading Pairs</div>
+          <div className="w-px bg-[hsl(222,14%,20%)]" />
+          <div>
+            <div className="font-mono text-lg font-bold text-[hsl(224,100%,58%)]">200+</div>
+            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Pairs</div>
           </div>
-          <div className="bg-[hsl(223,18%,14%)] border border-[hsl(222,14%,19%)] p-3 hover:border-[hsl(270,91%,65%,0.3)] transition-colors">
-            <div className="font-mono text-xl md:text-2xl font-bold text-[hsl(270,91%,65%)] mb-0.5">&lt;10ms</div>
-            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">AI Execution</div>
-          </div>
-        </div>
-
-        {/* Trust Indicators */}
-        <div className="flex flex-wrap justify-center items-center gap-5 text-muted-foreground">
-          <div className="flex items-center gap-1.5 hover:text-[hsl(43,96%,56%)] transition-colors">
-            <Shield className="w-3.5 h-3.5 text-[hsl(43,96%,56%)]" />
-            <span className="font-mono text-[10px]">Post-Quantum Security</span>
-          </div>
-          <div className="flex items-center gap-1.5 hover:text-[hsl(224,100%,58%)] transition-colors">
-            <Globe className="w-3.5 h-3.5 text-[hsl(224,100%,58%)]" />
-            <span className="font-mono text-[10px]">200+ Countries</span>
-          </div>
-          <div className="flex items-center gap-1.5 hover:text-[hsl(43,96%,56%)] transition-colors">
-            <Zap className="w-3.5 h-3.5 text-[hsl(43,96%,56%)]" />
-            <span className="font-mono text-[10px]">Lightning Network</span>
-          </div>
-          <div className="flex items-center gap-1.5 hover:text-[hsl(270,91%,65%)] transition-colors">
-            <Bot className="w-3.5 h-3.5 text-[hsl(270,91%,65%)]" />
-            <span className="font-mono text-[10px]">AI Trading Bots™</span>
+          <div className="w-px bg-[hsl(222,14%,20%)]" />
+          <div>
+            <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)]">&lt;10ms</div>
+            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Execution</div>
           </div>
         </div>
-      </div>
-
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
-        <ChevronDown className="w-4 h-4 text-muted-foreground" />
       </div>
     </section>
   );
