@@ -2,143 +2,166 @@
 @tailwind components;
 @tailwind utilities;
 
-/* AIQTP™ Design System - Next-Gen Intelligent Trading Conglomerate */
-/* Feature-Specific Color Theming:
-   - QAQI™ / AI / Quantum: Royal Neon Purple
-   - Lightning Vault® / Payments: Royal Neon Yellow/Gold  
-   - Trading / Start Trading: Royal Neon Green
-   - Common Areas / General: Royal Neon Blue
-   - Warnings / Alerts: Royal Neon Red
+/* ============= AIQTP™ BLOOMBERG/TRADINGVIEW TERMINAL DESIGN SYSTEM ============= 
+   Inspired by: ThinkOrSwim, Bloomberg Terminal, TastyTrades, TradingView, AInvest
+   
+   Feature-Specific Color Theming:
+   - QAQI™ / AI / Quantum: Royal Neon Purple (#a855f7)
+   - Lightning Vault® / Payments: Royal Neon Gold (#fbbf24)  
+   - Trading / Start Trading: Terminal Green (#22c55e)
+   - Common Areas / General: Bloomberg Blue (#3b82f6)
+   - Warnings / Alerts: Terminal Red (#ef4444)
+   - Data / Tech: Neon Cyan (#06b6d4)
 */
+
+/* Google Fonts - Professional Monospace & Sans */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
-    /* ============= AIQTP™ PREMIUM BRAND PALETTE ============= */
+    /* ============= BLOOMBERG TERMINAL PALETTE ============= */
     
-    /* Deep Black Foundation - Ultra Dark */
-    --background: 0 0% 2%;
-    --foreground: 45 15% 95%;
+    /* Deep Terminal Black - Like Bloomberg/TradingView */
+    --background: 220 15% 4%;
+    --foreground: 210 20% 92%;
 
-    /* Premium Card System - Obsidian Glass */
-    --card: 0 0% 5%;
-    --card-foreground: 45 15% 95%;
-    --card-premium: 0 0% 7%;
-    --card-premium-foreground: 45 15% 95%;
+    /* Terminal Card System - Obsidian Glass */
+    --card: 220 15% 6%;
+    --card-foreground: 210 20% 92%;
+    --card-premium: 220 15% 8%;
+    --card-premium-foreground: 210 20% 92%;
+    
+    /* Panel System - Multi-Monitor Ready */
+    --panel: 220 15% 5%;
+    --panel-header: 220 15% 7%;
+    --panel-border: 220 15% 12%;
 
     /* Popover System */
-    --popover: 0 0% 5%;
-    --popover-foreground: 45 15% 95%;
+    --popover: 220 15% 6%;
+    --popover-foreground: 210 20% 92%;
 
-    /* Primary Brand - Luxurious Neon Gold (Lightning/Payments) */
-    --primary: 48 100% 55%;
-    --primary-foreground: 0 0% 3%;
-    --primary-hover: 48 100% 60%;
-    --primary-light: 48 100% 12%;
+    /* Primary Brand - Terminal Gold (Lightning/Payments) */
+    --primary: 45 95% 55%;
+    --primary-foreground: 220 15% 4%;
+    --primary-hover: 45 95% 62%;
+    --primary-light: 45 95% 12%;
 
-    /* Premium Gold Accents - Rich & Radiant */
-    --gold: 45 100% 55%;
-    --gold-foreground: 0 0% 3%;
-    --gold-hover: 45 100% 62%;
-    --gold-light: 45 100% 10%;
+    /* Premium Gold Accents - Bloomberg Style */
+    --gold: 43 96% 56%;
+    --gold-foreground: 220 15% 4%;
+    --gold-hover: 43 96% 64%;
+    --gold-light: 43 96% 10%;
 
-    /* Secondary - Deep Charcoal */
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 45 15% 95%;
-    --secondary-hover: 0 0% 14%;
+    /* Secondary - Terminal Charcoal */
+    --secondary: 220 15% 10%;
+    --secondary-foreground: 210 20% 92%;
+    --secondary-hover: 220 15% 14%;
 
-    /* Muted Tones */
-    --muted: 0 0% 12%;
-    --muted-foreground: 45 8% 55%;
+    /* Muted Tones - Terminal Dimmed */
+    --muted: 220 15% 14%;
+    --muted-foreground: 220 10% 50%;
 
-    /* Accent - Neon Trading Green (Start Trading / Trading Actions) */
-    --accent: 145 100% 50%;
-    --accent-foreground: 0 0% 0%;
-    --accent-hover: 145 100% 55%;
-    --accent-light: 145 100% 12%;
+    /* Accent - Terminal Trading Green */
+    --accent: 142 76% 45%;
+    --accent-foreground: 220 15% 4%;
+    --accent-hover: 142 76% 52%;
+    --accent-light: 142 76% 12%;
 
-    /* Royal Neon Red - Alerts & Warnings */
-    --royal-red: 0 100% 60%;
+    /* Royal Neon Red - Terminal Sell/Alerts */
+    --royal-red: 0 85% 58%;
     --royal-red-foreground: 0 0% 100%;
-    --royal-red-light: 0 100% 12%;
+    --royal-red-light: 0 85% 12%;
 
-    /* Royal Neon Blue - Common UI / General Elements */
-    --royal-blue: 215 100% 60%;
+    /* Royal Blue - Bloomberg Blue UI */
+    --royal-blue: 217 91% 60%;
     --royal-blue-foreground: 0 0% 100%;
-    --royal-blue-light: 215 100% 12%;
+    --royal-blue-light: 217 91% 12%;
 
-    /* Royal Neon Purple - QAQI / AI / Quantum */
-    --royal-purple: 280 100% 65%;
+    /* Royal Purple - QAQI / AI / Quantum */
+    --royal-purple: 270 91% 65%;
     --royal-purple-foreground: 0 0% 100%;
-    --royal-purple-light: 280 100% 12%;
+    --royal-purple-light: 270 91% 12%;
 
     /* Neon Cyan - Tech Accent / Data */
-    --neon-cyan: 188 100% 55%;
-    --neon-cyan-foreground: 0 0% 0%;
-    --neon-cyan-light: 188 100% 10%;
+    --neon-cyan: 188 94% 45%;
+    --neon-cyan-foreground: 220 15% 4%;
+    --neon-cyan-light: 188 94% 10%;
 
     /* Neon Yellow - Lightning / Speed */
-    --neon-yellow: 55 100% 55%;
-    --neon-yellow-foreground: 0 0% 0%;
-    --neon-yellow-light: 55 100% 10%;
+    --neon-yellow: 50 100% 52%;
+    --neon-yellow-foreground: 220 15% 4%;
+    --neon-yellow-light: 50 100% 10%;
 
-    /* Status Colors */
-    --success: 145 100% 50%;
-    --success-foreground: 0 0% 0%;
-    --success-light: 145 100% 12%;
+    /* Status Colors - Terminal Style */
+    --success: 142 76% 45%;
+    --success-foreground: 220 15% 4%;
+    --success-light: 142 76% 12%;
 
-    --warning: 45 100% 55%;
-    --warning-foreground: 0 0% 0%;
-    --warning-light: 45 100% 12%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 15% 4%;
+    --warning-light: 38 92% 12%;
 
-    --destructive: 0 85% 55%;
+    --destructive: 0 85% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border and Input */
-    --border: 45 15% 15%;
-    --input: 0 0% 8%;
-    --ring: 48 100% 55%;
+    /* Border and Input - Terminal Grid */
+    --border: 220 15% 15%;
+    --input: 220 15% 8%;
+    --ring: 45 95% 55%;
 
-    /* ============= NEON GRADIENTS ============= */
-    --gradient-primary: linear-gradient(135deg, hsl(48, 100%, 55%) 0%, hsl(45, 100%, 45%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(45, 100%, 55%) 0%, hsl(40, 100%, 48%) 50%, hsl(48, 100%, 55%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(145, 100%, 50%) 0%, hsl(145, 100%, 58%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(0, 0%, 2%) 0%, hsl(0, 0%, 4%) 40%, hsl(280, 100%, 65%, 0.02) 70%, hsl(0, 0%, 3%) 100%);
-    --gradient-premium: linear-gradient(135deg, hsl(0, 0%, 5%) 0%, hsl(45, 100%, 55%, 0.05) 50%, hsl(0, 0%, 6%) 100%);
-    --gradient-royal: linear-gradient(135deg, hsl(280, 100%, 65%, 0.12) 0%, hsl(215, 100%, 60%, 0.12) 50%, hsl(145, 100%, 50%, 0.12) 100%);
-    --gradient-conglomerate: linear-gradient(180deg, hsl(0, 0%, 2%) 0%, hsl(0, 0%, 4%) 25%, hsl(280, 100%, 65%, 0.02) 50%, hsl(45, 100%, 55%, 0.03) 75%, hsl(0, 0%, 3%) 100%);
-    --gradient-neon: linear-gradient(135deg, hsl(280, 100%, 65%, 0.15) 0%, hsl(188, 100%, 55%, 0.15) 50%, hsl(145, 100%, 50%, 0.15) 100%);
-    --gradient-trading: linear-gradient(135deg, hsl(145, 100%, 50%, 0.1) 0%, hsl(145, 100%, 45%, 0.05) 100%);
-    --gradient-qaqi: linear-gradient(135deg, hsl(280, 100%, 65%, 0.12) 0%, hsl(280, 100%, 55%, 0.06) 100%);
-    --gradient-lightning: linear-gradient(135deg, hsl(48, 100%, 55%, 0.12) 0%, hsl(55, 100%, 50%, 0.06) 100%);
+    /* Chart Colors - TradingView Inspired */
+    --chart-bull: 142 76% 45%;
+    --chart-bear: 0 85% 58%;
+    --chart-volume: 217 91% 60%;
+    --chart-grid: 220 15% 12%;
+    --chart-crosshair: 210 20% 50%;
 
-    /* ============= NEON GLOW SHADOWS ============= */
-    --shadow-premium: 0 20px 60px -15px hsl(48 100% 55% / 0.25);
-    --shadow-gold: 0 0 30px hsl(45 100% 55% / 0.4);
-    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.7);
-    --shadow-hover: 0 20px 60px -15px hsl(48 100% 55% / 0.35);
-    --shadow-glow-gold: 0 0 45px hsl(48 100% 55% / 0.5);
-    --shadow-glow-green: 0 0 40px hsl(145 100% 50% / 0.5);
-    --shadow-glow-purple: 0 0 40px hsl(280 100% 65% / 0.5);
-    --shadow-glow-blue: 0 0 40px hsl(215 100% 60% / 0.5);
-    --shadow-glow-red: 0 0 35px hsl(0 100% 60% / 0.4);
-    --shadow-glow-cyan: 0 0 40px hsl(188 100% 55% / 0.5);
-    --shadow-glow-yellow: 0 0 45px hsl(55 100% 55% / 0.5);
+    /* ============= TERMINAL GRADIENTS ============= */
+    --gradient-primary: linear-gradient(135deg, hsl(45, 95%, 55%) 0%, hsl(38, 92%, 50%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43, 96%, 56%) 0%, hsl(38, 92%, 50%) 50%, hsl(45, 95%, 55%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(142, 76%, 45%) 0%, hsl(142, 76%, 52%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(220, 15%, 4%) 0%, hsl(220, 15%, 6%) 30%, hsl(220, 15%, 5%) 60%, hsl(220, 15%, 4%) 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(220, 15%, 6%) 0%, hsl(43, 96%, 56%, 0.03) 50%, hsl(220, 15%, 7%) 100%);
+    --gradient-royal: linear-gradient(135deg, hsl(270, 91%, 65%, 0.08) 0%, hsl(217, 91%, 60%, 0.08) 50%, hsl(142, 76%, 45%, 0.08) 100%);
+    --gradient-terminal: linear-gradient(180deg, hsl(220, 15%, 4%) 0%, hsl(220, 15%, 6%) 100%);
+    --gradient-chart: linear-gradient(180deg, hsl(142, 76%, 45%, 0.15) 0%, transparent 100%);
+    --gradient-trading: linear-gradient(135deg, hsl(142, 76%, 45%, 0.08) 0%, hsl(142, 76%, 45%, 0.02) 100%);
+    --gradient-qaqi: linear-gradient(135deg, hsl(270, 91%, 65%, 0.1) 0%, hsl(270, 91%, 65%, 0.03) 100%);
+    --gradient-lightning: linear-gradient(135deg, hsl(45, 95%, 55%, 0.1) 0%, hsl(45, 95%, 55%, 0.03) 100%);
+    --gradient-scanner: linear-gradient(90deg, transparent 0%, hsl(142, 76%, 45%, 0.3) 50%, transparent 100%);
+
+    /* ============= TERMINAL GLOW SHADOWS ============= */
+    --shadow-premium: 0 20px 60px -15px hsl(45 95% 55% / 0.2);
+    --shadow-gold: 0 0 25px hsl(43 96% 56% / 0.35);
+    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.6);
+    --shadow-hover: 0 20px 60px -15px hsl(45 95% 55% / 0.3);
+    --shadow-panel: 0 1px 3px 0 hsl(0 0% 0% / 0.3);
+    --shadow-glow-gold: 0 0 40px hsl(45 95% 55% / 0.4);
+    --shadow-glow-green: 0 0 35px hsl(142 76% 45% / 0.4);
+    --shadow-glow-purple: 0 0 35px hsl(270 91% 65% / 0.4);
+    --shadow-glow-blue: 0 0 35px hsl(217 91% 60% / 0.4);
+    --shadow-glow-red: 0 0 30px hsl(0 85% 58% / 0.35);
+    --shadow-glow-cyan: 0 0 35px hsl(188 94% 45% / 0.4);
+
+    /* Terminal Typography */
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Consolas, monospace;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
     /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 4%;
-    --sidebar-foreground: 45 15% 90%;
-    --sidebar-primary: 48 100% 55%;
-    --sidebar-primary-foreground: 0 0% 3%;
-    --sidebar-accent: 0 0% 8%;
-    --sidebar-accent-foreground: 45 15% 90%;
-    --sidebar-border: 45 15% 12%;
-    --sidebar-ring: 48 100% 55%;
+    /* Sidebar - Terminal Style */
+    --sidebar-background: 220 15% 5%;
+    --sidebar-foreground: 210 20% 88%;
+    --sidebar-primary: 45 95% 55%;
+    --sidebar-primary-foreground: 220 15% 4%;
+    --sidebar-accent: 220 15% 10%;
+    --sidebar-accent-foreground: 210 20% 88%;
+    --sidebar-border: 220 15% 14%;
+    --sidebar-ring: 45 95% 55%;
   }
 }
 
@@ -148,23 +171,86 @@
   }
 
   body {
-    @apply bg-background text-foreground font-medium;
+    @apply bg-background text-foreground font-medium antialiased;
+    font-family: var(--font-sans);
+  }
+
+  /* Terminal Monospace Numbers */
+  .font-mono, [data-mono], .tabular-nums {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 }
 
 @layer components {
-  /* Premium Card Effects - Conglomerate Style */
+  /* ============= TERMINAL PANEL SYSTEM ============= */
+  .terminal-panel {
+    @apply bg-panel border border-panel-border rounded-md;
+    box-shadow: var(--shadow-panel);
+  }
+
+  .terminal-panel-header {
+    @apply bg-panel-header px-3 py-2 border-b border-panel-border flex items-center justify-between;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Bloomberg-style Data Grid */
+  .data-grid {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .data-grid-row {
+    @apply flex items-center border-b border-panel-border hover:bg-secondary/50 transition-colors;
+  }
+
+  .data-grid-cell {
+    @apply px-2 py-1.5;
+  }
+
+  /* Premium Card Effects - Terminal Style */
   .card-premium {
-    @apply bg-card-premium text-card-premium-foreground;
+    @apply bg-card-premium text-card-premium-foreground rounded-md;
     box-shadow: var(--shadow-card);
     transition: var(--transition-smooth);
-    border: 1px solid hsl(45 100% 50% / 0.1);
+    border: 1px solid hsl(220 15% 15%);
   }
 
   .card-premium:hover {
     box-shadow: var(--shadow-hover);
-    transform: translateY(-2px);
-    border-color: hsl(45 100% 50% / 0.2);
+    border-color: hsl(45 95% 55% / 0.2);
+  }
+
+  /* Terminal Quote Display */
+  .quote-display {
+    font-family: var(--font-mono);
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  .quote-positive {
+    @apply text-accent;
+    text-shadow: 0 0 20px hsl(142 76% 45% / 0.5);
+  }
+
+  .quote-negative {
+    @apply text-royal-red;
+    text-shadow: 0 0 20px hsl(0 85% 58% / 0.5);
+  }
+
+  /* Terminal Status Indicators */
+  .status-live {
+    @apply inline-flex items-center gap-1.5 text-xs font-medium text-accent;
+  }
+
+  .status-live::before {
+    content: '';
+    @apply w-2 h-2 rounded-full bg-accent;
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 8px hsl(142 76% 45%);
   }
 
   /* Gold Accent Border */
@@ -174,33 +260,14 @@
   }
 
   /* Gradient Backgrounds */
-  .bg-gradient-primary {
-    background: var(--gradient-primary);
-  }
-
-  .bg-gradient-gold {
-    background: var(--gradient-gold);
-  }
-
-  .bg-gradient-accent {
-    background: var(--gradient-accent);
-  }
-
-  .bg-gradient-hero {
-    background: var(--gradient-hero);
-  }
-
-  .bg-gradient-premium {
-    background: var(--gradient-premium);
-  }
-
-  .bg-gradient-royal {
-    background: var(--gradient-royal);
-  }
-
-  .bg-gradient-conglomerate {
-    background: var(--gradient-conglomerate);
-  }
+  .bg-gradient-primary { background: var(--gradient-primary); }
+  .bg-gradient-gold { background: var(--gradient-gold); }
+  .bg-gradient-accent { background: var(--gradient-accent); }
+  .bg-gradient-hero { background: var(--gradient-hero); }
+  .bg-gradient-premium { background: var(--gradient-premium); }
+  .bg-gradient-royal { background: var(--gradient-royal); }
+  .bg-gradient-terminal { background: var(--gradient-terminal); }
+  .bg-gradient-chart { background: var(--gradient-chart); }
 
   /* Premium Text Effects */
   .text-gradient-gold {
@@ -210,38 +277,34 @@
     background-clip: text;
   }
 
-  /* Glass Effect - Dark Premium */
+  /* Glass Effect - Terminal Dark */
   .glass-effect {
-    background: rgba(0, 0, 0, 0.6);
+    background: hsl(220 15% 6% / 0.85);
     backdrop-filter: blur(20px);
-    border: 1px solid hsl(45 100% 50% / 0.15);
+    border: 1px solid hsl(220 15% 18%);
+  }
+
+  /* Terminal Scanner Line Animation */
+  .scanner-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-scanner);
+    animation: scan 3s linear infinite;
   }
 
   /* Royal Glow Effects */
-  .glow-gold {
-    box-shadow: var(--shadow-glow-gold);
-  }
+  .glow-gold { box-shadow: var(--shadow-glow-gold); }
+  .glow-green { box-shadow: var(--shadow-glow-green); }
+  .glow-purple { box-shadow: var(--shadow-glow-purple); }
+  .glow-blue { box-shadow: var(--shadow-glow-blue); }
 
-  .glow-green {
-    box-shadow: var(--shadow-glow-green);
-  }
-
-  .glow-purple {
-    box-shadow: var(--shadow-glow-purple);
-  }
-
-  /* Premium Animations */
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
-  }
-
-  .animate-gold-pulse {
-    animation: gold-pulse 2s ease-in-out infinite;
-  }
+  /* Terminal Animations */
+  .animate-float { animation: float 3s ease-in-out infinite; }
+  .animate-glow { animation: glow 2s ease-in-out infinite alternate; }
+  .animate-gold-pulse { animation: gold-pulse 2s ease-in-out infinite; }
+  .animate-ticker { animation: ticker 20s linear infinite; }
 }
 
 @layer utilities {
@@ -270,25 +333,48 @@
   }
 }
 
-/* Custom Animations */
+/* ============= TERMINAL ANIMATIONS ============= */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-8px); }
 }
 
 @keyframes glow {
-  from { filter: drop-shadow(0 0 20px hsl(45, 100%, 50%, 0.5)); }
-  to { filter: drop-shadow(0 0 40px hsl(45, 100%, 50%, 0.8)); }
+  from { filter: drop-shadow(0 0 15px hsl(45, 95%, 55%, 0.4)); }
+  to { filter: drop-shadow(0 0 30px hsl(45, 95%, 55%, 0.7)); }
 }
 
 @keyframes gold-pulse {
-  0%, 100% { box-shadow: 0 0 20px hsl(45, 100%, 50%, 0.3); }
-  50% { box-shadow: 0 0 40px hsl(45, 100%, 50%, 0.6); }
+  0%, 100% { box-shadow: 0 0 15px hsl(45, 95%, 55%, 0.25); }
+  50% { box-shadow: 0 0 30px hsl(45, 95%, 55%, 0.5); }
 }
 
 @keyframes shimmer-gold {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+@keyframes scan {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+
+@keyframes data-flash {
+  0% { background-color: transparent; }
+  50% { background-color: hsl(142 76% 45% / 0.15); }
+  100% { background-color: transparent; }
 }
 
 /* ============= ACCESSIBILITY STYLES ============= */

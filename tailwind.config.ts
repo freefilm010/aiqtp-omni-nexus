@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'SF Mono', 'Consolas', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -70,6 +74,11 @@ export default {
           premium: "hsl(var(--card-premium))",
           "premium-foreground": "hsl(var(--card-premium-foreground))",
         },
+        panel: {
+          DEFAULT: "hsl(var(--panel))",
+          header: "hsl(var(--panel-header))",
+          border: "hsl(var(--panel-border))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -79,6 +88,14 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        // Terminal Chart Colors
+        chart: {
+          bull: "hsl(var(--chart-bull))",
+          bear: "hsl(var(--chart-bear))",
+          volume: "hsl(var(--chart-volume))",
+          grid: "hsl(var(--chart-grid))",
+          crosshair: "hsl(var(--chart-crosshair))",
         },
         // Neon Royal Colors - Feature Specific
         "royal-red": {
