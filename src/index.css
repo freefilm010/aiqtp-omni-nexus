@@ -2,80 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
-/* AIQTP Design System - Premium Financial Marketplace */
+/* AIQTP™ Design System - Next-Gen Intelligent Trading Conglomerate */
 
 @layer base {
   :root {
-    /* Core Brand Colors */
-    --background: 0 0% 100%;
-    --foreground: 220 13% 18%;
+    /* ============= AIQTP™ PREMIUM BRAND PALETTE ============= */
+    
+    /* Deep Black Foundation */
+    --background: 0 0% 3%;
+    --foreground: 45 20% 95%;
 
-    /* Premium Card System */
-    --card: 0 0% 100%;
-    --card-foreground: 220 13% 18%;
-    --card-premium: 220 14% 96%;
-    --card-premium-foreground: 220 13% 18%;
+    /* Premium Card System - Dark Obsidian */
+    --card: 0 0% 6%;
+    --card-foreground: 45 20% 95%;
+    --card-premium: 0 0% 8%;
+    --card-premium-foreground: 45 20% 95%;
 
     /* Popover System */
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 45 20% 95%;
 
-    /* Primary Brand - Deep Professional Blue */
-    --primary: 220 91% 25%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 220 91% 30%;
-    --primary-light: 220 91% 95%;
+    /* Primary Brand - Luxurious Gold */
+    --primary: 45 100% 50%;
+    --primary-foreground: 0 0% 5%;
+    --primary-hover: 45 100% 55%;
+    --primary-light: 45 100% 15%;
 
-    /* Premium Gold Accents */
-    --gold: 45 96% 53%;
-    --gold-foreground: 220 13% 18%;
-    --gold-hover: 45 96% 48%;
-    --gold-light: 45 96% 95%;
+    /* Premium Gold Accents - Rich & Radiant */
+    --gold: 42 100% 55%;
+    --gold-foreground: 0 0% 5%;
+    --gold-hover: 42 100% 60%;
+    --gold-light: 42 100% 12%;
 
-    /* Secondary - Sophisticated Gray */
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 13% 18%;
-    --secondary-hover: 220 14% 91%;
+    /* Secondary - Charcoal Elegance */
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 45 20% 95%;
+    --secondary-hover: 0 0% 16%;
 
-    /* Muted Tones */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted Tones - Sophisticated Gray */
+    --muted: 0 0% 14%;
+    --muted-foreground: 45 10% 60%;
 
-    /* Accent - Premium Teal */
-    --accent: 180 84% 35%;
+    /* Accent - Royal Emerald Green */
+    --accent: 155 80% 35%;
     --accent-foreground: 0 0% 100%;
-    --accent-hover: 180 84% 40%;
-    --accent-light: 180 84% 95%;
+    --accent-hover: 155 80% 42%;
+    --accent-light: 155 80% 12%;
+
+    /* Royal Red - Power & Prestige */
+    --royal-red: 0 85% 45%;
+    --royal-red-foreground: 0 0% 100%;
+    --royal-red-light: 0 85% 15%;
+
+    /* Royal Blue - Trust & Intelligence (Subtle) */
+    --royal-blue: 220 90% 45%;
+    --royal-blue-foreground: 0 0% 100%;
+    --royal-blue-light: 220 90% 12%;
+
+    /* Royal Purple - Innovation & Quantum (Subtle) */
+    --royal-purple: 270 70% 50%;
+    --royal-purple-foreground: 0 0% 100%;
+    --royal-purple-light: 270 70% 12%;
 
     /* Status Colors */
-    --success: 142 71% 45%;
+    --success: 155 80% 40%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 71% 95%;
+    --success-light: 155 80% 12%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --warning-light: 38 92% 95%;
+    --warning: 42 100% 50%;
+    --warning-foreground: 0 0% 5%;
+    --warning-light: 42 100% 12%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 85% 50%;
     --destructive-foreground: 0 0% 100%;
 
     /* Border and Input */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 91% 25%;
+    --border: 45 20% 18%;
+    --input: 0 0% 10%;
+    --ring: 45 100% 50%;
 
-    /* Premium Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(220, 91%, 25%), hsl(220, 91%, 35%));
-    --gradient-gold: linear-gradient(135deg, hsl(45, 96%, 53%), hsl(45, 96%, 63%));
-    --gradient-accent: linear-gradient(135deg, hsl(180, 84%, 35%), hsl(180, 84%, 45%));
-    --gradient-hero: linear-gradient(135deg, hsl(220, 91%, 25%) 0%, hsl(180, 84%, 35%) 100%);
-    --gradient-premium: linear-gradient(135deg, hsl(220, 14%, 96%) 0%, hsl(45, 96%, 95%) 100%);
+    /* ============= PREMIUM GRADIENTS ============= */
+    --gradient-primary: linear-gradient(135deg, hsl(45, 100%, 50%) 0%, hsl(42, 100%, 40%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(42, 100%, 55%) 0%, hsl(38, 100%, 45%) 50%, hsl(45, 100%, 50%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(155, 80%, 35%) 0%, hsl(155, 80%, 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0, 0%, 5%) 0%, hsl(0, 0%, 8%) 50%, hsl(0, 0%, 3%) 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(0, 0%, 6%) 0%, hsl(45, 100%, 50%, 0.05) 50%, hsl(0, 0%, 8%) 100%);
+    --gradient-royal: linear-gradient(135deg, hsl(270, 70%, 50%, 0.1) 0%, hsl(220, 90%, 45%, 0.1) 50%, hsl(155, 80%, 35%, 0.1) 100%);
+    --gradient-conglomerate: linear-gradient(180deg, hsl(0, 0%, 3%) 0%, hsl(0, 0%, 6%) 50%, hsl(45, 100%, 50%, 0.03) 100%);
 
-    /* Shadows */
-    --shadow-premium: 0 10px 40px -10px hsl(220 91% 25% / 0.2);
-    --shadow-gold: 0 8px 32px -8px hsl(45 96% 53% / 0.3);
-    --shadow-card: 0 4px 20px -4px hsl(220 13% 18% / 0.1);
-    --shadow-hover: 0 12px 48px -12px hsl(220 91% 25% / 0.3);
+    /* ============= PREMIUM SHADOWS ============= */
+    --shadow-premium: 0 20px 60px -15px hsl(45 100% 50% / 0.2);
+    --shadow-gold: 0 10px 40px -10px hsl(42 100% 55% / 0.4);
+    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.5);
+    --shadow-hover: 0 20px 60px -15px hsl(45 100% 50% / 0.3);
+    --shadow-glow-gold: 0 0 40px hsl(45 100% 50% / 0.3);
+    --shadow-glow-green: 0 0 30px hsl(155 80% 35% / 0.3);
+    --shadow-glow-purple: 0 0 30px hsl(270 70% 50% / 0.2);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -83,59 +105,48 @@
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 45 20% 90%;
+    --sidebar-primary: 45 100% 50%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 45 20% 90%;
+    --sidebar-border: 45 20% 15%;
+    --sidebar-ring: 45 100% 50%;
   }
 
+  /* Dark mode inherits from root - already dark by default */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Already using dark theme as default */
+  }
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  /* Light Mode Override (for accessibility) */
+  .theme-light {
+    --background: 45 10% 97%;
+    --foreground: 0 0% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+    --card-premium: 45 20% 98%;
+    --card-premium-foreground: 0 0% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+    --primary: 45 100% 45%;
+    --primary-foreground: 0 0% 5%;
+    --gold: 42 100% 50%;
+    --gold-foreground: 0 0% 5%;
+    --secondary: 45 10% 92%;
+    --secondary-foreground: 0 0% 8%;
+    --muted: 45 10% 90%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 155 70% 30%;
+    --accent-foreground: 0 0% 100%;
+    --border: 45 15% 85%;
+    --input: 45 10% 90%;
+    --ring: 45 100% 45%;
+    --sidebar-background: 45 10% 95%;
+    --sidebar-foreground: 0 0% 15%;
+    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.1);
   }
 
   /* ============= TRADING THEMES ============= */
@@ -315,16 +326,24 @@
 }
 
 @layer components {
-  /* Premium Card Effects */
+  /* Premium Card Effects - Conglomerate Style */
   .card-premium {
     @apply bg-card-premium text-card-premium-foreground;
     box-shadow: var(--shadow-card);
     transition: var(--transition-smooth);
+    border: 1px solid hsl(45 100% 50% / 0.1);
   }
 
   .card-premium:hover {
     box-shadow: var(--shadow-hover);
     transform: translateY(-2px);
+    border-color: hsl(45 100% 50% / 0.2);
+  }
+
+  /* Gold Accent Border */
+  .border-gold-glow {
+    border: 1px solid hsl(var(--gold));
+    box-shadow: var(--shadow-glow-gold);
   }
 
   /* Gradient Backgrounds */
@@ -348,6 +367,14 @@
     background: var(--gradient-premium);
   }
 
+  .bg-gradient-royal {
+    background: var(--gradient-royal);
+  }
+
+  .bg-gradient-conglomerate {
+    background: var(--gradient-conglomerate);
+  }
+
   /* Premium Text Effects */
   .text-gradient-gold {
     background: var(--gradient-gold);
@@ -356,11 +383,24 @@
     background-clip: text;
   }
 
-  /* Glass Effect */
+  /* Glass Effect - Dark Premium */
   .glass-effect {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid hsl(45 100% 50% / 0.15);
+  }
+
+  /* Royal Glow Effects */
+  .glow-gold {
+    box-shadow: var(--shadow-glow-gold);
+  }
+
+  .glow-green {
+    box-shadow: var(--shadow-glow-green);
+  }
+
+  .glow-purple {
+    box-shadow: var(--shadow-glow-purple);
   }
 
   /* Premium Animations */
@@ -370,6 +410,10 @@
 
   .animate-glow {
     animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-gold-pulse {
+    animation: gold-pulse 2s ease-in-out infinite;
   }
 }
 
@@ -406,8 +450,18 @@
 }
 
 @keyframes glow {
-  from { filter: drop-shadow(0 0 20px hsl(45, 96%, 53%, 0.5)); }
-  to { filter: drop-shadow(0 0 30px hsl(45, 96%, 53%, 0.8)); }
+  from { filter: drop-shadow(0 0 20px hsl(45, 100%, 50%, 0.5)); }
+  to { filter: drop-shadow(0 0 40px hsl(45, 100%, 50%, 0.8)); }
+}
+
+@keyframes gold-pulse {
+  0%, 100% { box-shadow: 0 0 20px hsl(45, 100%, 50%, 0.3); }
+  50% { box-shadow: 0 0 40px hsl(45, 100%, 50%, 0.6); }
+}
+
+@keyframes shimmer-gold {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* ============= ACCESSIBILITY STYLES ============= */

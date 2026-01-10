@@ -80,6 +80,22 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Royal Colors
+        "royal-red": {
+          DEFAULT: "hsl(var(--royal-red))",
+          foreground: "hsl(var(--royal-red-foreground))",
+          light: "hsl(var(--royal-red-light))",
+        },
+        "royal-blue": {
+          DEFAULT: "hsl(var(--royal-blue))",
+          foreground: "hsl(var(--royal-blue-foreground))",
+          light: "hsl(var(--royal-blue-light))",
+        },
+        "royal-purple": {
+          DEFAULT: "hsl(var(--royal-purple))",
+          foreground: "hsl(var(--royal-purple-foreground))",
+          light: "hsl(var(--royal-purple-light))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
