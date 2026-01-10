@@ -76,8 +76,8 @@ const LeftToolbar = () => (
   </div>
 );
 
-// Mini Chart Panel for Multi-Chart Grid
-const MiniChartPanel = ({ symbol, price, change, timeframe, positive }: { symbol: string; price: string; change: string; timeframe: string; positive: boolean }) => {
+// Award-Winning Bento Mini Chart Panel with Glassmorphism 2.0
+const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured = false }: { symbol: string; price: string; change: string; timeframe: string; positive: boolean; featured?: boolean }) => {
   // Generate random candles for each mini chart
   const candles = Array.from({ length: 12 }, () => ({
     o: 40 + Math.random() * 30,
@@ -87,78 +87,101 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive }: { symbol
   }));
 
   return (
-    <div className="relative bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,15%)] overflow-hidden group hover:border-[hsl(224,100%,58%,0.4)] transition-all">
-      {/* Header */}
-      <div className="flex items-center justify-between px-2 py-1.5 border-b border-[hsl(222,14%,15%)] bg-[hsl(223,18%,9%)]">
+    <div className={`relative overflow-hidden group transition-all duration-500 ease-out ${featured ? 'bento-item-featured' : 'bento-item'}`}>
+      {/* Mesh Gradient Overlay */}
+      <div className="absolute inset-0 bg-mesh-card opacity-50 pointer-events-none" />
+      
+      {/* Glassmorphism Header */}
+      <div className="relative flex items-center justify-between px-3 py-2 border-b border-[hsl(222,14%,15%,0.5)] backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-semibold text-foreground">{symbol}</span>
           <span className="font-mono text-[10px] text-muted-foreground">{timeframe}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`font-mono text-[10px] ${positive ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+          <span className={`font-mono text-[10px] font-medium px-1.5 py-0.5 rounded ${positive ? 'text-[hsl(162,91%,32%)] bg-[hsl(162,91%,32%,0.1)]' : 'text-[hsl(355,88%,58%)] bg-[hsl(355,88%,58%,0.1)]'}`}>
             {change}
           </span>
         </div>
       </div>
       
-      {/* OHLC Data */}
-      <div className="flex items-center gap-3 px-2 py-1 bg-[hsl(223,18%,8%)] border-b border-[hsl(222,14%,12%)]">
+      {/* OHLC Data - Glassmorphism Bar */}
+      <div className="flex items-center gap-3 px-3 py-1.5 bg-[hsl(223,18%,6%,0.4)] border-b border-[hsl(222,14%,12%,0.5)]">
         <span className="font-mono text-[9px] text-muted-foreground">O <span className="text-foreground/80">{(Math.random() * 100 + 50).toFixed(2)}</span></span>
         <span className="font-mono text-[9px] text-muted-foreground">H <span className="text-[hsl(162,91%,32%)]">{(Math.random() * 100 + 60).toFixed(2)}</span></span>
         <span className="font-mono text-[9px] text-muted-foreground">L <span className="text-[hsl(355,88%,58%)]">{(Math.random() * 50 + 40).toFixed(2)}</span></span>
         <span className="font-mono text-[9px] text-muted-foreground">C <span className="text-foreground/80">{price}</span></span>
       </div>
 
-      {/* Chart Area */}
-      <div className="relative h-28 p-1">
-        {/* Grid */}
-        <svg className="absolute inset-0 w-full h-full opacity-30">
+      {/* Chart Area with Depth */}
+      <div className="relative h-32 p-2">
+        {/* Grid Pattern */}
+        <svg className="absolute inset-0 w-full h-full opacity-20">
           <defs>
             <pattern id={`miniGrid-${symbol}`} width="30" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 30 0 L 0 0 0 20" fill="none" stroke="hsl(222,14%,14%)" strokeWidth="0.5"/>
+              <path d="M 30 0 L 0 0 0 20" fill="none" stroke="hsl(222,14%,18%)" strokeWidth="0.5"/>
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill={`url(#miniGrid-${symbol})`} />
         </svg>
 
-        {/* Candles */}
-        <div className="absolute inset-2 flex items-end justify-around gap-0.5">
+        {/* Candles with Micro-Interaction Hover */}
+        <div className="absolute inset-3 flex items-end justify-around gap-0.5">
           {candles.map((candle, i) => {
             const isBull = candle.c > candle.o;
             const bodyHeight = Math.abs(candle.c - candle.o) * 1.2;
             return (
-              <div key={i} className="relative flex flex-col items-center h-full justify-end">
+              <div key={i} className="relative flex flex-col items-center h-full justify-end group/candle">
                 <div 
-                  className={`w-1.5 ${isBull ? 'bg-[hsl(162,91%,32%)]' : 'bg-[hsl(355,88%,58%)]'}`}
-                  style={{ height: `${Math.max(bodyHeight, 3)}px` }}
+                  className={`w-2 rounded-sm transition-all duration-200 group-hover/candle:scale-110 ${isBull ? 'bg-[hsl(162,91%,32%)]' : 'bg-[hsl(355,88%,58%)]'}`}
+                  style={{ 
+                    height: `${Math.max(bodyHeight, 4)}px`,
+                    boxShadow: isBull ? '0 0 8px hsl(162,91%,32%,0.3)' : '0 0 8px hsl(355,88%,58%,0.3)'
+                  }}
                 />
               </div>
             );
           })}
         </div>
 
-        {/* Moving Average */}
-        <svg className="absolute inset-2 opacity-50" preserveAspectRatio="none" viewBox="0 0 100 50">
-          <path d={`M 0 ${30 + Math.random() * 10} Q ${25 + Math.random() * 10} ${25 + Math.random() * 15} 50 ${20 + Math.random() * 10} T 100 ${15 + Math.random() * 10}`} 
-            stroke="hsl(43,96%,56%)" strokeWidth="1" fill="none" />
+        {/* Moving Average with Glow */}
+        <svg className="absolute inset-3 opacity-60" preserveAspectRatio="none" viewBox="0 0 100 50">
+          <defs>
+            <filter id={`glow-${symbol}`}>
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <path 
+            d={`M 0 ${30 + Math.random() * 10} Q ${25 + Math.random() * 10} ${25 + Math.random() * 15} 50 ${20 + Math.random() * 10} T 100 ${15 + Math.random() * 10}`} 
+            stroke="hsl(43,96%,56%)" 
+            strokeWidth="1.5" 
+            fill="none" 
+            filter={`url(#glow-${symbol})`}
+          />
         </svg>
 
-        {/* Price Label */}
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-[hsl(224,100%,58%)] rounded-sm">
-          <span className="font-mono text-[9px] font-bold text-white">{price}</span>
+        {/* Floating Price Label with Glassmorphism */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-[hsl(224,100%,58%,0.9)] backdrop-blur-sm rounded-md shadow-lg">
+          <span className="font-mono text-[10px] font-bold text-white">{price}</span>
         </div>
       </div>
 
-      {/* Volume */}
-      <div className="absolute bottom-0 left-0 right-0 h-6 px-1 flex items-end gap-0.5 opacity-40">
+      {/* Volume Bars with Gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-7 px-2 flex items-end gap-0.5 opacity-40">
         {Array.from({ length: 12 }, (_, i) => (
           <div 
             key={i} 
-            className={`flex-1 ${i % 2 === 0 ? 'bg-[hsl(162,91%,32%,0.5)]' : 'bg-[hsl(355,88%,58%,0.5)]'}`}
+            className={`flex-1 rounded-t-sm transition-all duration-300 ${i % 2 === 0 ? 'bg-gradient-to-t from-[hsl(162,91%,32%,0.6)] to-[hsl(162,91%,32%,0.2)]' : 'bg-gradient-to-t from-[hsl(355,88%,58%,0.6)] to-[hsl(355,88%,58%,0.2)]'}`}
             style={{ height: `${20 + Math.random() * 80}%` }}
           />
         ))}
       </div>
+
+      {/* Hover Glow Effect */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-t from-[hsl(224,100%,58%,0.05)] to-transparent" />
     </div>
   );
 };
@@ -239,16 +262,20 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[hsl(225,20%,7%)]">
+      {/* Award-Winning Mesh Gradient Background */}
+      <div className="absolute inset-0 bg-mesh-hero opacity-80" />
+      
       {/* TradingView-style Interface */}
       <LiveTicker />
       <LeftToolbar />
       <BottomToolbar />
       
-      {/* Subtle Ambient Glow */}
-      <div className="absolute top-[20%] right-[10%] w-[400px] h-[400px] bg-[hsl(355,88%,58%,0.03)] rounded-full blur-[150px]" />
-      <div className="absolute bottom-[30%] left-[10%] w-[350px] h-[350px] bg-[hsl(224,100%,58%,0.03)] rounded-full blur-[120px]" />
+      {/* Subtle Ambient Glow with Breathing Animation */}
+      <div className="absolute top-[20%] right-[10%] w-[400px] h-[400px] bg-[hsl(355,88%,58%,0.04)] rounded-full blur-[150px] animate-breathe" style={{ animationDuration: '8s' }} />
+      <div className="absolute bottom-[30%] left-[10%] w-[350px] h-[350px] bg-[hsl(224,100%,58%,0.04)] rounded-full blur-[120px] animate-breathe" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+      <div className="absolute top-[50%] left-[50%] w-[500px] h-[500px] bg-[hsl(270,91%,65%,0.03)] rounded-full blur-[180px] animate-breathe" style={{ animationDuration: '12s', animationDelay: '4s' }} />
       
-      {/* AI Bot Minions */}
+      {/* AI Bot Minions with Enhanced Animations */}
       <AIBotMinion className="top-[12%] left-[8%]" delay={0} color="purple" />
       <AIBotMinion className="top-[15%] right-[12%]" delay={0.5} color="gold" />
       <AIBotMinion className="bottom-[25%] left-[12%]" delay={1} color="green" />
@@ -257,42 +284,44 @@ const Hero = () => {
       {/* Main Content - Centered */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 pt-16 pb-12 ml-11">
         
-        {/* TradingView-style Gradient Header */}
-        <div className="text-center mb-8">
-          {/* Gradient Title like TradingView Desktop */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-2 tracking-tight">
-            <span className="bg-gradient-to-r from-white via-[hsl(270,91%,75%)] to-[hsl(355,88%,65%)] bg-clip-text text-transparent">
+        {/* Award-Winning Hero Header with Glassmorphism */}
+        <div className="text-center mb-10 animate-fade-in">
+          {/* Gradient Title with Mesh Effect */}
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-2 tracking-tight animate-slide-up">
+            <span className="bg-gradient-to-r from-white via-[hsl(270,91%,75%)] to-[hsl(355,88%,65%)] bg-clip-text text-transparent drop-shadow-lg">
               AIQTP™
             </span>
           </h1>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 tracking-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 tracking-tight animate-slide-up stagger-1">
             <span className="bg-gradient-to-r from-[hsl(270,91%,70%)] via-[hsl(320,85%,60%)] to-[hsl(355,88%,58%)] bg-clip-text text-transparent">
               Terminal
             </span>
           </h2>
           
-          {/* Subtitle */}
-          <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-xl mx-auto">
-            Experience quantum-powered trading, AI pattern recognition and institutional analytics,
-            all with the professional UX you know and love.
-          </p>
+          {/* Subtitle with Glassmorphism Badge */}
+          <div className="flex justify-center mb-6 animate-slide-up stagger-2">
+            <p className="text-sm md:text-base text-muted-foreground max-w-xl glass-morphism-subtle px-6 py-3 rounded-xl">
+              Experience quantum-powered trading, AI pattern recognition and institutional analytics,
+              all with the professional UX you know and love.
+            </p>
+          </div>
 
-          {/* Action Buttons - TradingView Style Download Buttons */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
+          {/* Action Buttons - Award-Winning Micro-Interactions */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8 animate-slide-up stagger-3">
             <Link to="/auth">
-              <Button size="lg" className="bg-[hsl(223,18%,15%)] hover:bg-[hsl(223,18%,20%)] border border-[hsl(222,14%,25%)] text-foreground font-medium gap-2">
+              <Button size="lg" className="glass-morphism micro-hover border-[hsl(222,14%,25%)] text-foreground font-medium gap-2 hover:border-[hsl(224,100%,58%,0.5)]">
                 <Terminal className="w-4 h-4" />
                 Launch Terminal
               </Button>
             </Link>
             <Link to="/qaqi">
-              <Button size="lg" className="bg-[hsl(223,18%,15%)] hover:bg-[hsl(223,18%,20%)] border border-[hsl(222,14%,25%)] text-foreground font-medium gap-2">
+              <Button size="lg" className="glass-morphism micro-hover border-[hsl(270,91%,65%,0.3)] text-foreground font-medium gap-2 hover:border-[hsl(270,91%,65%,0.5)]">
                 <Cpu className="w-4 h-4 text-[hsl(270,91%,65%)]" />
                 QAQI™ Agent
               </Button>
             </Link>
             <Link to="/vault">
-              <Button size="lg" className="bg-[hsl(223,18%,15%)] hover:bg-[hsl(223,18%,20%)] border border-[hsl(222,14%,25%)] text-foreground font-medium gap-2">
+              <Button size="lg" className="glass-morphism micro-hover border-[hsl(43,96%,56%,0.3)] text-foreground font-medium gap-2 hover:border-[hsl(43,96%,56%,0.5)]">
                 <Zap className="w-4 h-4 text-[hsl(43,96%,56%)]" />
                 Lightning Vault
               </Button>
@@ -300,53 +329,50 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Multi-Chart Grid - TradingView Desktop Style */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-1 mb-6">
+        {/* Award-Winning Bento Grid Layout */}
+        <div className="bento-grid grid-cols-2 lg:grid-cols-3 mb-8 animate-scale-in stagger-4">
           {miniCharts.map((chart, i) => (
-            <MiniChartPanel key={i} {...chart} />
+            <MiniChartPanel key={i} {...chart} featured={i === 0 || i === 3} />
           ))}
         </div>
 
-        {/* Feature Badges */}
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
-          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+        {/* Feature Badges with Glassmorphism */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8 animate-slide-up stagger-5">
+          <Badge variant="outline" className="glass-morphism-subtle border-[hsl(270,91%,65%,0.2)] text-muted-foreground px-4 py-1.5 font-mono text-[10px] micro-hover">
             <Shield className="w-3 h-3 mr-1.5 text-[hsl(270,91%,65%)]" />
             Post-Quantum Security
           </Badge>
-          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+          <Badge variant="outline" className="glass-morphism-subtle border-[hsl(224,100%,58%,0.2)] text-muted-foreground px-4 py-1.5 font-mono text-[10px] micro-hover">
             <Globe className="w-3 h-3 mr-1.5 text-[hsl(224,100%,58%)]" />
             200+ Countries
           </Badge>
-          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+          <Badge variant="outline" className="glass-morphism-subtle border-[hsl(43,96%,56%,0.2)] text-muted-foreground px-4 py-1.5 font-mono text-[10px] micro-hover">
             <Zap className="w-3 h-3 mr-1.5 text-[hsl(43,96%,56%)]" />
             Lightning Network
           </Badge>
-          <Badge variant="outline" className="bg-[hsl(223,18%,10%)] border-[hsl(222,14%,20%)] text-muted-foreground px-3 py-1 font-mono text-[10px]">
+          <Badge variant="outline" className="glass-morphism-subtle border-[hsl(162,91%,32%,0.2)] text-muted-foreground px-4 py-1.5 font-mono text-[10px] micro-hover">
             <Bot className="w-3 h-3 mr-1.5 text-[hsl(162,91%,32%)]" />
             AI Trading Bots™
           </Badge>
         </div>
 
-        {/* Stats Row */}
-        <div className="flex justify-center gap-6 text-center">
-          <div>
-            <div className="font-mono text-lg font-bold text-[hsl(43,96%,56%)]">$2.4B+</div>
+        {/* Stats Row with Glassmorphism Cards */}
+        <div className="flex justify-center gap-4 text-center animate-slide-up stagger-6">
+          <div className="glass-morphism-subtle px-6 py-3 rounded-xl micro-hover">
+            <div className="font-mono text-xl font-bold text-[hsl(43,96%,56%)]">$2.4B+</div>
             <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">24h Volume</div>
           </div>
-          <div className="w-px bg-[hsl(222,14%,20%)]" />
-          <div>
-            <div className="font-mono text-lg font-bold text-[hsl(162,91%,32%)]">50K+</div>
+          <div className="glass-morphism-subtle px-6 py-3 rounded-xl micro-hover">
+            <div className="font-mono text-xl font-bold text-[hsl(162,91%,32%)]">50K+</div>
             <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Traders</div>
           </div>
-          <div className="w-px bg-[hsl(222,14%,20%)]" />
-          <div>
-            <div className="font-mono text-lg font-bold text-[hsl(224,100%,58%)]">200+</div>
-            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Pairs</div>
+          <div className="glass-morphism-subtle px-6 py-3 rounded-xl micro-hover">
+            <div className="font-mono text-xl font-bold text-[hsl(270,91%,65%)]">99.9%</div>
+            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Uptime</div>
           </div>
-          <div className="w-px bg-[hsl(222,14%,20%)]" />
-          <div>
-            <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)]">&lt;10ms</div>
-            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">Execution</div>
+          <div className="glass-morphism-subtle px-6 py-3 rounded-xl micro-hover">
+            <div className="font-mono text-xl font-bold text-[hsl(224,100%,58%)]">85%+</div>
+            <div className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">AI Win Rate</div>
           </div>
         </div>
       </div>

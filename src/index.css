@@ -130,6 +130,18 @@
     --gradient-qaqi: linear-gradient(135deg, hsl(270, 91%, 65%, 0.08) 0%, hsl(270, 91%, 65%, 0.02) 100%);
     --gradient-lightning: linear-gradient(135deg, hsl(43, 96%, 56%, 0.08) 0%, hsl(43, 96%, 56%, 0.02) 100%);
     --gradient-scanner: linear-gradient(90deg, transparent 0%, hsl(162, 91%, 32%, 0.25) 50%, transparent 100%);
+    
+    /* ============= 2025 AWARD-WINNING MESH GRADIENTS ============= */
+    --gradient-mesh-primary: radial-gradient(ellipse at 20% 20%, hsl(270, 91%, 65%, 0.15) 0%, transparent 50%), 
+                             radial-gradient(ellipse at 80% 80%, hsl(224, 100%, 58%, 0.12) 0%, transparent 50%),
+                             radial-gradient(ellipse at 50% 50%, hsl(162, 91%, 32%, 0.08) 0%, transparent 70%);
+    --gradient-mesh-hero: radial-gradient(ellipse at 0% 0%, hsl(270, 91%, 65%, 0.08) 0%, transparent 40%),
+                          radial-gradient(ellipse at 100% 0%, hsl(355, 88%, 58%, 0.06) 0%, transparent 40%),
+                          radial-gradient(ellipse at 50% 100%, hsl(43, 96%, 56%, 0.05) 0%, transparent 50%);
+    --gradient-mesh-card: radial-gradient(ellipse at 0% 0%, hsl(224, 100%, 58%, 0.06) 0%, transparent 50%),
+                          radial-gradient(ellipse at 100% 100%, hsl(270, 91%, 65%, 0.04) 0%, transparent 50%);
+    --gradient-mesh-gold: radial-gradient(ellipse at 30% 30%, hsl(43, 96%, 56%, 0.12) 0%, transparent 50%),
+                          radial-gradient(ellipse at 70% 70%, hsl(38, 92%, 50%, 0.08) 0%, transparent 50%);
 
     /* ============= TERMINAL GLOW SHADOWS ============= */
     --shadow-premium: 0 20px 60px -15px hsl(45 95% 55% / 0.2);
@@ -143,6 +155,12 @@
     --shadow-glow-blue: 0 0 35px hsl(217 91% 60% / 0.4);
     --shadow-glow-red: 0 0 30px hsl(0 85% 58% / 0.35);
     --shadow-glow-cyan: 0 0 35px hsl(188 94% 45% / 0.4);
+    
+    /* 2025 Glassmorphism Shadows */
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.37);
+    --shadow-glass-hover: 0 12px 40px hsl(0 0% 0% / 0.45);
+    --shadow-bento: 0 1px 2px hsl(0 0% 0% / 0.2), 0 4px 12px hsl(0 0% 0% / 0.15);
+    --shadow-bento-hover: 0 4px 8px hsl(0 0% 0% / 0.25), 0 12px 32px hsl(0 0% 0% / 0.2);
 
     /* Terminal Typography */
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Consolas, monospace;
@@ -151,6 +169,7 @@
     /* Animations */
     --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
     --radius: 0.5rem;
 
@@ -285,6 +304,66 @@
     border: 1px solid hsl(220 15% 18%);
   }
 
+  /* ============= 2025 AWARD-WINNING GLASSMORPHISM 2.0 ============= */
+  .glass-morphism {
+    background: hsl(223 18% 10% / 0.6);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid hsl(220 15% 20% / 0.5);
+    box-shadow: var(--shadow-glass);
+    transition: var(--transition-spring);
+  }
+
+  .glass-morphism:hover {
+    background: hsl(223 18% 12% / 0.7);
+    border-color: hsl(220 15% 25% / 0.6);
+    box-shadow: var(--shadow-glass-hover);
+    transform: translateY(-2px);
+  }
+
+  .glass-morphism-subtle {
+    background: hsl(223 18% 8% / 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(220 15% 15% / 0.3);
+  }
+
+  /* ============= BENTO GRID SYSTEM ============= */
+  .bento-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .bento-item {
+    @apply relative overflow-hidden rounded-xl;
+    background: var(--gradient-mesh-card), hsl(223 18% 10%);
+    border: 1px solid hsl(222 14% 18%);
+    box-shadow: var(--shadow-bento);
+    transition: var(--transition-spring);
+  }
+
+  .bento-item:hover {
+    border-color: hsl(224 100% 58% / 0.3);
+    box-shadow: var(--shadow-bento-hover);
+    transform: translateY(-3px) scale(1.005);
+  }
+
+  .bento-item-featured {
+    background: var(--gradient-mesh-gold), hsl(223 18% 11%);
+    border-color: hsl(43 96% 56% / 0.2);
+  }
+
+  .bento-item-featured:hover {
+    border-color: hsl(43 96% 56% / 0.4);
+    box-shadow: var(--shadow-bento-hover), 0 0 30px hsl(43 96% 56% / 0.15);
+  }
+
+  /* Mesh Gradient Backgrounds */
+  .bg-mesh-primary { background: var(--gradient-mesh-primary); }
+  .bg-mesh-hero { background: var(--gradient-mesh-hero); }
+  .bg-mesh-card { background: var(--gradient-mesh-card); }
+  .bg-mesh-gold { background: var(--gradient-mesh-gold); }
+
   /* Terminal Scanner Line Animation */
   .scanner-line {
     position: absolute;
@@ -301,11 +380,79 @@
   .glow-purple { box-shadow: var(--shadow-glow-purple); }
   .glow-blue { box-shadow: var(--shadow-glow-blue); }
 
+  /* ============= MICRO-INTERACTIONS ============= */
+  .micro-hover {
+    transition: var(--transition-spring);
+  }
+
+  .micro-hover:hover {
+    transform: translateY(-2px);
+  }
+
+  .micro-hover:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .micro-press {
+    transition: transform 0.1s ease-out;
+  }
+
+  .micro-press:active {
+    transform: scale(0.95);
+  }
+
+  .micro-glow:hover {
+    box-shadow: 0 0 20px hsl(224 100% 58% / 0.3);
+  }
+
+  /* Haptic-style Click Feedback */
+  .haptic-click {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .haptic-click::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--click-x, 50%) var(--click-y, 50%), hsl(224 100% 58% / 0.3) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
+  }
+
+  .haptic-click:active::after {
+    opacity: 1;
+  }
+
+  /* Depth Layers */
+  .depth-1 { z-index: 10; }
+  .depth-2 { z-index: 20; }
+  .depth-3 { z-index: 30; }
+
+  /* 3D Transform Effects */
+  .preserve-3d {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  .card-3d {
+    transition: var(--transition-spring);
+  }
+
+  .card-3d:hover {
+    transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateZ(10px);
+  }
+
   /* Terminal Animations */
   .animate-float { animation: float 3s ease-in-out infinite; }
   .animate-glow { animation: glow 2s ease-in-out infinite alternate; }
   .animate-gold-pulse { animation: gold-pulse 2s ease-in-out infinite; }
   .animate-ticker { animation: ticker 20s linear infinite; }
+  .animate-shimmer { animation: shimmer 2s linear infinite; }
+  .animate-slide-up { animation: slideUp 0.5s ease-out; }
+  .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+  .animate-scale-in { animation: scaleIn 0.3s ease-out; }
 }
 
 @layer utilities {
@@ -377,6 +524,56 @@
   50% { background-color: hsl(142 76% 45% / 0.15); }
   100% { background-color: transparent; }
 }
+
+/* ============= 2025 AWARD-WINNING ANIMATIONS ============= */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes morphBorder {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* Staggered Animation Delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
 
 /* ============= ACCESSIBILITY STYLES ============= */
 
