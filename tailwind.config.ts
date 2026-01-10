@@ -80,7 +80,7 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Royal Colors
+        // Neon Royal Colors
         "royal-red": {
           DEFAULT: "hsl(var(--royal-red))",
           foreground: "hsl(var(--royal-red-foreground))",
@@ -95,6 +95,11 @@ export default {
           DEFAULT: "hsl(var(--royal-purple))",
           foreground: "hsl(var(--royal-purple-foreground))",
           light: "hsl(var(--royal-purple-light))",
+        },
+        "neon-cyan": {
+          DEFAULT: "hsl(var(--neon-cyan))",
+          foreground: "hsl(var(--neon-cyan-foreground))",
+          light: "hsl(var(--neon-cyan-light))",
         },
       },
       borderRadius: {
