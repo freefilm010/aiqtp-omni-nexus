@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import SkipLinks from "./components/accessibility/SkipLinks";
@@ -99,74 +100,335 @@ const AuthDeepLinkHandler = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-    <LanguageProvider>
-    <AccessibilityProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <FloatingWindowsProvider>
-            <AuthDeepLinkHandler />
-            <SkipLinks />
-            <ScreenReaderAnnouncer />
-            <FloatingWindowsLayer />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/trading" element={<ProtectedRoute><TradingDashboard /></ProtectedRoute>} />
-                <Route path="/vault" element={<ProtectedRoute><LightningVault /></ProtectedRoute>} />
-                <Route path="/ai-lab" element={<ProtectedRoute><AIResearchLab /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
-                <Route path="/exchange" element={<ProtectedRoute><ExchangeHub /></ProtectedRoute>} />
-                <Route path="/strategy-studio" element={<ProtectedRoute><FreqtradeStudio /></ProtectedRoute>} />
-                <Route path="/ml-predictions" element={<ProtectedRoute><MLPredictions /></ProtectedRoute>} />
-                <Route path="/defi-sniper" element={<ProtectedRoute><DefiSniperPage /></ProtectedRoute>} />
-                <Route path="/marketplace" element={<ProtectedRoute><StrategyMarketplacePage /></ProtectedRoute>} />
-                <Route path="/risk" element={<ProtectedRoute><RiskManagement /></ProtectedRoute>} />
-                <Route path="/social" element={<ProtectedRoute><SocialTrading /></ProtectedRoute>} />
-                <Route path="/institutional" element={<ProtectedRoute><InstitutionalServices /></ProtectedRoute>} />
-                <Route path="/advanced-trading" element={<ProtectedRoute><AdvancedTrading /></ProtectedRoute>} />
-                <Route path="/nft-studio" element={<ProtectedRoute><NFTStudio /></ProtectedRoute>} />
-                <Route path="/token-launchpad" element={<ProtectedRoute><TokenLaunchpad /></ProtectedRoute>} />
-                <Route path="/faucet" element={<ProtectedRoute><CryptoFaucetPage /></ProtectedRoute>} />
-                <Route path="/education" element={<ProtectedRoute><EducationPage /></ProtectedRoute>} />
-                <Route path="/screener" element={<ProtectedRoute><ScreenerPage /></ProtectedRoute>} />
-                <Route path="/news" element={<ProtectedRoute><NewsFeedPage /></ProtectedRoute>} />
-                <Route path="/calendar" element={<ProtectedRoute><EconomicCalendarPage /></ProtectedRoute>} />
-                <Route path="/derivatives" element={<ProtectedRoute><DerivativesPage /></ProtectedRoute>} />
-                <Route path="/quantum-lab" element={<ProtectedRoute><QuantumLabPage /></ProtectedRoute>} />
-                <Route path="/strategy-lab" element={<ProtectedRoute><StrategyLab /></ProtectedRoute>} />
-                <Route path="/titan-codex" element={<ProtectedRoute><TitanCodexPage /></ProtectedRoute>} />
-                <Route path="/qaqi" element={<ProtectedRoute><QAQIPage /></ProtectedRoute>} />
-                <Route path="/connections" element={<ProtectedRoute><ConnectionsPage /></ProtectedRoute>} />
-                <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
-                <Route path="/admin/*" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
-                <Route path="/alerts" element={<ProtectedRoute><AlertsFeedPage /></ProtectedRoute>} />
-                <Route path="/intelligence" element={<ProtectedRoute><MarketIntelligencePage /></ProtectedRoute>} />
-                <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
-                <Route path="/cockpit" element={<ProtectedRoute><TradingCockpit /></ProtectedRoute>} />
-                <Route path="/media" element={<ProtectedRoute><MediaHub /></ProtectedRoute>} />
-                <Route path="/popout/:tool" element={<ProtectedRoute><PopoutTool /></ProtectedRoute>} />
-                <Route path="/legal" element={<LegalPage />} />
-                <Route path="/fees" element={<FeesPage />} />
-                <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
-                <Route path="/watchlist" element={<WatchlistPage />} />
-                <Route path="/revenue" element={<ProtectedRoute><RevenueCommandCenter /></ProtectedRoute>} />
-                <Route path="/data-ecosystem" element={<ProtectedRoute><DataEcosystem /></ProtectedRoute>} />
-                <Route path="/payment-success" element={<PaymentSuccess />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </FloatingWindowsProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AccessibilityProvider>
-    </LanguageProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AccessibilityProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <FloatingWindowsProvider>
+                  <AuthDeepLinkHandler />
+                  <SkipLinks />
+                  <ScreenReaderAnnouncer />
+                  <FloatingWindowsLayer />
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/pricing" element={<PricingPage />} />
+                      <Route
+                        path="/trading"
+                        element={
+                          <ProtectedRoute>
+                            <TradingDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/vault"
+                        element={
+                          <ProtectedRoute>
+                            <LightningVault />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ai-lab"
+                        element={
+                          <ProtectedRoute>
+                            <AIResearchLab />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/analytics"
+                        element={
+                          <ProtectedRoute>
+                            <AdvancedAnalytics />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/exchange"
+                        element={
+                          <ProtectedRoute>
+                            <ExchangeHub />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/strategy-studio"
+                        element={
+                          <ProtectedRoute>
+                            <FreqtradeStudio />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ml-predictions"
+                        element={
+                          <ProtectedRoute>
+                            <MLPredictions />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/defi-sniper"
+                        element={
+                          <ProtectedRoute>
+                            <DefiSniperPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/marketplace"
+                        element={
+                          <ProtectedRoute>
+                            <StrategyMarketplacePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/risk"
+                        element={
+                          <ProtectedRoute>
+                            <RiskManagement />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/social"
+                        element={
+                          <ProtectedRoute>
+                            <SocialTrading />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/institutional"
+                        element={
+                          <ProtectedRoute>
+                            <InstitutionalServices />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/advanced-trading"
+                        element={
+                          <ProtectedRoute>
+                            <AdvancedTrading />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/nft-studio"
+                        element={
+                          <ProtectedRoute>
+                            <NFTStudio />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/token-launchpad"
+                        element={
+                          <ProtectedRoute>
+                            <TokenLaunchpad />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/faucet"
+                        element={
+                          <ProtectedRoute>
+                            <CryptoFaucetPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/education"
+                        element={
+                          <ProtectedRoute>
+                            <EducationPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/screener"
+                        element={
+                          <ProtectedRoute>
+                            <ScreenerPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/news"
+                        element={
+                          <ProtectedRoute>
+                            <NewsFeedPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/calendar"
+                        element={
+                          <ProtectedRoute>
+                            <EconomicCalendarPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/derivatives"
+                        element={
+                          <ProtectedRoute>
+                            <DerivativesPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/quantum-lab"
+                        element={
+                          <ProtectedRoute>
+                            <QuantumLabPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/strategy-lab"
+                        element={
+                          <ProtectedRoute>
+                            <StrategyLab />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/titan-codex"
+                        element={
+                          <ProtectedRoute>
+                            <TitanCodexPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/qaqi"
+                        element={
+                          <ProtectedRoute>
+                            <QAQIPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/connections"
+                        element={
+                          <ProtectedRoute>
+                            <ConnectionsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/ai-assistant"
+                        element={
+                          <ProtectedRoute>
+                            <AIAssistantPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/admin/*"
+                        element={
+                          <ProtectedRoute>
+                            <AdminDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
+                      <Route
+                        path="/alerts"
+                        element={
+                          <ProtectedRoute>
+                            <AlertsFeedPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/intelligence"
+                        element={
+                          <ProtectedRoute>
+                            <MarketIntelligencePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/portfolio"
+                        element={
+                          <ProtectedRoute>
+                            <PortfolioPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/cockpit"
+                        element={
+                          <ProtectedRoute>
+                            <TradingCockpit />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/media"
+                        element={
+                          <ProtectedRoute>
+                            <MediaHub />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/popout/:tool"
+                        element={
+                          <ProtectedRoute>
+                            <PopoutTool />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/legal" element={<LegalPage />} />
+                      <Route path="/fees" element={<FeesPage />} />
+                      <Route
+                        path="/achievements"
+                        element={
+                          <ProtectedRoute>
+                            <AchievementsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/watchlist" element={<WatchlistPage />} />
+                      <Route
+                        path="/revenue"
+                        element={
+                          <ProtectedRoute>
+                            <RevenueCommandCenter />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/data-ecosystem"
+                        element={
+                          <ProtectedRoute>
+                            <DataEcosystem />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route path="/payment-success" element={<PaymentSuccess />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </FloatingWindowsProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AccessibilityProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
