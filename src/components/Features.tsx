@@ -22,8 +22,40 @@ import {
   BarChart3,
   Layers,
   Cpu,
-  Trophy
+  Trophy,
+  Boxes,
+  Database,
+  Coins,
+  Network
 } from "lucide-react";
+
+// Ecosystem highlights
+const ECOSYSTEMS = [
+  { 
+    icon: Atom, 
+    name: "Quantum AI", 
+    description: "QAQI™ autonomous agents", 
+    color: "purple" 
+  },
+  { 
+    icon: Coins, 
+    name: "$QTC Token", 
+    description: "Native blockchain currency", 
+    color: "gold" 
+  },
+  { 
+    icon: Database, 
+    name: "Data Economy", 
+    description: "Tokenized data marketplace", 
+    color: "blue" 
+  },
+  { 
+    icon: Network, 
+    name: "DeFi Hub", 
+    description: "DEX & derivatives", 
+    color: "accent" 
+  },
+];
 
 // Competitive scores - auto-calculated monthly based on feature parity
 const COMPETITIVE_SCORES = [
@@ -152,10 +184,48 @@ const Features = () => {
             </p>
           </Card>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
             Every feature institutional traders demand — AI-powered analytics, quantum-grade security, 
             and multi-exchange integration that surpasses Bloomberg, Binance, and traditional platforms.
           </p>
+          
+          {/* Ecosystems Highlight Squares */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            {ECOSYSTEMS.map((eco) => {
+              const Icon = eco.icon;
+              const borderColor = eco.color === 'gold' ? 'border-gold' : 
+                                 eco.color === 'accent' ? 'border-accent' : 
+                                 eco.color === 'purple' ? 'border-purple-500' :
+                                 eco.color === 'blue' ? 'border-blue-500' : 'border-primary';
+              const bgColor = eco.color === 'gold' ? 'bg-gold/10' : 
+                             eco.color === 'accent' ? 'bg-accent/10' : 
+                             eco.color === 'purple' ? 'bg-purple-500/10' :
+                             eco.color === 'blue' ? 'bg-blue-500/10' : 'bg-primary/10';
+              const textColor = eco.color === 'gold' ? 'text-gold' : 
+                               eco.color === 'accent' ? 'text-accent' : 
+                               eco.color === 'purple' ? 'text-purple-500' :
+                               eco.color === 'blue' ? 'text-blue-500' : 'text-primary';
+              
+              return (
+                <div 
+                  key={eco.name}
+                  className={`relative p-6 rounded-xl border-2 ${borderColor} ${bgColor} hover:scale-105 transition-all duration-300 group`}
+                >
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className={`p-3 rounded-lg ${bgColor} group-hover:shadow-lg transition-smooth`}>
+                      <Icon className={`w-8 h-8 ${textColor}`} />
+                    </div>
+                    <div>
+                      <h4 className={`font-bold ${textColor}`}>{eco.name}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">{eco.description}</p>
+                    </div>
+                  </div>
+                  {/* Corner highlight */}
+                  <div className={`absolute top-0 right-0 w-3 h-3 ${bgColor} rounded-bl-lg`} />
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
