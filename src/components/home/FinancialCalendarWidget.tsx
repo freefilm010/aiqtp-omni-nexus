@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Calendar,
   Clock,
@@ -13,11 +14,9 @@ import {
   Star,
   Megaphone,
   DollarSign,
-  BarChart2
+  BarChart2,
+  AlertCircle
 } from "lucide-react";
-
-// AInvest + Bloomberg-style Financial Calendar
-// Economic events, earnings, Fed decisions
 
 interface CalendarEvent {
   id: string;
@@ -35,69 +34,9 @@ interface CalendarEvent {
 
 const FinancialCalendarWidget = () => {
   const [activeFilter, setActiveFilter] = useState<string>('all');
-
-  const events: CalendarEvent[] = [
-    {
-      id: '1',
-      type: 'fed',
-      title: 'FOMC Interest Rate Decision',
-      time: '2:00 PM EST',
-      date: 'Today',
-      impact: 'high',
-      forecast: '5.50%',
-      previous: '5.50%',
-      isLive: true
-    },
-    {
-      id: '2',
-      type: 'earnings',
-      title: 'NVIDIA Earnings Report',
-      asset: 'NVDA',
-      time: '4:30 PM EST',
-      date: 'Today',
-      impact: 'high',
-      forecast: '$5.57 EPS'
-    },
-    {
-      id: '3',
-      type: 'economic',
-      title: 'Non-Farm Payrolls',
-      time: '8:30 AM EST',
-      date: 'Tomorrow',
-      impact: 'high',
-      forecast: '185K',
-      previous: '199K'
-    },
-    {
-      id: '4',
-      type: 'crypto',
-      title: 'Bitcoin ETF Inflows Report',
-      asset: 'BTC',
-      time: '9:00 AM EST',
-      date: 'Tomorrow',
-      impact: 'medium'
-    },
-    {
-      id: '5',
-      type: 'earnings',
-      title: 'Apple Earnings Call',
-      asset: 'AAPL',
-      time: '5:00 PM EST',
-      date: 'Jan 12',
-      impact: 'high',
-      forecast: '$2.10 EPS'
-    },
-    {
-      id: '6',
-      type: 'economic',
-      title: 'CPI Inflation Data',
-      time: '8:30 AM EST',
-      date: 'Jan 15',
-      impact: 'high',
-      forecast: '3.2%',
-      previous: '3.4%'
-    },
-  ];
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const filters = [
     { id: 'all', label: 'All Events' },
@@ -106,6 +45,64 @@ const FinancialCalendarWidget = () => {
     { id: 'economic', label: 'Economic' },
     { id: 'crypto', label: 'Crypto' },
   ];
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('economic_calendar_events')
+        .select('*')
+        .eq('is_active', true)
+        .gte('event_time', new Date().toISOString())
+        .order('event_time', { ascending: true })
+        .limit(20);
+
+      if (fetchError) throw fetchError;
+
+      const mapped: CalendarEvent[] = (data || []).map(e => {
+        const eventDate = new Date(e.event_time);
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        let dateStr: string;
+        if (eventDate.toDateString() === today.toDateString()) {
+          dateStr = 'Today';
+        } else if (eventDate.toDateString() === tomorrow.toDateString()) {
+          dateStr = 'Tomorrow';
+        } else {
+          dateStr = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        return {
+          id: e.id,
+          type: e.event_type as CalendarEvent['type'],
+          title: e.title,
+          asset: e.asset || undefined,
+          time: eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }),
+          date: dateStr,
+          impact: e.impact as 'high' | 'medium' | 'low',
+          forecast: e.forecast || undefined,
+          previous: e.previous || undefined,
+          actual: e.actual || undefined,
+          isLive: e.is_live
+        };
+      });
+
+      setEvents(mapped);
+    } catch (err: any) {
+      console.error('Error fetching calendar events:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredEvents = activeFilter === 'all' 
     ? events 
@@ -140,6 +137,11 @@ const FinancialCalendarWidget = () => {
     }
   };
 
+  const liveCount = events.filter(e => e.isLive).length;
+  const highImpactToday = events.filter(e => e.date === 'Today' && e.impact === 'high').length;
+  const earningsThisWeek = events.filter(e => e.type === 'earnings').length;
+  const fedEvents = events.filter(e => e.type === 'fed').length;
+
   return (
     <Card className="p-5 bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
       {/* Header */}
@@ -149,9 +151,11 @@ const FinancialCalendarWidget = () => {
             <Calendar className="w-4 h-4 text-[hsl(224,100%,58%)]" />
           </div>
           <h3 className="font-bold text-foreground">Financial Calendar</h3>
-          <Badge className="bg-[hsl(355,88%,58%,0.15)] text-[hsl(355,88%,58%)] text-[9px] animate-pulse">
-            1 LIVE
-          </Badge>
+          {liveCount > 0 && (
+            <Badge className="bg-[hsl(355,88%,58%,0.15)] text-[hsl(355,88%,58%)] text-[9px] animate-pulse">
+              {liveCount} LIVE
+            </Badge>
+          )}
         </div>
         <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground">
           Full Calendar <ChevronRight className="w-3 h-3 ml-1" />
@@ -175,104 +179,118 @@ const FinancialCalendarWidget = () => {
         ))}
       </div>
 
-      {/* Events List */}
-      <div className="space-y-2">
-        {filteredEvents.map((event) => (
-          <div 
-            key={event.id}
-            className={`p-3 rounded-lg bg-[hsl(223,18%,7%)] border transition-all hover:border-[hsl(222,14%,25%)] ${
-              event.isLive 
-                ? 'border-[hsl(355,88%,58%,0.3)] ring-1 ring-[hsl(355,88%,58%,0.1)]' 
-                : 'border-[hsl(222,14%,12%)]'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                {/* Event Type Icon */}
-                <div 
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: `${getEventColor(event.type)}15` }}
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : error ? (
+        <div className="flex items-center gap-2 text-destructive py-8 justify-center">
+          <AlertCircle className="h-5 w-5" />
+          <span>Error loading events</span>
+        </div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p className="font-medium">No Upcoming Events</p>
+          <p className="text-sm">Calendar events will appear here when scheduled.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filteredEvents.map((event) => (
+            <div 
+              key={event.id}
+              className={`p-3 rounded-lg bg-[hsl(223,18%,7%)] border transition-all hover:border-[hsl(222,14%,25%)] ${
+                event.isLive 
+                  ? 'border-[hsl(355,88%,58%,0.3)] ring-1 ring-[hsl(355,88%,58%,0.1)]' 
+                  : 'border-[hsl(222,14%,12%)]'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div 
+                    className="p-2 rounded-lg"
+                    style={{ backgroundColor: `${getEventColor(event.type)}15` }}
+                  >
+                    <div style={{ color: getEventColor(event.type) }}>
+                      {getEventIcon(event.type)}
+                    </div>
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm text-foreground">{event.title}</span>
+                      {event.isLive && (
+                        <Badge className="bg-[hsl(355,88%,58%,0.15)] text-[hsl(355,88%,58%)] text-[8px] animate-pulse">
+                          LIVE
+                        </Badge>
+                      )}
+                      {event.asset && (
+                        <Badge className="bg-[hsl(222,14%,20%)] text-foreground text-[8px]">
+                          {event.asset}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 text-[10px]">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        <span>{event.time}</span>
+                      </div>
+                      <span className="text-muted-foreground">•</span>
+                      <span className={event.date === 'Today' ? 'text-[hsl(43,96%,56%)]' : 'text-muted-foreground'}>
+                        {event.date}
+                      </span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className={getImpactColor(event.impact)}>
+                        {event.impact.toUpperCase()} IMPACT
+                      </span>
+                    </div>
+
+                    {(event.forecast || event.previous) && (
+                      <div className="flex items-center gap-4 mt-2 text-[10px] font-mono">
+                        {event.forecast && (
+                          <div>
+                            <span className="text-muted-foreground">Forecast: </span>
+                            <span className="text-[hsl(224,100%,58%)] font-medium">{event.forecast}</span>
+                          </div>
+                        )}
+                        {event.previous && (
+                          <div>
+                            <span className="text-muted-foreground">Previous: </span>
+                            <span className="text-foreground/70">{event.previous}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-[hsl(43,96%,56%)] hover:bg-[hsl(43,96%,56%,0.1)]"
                 >
-                  <div style={{ color: getEventColor(event.type) }}>
-                    {getEventIcon(event.type)}
-                  </div>
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm text-foreground">{event.title}</span>
-                    {event.isLive && (
-                      <Badge className="bg-[hsl(355,88%,58%,0.15)] text-[hsl(355,88%,58%)] text-[8px] animate-pulse">
-                        LIVE
-                      </Badge>
-                    )}
-                    {event.asset && (
-                      <Badge className="bg-[hsl(222,14%,20%)] text-foreground text-[8px]">
-                        {event.asset}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 text-[10px]">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      <span>{event.time}</span>
-                    </div>
-                    <span className="text-muted-foreground">•</span>
-                    <span className={event.date === 'Today' ? 'text-[hsl(43,96%,56%)]' : 'text-muted-foreground'}>
-                      {event.date}
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className={getImpactColor(event.impact)}>
-                      {event.impact.toUpperCase()} IMPACT
-                    </span>
-                  </div>
-
-                  {/* Forecast/Previous */}
-                  {(event.forecast || event.previous) && (
-                    <div className="flex items-center gap-4 mt-2 text-[10px] font-mono">
-                      {event.forecast && (
-                        <div>
-                          <span className="text-muted-foreground">Forecast: </span>
-                          <span className="text-[hsl(224,100%,58%)] font-medium">{event.forecast}</span>
-                        </div>
-                      )}
-                      {event.previous && (
-                        <div>
-                          <span className="text-muted-foreground">Previous: </span>
-                          <span className="text-foreground/70">{event.previous}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                  <Bell className="w-4 h-4" />
+                </Button>
               </div>
-
-              {/* Set Alert Button */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-[hsl(43,96%,56%)] hover:bg-[hsl(43,96%,56%,0.1)]"
-              >
-                <Bell className="w-4 h-4" />
-              </Button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-[hsl(222,14%,15%)]">
         <div className="text-center">
-          <div className="font-mono text-lg font-bold text-[hsl(355,88%,58%)]">3</div>
+          <div className="font-mono text-lg font-bold text-[hsl(355,88%,58%)]">{highImpactToday}</div>
           <div className="text-[9px] text-muted-foreground uppercase">High Impact Today</div>
         </div>
         <div className="text-center">
-          <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)]">5</div>
+          <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)]">{earningsThisWeek}</div>
           <div className="text-[9px] text-muted-foreground uppercase">Earnings This Week</div>
         </div>
         <div className="text-center">
-          <div className="font-mono text-lg font-bold text-[hsl(224,100%,58%)]">2</div>
+          <div className="font-mono text-lg font-bold text-[hsl(224,100%,58%)]">{fedEvents}</div>
           <div className="text-[9px] text-muted-foreground uppercase">Fed Events</div>
         </div>
       </div>
