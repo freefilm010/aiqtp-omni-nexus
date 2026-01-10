@@ -40,36 +40,47 @@ const Auth = () => {
     
     if (isRecovery) {
       setRecoveryMode(true);
-      // Don't redirect even if there's a session during recovery
       return; // Early exit for recovery mode
     }
 
-    // Check for existing session FIRST - immediate redirect if already signed in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && !isRecovery) {
-        navigate("/trading", { replace: true });
-      }
-    });
+    let mounted = true;
 
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event);
+      console.log('Auth event:', event, 'Has session:', !!session);
+      
+      if (!mounted) return;
       
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryMode(true);
         return;
       }
 
-      // Redirect on sign in (not during recovery)
-      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-        navigate("/trading", { replace: true });
+      // Redirect on any session event (SIGNED_IN, INITIAL_SESSION, TOKEN_REFRESHED)
+      if (session && event !== "SIGNED_OUT") {
+        // Use setTimeout to ensure state is settled before navigation
+        setTimeout(() => {
+          if (mounted) {
+            window.location.href = "/trading";
+          }
+        }, 100);
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    // Also check for existing session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && mounted) {
+        window.location.href = "/trading";
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
