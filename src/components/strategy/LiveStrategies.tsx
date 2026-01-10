@@ -13,12 +13,20 @@ import {
   Activity,
   Zap,
   Settings,
-  MoreVertical
+  MoreVertical,
+  Bot,
+  Crown,
+  Copyright,
+  Bookmark,
+  Sparkles
 } from "lucide-react";
+import { BOT_PERSONAS, BOT_PERFORMANCE } from "@/lib/nft/botPersonaNFT";
 
 interface LiveStrategy {
   id: string;
+  personaId: string;
   name: string;
+  codeName: string;
   status: 'running' | 'paused' | 'stopped';
   pairs: string[];
   profit: number;
@@ -29,12 +37,18 @@ interface LiveStrategy {
   lastTrade: string;
   openPositions: number;
   drawdown: number;
+  personality: string;
+  catchphrase: string;
+  primaryColor: string;
 }
 
+// Map personas to live strategies with their trading pairs
 const mockStrategies: LiveStrategy[] = [
   {
     id: '1',
-    name: 'RSI Mean Reversion',
+    personaId: 'rsi-reversion-alpha',
+    name: 'REX Reversion',
+    codeName: 'RSI Mean Reversion™',
     status: 'running',
     pairs: ['BTC/USDT', 'ETH/USDT'],
     profit: 4520.50,
@@ -45,10 +59,15 @@ const mockStrategies: LiveStrategy[] = [
     lastTrade: '2 min ago',
     openPositions: 2,
     drawdown: 4.2,
+    personality: 'Calculated and patient',
+    catchphrase: "Patience pays. Extremes correct.",
+    primaryColor: 'royal-blue'
   },
   {
     id: '2',
-    name: 'MACD Trend Follower',
+    personaId: 'macd-trend-hunter',
+    name: 'MACH Trendhunter',
+    codeName: 'MACD Trend Follower™',
     status: 'running',
     pairs: ['SOL/USDT', 'XRP/USDT', 'DOGE/USDT'],
     profit: 2150.25,
@@ -59,10 +78,15 @@ const mockStrategies: LiveStrategy[] = [
     lastTrade: '15 min ago',
     openPositions: 1,
     drawdown: 6.8,
+    personality: 'Aggressive and momentum-driven',
+    catchphrase: "The trend is my friend.",
+    primaryColor: 'accent'
   },
   {
     id: '3',
-    name: 'Bollinger Breakout',
+    personaId: 'bollinger-breaker',
+    name: 'BOLT Breakout',
+    codeName: 'Bollinger Breakout™',
     status: 'paused',
     pairs: ['BTC/USDT'],
     profit: -320.00,
@@ -73,10 +97,15 @@ const mockStrategies: LiveStrategy[] = [
     lastTrade: '2 hours ago',
     openPositions: 0,
     drawdown: 8.5,
+    personality: 'Explosive and unpredictable',
+    catchphrase: "Volatility is opportunity.",
+    primaryColor: 'gold'
   },
   {
     id: '4',
-    name: 'AI Momentum Alpha',
+    personaId: 'ai-momentum-alpha',
+    name: 'ALPHA Prime',
+    codeName: 'AI Momentum Alpha™',
     status: 'running',
     pairs: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT'],
     profit: 8920.75,
@@ -87,6 +116,9 @@ const mockStrategies: LiveStrategy[] = [
     lastTrade: '5 min ago',
     openPositions: 3,
     drawdown: 3.1,
+    personality: 'Supreme and confident',
+    catchphrase: "I AM the market's next move.",
+    primaryColor: 'royal-purple'
   },
 ];
 
@@ -165,19 +197,28 @@ const LiveStrategies = () => {
         </Card>
       </div>
 
-      {/* Strategy Cards */}
+      {/* Strategy Cards with Bot Personas */}
       <div className="grid grid-cols-2 gap-6">
         {strategies.map(strategy => (
-          <Card key={strategy.id} className={strategy.status === 'paused' ? 'opacity-75' : ''}>
+          <Card key={strategy.id} className={`${strategy.status === 'paused' ? 'opacity-75' : ''} border-${strategy.primaryColor}/20 hover:border-${strategy.primaryColor}/40 transition-colors`}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`h-3 w-3 rounded-full ${
-                    strategy.status === 'running' ? 'bg-green-500 animate-pulse' :
-                    strategy.status === 'paused' ? 'bg-amber-500' : 'bg-gray-500'
-                  }`} />
+                  {/* Bot Avatar */}
+                  <div className={`relative h-12 w-12 rounded-full bg-gradient-to-br from-${strategy.primaryColor}/30 to-muted flex items-center justify-center border border-${strategy.primaryColor}/40`}>
+                    <Bot className={`h-6 w-6 text-${strategy.primaryColor}`} />
+                    <div className={`absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full ${
+                      strategy.status === 'running' ? 'bg-accent animate-pulse' :
+                      strategy.status === 'paused' ? 'bg-gold' : 'bg-muted-foreground'
+                    }`} />
+                  </div>
                   <div>
-                    <CardTitle className="text-lg">{strategy.name}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">{strategy.name}</CardTitle>
+                      <Copyright className="h-3 w-3 text-muted-foreground" />
+                      <Bookmark className="h-3 w-3 text-muted-foreground" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">{strategy.codeName}</p>
                     <div className="flex gap-1 mt-1">
                       {strategy.pairs.map(pair => (
                         <Badge key={pair} variant="secondary" className="text-xs">{pair}</Badge>
@@ -204,10 +245,15 @@ const LiveStrategies = () => {
               </div>
             </CardHeader>
             <CardContent>
+              {/* Personality Quote */}
+              <div className="mb-4 p-2 rounded bg-muted/30 border-l-2 border-gold/50">
+                <p className="text-xs italic text-muted-foreground">"{strategy.catchphrase}"</p>
+              </div>
+              
               <div className="grid grid-cols-4 gap-4 mb-4">
                 <div className="text-center p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Profit</p>
-                  <p className={`text-lg font-bold ${strategy.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  <p className={`text-lg font-bold ${strategy.profit >= 0 ? 'text-accent' : 'text-royal-red'}`}>
                     {strategy.profit >= 0 ? '+' : ''}{strategy.profitPercent.toFixed(1)}%
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -221,7 +267,7 @@ const LiveStrategies = () => {
                 </div>
                 <div className="text-center p-3 rounded-lg bg-muted/50">
                   <p className="text-xs text-muted-foreground">Drawdown</p>
-                  <p className="text-lg font-bold text-red-500">-{strategy.drawdown}%</p>
+                  <p className="text-lg font-bold text-royal-red">-{strategy.drawdown}%</p>
                   <p className="text-xs text-muted-foreground">Max</p>
                 </div>
                 <div className="text-center p-3 rounded-lg bg-muted/50">
@@ -240,9 +286,15 @@ const LiveStrategies = () => {
                     Last trade: <span className="font-medium text-foreground">{strategy.lastTrade}</span>
                   </span>
                 </div>
-                <Badge variant={strategy.status === 'running' ? 'default' : 'secondary'} className="capitalize">
-                  {strategy.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={strategy.status === 'running' ? 'default' : 'secondary'} className="capitalize">
+                    {strategy.status}
+                  </Badge>
+                  <Badge variant="outline" className="border-gold/30 text-gold text-xs">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    NFT Card
+                  </Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
