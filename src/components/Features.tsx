@@ -37,7 +37,7 @@ const COMPETITIVE_SCORES = [
 const features = [
   {
     icon: Atom,
-    title: "QAQI Quantum Agent",
+    title: "QAQI™ Quantum Artificial Qubit Intelligence",
     description: "Autonomous quantum-enhanced AI for $QTC development, QuWallet operations, and self-learning capabilities.",
     benefits: ["Quantum computing", "$QTC blockchain", "Self-enhancement"],
     color: "purple",
@@ -46,7 +46,7 @@ const features = [
   },
   {
     icon: Bot,
-    title: "AI Trading Bots",
+    title: "AI Strategy Trading Bots™",
     description: "Deploy sophisticated trading bots with ML-powered strategies, arbitrage detection, and 24/7 automation.",
     benefits: ["Auto-trading", "Arbitrage scanning", "Strategy marketplace"],
     color: "blue",
@@ -54,7 +54,7 @@ const features = [
   },
   {
     icon: Zap,
-    title: "Lightning Vault",
+    title: "Lightning Vault Wallet®",
     description: "Revolutionary wallet with BOLT11 invoices for instant, secure transactions. Coinbase-compatible.",
     benefits: ["Instant settlements", "USD invoices", "Zero gas fees"],
     color: "gold",
@@ -62,7 +62,7 @@ const features = [
   },
   {
     icon: LineChart,
-    title: "Advanced Trading",
+    title: "Advanced Trading™",
     description: "Professional-grade charts, Level II order books, pattern recognition, and smart order routing.",
     benefits: ["TradingView charts", "Pattern detection", "Smart orders"],
     color: "accent",
@@ -70,7 +70,7 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Post-Quantum Security",
+    title: "Post-Quantum Security™",
     description: "ML-KEM-768 encryption with FIPS 204-206 standards. Military-grade protection for all assets.",
     benefits: ["Quantum-resistant", "Multi-sig support", "Insurance coverage"],
     color: "primary",
@@ -78,7 +78,7 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: "ML Predictions",
+    title: "ML Predictions™",
     description: "Deep learning models for price prediction, sentiment analysis, and regime detection.",
     benefits: ["78% accuracy", "Real-time signals", "Multi-model ensemble"],
     color: "accent",
@@ -86,7 +86,7 @@ const features = [
   },
   {
     icon: Target,
-    title: "Risk Management",
+    title: "Risk Management™",
     description: "Value-at-Risk, Monte Carlo simulations, and portfolio optimization tools.",
     benefits: ["VaR analytics", "Stress testing", "Correlation matrix"],
     color: "primary",
@@ -94,7 +94,7 @@ const features = [
   },
   {
     icon: Layers,
-    title: "DeFi & Derivatives",
+    title: "DeFi & Derivatives™",
     description: "Access DEX aggregation, yield farming, options, futures, and credit derivatives.",
     benefits: ["DEX sniper", "Yield optimizer", "Options trading"],
     color: "gold",
@@ -102,7 +102,7 @@ const features = [
   },
   {
     icon: Globe,
-    title: "Multi-Exchange",
+    title: "Multi-Exchange™",
     description: "Connect to 50+ exchanges with unified order book, cross-exchange arbitrage, and smart routing.",
     benefits: ["50+ exchanges", "Unified trading", "Best execution"],
     color: "accent",
@@ -114,17 +114,47 @@ const Features = () => {
   return (
     <section className="py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <Badge variant="outline" className="mb-4 bg-purple-500/10 text-purple-500 border-purple-500/30">
             <Cpu className="w-3 h-3 mr-1" />
             Industry-Leading Technology
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            Outperforming Top-Tier Competitors
+            Beating the Competition
           </h2>
+          
+          {/* Competitive Score Chart - Directly below heading */}
+          <Card className="p-6 max-w-2xl mx-auto mb-8">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Trophy className="h-5 w-5 text-primary" />
+              <span className="font-semibold text-foreground">Platform Feature Score</span>
+            </div>
+            <div className="space-y-4">
+              {COMPETITIVE_SCORES.map((platform, idx) => (
+                <div key={platform.name} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className={idx === 0 ? "font-bold text-primary" : "text-muted-foreground"}>
+                      {platform.name}
+                    </span>
+                    <span className={idx === 0 ? "font-bold text-primary" : "text-muted-foreground"}>
+                      {platform.score}%
+                    </span>
+                  </div>
+                  <Progress 
+                    value={platform.score} 
+                    className={`h-2 ${idx === 0 ? "[&>div]:bg-primary" : "[&>div]:bg-muted-foreground/30"}`} 
+                  />
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Score based on feature parity analysis • Updated monthly
+            </p>
+          </Card>
+          
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Every feature institutional traders demand, with AI and quantum capabilities 
-            that set us apart from Binance, Coinbase, and traditional platforms.
+            Every feature institutional traders demand — AI-powered analytics, quantum-grade security, 
+            and multi-exchange integration that surpasses Bloomberg, Binance, and traditional platforms.
           </p>
         </div>
 
@@ -206,35 +236,12 @@ const Features = () => {
           </div>
         </div>
 
-        {/* Competitive Score Chart */}
-        <div className="mt-16">
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <Trophy className="h-6 w-6 text-primary" />
-            <h3 className="text-2xl font-bold text-center">Platform Comparison</h3>
-          </div>
-          <Card className="p-6 max-w-2xl mx-auto">
-            <div className="space-y-4">
-              {COMPETITIVE_SCORES.map((platform, idx) => (
-                <div key={platform.name} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className={idx === 0 ? "font-bold text-primary" : "text-muted-foreground"}>
-                      {platform.name}
-                    </span>
-                    <span className={idx === 0 ? "font-bold text-primary" : "text-muted-foreground"}>
-                      {platform.score}%
-                    </span>
-                  </div>
-                  <Progress 
-                    value={platform.score} 
-                    className={`h-2 ${idx === 0 ? "[&>div]:bg-primary" : "[&>div]:bg-muted-foreground/30"}`} 
-                  />
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              Score based on feature parity analysis • Updated monthly
-            </p>
-          </Card>
+        {/* Trademark Notice */}
+        <div className="mt-16 text-center">
+          <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
+            QAQI™, AI Strategy Trading Bots™, Lightning Vault Wallet®, and all associated marks are registered trademarks 
+            of AIQTP. All intellectual property is secured via decentralized NFT minting and stored in the platform treasury.
+          </p>
         </div>
 
         {/* Call to Action */}
