@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,24 +14,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+
+  // IMPORTANT: keep "loading" true until the initial getSession() completes.
+  // Otherwise ProtectedRoute can briefly see user=null and bounce back to /auth (flicker).
   const [loading, setLoading] = useState(true);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     let active = true;
 
-    // Listener first to avoid missing events
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_, nextSession) => {
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
-      setLoading(false);
+
+      // Don't end loading based on INITIAL_SESSION; wait for getSession() to resolve.
+      if (initializedRef.current) setLoading(false);
     });
 
-    // Then initial session check
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
+      initializedRef.current = true;
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setLoading(false);
