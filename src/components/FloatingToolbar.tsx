@@ -79,7 +79,7 @@ const ALL_TOOLS: ToolItem[] = [
   { id: 'defi', name: 'DeFi Sniper', icon: Crosshair, path: '/defi-sniper', description: 'New token launches', category: 'Intel' },
 
   // AI & Quantum
-  { id: 'qaqi', name: 'QAQI Agent', icon: Atom, path: '/qaqi', description: 'Quantum AI assistant', category: 'AI', badge: 'Quantum' },
+  { id: 'qaqi', name: 'QAQI™ Agent', icon: Atom, path: '/qaqi', description: 'Quantum AI assistant', category: 'AI', badge: 'Quantum' },
   { id: 'ml', name: 'ML Predictions', icon: Cpu, path: '/ml-predictions', description: 'AI price forecasts', category: 'AI' },
   { id: 'quantum', name: 'Quantum Lab', icon: FlaskConical, path: '/quantum-lab', description: 'Quantum research', category: 'AI' },
 

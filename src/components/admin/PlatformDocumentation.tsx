@@ -117,7 +117,7 @@ const PlatformDocumentation = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="h-5 w-5 text-blue-500" />
-                  QuWallet
+                  QuWallet®
                 </CardTitle>
                 <CardDescription>Post-Quantum Secure Wallet</CardDescription>
               </CardHeader>
