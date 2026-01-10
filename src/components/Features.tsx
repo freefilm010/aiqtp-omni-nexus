@@ -29,30 +29,30 @@ import {
   Network
 } from "lucide-react";
 
-// Ecosystem highlights
+// Ecosystem highlights - AIQTP™ proprietary ecosystems
 const ECOSYSTEMS = [
   { 
     icon: Atom, 
-    name: "Quantum AI", 
-    description: "QAQI™ autonomous agents", 
+    name: "QAQI™ Ecosystem", 
+    description: "Quantum AI agents", 
     color: "purple" 
   },
   { 
     icon: Coins, 
-    name: "$QTC Token", 
+    name: "$QTC™ Token", 
     description: "Native blockchain currency", 
     color: "gold" 
   },
   { 
     icon: Database, 
-    name: "Data Economy", 
+    name: "Data Economy™", 
     description: "Tokenized data marketplace", 
     color: "blue" 
   },
   { 
     icon: Network, 
-    name: "DeFi Hub", 
-    description: "DEX & derivatives", 
+    name: "QuWallet®", 
+    description: "Quantum-secured wallet", 
     color: "accent" 
   },
 ];
@@ -70,8 +70,8 @@ const features = [
   {
     icon: Atom,
     title: "QAQI™ Quantum Artificial Qubit Intelligence",
-    description: "Autonomous quantum-enhanced AI for $QTC development, QuWallet operations, and self-learning capabilities.",
-    benefits: ["Quantum computing", "$QTC blockchain", "Self-enhancement"],
+    description: "Autonomous quantum-enhanced AI for $QTC development, QuWallet® operations, and self-learning capabilities.",
+    benefits: ["Quantum computing", "$QTC™ blockchain", "Self-enhancement"],
     color: "purple",
     link: "/qaqi",
     badge: "NEW"
@@ -94,7 +94,7 @@ const features = [
   },
   {
     icon: LineChart,
-    title: "Advanced Trading™",
+    title: "Advanced Trading",
     description: "Professional-grade charts, Level II order books, pattern recognition, and smart order routing.",
     benefits: ["TradingView charts", "Pattern detection", "Smart orders"],
     color: "accent",
@@ -102,7 +102,7 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Post-Quantum Security™",
+    title: "Post-Quantum Security",
     description: "ML-KEM-768 encryption with FIPS 204-206 standards. Military-grade protection for all assets.",
     benefits: ["Quantum-resistant", "Multi-sig support", "Insurance coverage"],
     color: "primary",
@@ -110,7 +110,7 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: "ML Predictions™",
+    title: "ML Predictions",
     description: "Deep learning models for price prediction, sentiment analysis, and regime detection.",
     benefits: ["78% accuracy", "Real-time signals", "Multi-model ensemble"],
     color: "accent",
@@ -118,7 +118,7 @@ const features = [
   },
   {
     icon: Target,
-    title: "Risk Management™",
+    title: "Risk Management",
     description: "Value-at-Risk, Monte Carlo simulations, and portfolio optimization tools.",
     benefits: ["VaR analytics", "Stress testing", "Correlation matrix"],
     color: "primary",
@@ -126,7 +126,7 @@ const features = [
   },
   {
     icon: Layers,
-    title: "DeFi & Derivatives™",
+    title: "DeFi & Derivatives",
     description: "Access DEX aggregation, yield farming, options, futures, and credit derivatives.",
     benefits: ["DEX sniper", "Yield optimizer", "Options trading"],
     color: "gold",
@@ -134,7 +134,7 @@ const features = [
   },
   {
     icon: Globe,
-    title: "Multi-Exchange™",
+    title: "Multi-Exchange",
     description: "Connect to 50+ exchanges with unified order book, cross-exchange arbitrage, and smart routing.",
     benefits: ["50+ exchanges", "Unified trading", "Best execution"],
     color: "accent",
@@ -309,8 +309,9 @@ const Features = () => {
         {/* Trademark Notice */}
         <div className="mt-16 text-center">
           <p className="text-xs text-muted-foreground max-w-2xl mx-auto">
-            QAQI™, AI Strategy Trading Bots™, Lightning Vault Wallet®, and all associated marks are registered trademarks 
-            of AIQTP. All intellectual property is secured via decentralized NFT minting and stored in the platform treasury.
+            AIQTP™, QAQI™, AI Strategy Trading Bots™, Lightning Vault Wallet®, QuWallet®, $QTC™, Data Economy™, 
+            and all associated marks are registered trademarks of AIQTP. All intellectual property is secured 
+            via decentralized NFT minting and stored in the platform treasury.
           </p>
         </div>
 
