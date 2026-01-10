@@ -39,7 +39,7 @@ const PLATFORM_ASSETS = [
   { name: "Quantum Time Crystal™", type: "trademark", value: "$QTC™", status: "registered" },
   { name: "QuWallet®", type: "trademark", value: "QuWallet®", status: "registered" },
   { name: "Proof of Temporal Resonance™", type: "patent", value: "PoTR™ Consensus", status: "registered" },
-  { name: "AIQTP™ Platform", type: "copyright", value: "AIQTP™ Software", status: "registered" },
+  { name: "AIQTP™ Portal", type: "copyright", value: "AIQTP™ AI Quantum Trading Portal", status: "registered" },
   { name: "AI Strategy Trading Bots™", type: "trademark", value: "AI Strategy Trading Bots™", status: "registered" },
   { name: "Lightning Vault Wallet®", type: "trademark", value: "Lightning Vault Wallet®", status: "registered" },
   { name: "Data Economy™", type: "trademark", value: "Data Economy™", status: "registered" },

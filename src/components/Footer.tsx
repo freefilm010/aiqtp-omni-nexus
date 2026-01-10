@@ -221,7 +221,7 @@ const Footer = () => {
               </div>
               <div>
                 <div className="text-xl font-bold">AIQTP™</div>
-                <div className="text-sm text-white/70">AI Quantum Trading Platform</div>
+                <div className="text-sm text-white/70">AI Quantum Trading Portal</div>
               </div>
             </div>
             
@@ -339,7 +339,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="py-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center">
           <div className="text-white/70 text-sm mb-4 md:mb-0">
-            © {new Date().getFullYear()} AIQTP™ AI Quantum Trading Platform. All rights reserved.
+            © {new Date().getFullYear()} AIQTP™ AI Quantum Trading Portal. All rights reserved.
           </div>
           
           <div className="flex flex-wrap items-center gap-6 text-sm text-white/70">
