@@ -242,7 +242,7 @@ export const BOT_PERSONAS: BotPersona[] = [
   }
 ];
 
-// Performance data mapped to personas (based on existing mock data + extended)
+// Performance data mapped to personas - Tickeron-style metrics
 export const BOT_PERFORMANCE: Record<string, {
   winRate: number;
   totalTrades: number;
@@ -252,6 +252,25 @@ export const BOT_PERFORMANCE: Record<string, {
   maxDrawdown: number;
   uptime: string;
   status: 'running' | 'paused' | 'stopped';
+  // Tickeron-style extended metrics
+  profitFactor: number;
+  avgWin: number;
+  avgLoss: number;
+  riskRewardRatio: number;
+  sortinoRatio: number;
+  calmarRatio: number;
+  monthlyReturn: number;
+  weeklyReturn: number;
+  dailyReturn: number;
+  volatility: number;
+  beta: number;
+  alpha: number;
+  rankOverall: number;
+  rankCategory: number;
+  totalAssets: number;
+  subscribers: number;
+  rating: number;
+  lastUpdated: string;
 }> = {
   'rsi-reversion-alpha': {
     winRate: 68.4,
@@ -261,7 +280,25 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 1.82,
     maxDrawdown: 4.2,
     uptime: '15d 4h 23m',
-    status: 'running'
+    status: 'running',
+    profitFactor: 2.14,
+    avgWin: 245.80,
+    avgLoss: 114.92,
+    riskRewardRatio: 2.14,
+    sortinoRatio: 2.45,
+    calmarRatio: 3.62,
+    monthlyReturn: 8.4,
+    weeklyReturn: 2.1,
+    dailyReturn: 0.32,
+    volatility: 12.4,
+    beta: 0.72,
+    alpha: 4.2,
+    rankOverall: 3,
+    rankCategory: 1,
+    totalAssets: 125000,
+    subscribers: 342,
+    rating: 4.7,
+    lastUpdated: new Date().toISOString()
   },
   'macd-trend-hunter': {
     winRate: 54.2,
@@ -271,7 +308,25 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 1.24,
     maxDrawdown: 6.8,
     uptime: '8d 12h 45m',
-    status: 'running'
+    status: 'running',
+    profitFactor: 1.52,
+    avgWin: 312.45,
+    avgLoss: 205.60,
+    riskRewardRatio: 1.52,
+    sortinoRatio: 1.78,
+    calmarRatio: 1.28,
+    monthlyReturn: 4.2,
+    weeklyReturn: 1.1,
+    dailyReturn: 0.15,
+    volatility: 18.5,
+    beta: 1.15,
+    alpha: 1.8,
+    rankOverall: 6,
+    rankCategory: 2,
+    totalAssets: 67000,
+    subscribers: 189,
+    rating: 4.2,
+    lastUpdated: new Date().toISOString()
   },
   'bollinger-breaker': {
     winRate: 43.5,
@@ -281,7 +336,25 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 0.45,
     maxDrawdown: 8.5,
     uptime: '3d 8h 12m',
-    status: 'paused'
+    status: 'paused',
+    profitFactor: 0.82,
+    avgWin: 189.20,
+    avgLoss: 230.75,
+    riskRewardRatio: 0.82,
+    sortinoRatio: 0.52,
+    calmarRatio: -0.25,
+    monthlyReturn: -1.2,
+    weeklyReturn: -0.4,
+    dailyReturn: -0.08,
+    volatility: 24.8,
+    beta: 1.45,
+    alpha: -2.1,
+    rankOverall: 8,
+    rankCategory: 4,
+    totalAssets: 12000,
+    subscribers: 45,
+    rating: 3.2,
+    lastUpdated: new Date().toISOString()
   },
   'ai-momentum-alpha': {
     winRate: 72.1,
@@ -291,7 +364,25 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 2.45,
     maxDrawdown: 3.1,
     uptime: '30d 2h 15m',
-    status: 'running'
+    status: 'running',
+    profitFactor: 3.28,
+    avgWin: 198.45,
+    avgLoss: 60.50,
+    riskRewardRatio: 3.28,
+    sortinoRatio: 3.92,
+    calmarRatio: 7.94,
+    monthlyReturn: 12.8,
+    weeklyReturn: 3.2,
+    dailyReturn: 0.48,
+    volatility: 8.2,
+    beta: 0.45,
+    alpha: 8.4,
+    rankOverall: 1,
+    rankCategory: 1,
+    totalAssets: 485000,
+    subscribers: 1247,
+    rating: 4.9,
+    lastUpdated: new Date().toISOString()
   },
   'dca-sentinel': {
     winRate: 89.2,
@@ -301,7 +392,25 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 1.95,
     maxDrawdown: 2.1,
     uptime: '45d 6h 30m',
-    status: 'running'
+    status: 'running',
+    profitFactor: 4.12,
+    avgWin: 156.25,
+    avgLoss: 37.92,
+    riskRewardRatio: 4.12,
+    sortinoRatio: 4.85,
+    calmarRatio: 5.90,
+    monthlyReturn: 6.2,
+    weeklyReturn: 1.5,
+    dailyReturn: 0.22,
+    volatility: 5.4,
+    beta: 0.28,
+    alpha: 5.8,
+    rankOverall: 2,
+    rankCategory: 1,
+    totalAssets: 320000,
+    subscribers: 892,
+    rating: 4.8,
+    lastUpdated: new Date().toISOString()
   },
   'arb-phantom': {
     winRate: 94.8,
@@ -311,7 +420,25 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 3.12,
     maxDrawdown: 0.8,
     uptime: '60d 0h 0m',
-    status: 'running'
+    status: 'running',
+    profitFactor: 8.45,
+    avgWin: 12.80,
+    avgLoss: 1.52,
+    riskRewardRatio: 8.42,
+    sortinoRatio: 6.25,
+    calmarRatio: 7.75,
+    monthlyReturn: 3.1,
+    weeklyReturn: 0.8,
+    dailyReturn: 0.11,
+    volatility: 2.1,
+    beta: 0.08,
+    alpha: 2.9,
+    rankOverall: 4,
+    rankCategory: 1,
+    totalAssets: 890000,
+    subscribers: 567,
+    rating: 4.6,
+    lastUpdated: new Date().toISOString()
   },
   'grid-architect': {
     winRate: 76.3,
@@ -321,7 +448,25 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 1.67,
     maxDrawdown: 5.4,
     uptime: '22d 14h 8m',
-    status: 'running'
+    status: 'running',
+    profitFactor: 2.85,
+    avgWin: 78.45,
+    avgLoss: 27.52,
+    riskRewardRatio: 2.85,
+    sortinoRatio: 2.12,
+    calmarRatio: 3.50,
+    monthlyReturn: 9.2,
+    weeklyReturn: 2.3,
+    dailyReturn: 0.35,
+    volatility: 14.2,
+    beta: 0.62,
+    alpha: 6.1,
+    rankOverall: 5,
+    rankCategory: 1,
+    totalAssets: 156000,
+    subscribers: 423,
+    rating: 4.5,
+    lastUpdated: new Date().toISOString()
   },
   'scalp-viper': {
     winRate: 61.2,
@@ -331,9 +476,51 @@ export const BOT_PERFORMANCE: Record<string, {
     sharpeRatio: 1.33,
     maxDrawdown: 4.7,
     uptime: '18d 9h 45m',
-    status: 'running'
+    status: 'running',
+    profitFactor: 1.78,
+    avgWin: 8.92,
+    avgLoss: 5.01,
+    riskRewardRatio: 1.78,
+    sortinoRatio: 1.56,
+    calmarRatio: 2.09,
+    monthlyReturn: 4.8,
+    weeklyReturn: 1.2,
+    dailyReturn: 0.18,
+    volatility: 16.8,
+    beta: 0.92,
+    alpha: 2.4,
+    rankOverall: 7,
+    rankCategory: 2,
+    totalAssets: 78000,
+    subscribers: 312,
+    rating: 4.3,
+    lastUpdated: new Date().toISOString()
   }
 };
+
+// Get leaderboard sorted by profit factor (Tickeron style)
+export function getAgentLeaderboard(sortBy: 'profitFactor' | 'winRate' | 'profit' | 'subscribers' = 'profitFactor') {
+  return Object.entries(BOT_PERFORMANCE)
+    .map(([id, perf]) => ({
+      id,
+      persona: BOT_PERSONAS.find(p => p.id === id)!,
+      ...perf
+    }))
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'profitFactor': return b.profitFactor - a.profitFactor;
+        case 'winRate': return b.winRate - a.winRate;
+        case 'profit': return b.profit - a.profit;
+        case 'subscribers': return b.subscribers - a.subscribers;
+        default: return b.profitFactor - a.profitFactor;
+      }
+    });
+}
+
+// Get top performers
+export function getTopPerformers(count: number = 5) {
+  return getAgentLeaderboard('profitFactor').slice(0, count);
+}
 
 function generateTokenId(): string {
   const timestamp = Date.now().toString(36);
