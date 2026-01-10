@@ -35,47 +35,41 @@ const Auth = () => {
     
     const isRecoveryFromSearch = urlParams.get('type') === 'recovery';
     const isRecoveryFromHash = hashParams.get('type') === 'recovery';
-    const hasAccessToken = hashParams.has('access_token') || urlParams.has('access_token');
     
     const isRecovery = isRecoveryFromSearch || isRecoveryFromHash;
     
     if (isRecovery) {
       setRecoveryMode(true);
       // Don't redirect even if there's a session during recovery
+      return; // Early exit for recovery mode
     }
 
-    // Set up auth state listener FIRST (prevents missing events during init)
+    // Check for existing session FIRST - immediate redirect if already signed in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && !isRecovery) {
+        navigate("/trading", { replace: true });
+      }
+    });
+
+    // Set up auth state listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event, 'Recovery mode:', recoveryMode);
+      console.log('Auth event:', event);
       
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryMode(true);
         return;
       }
 
-      // Don't auto-redirect during password recovery flow
-      if (isRecovery || recoveryMode) {
-        return;
-      }
-
-      if (session && event === "SIGNED_IN") {
-        navigate("/trading");
+      // Redirect on sign in (not during recovery)
+      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        navigate("/trading", { replace: true });
       }
     });
 
-    // THEN check for existing session - but NOT during recovery
-    if (!isRecovery) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          navigate("/trading");
-        }
-      });
-    }
-
     return () => subscription.unsubscribe();
-  }, [navigate, recoveryMode]);
+  }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
