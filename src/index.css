@@ -19,116 +19,117 @@
 
 @layer base {
   :root {
-    /* ============= BLOOMBERG TERMINAL PALETTE ============= */
+    /* ============= TRADINGVIEW TERMINAL PALETTE ============= */
+    /* Based on TradingView's exact color system */
     
-    /* Deep Terminal Black - Like Bloomberg/TradingView */
-    --background: 220 15% 4%;
-    --foreground: 210 20% 92%;
+    /* TradingView Primary Background #131722 */
+    --background: 225 20% 10%;
+    --foreground: 220 15% 93%;
 
-    /* Terminal Card System - Obsidian Glass */
-    --card: 220 15% 6%;
-    --card-foreground: 210 20% 92%;
-    --card-premium: 220 15% 8%;
-    --card-premium-foreground: 210 20% 92%;
+    /* TradingView Panel Background #1e222d */
+    --card: 223 18% 14%;
+    --card-foreground: 220 15% 93%;
+    --card-premium: 223 18% 16%;
+    --card-premium-foreground: 220 15% 93%;
     
-    /* Panel System - Multi-Monitor Ready */
-    --panel: 220 15% 5%;
-    --panel-header: 220 15% 7%;
-    --panel-border: 220 15% 12%;
+    /* Panel System - TradingView Style */
+    --panel: 223 18% 14%;
+    --panel-header: 223 18% 12%;
+    --panel-border: 222 14% 22%;
 
     /* Popover System */
-    --popover: 220 15% 6%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 223 18% 14%;
+    --popover-foreground: 220 15% 93%;
 
-    /* Primary Brand - Terminal Gold (Lightning/Payments) */
-    --primary: 45 95% 55%;
-    --primary-foreground: 220 15% 4%;
-    --primary-hover: 45 95% 62%;
-    --primary-light: 45 95% 12%;
+    /* Primary Brand - TradingView Blue #2962ff */
+    --primary: 224 100% 58%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 224 100% 65%;
+    --primary-light: 224 100% 15%;
 
-    /* Premium Gold Accents - Bloomberg Style */
+    /* Premium Gold Accents */
     --gold: 43 96% 56%;
-    --gold-foreground: 220 15% 4%;
+    --gold-foreground: 225 20% 10%;
     --gold-hover: 43 96% 64%;
-    --gold-light: 43 96% 10%;
+    --gold-light: 43 96% 12%;
 
-    /* Secondary - Terminal Charcoal */
-    --secondary: 220 15% 10%;
-    --secondary-foreground: 210 20% 92%;
-    --secondary-hover: 220 15% 14%;
+    /* Secondary - TradingView Panel #1e222d */
+    --secondary: 223 18% 14%;
+    --secondary-foreground: 220 15% 93%;
+    --secondary-hover: 223 18% 18%;
 
-    /* Muted Tones - Terminal Dimmed */
-    --muted: 220 15% 14%;
-    --muted-foreground: 220 10% 50%;
+    /* Muted Tones */
+    --muted: 222 14% 20%;
+    --muted-foreground: 220 10% 55%;
 
-    /* Accent - Terminal Trading Green */
-    --accent: 142 76% 45%;
-    --accent-foreground: 220 15% 4%;
-    --accent-hover: 142 76% 52%;
-    --accent-light: 142 76% 12%;
+    /* Accent - TradingView Green #089981 */
+    --accent: 162 91% 32%;
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 162 91% 38%;
+    --accent-light: 162 91% 12%;
 
-    /* Royal Neon Red - Terminal Sell/Alerts */
-    --royal-red: 0 85% 58%;
+    /* TradingView Red #f23645 */
+    --royal-red: 355 88% 58%;
     --royal-red-foreground: 0 0% 100%;
-    --royal-red-light: 0 85% 12%;
+    --royal-red-light: 355 88% 15%;
 
-    /* Royal Blue - Bloomberg Blue UI */
-    --royal-blue: 217 91% 60%;
+    /* TradingView Blue #2962ff */
+    --royal-blue: 224 100% 58%;
     --royal-blue-foreground: 0 0% 100%;
-    --royal-blue-light: 217 91% 12%;
+    --royal-blue-light: 224 100% 15%;
 
     /* Royal Purple - QAQI / AI / Quantum */
     --royal-purple: 270 91% 65%;
     --royal-purple-foreground: 0 0% 100%;
-    --royal-purple-light: 270 91% 12%;
+    --royal-purple-light: 270 91% 15%;
 
     /* Neon Cyan - Tech Accent / Data */
     --neon-cyan: 188 94% 45%;
-    --neon-cyan-foreground: 220 15% 4%;
-    --neon-cyan-light: 188 94% 10%;
+    --neon-cyan-foreground: 225 20% 10%;
+    --neon-cyan-light: 188 94% 12%;
 
     /* Neon Yellow - Lightning / Speed */
     --neon-yellow: 50 100% 52%;
-    --neon-yellow-foreground: 220 15% 4%;
-    --neon-yellow-light: 50 100% 10%;
+    --neon-yellow-foreground: 225 20% 10%;
+    --neon-yellow-light: 50 100% 12%;
 
-    /* Status Colors - Terminal Style */
-    --success: 142 76% 45%;
-    --success-foreground: 220 15% 4%;
-    --success-light: 142 76% 12%;
+    /* Status Colors - TradingView Style */
+    --success: 162 91% 32%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 162 91% 12%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 220 15% 4%;
+    --warning-foreground: 225 20% 10%;
     --warning-light: 38 92% 12%;
 
-    --destructive: 0 85% 58%;
+    --destructive: 355 88% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border and Input - Terminal Grid */
-    --border: 220 15% 15%;
-    --input: 220 15% 8%;
-    --ring: 45 95% 55%;
+    /* Border - TradingView #2a2e39 */
+    --border: 222 14% 19%;
+    --input: 223 18% 14%;
+    --ring: 224 100% 58%;
 
-    /* Chart Colors - TradingView Inspired */
-    --chart-bull: 142 76% 45%;
-    --chart-bear: 0 85% 58%;
-    --chart-volume: 217 91% 60%;
-    --chart-grid: 220 15% 12%;
-    --chart-crosshair: 210 20% 50%;
+    /* Chart Colors - TradingView Exact */
+    --chart-bull: 162 91% 32%;
+    --chart-bear: 355 88% 58%;
+    --chart-volume: 224 100% 58%;
+    --chart-grid: 222 14% 18%;
+    --chart-crosshair: 220 10% 50%;
 
-    /* ============= TERMINAL GRADIENTS ============= */
-    --gradient-primary: linear-gradient(135deg, hsl(45, 95%, 55%) 0%, hsl(38, 92%, 50%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(43, 96%, 56%) 0%, hsl(38, 92%, 50%) 50%, hsl(45, 95%, 55%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(142, 76%, 45%) 0%, hsl(142, 76%, 52%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(220, 15%, 4%) 0%, hsl(220, 15%, 6%) 30%, hsl(220, 15%, 5%) 60%, hsl(220, 15%, 4%) 100%);
-    --gradient-premium: linear-gradient(135deg, hsl(220, 15%, 6%) 0%, hsl(43, 96%, 56%, 0.03) 50%, hsl(220, 15%, 7%) 100%);
-    --gradient-royal: linear-gradient(135deg, hsl(270, 91%, 65%, 0.08) 0%, hsl(217, 91%, 60%, 0.08) 50%, hsl(142, 76%, 45%, 0.08) 100%);
-    --gradient-terminal: linear-gradient(180deg, hsl(220, 15%, 4%) 0%, hsl(220, 15%, 6%) 100%);
-    --gradient-chart: linear-gradient(180deg, hsl(142, 76%, 45%, 0.15) 0%, transparent 100%);
-    --gradient-trading: linear-gradient(135deg, hsl(142, 76%, 45%, 0.08) 0%, hsl(142, 76%, 45%, 0.02) 100%);
-    --gradient-qaqi: linear-gradient(135deg, hsl(270, 91%, 65%, 0.1) 0%, hsl(270, 91%, 65%, 0.03) 100%);
-    --gradient-lightning: linear-gradient(135deg, hsl(45, 95%, 55%, 0.1) 0%, hsl(45, 95%, 55%, 0.03) 100%);
-    --gradient-scanner: linear-gradient(90deg, transparent 0%, hsl(142, 76%, 45%, 0.3) 50%, transparent 100%);
+    /* ============= TRADINGVIEW GRADIENTS ============= */
+    --gradient-primary: linear-gradient(135deg, hsl(224, 100%, 58%) 0%, hsl(224, 100%, 50%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(43, 96%, 56%) 0%, hsl(38, 92%, 50%) 50%, hsl(43, 96%, 56%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(162, 91%, 32%) 0%, hsl(162, 91%, 40%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(225, 20%, 10%) 0%, hsl(223, 18%, 12%) 50%, hsl(225, 20%, 10%) 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(223, 18%, 14%) 0%, hsl(43, 96%, 56%, 0.02) 50%, hsl(223, 18%, 16%) 100%);
+    --gradient-royal: linear-gradient(135deg, hsl(270, 91%, 65%, 0.06) 0%, hsl(224, 100%, 58%, 0.06) 50%, hsl(162, 91%, 32%, 0.06) 100%);
+    --gradient-terminal: linear-gradient(180deg, hsl(225, 20%, 10%) 0%, hsl(223, 18%, 12%) 100%);
+    --gradient-chart: linear-gradient(180deg, hsl(162, 91%, 32%, 0.12) 0%, transparent 100%);
+    --gradient-trading: linear-gradient(135deg, hsl(162, 91%, 32%, 0.06) 0%, hsl(162, 91%, 32%, 0.02) 100%);
+    --gradient-qaqi: linear-gradient(135deg, hsl(270, 91%, 65%, 0.08) 0%, hsl(270, 91%, 65%, 0.02) 100%);
+    --gradient-lightning: linear-gradient(135deg, hsl(43, 96%, 56%, 0.08) 0%, hsl(43, 96%, 56%, 0.02) 100%);
+    --gradient-scanner: linear-gradient(90deg, transparent 0%, hsl(162, 91%, 32%, 0.25) 50%, transparent 100%);
 
     /* ============= TERMINAL GLOW SHADOWS ============= */
     --shadow-premium: 0 20px 60px -15px hsl(45 95% 55% / 0.2);
