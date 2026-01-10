@@ -663,6 +663,41 @@ export type Database = {
           },
         ]
       }
+      course_ratings: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          rating: number
+          review: string | null
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          review?: string | null
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          review?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_ratings_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "education_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_aggregator_bots: {
         Row: {
           admin_approved: boolean | null
@@ -1253,6 +1288,84 @@ export type Database = {
           quote_token_coingecko_id?: string | null
           updated_at?: string | null
           volume_24h?: number | null
+        }
+        Relationships: []
+      }
+      education_articles: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          is_published: boolean | null
+          read_time_minutes: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean | null
+          read_time_minutes?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean | null
+          read_time_minutes?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      education_courses: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          id: string
+          is_active: boolean | null
+          is_premium: boolean | null
+          lessons_count: number
+          level: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          lessons_count?: number
+          level: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          lessons_count?: number
+          level?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4097,6 +4210,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_course_progress: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          id: string
+          last_accessed_at: string
+          lessons_completed: number
+          started_at: string
+          total_time_seconds: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          id?: string
+          last_accessed_at?: string
+          lessons_completed?: number
+          started_at?: string
+          total_time_seconds?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          id?: string
+          last_accessed_at?: string
+          lessons_completed?: number
+          started_at?: string
+          total_time_seconds?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_course_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "education_courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
