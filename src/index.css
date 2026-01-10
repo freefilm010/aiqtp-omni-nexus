@@ -3,110 +3,126 @@
 @tailwind utilities;
 
 /* AIQTP™ Design System - Next-Gen Intelligent Trading Conglomerate */
+/* Feature-Specific Color Theming:
+   - QAQI™ / AI / Quantum: Royal Neon Purple
+   - Lightning Vault® / Payments: Royal Neon Yellow/Gold  
+   - Trading / Start Trading: Royal Neon Green
+   - Common Areas / General: Royal Neon Blue
+   - Warnings / Alerts: Royal Neon Red
+*/
 
 @layer base {
   :root {
     /* ============= AIQTP™ PREMIUM BRAND PALETTE ============= */
     
-    /* Deep Black Foundation */
-    --background: 0 0% 3%;
-    --foreground: 45 20% 95%;
+    /* Deep Black Foundation - Ultra Dark */
+    --background: 0 0% 2%;
+    --foreground: 45 15% 95%;
 
-    /* Premium Card System - Dark Obsidian */
-    --card: 0 0% 6%;
-    --card-foreground: 45 20% 95%;
-    --card-premium: 0 0% 8%;
-    --card-premium-foreground: 45 20% 95%;
+    /* Premium Card System - Obsidian Glass */
+    --card: 0 0% 5%;
+    --card-foreground: 45 15% 95%;
+    --card-premium: 0 0% 7%;
+    --card-premium-foreground: 45 15% 95%;
 
     /* Popover System */
-    --popover: 0 0% 6%;
-    --popover-foreground: 45 20% 95%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 45 15% 95%;
 
-    /* Primary Brand - Luxurious Gold */
-    --primary: 45 100% 50%;
-    --primary-foreground: 0 0% 5%;
-    --primary-hover: 45 100% 55%;
-    --primary-light: 45 100% 15%;
+    /* Primary Brand - Luxurious Neon Gold (Lightning/Payments) */
+    --primary: 48 100% 55%;
+    --primary-foreground: 0 0% 3%;
+    --primary-hover: 48 100% 60%;
+    --primary-light: 48 100% 12%;
 
     /* Premium Gold Accents - Rich & Radiant */
-    --gold: 42 100% 55%;
-    --gold-foreground: 0 0% 5%;
-    --gold-hover: 42 100% 60%;
-    --gold-light: 42 100% 12%;
+    --gold: 45 100% 55%;
+    --gold-foreground: 0 0% 3%;
+    --gold-hover: 45 100% 62%;
+    --gold-light: 45 100% 10%;
 
-    /* Secondary - Charcoal Elegance */
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 45 20% 95%;
-    --secondary-hover: 0 0% 16%;
+    /* Secondary - Deep Charcoal */
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 45 15% 95%;
+    --secondary-hover: 0 0% 14%;
 
-    /* Muted Tones - Sophisticated Gray */
-    --muted: 0 0% 14%;
-    --muted-foreground: 45 10% 60%;
+    /* Muted Tones */
+    --muted: 0 0% 12%;
+    --muted-foreground: 45 8% 55%;
 
-    /* Accent - Neon Emerald Green */
-    --accent: 155 100% 45%;
+    /* Accent - Neon Trading Green (Start Trading / Trading Actions) */
+    --accent: 145 100% 50%;
     --accent-foreground: 0 0% 0%;
-    --accent-hover: 155 100% 50%;
-    --accent-light: 155 100% 15%;
+    --accent-hover: 145 100% 55%;
+    --accent-light: 145 100% 12%;
 
-    /* Neon Royal Red - Power & Prestige */
-    --royal-red: 0 100% 55%;
+    /* Royal Neon Red - Alerts & Warnings */
+    --royal-red: 0 100% 60%;
     --royal-red-foreground: 0 0% 100%;
-    --royal-red-light: 0 100% 15%;
+    --royal-red-light: 0 100% 12%;
 
-    /* Neon Royal Blue - Trust & Intelligence */
-    --royal-blue: 210 100% 55%;
+    /* Royal Neon Blue - Common UI / General Elements */
+    --royal-blue: 215 100% 60%;
     --royal-blue-foreground: 0 0% 100%;
-    --royal-blue-light: 210 100% 15%;
+    --royal-blue-light: 215 100% 12%;
 
-    /* Neon Royal Purple - Innovation & Quantum */
-    --royal-purple: 275 100% 60%;
+    /* Royal Neon Purple - QAQI / AI / Quantum */
+    --royal-purple: 280 100% 65%;
     --royal-purple-foreground: 0 0% 100%;
-    --royal-purple-light: 275 100% 15%;
+    --royal-purple-light: 280 100% 12%;
 
-    /* Neon Cyan - Tech Accent */
-    --neon-cyan: 185 100% 50%;
+    /* Neon Cyan - Tech Accent / Data */
+    --neon-cyan: 188 100% 55%;
     --neon-cyan-foreground: 0 0% 0%;
-    --neon-cyan-light: 185 100% 12%;
+    --neon-cyan-light: 188 100% 10%;
 
-    /* Status Colors - Neon */
-    --success: 155 100% 50%;
+    /* Neon Yellow - Lightning / Speed */
+    --neon-yellow: 55 100% 55%;
+    --neon-yellow-foreground: 0 0% 0%;
+    --neon-yellow-light: 55 100% 10%;
+
+    /* Status Colors */
+    --success: 145 100% 50%;
     --success-foreground: 0 0% 0%;
-    --success-light: 155 100% 15%;
+    --success-light: 145 100% 12%;
 
-    --warning: 42 100% 55%;
+    --warning: 45 100% 55%;
     --warning-foreground: 0 0% 0%;
-    --warning-light: 42 100% 15%;
+    --warning-light: 45 100% 12%;
 
-    --destructive: 0 85% 50%;
+    --destructive: 0 85% 55%;
     --destructive-foreground: 0 0% 100%;
 
     /* Border and Input */
-    --border: 45 20% 18%;
-    --input: 0 0% 10%;
-    --ring: 45 100% 50%;
+    --border: 45 15% 15%;
+    --input: 0 0% 8%;
+    --ring: 48 100% 55%;
 
     /* ============= NEON GRADIENTS ============= */
-    --gradient-primary: linear-gradient(135deg, hsl(45, 100%, 50%) 0%, hsl(42, 100%, 40%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(42, 100%, 55%) 0%, hsl(38, 100%, 45%) 50%, hsl(45, 100%, 50%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(155, 100%, 45%) 0%, hsl(155, 100%, 55%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(0, 0%, 3%) 0%, hsl(0, 0%, 5%) 50%, hsl(0, 0%, 3%) 100%);
-    --gradient-premium: linear-gradient(135deg, hsl(0, 0%, 6%) 0%, hsl(45, 100%, 50%, 0.08) 50%, hsl(0, 0%, 8%) 100%);
-    --gradient-royal: linear-gradient(135deg, hsl(275, 100%, 60%, 0.15) 0%, hsl(210, 100%, 55%, 0.15) 50%, hsl(155, 100%, 45%, 0.15) 100%);
-    --gradient-conglomerate: linear-gradient(180deg, hsl(0, 0%, 3%) 0%, hsl(0, 0%, 5%) 30%, hsl(275, 100%, 60%, 0.03) 60%, hsl(45, 100%, 50%, 0.05) 100%);
-    --gradient-neon: linear-gradient(135deg, hsl(275, 100%, 60%, 0.2) 0%, hsl(185, 100%, 50%, 0.2) 50%, hsl(155, 100%, 45%, 0.2) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(48, 100%, 55%) 0%, hsl(45, 100%, 45%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(45, 100%, 55%) 0%, hsl(40, 100%, 48%) 50%, hsl(48, 100%, 55%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(145, 100%, 50%) 0%, hsl(145, 100%, 58%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0, 0%, 2%) 0%, hsl(0, 0%, 4%) 40%, hsl(280, 100%, 65%, 0.02) 70%, hsl(0, 0%, 3%) 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(0, 0%, 5%) 0%, hsl(45, 100%, 55%, 0.05) 50%, hsl(0, 0%, 6%) 100%);
+    --gradient-royal: linear-gradient(135deg, hsl(280, 100%, 65%, 0.12) 0%, hsl(215, 100%, 60%, 0.12) 50%, hsl(145, 100%, 50%, 0.12) 100%);
+    --gradient-conglomerate: linear-gradient(180deg, hsl(0, 0%, 2%) 0%, hsl(0, 0%, 4%) 25%, hsl(280, 100%, 65%, 0.02) 50%, hsl(45, 100%, 55%, 0.03) 75%, hsl(0, 0%, 3%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(280, 100%, 65%, 0.15) 0%, hsl(188, 100%, 55%, 0.15) 50%, hsl(145, 100%, 50%, 0.15) 100%);
+    --gradient-trading: linear-gradient(135deg, hsl(145, 100%, 50%, 0.1) 0%, hsl(145, 100%, 45%, 0.05) 100%);
+    --gradient-qaqi: linear-gradient(135deg, hsl(280, 100%, 65%, 0.12) 0%, hsl(280, 100%, 55%, 0.06) 100%);
+    --gradient-lightning: linear-gradient(135deg, hsl(48, 100%, 55%, 0.12) 0%, hsl(55, 100%, 50%, 0.06) 100%);
 
     /* ============= NEON GLOW SHADOWS ============= */
-    --shadow-premium: 0 20px 60px -15px hsl(45 100% 50% / 0.25);
-    --shadow-gold: 0 0 30px hsl(42 100% 55% / 0.4);
-    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.6);
-    --shadow-hover: 0 20px 60px -15px hsl(45 100% 50% / 0.35);
-    --shadow-glow-gold: 0 0 40px hsl(45 100% 50% / 0.5);
-    --shadow-glow-green: 0 0 35px hsl(155 100% 45% / 0.5);
-    --shadow-glow-purple: 0 0 35px hsl(275 100% 60% / 0.5);
-    --shadow-glow-blue: 0 0 35px hsl(210 100% 55% / 0.5);
-    --shadow-glow-red: 0 0 35px hsl(0 100% 55% / 0.4);
-    --shadow-glow-cyan: 0 0 35px hsl(185 100% 50% / 0.5);
+    --shadow-premium: 0 20px 60px -15px hsl(48 100% 55% / 0.25);
+    --shadow-gold: 0 0 30px hsl(45 100% 55% / 0.4);
+    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.7);
+    --shadow-hover: 0 20px 60px -15px hsl(48 100% 55% / 0.35);
+    --shadow-glow-gold: 0 0 45px hsl(48 100% 55% / 0.5);
+    --shadow-glow-green: 0 0 40px hsl(145 100% 50% / 0.5);
+    --shadow-glow-purple: 0 0 40px hsl(280 100% 65% / 0.5);
+    --shadow-glow-blue: 0 0 40px hsl(215 100% 60% / 0.5);
+    --shadow-glow-red: 0 0 35px hsl(0 100% 60% / 0.4);
+    --shadow-glow-cyan: 0 0 40px hsl(188 100% 55% / 0.5);
+    --shadow-glow-yellow: 0 0 45px hsl(55 100% 55% / 0.5);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -115,212 +131,14 @@
     --radius: 0.75rem;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 45 20% 90%;
-    --sidebar-primary: 45 100% 50%;
-    --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 45 20% 90%;
-    --sidebar-border: 45 20% 15%;
-    --sidebar-ring: 45 100% 50%;
-  }
-
-  /* Dark mode inherits from root - already dark by default */
-  .dark {
-    /* Already using dark theme as default */
-  }
-
-  /* Light Mode Override (for accessibility) */
-  .theme-light {
-    --background: 45 10% 97%;
-    --foreground: 0 0% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
-    --card-premium: 45 20% 98%;
-    --card-premium-foreground: 0 0% 8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 8%;
-    --primary: 45 100% 45%;
-    --primary-foreground: 0 0% 5%;
-    --gold: 42 100% 50%;
-    --gold-foreground: 0 0% 5%;
-    --secondary: 45 10% 92%;
-    --secondary-foreground: 0 0% 8%;
-    --muted: 45 10% 90%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 155 70% 30%;
-    --accent-foreground: 0 0% 100%;
-    --border: 45 15% 85%;
-    --input: 45 10% 90%;
-    --ring: 45 100% 45%;
-    --sidebar-background: 45 10% 95%;
-    --sidebar-foreground: 0 0% 15%;
-    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.1);
-  }
-
-  /* ============= TRADING THEMES ============= */
-  
-  /* Hacker Theme - Classic green terminal */
-  .theme-hacker {
-    --background: 0 0% 4%;
-    --foreground: 120 100% 50%;
-    --card: 0 0% 6%;
-    --card-foreground: 120 100% 50%;
-    --popover: 0 0% 6%;
-    --popover-foreground: 120 100% 50%;
-    --primary: 120 100% 50%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 120 30% 10%;
-    --secondary-foreground: 120 100% 50%;
-    --muted: 120 20% 12%;
-    --muted-foreground: 120 60% 40%;
-    --accent: 120 100% 40%;
-    --accent-foreground: 0 0% 0%;
-    --border: 120 50% 20%;
-    --input: 120 30% 15%;
-    --ring: 120 100% 50%;
-    --success: 120 100% 50%;
-    --destructive: 0 100% 50%;
-  }
-
-  /* Matrix Theme - Digital rain */
-  .theme-matrix {
-    --background: 0 0% 0%;
-    --foreground: 120 100% 25%;
-    --card: 120 100% 2%;
-    --card-foreground: 120 100% 35%;
-    --popover: 120 100% 2%;
-    --popover-foreground: 120 100% 35%;
-    --primary: 120 100% 35%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 120 50% 8%;
-    --secondary-foreground: 120 100% 35%;
-    --muted: 120 30% 6%;
-    --muted-foreground: 120 80% 25%;
-    --accent: 120 100% 30%;
-    --accent-foreground: 0 0% 0%;
-    --border: 120 80% 15%;
-    --input: 120 50% 8%;
-    --ring: 120 100% 35%;
-    --success: 120 100% 45%;
-    --destructive: 0 100% 40%;
-  }
-
-  /* Cyberpunk Theme - Neon pink/cyan */
-  .theme-cyberpunk {
-    --background: 270 50% 5%;
-    --foreground: 180 100% 50%;
-    --card: 270 50% 8%;
-    --card-foreground: 180 100% 50%;
-    --popover: 270 50% 8%;
-    --popover-foreground: 180 100% 50%;
-    --primary: 300 100% 50%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 270 40% 15%;
-    --secondary-foreground: 180 100% 50%;
-    --muted: 270 30% 12%;
-    --muted-foreground: 180 60% 40%;
-    --accent: 180 100% 50%;
-    --accent-foreground: 0 0% 0%;
-    --border: 300 60% 30%;
-    --input: 270 40% 12%;
-    --ring: 300 100% 50%;
-    --success: 120 100% 50%;
-    --destructive: 0 100% 50%;
-    --gold: 300 100% 50%;
-  }
-
-  /* Terminal Theme - Orange on dark */
-  .theme-terminal {
-    --background: 0 0% 8%;
-    --foreground: 30 100% 50%;
-    --card: 0 0% 10%;
-    --card-foreground: 30 100% 50%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 30 100% 50%;
-    --primary: 30 100% 50%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 30 30% 15%;
-    --secondary-foreground: 30 100% 50%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 30 60% 40%;
-    --accent: 45 100% 50%;
-    --accent-foreground: 0 0% 0%;
-    --border: 30 50% 25%;
-    --input: 30 20% 12%;
-    --ring: 30 100% 50%;
-    --success: 120 100% 40%;
-    --destructive: 0 100% 50%;
-  }
-
-  /* Bloomberg Theme - Professional orange */
-  .theme-bloomberg {
-    --background: 240 30% 10%;
-    --foreground: 0 0% 88%;
-    --card: 240 30% 12%;
-    --card-foreground: 0 0% 88%;
-    --popover: 240 30% 12%;
-    --popover-foreground: 0 0% 88%;
-    --primary: 22 100% 50%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 240 20% 18%;
-    --secondary-foreground: 0 0% 88%;
-    --muted: 240 20% 15%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 22 100% 55%;
-    --accent-foreground: 0 0% 0%;
-    --border: 240 20% 20%;
-    --input: 240 20% 15%;
-    --ring: 22 100% 50%;
-    --success: 142 71% 45%;
-    --destructive: 0 84% 60%;
-  }
-
-  /* Midnight Theme - Deep blue */
-  .theme-midnight {
-    --background: 210 50% 8%;
-    --foreground: 195 100% 90%;
-    --card: 210 50% 10%;
-    --card-foreground: 195 100% 90%;
-    --popover: 210 50% 10%;
-    --popover-foreground: 195 100% 90%;
-    --primary: 195 100% 50%;
-    --primary-foreground: 210 50% 8%;
-    --secondary: 210 40% 15%;
-    --secondary-foreground: 195 100% 90%;
-    --muted: 210 30% 12%;
-    --muted-foreground: 195 50% 60%;
-    --accent: 195 100% 45%;
-    --accent-foreground: 210 50% 8%;
-    --border: 210 40% 20%;
-    --input: 210 40% 12%;
-    --ring: 195 100% 50%;
-    --success: 142 71% 45%;
-    --destructive: 0 84% 60%;
-  }
-
-  /* Neon Theme - Synthwave */
-  .theme-neon {
-    --background: 280 80% 5%;
-    --foreground: 175 100% 50%;
-    --card: 280 70% 8%;
-    --card-foreground: 175 100% 50%;
-    --popover: 280 70% 8%;
-    --popover-foreground: 175 100% 50%;
-    --primary: 330 100% 60%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 280 50% 15%;
-    --secondary-foreground: 175 100% 50%;
-    --muted: 280 40% 12%;
-    --muted-foreground: 175 60% 40%;
-    --accent: 175 100% 50%;
-    --accent-foreground: 0 0% 0%;
-    --border: 330 60% 30%;
-    --input: 280 50% 10%;
-    --ring: 330 100% 60%;
-    --success: 120 100% 50%;
-    --destructive: 0 100% 50%;
-    --gold: 330 100% 60%;
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 45 15% 90%;
+    --sidebar-primary: 48 100% 55%;
+    --sidebar-primary-foreground: 0 0% 3%;
+    --sidebar-accent: 0 0% 8%;
+    --sidebar-accent-foreground: 45 15% 90%;
+    --sidebar-border: 45 15% 12%;
+    --sidebar-ring: 48 100% 55%;
   }
 }
 
