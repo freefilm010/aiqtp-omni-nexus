@@ -50,35 +50,26 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Financial metrics data
-const revenueBySource = [
-  { name: "Strategy Rentals", value: 45200, color: "#8b5cf6" },
-  { name: "Trading Fees", value: 28500, color: "#22c55e" },
-  { name: "Subscriptions", value: 18900, color: "#3b82f6" },
-  { name: "IP Licensing", value: 12400, color: "#f59e0b" },
-  { name: "Quantum API", value: 8200, color: "#ec4899" },
-];
+// NOTE: No placeholder/demo financial numbers.
+// These datasets are computed from the backend (platform_revenue) at runtime.
 
-const monthlyFinancials = [
-  { month: "Jan", revenue: 42500, expenses: 18200, profit: 24300 },
-  { month: "Feb", revenue: 48200, expenses: 19500, profit: 28700 },
-  { month: "Mar", revenue: 55800, expenses: 21000, profit: 34800 },
-  { month: "Apr", revenue: 62100, expenses: 22800, profit: 39300 },
-  { month: "May", revenue: 71500, expenses: 25200, profit: 46300 },
-  { month: "Jun", revenue: 85200, expenses: 28500, profit: 56700 },
+type RevenueBySourceItem = { name: string; value: number; color: string };
+type MonthlyRevenueRow = { month: string; revenue: number };
+
+const REVENUE_SOURCE_COLORS = [
+  "#22c55e",
+  "#3b82f6",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ec4899",
+  "#06b6d4",
+  "#f97316",
 ];
 
 const taxRates = [
   { jurisdiction: "Federal", corporateRate: "21.0%", personalRate: "37.0%", salesTax: "N/A" },
   { jurisdiction: "Virginia", corporateRate: "6.0%", personalRate: "5.75%", salesTax: "6.0%" },
   { jurisdiction: "Fairfax County", corporateRate: "6.0%", personalRate: "5.75%", salesTax: "6.0%" },
-];
-
-const capitalInvestments = [
-  { company: "AIQTP Platform", stage: "Growth", amount: "$2.5M", status: "Active" },
-  { company: "Quantum Research Lab", stage: "Seed", amount: "$500K", status: "Active" },
-  { company: "DeFi Protocol", stage: "Early", amount: "$1.2M", status: "Pending" },
-  { company: "AI Trading Bot", stage: "Accelerator", amount: "$150K", status: "Completed" },
 ];
 
 const financialDocuments = [
@@ -90,45 +81,101 @@ const financialDocuments = [
   { name: "Future of Digital Money", file: "/documents/future-of-digital-money.pdf", type: "Research" },
 ];
 
+
 const AdminFinancials = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [financialStats, setFinancialStats] = useState({
-    totalRevenue: 365300,
-    totalExpenses: 135200,
-    netProfit: 230100,
-    profitMargin: 63.0,
-    monthlyGrowth: 19.3,
-    yoyGrowth: 142.5,
-    totalAssets: 2850000,
-    totalLiabilities: 420000,
+
+  const [financialStats, setFinancialStats] = useState<{
+    totalRevenue: number;
+    revenueCount: number;
+    pendingRevenue: number;
+    lastRevenueAt: string | null;
+  }>({
+    totalRevenue: 0,
+    revenueCount: 0,
+    pendingRevenue: 0,
+    lastRevenueAt: null,
   });
+
+  const [revenueBySource, setRevenueBySource] = useState<RevenueBySourceItem[]>([]);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenueRow[]>([]);
 
   const refreshData = async () => {
     setIsLoading(true);
     try {
-      // Fetch real data from Supabase
       const { data: revenueData, error } = await supabase
-        .from('platform_revenue')
-        .select('amount, source_type, created_at')
-        .order('created_at', { ascending: false });
+        .from("platform_revenue")
+        .select("amount, source_type, status, created_at")
+        .order("created_at", { ascending: false });
 
-      if (!error && revenueData) {
-        const totalRev = revenueData.reduce((sum, r) => sum + Number(r.amount), 0);
-        if (totalRev > 0) {
-          setFinancialStats(prev => ({
-            ...prev,
-            totalRevenue: totalRev,
-            netProfit: totalRev * 0.63,
-          }));
+      if (error) throw error;
+
+      const rows = revenueData ?? [];
+      const totalRevenue = rows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+      const pendingRevenue = rows
+        .filter((r) => r.status === "pending")
+        .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+      const bySource = new Map<string, number>();
+      for (const r of rows) {
+        const key = (r.source_type || "unknown").toString();
+        bySource.set(key, (bySource.get(key) || 0) + Number(r.amount || 0));
+      }
+
+      const sourceItems: RevenueBySourceItem[] = Array.from(bySource.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, value], i) => ({
+          name,
+          value,
+          color: REVENUE_SOURCE_COLORS[i % REVENUE_SOURCE_COLORS.length],
+        }));
+
+      // Build last 6 months revenue series
+      const now = new Date();
+      const monthKeys = Array.from({ length: 6 }).map((_, idx) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (5 - idx), 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const label = d.toLocaleString(undefined, { month: "short" });
+        return { key, label };
+      });
+
+      const byMonth = new Map<string, number>(monthKeys.map((m) => [m.key, 0]));
+      for (const r of rows) {
+        const dt = new Date(r.created_at);
+        const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+        if (byMonth.has(key)) {
+          byMonth.set(key, (byMonth.get(key) || 0) + Number(r.amount || 0));
         }
       }
+
+      const monthSeries: MonthlyRevenueRow[] = monthKeys.map((m) => ({
+        month: m.label,
+        revenue: byMonth.get(m.key) || 0,
+      }));
+
+      setRevenueBySource(sourceItems);
+      setMonthlyRevenue(monthSeries);
+      setFinancialStats({
+        totalRevenue,
+        revenueCount: rows.length,
+        pendingRevenue,
+        lastRevenueAt: rows[0]?.created_at ?? null,
+      });
+
       toast.success("Financial data refreshed");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to refresh financial data");
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    refreshData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   return (
     <div className="space-y-6">
@@ -165,9 +212,44 @@ const AdminFinancials = () => {
             <div className="text-3xl font-bold text-green-500">
               ${financialStats.totalRevenue.toLocaleString()}
             </div>
-            <div className="flex items-center text-xs text-green-500 mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1" />
-              +{financialStats.monthlyGrowth}% this month
+            <div className="flex items-center text-xs text-muted-foreground mt-1">
+              <span>{financialStats.revenueCount} payments recorded</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-blue-500" />
+              Pending Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-500">
+              ${financialStats.pendingRevenue.toLocaleString()}
+            </div>
+            <div className="flex items-center text-xs text-muted-foreground mt-1">
+              <span>Awaiting settlement</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-purple-500" />
+              Last Payment
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-purple-500">{
+              financialStats.lastRevenueAt
+                ? new Date(financialStats.lastRevenueAt).toLocaleDateString()
+                : "—"
+            }</div>
+            <div className="flex items-center text-xs text-muted-foreground mt-1">
+              <span>{financialStats.lastRevenueAt ? "Latest recorded" : "No payments yet"}</span>
             </div>
           </CardContent>
         </Card>
@@ -176,51 +258,13 @@ const AdminFinancials = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-red-500" />
-              Total Expenses
+              Expense Ledger
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-500">
-              ${financialStats.totalExpenses.toLocaleString()}
-            </div>
-            <div className="flex items-center text-xs text-red-400 mt-1">
-              <ArrowDownRight className="h-3 w-3 mr-1" />
-              -5.2% from last month
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-purple-500" />
-              Net Profit
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-500">
-              ${financialStats.netProfit.toLocaleString()}
-            </div>
-            <div className="flex items-center text-xs text-purple-400 mt-1">
-              {financialStats.profitMargin}% margin
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-blue-500" />
-              Total Assets
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-500">
-              ${(financialStats.totalAssets / 1000000).toFixed(2)}M
-            </div>
-            <div className="flex items-center text-xs text-blue-400 mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1" />
-              +{financialStats.yoyGrowth}% YoY
+            <div className="text-3xl font-bold text-red-500">—</div>
+            <div className="flex items-center text-xs text-muted-foreground mt-1">
+              <span>Not configured</span>
             </div>
           </CardContent>
         </Card>
@@ -243,29 +287,30 @@ const AdminFinancials = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Profit & Loss (6 Months)
+                  Revenue (Last 6 Months)
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyFinancials}>
+                  <BarChart data={monthlyRevenue}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px'
-                      }} 
+                      }}
                       formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
                     />
                     <Legend />
                     <Bar dataKey="revenue" name="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="profit" name="Net Profit" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                {monthlyRevenue.every((r) => r.revenue === 0) && (
+                  <p className="text-sm text-muted-foreground mt-3">No revenue recorded yet.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -278,28 +323,30 @@ const AdminFinancials = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RePieChart>
-                    <Pie
-                      data={revenueBySource}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      labelLine={false}
-                    >
-                      {revenueBySource.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                    />
-                  </RePieChart>
-                </ResponsiveContainer>
+                {revenueBySource.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No revenue recorded yet.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RePieChart>
+                      <Pie
+                        data={revenueBySource}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {revenueBySource.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => [`$${value.toLocaleString()}`, "Revenue"]} />
+                    </RePieChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -312,24 +359,29 @@ const AdminFinancials = () => {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground">Gross Margin</p>
-                  <p className="text-2xl font-bold">72.4%</p>
-                  <Progress value={72.4} className="h-2 mt-2" />
+                  <p className="text-sm text-muted-foreground">Payments</p>
+                  <p className="text-2xl font-bold">{financialStats.revenueCount}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground">Operating Margin</p>
-                  <p className="text-2xl font-bold">63.0%</p>
-                  <Progress value={63} className="h-2 mt-2" />
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-2xl font-bold">${financialStats.pendingRevenue.toLocaleString()}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground">EBITDA</p>
-                  <p className="text-2xl font-bold">$248K</p>
-                  <Badge variant="outline" className="mt-2 text-green-500">+24% QoQ</Badge>
+                  <p className="text-sm text-muted-foreground">Average</p>
+                  <p className="text-2xl font-bold">
+                    ${
+                      (financialStats.revenueCount ? (financialStats.totalRevenue / financialStats.revenueCount) : 0).toLocaleString(
+                        undefined,
+                        { maximumFractionDigits: 2 }
+                      )
+                    }
+                  </p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground">Cash Flow</p>
-                  <p className="text-2xl font-bold">$185K</p>
-                  <Badge variant="outline" className="mt-2 text-green-500">Positive</Badge>
+                  <p className="text-sm text-muted-foreground">Last Payment</p>
+                  <p className="text-2xl font-bold">
+                    {financialStats.lastRevenueAt ? new Date(financialStats.lastRevenueAt).toLocaleDateString() : "—"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -343,33 +395,25 @@ const AdminFinancials = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={monthlyFinancials}>
+                <AreaChart data={monthlyRevenue}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
                     formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#22c55e" 
-                    fill="#22c55e" 
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#22c55e"
+                    fill="#22c55e"
                     fillOpacity={0.2}
                     name="Revenue"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="profit" 
-                    stroke="#8b5cf6" 
-                    fill="#8b5cf6" 
-                    fillOpacity={0.2}
-                    name="Profit"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -401,12 +445,14 @@ const AdminFinancials = () => {
                       </TableCell>
                       <TableCell>${source.value.toLocaleString()}</TableCell>
                       <TableCell>
-                        {((source.value / revenueBySource.reduce((a, b) => a + b.value, 0)) * 100).toFixed(1)}%
+                        {(
+                          (source.value / (revenueBySource.reduce((a, b) => a + b.value, 0) || 1)) *
+                          100
+                        ).toFixed(1)}%
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-green-500">
-                          <ArrowUpRight className="h-3 w-3 mr-1" />
-                          +{(10 + Math.random() * 20).toFixed(1)}%
+                        <Badge variant="outline" className="text-muted-foreground">
+                          —
                         </Badge>
                       </TableCell>
                     </TableRow>
@@ -422,101 +468,22 @@ const AdminFinancials = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Coins className="h-5 w-5" />
-                Capital Investments
+                Investments
               </CardTitle>
               <CardDescription>
-                Based on Fairfax County Q1 2025 capital investment data model
+                No placeholder investment figures are shown. Connect an investment ledger to display real allocations.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Company/Project</TableHead>
-                    <TableHead>Stage</TableHead>
-                    <TableHead>Investment</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {capitalInvestments.map((inv, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{inv.company}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{inv.stage}</Badge>
-                      </TableCell>
-                      <TableCell className="font-mono">{inv.amount}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={inv.status === 'Active' ? 'default' : inv.status === 'Completed' ? 'outline' : 'secondary'}
-                          className={inv.status === 'Active' ? 'bg-green-500' : ''}
-                        >
-                          {inv.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="rounded-lg border border-dashed p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No investment data is configured yet.
+                </p>
+              </div>
             </CardContent>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Funding by Stage</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { stage: "Seed", amount: "$92.9M", percent: 11 },
-                  { stage: "Early", amount: "$221.2M", percent: 25 },
-                  { stage: "Later", amount: "$331.8M", percent: 38 },
-                  { stage: "Growth", amount: "$226M", percent: 26 },
-                ].map((item, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{item.stage}</span>
-                      <span className="font-medium">{item.amount}</span>
-                    </div>
-                    <Progress value={item.percent} className="h-2" />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Investment Highlights</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-4">
-                  <p className="text-4xl font-bold text-primary">$872M</p>
-                  <p className="text-muted-foreground text-sm">Total (4 Quarters)</p>
-                </div>
-                <div className="text-center pb-2">
-                  <p className="text-2xl font-bold">89</p>
-                  <p className="text-muted-foreground text-sm">Deals Closed</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Q1 2025 Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-4">
-                  <p className="text-4xl font-bold text-green-500">$113M</p>
-                  <p className="text-muted-foreground text-sm">Capital Investment</p>
-                </div>
-                <div className="text-center pb-2">
-                  <p className="text-2xl font-bold">22</p>
-                  <p className="text-muted-foreground text-sm">Companies Funded</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
+
 
         <TabsContent value="taxes" className="space-y-4">
           <Card>
