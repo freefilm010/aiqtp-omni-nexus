@@ -263,6 +263,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_signals: {
+        Row: {
+          category: string | null
+          confidence: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          price_at_signal: number | null
+          reason: string
+          signal_type: string
+          source: string
+          stop_loss: number | null
+          strength: string
+          symbol: string
+          target_price: number | null
+          triggered_at: string
+        }
+        Insert: {
+          category?: string | null
+          confidence: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_at_signal?: number | null
+          reason: string
+          signal_type: string
+          source?: string
+          stop_loss?: number | null
+          strength: string
+          symbol: string
+          target_price?: number | null
+          triggered_at?: string
+        }
+        Update: {
+          category?: string | null
+          confidence?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          price_at_signal?: number | null
+          reason?: string
+          signal_type?: string
+          source?: string
+          stop_loss?: number | null
+          strength?: string
+          symbol?: string
+          target_price?: number | null
+          triggered_at?: string
+        }
+        Relationships: []
+      }
       ai_strategies: {
         Row: {
           admin_approved: boolean | null
@@ -2184,6 +2238,57 @@ export type Database = {
           },
         ]
       }
+      market_screener_assets: {
+        Row: {
+          change_24h: number | null
+          change_7d: number | null
+          created_at: string
+          id: string
+          macd_signal: string | null
+          market_cap: number | null
+          name: string
+          price: number
+          price_score: number | null
+          rsi: number | null
+          symbol: string
+          updated_at: string
+          volume_24h: number | null
+          volume_change: number | null
+        }
+        Insert: {
+          change_24h?: number | null
+          change_7d?: number | null
+          created_at?: string
+          id?: string
+          macd_signal?: string | null
+          market_cap?: number | null
+          name: string
+          price: number
+          price_score?: number | null
+          rsi?: number | null
+          symbol: string
+          updated_at?: string
+          volume_24h?: number | null
+          volume_change?: number | null
+        }
+        Update: {
+          change_24h?: number | null
+          change_7d?: number | null
+          created_at?: string
+          id?: string
+          macd_signal?: string | null
+          market_cap?: number | null
+          name?: string
+          price?: number
+          price_score?: number | null
+          rsi?: number | null
+          symbol?: string
+          updated_at?: string
+          volume_24h?: number | null
+          volume_change?: number | null
+        }
+        Relationships: []
+      }
       market_sync_logs: {
         Row: {
           completed_at: string | null
@@ -3419,6 +3524,69 @@ export type Database = {
           },
         ]
       }
+      screener_results: {
+        Row: {
+          ai_score: number | null
+          asset_type: string
+          category: string | null
+          change_24h: number | null
+          confidence: number
+          created_at: string
+          current_price: number | null
+          id: string
+          is_active: boolean | null
+          is_hot: boolean | null
+          name: string
+          patterns: string[] | null
+          price_target: number | null
+          signal: string
+          symbol: string
+          triggers: string[] | null
+          updated_at: string
+          volume_24h: number | null
+        }
+        Insert: {
+          ai_score?: number | null
+          asset_type: string
+          category?: string | null
+          change_24h?: number | null
+          confidence: number
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          name: string
+          patterns?: string[] | null
+          price_target?: number | null
+          signal: string
+          symbol: string
+          triggers?: string[] | null
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Update: {
+          ai_score?: number | null
+          asset_type?: string
+          category?: string | null
+          change_24h?: number | null
+          confidence?: number
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          name?: string
+          patterns?: string[] | null
+          price_target?: number | null
+          signal?: string
+          symbol?: string
+          triggers?: string[] | null
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
       security_logs: {
         Row: {
           created_at: string
@@ -3446,6 +3614,48 @@ export type Database = {
           ip_address?: string | null
           metadata?: Json | null
           severity?: string
+        }
+        Relationships: []
+      }
+      smart_money_flows: {
+        Row: {
+          asset: string
+          change_24h: number | null
+          created_at: string
+          id: string
+          inflow_millions: number
+          institutional_bias: string | null
+          net_flow_millions: number
+          outflow_millions: number
+          price: number | null
+          updated_at: string
+          whale_activity: string | null
+        }
+        Insert: {
+          asset: string
+          change_24h?: number | null
+          created_at?: string
+          id?: string
+          inflow_millions?: number
+          institutional_bias?: string | null
+          net_flow_millions?: number
+          outflow_millions?: number
+          price?: number | null
+          updated_at?: string
+          whale_activity?: string | null
+        }
+        Update: {
+          asset?: string
+          change_24h?: number | null
+          created_at?: string
+          id?: string
+          inflow_millions?: number
+          institutional_bias?: string | null
+          net_flow_millions?: number
+          outflow_millions?: number
+          price?: number | null
+          updated_at?: string
+          whale_activity?: string | null
         }
         Relationships: []
       }
@@ -4251,6 +4461,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notifications: {
+        Row: {
+          asset: string | null
+          change_percent: number | null
+          created_at: string
+          id: string
+          is_live: boolean | null
+          is_read: boolean | null
+          message: string
+          notification_type: string
+          title: string
+          user_id: string
+          value: string | null
+        }
+        Insert: {
+          asset?: string | null
+          change_percent?: number | null
+          created_at?: string
+          id?: string
+          is_live?: boolean | null
+          is_read?: boolean | null
+          message: string
+          notification_type: string
+          title: string
+          user_id: string
+          value?: string | null
+        }
+        Update: {
+          asset?: string | null
+          change_percent?: number | null
+          created_at?: string
+          id?: string
+          is_live?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          notification_type?: string
+          title?: string
+          user_id?: string
+          value?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
