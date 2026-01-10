@@ -74,8 +74,8 @@ const Auth = () => {
           _role: "admin",
         });
 
-        const isAdmin = !error && Boolean(data);
-        navigate(isAdmin ? "/admin" : safeFrom ?? "/trading", { replace: true });
+        // Always redirect to home page after sign-in
+        navigate("/", { replace: true });
       } catch {
         navigate(safeFrom ?? "/trading", { replace: true });
       }
@@ -117,7 +117,7 @@ const Auth = () => {
         toast.success("Account created. Check your email to confirm, then sign in.");
       } else {
         toast.success("Account created — signing you in…");
-        navigate("/trading");
+        navigate("/");
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -156,7 +156,7 @@ const Auth = () => {
       }
 
       toast.success("Signed in");
-      navigate("/trading");
+      navigate("/");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -233,7 +233,7 @@ const Auth = () => {
 
       toast.success("Password updated — you're signed in");
       setRecoveryMode(false);
-      navigate("/trading");
+      navigate("/");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
