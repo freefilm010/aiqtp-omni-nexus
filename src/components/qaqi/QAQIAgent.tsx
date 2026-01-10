@@ -76,10 +76,10 @@ interface QAQIStatus {
  * - Self-enhancement
  */
 const QUICK_ACTIONS = [
-  { label: "Create QuWallet", icon: Wallet, prompt: "Create a new QuWallet with post-quantum ML-KEM encryption for storing $QTC", category: "wallet" },
-  { label: "QTC Network", icon: Coins, prompt: "Show me the current $QTC network status including block height, validators, and pending transactions", category: "qtc" },
-  { label: "Mine Block", icon: Atom, prompt: "Simulate mining a new $QTC block using Proof of Temporal Resonance consensus", category: "qtc" },
-  { label: "Register IP", icon: Copyright, prompt: "Register the QAQI Agent trademark and Titan Codex platform copyright on the QTC chain", category: "ip" },
+  { label: "Create QuWallet®", icon: Wallet, prompt: "Create a new QuWallet® with post-quantum ML-KEM encryption for storing $QTC™", category: "wallet" },
+  { label: "$QTC™ Network", icon: Coins, prompt: "Show me the current $QTC™ network status including block height, validators, and pending transactions", category: "qtc" },
+  { label: "Mine Block", icon: Atom, prompt: "Simulate mining a new $QTC™ block using Proof of Temporal Resonance™ consensus", category: "qtc" },
+  { label: "Register IP", icon: Copyright, prompt: "Register the QAQI™ Agent trademark and Titan Codex™ platform copyright on the $QTC™ chain", category: "ip" },
   { label: "Revenue Status", icon: BarChart3, prompt: "List all active revenue generators and show total daily/monthly revenue projections", category: "revenue" },
   { label: "Market Analysis", icon: TrendingUp, prompt: "Run deep learning market analysis on BTC/USD with pattern recognition and ML predictions", category: "trading" },
   { label: "Fraud Scan", icon: Shield, prompt: "Run GNN-based fraud detection on recent platform transactions", category: "security" },

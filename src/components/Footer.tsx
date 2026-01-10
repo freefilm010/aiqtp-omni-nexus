@@ -57,11 +57,11 @@ const Footer = () => {
   ];
 
   const aiQuantumLinks = [
-    { to: "/qaqi", label: "QAQI Agent (Quantum)", icon: Atom },
+    { to: "/qaqi", label: "QAQI™ Agent", icon: Atom },
     { to: "/ai-lab", label: "AI Research Lab", icon: Brain },
     { to: "/ml-predictions", label: "ML Predictions", icon: Cpu },
     { to: "/quantum-lab", label: "Quantum Lab", icon: FlaskConical },
-    { to: "/titan-codex", label: "Titan Codex", icon: Shield },
+    { to: "/titan-codex", label: "Titan Codex™", icon: Shield },
     { to: "/ai-assistant", label: "AI Assistant", icon: Bot },
     { to: "/intelligence", label: "Market Intelligence", icon: Brain },
   ];

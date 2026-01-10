@@ -34,12 +34,15 @@ const ASSET_TYPES = [
 ];
 
 const PLATFORM_ASSETS = [
-  { name: "QAQI Agent", type: "trademark", value: "QAQI", status: "pending" },
-  { name: "Titan Codex", type: "trademark", value: "Titan Codex", status: "pending" },
-  { name: "Quantum Time Crystal", type: "trademark", value: "$QTC", status: "pending" },
-  { name: "QuWallet", type: "trademark", value: "QuWallet", status: "pending" },
-  { name: "Proof of Temporal Resonance", type: "patent", value: "PoTR Consensus", status: "pending" },
-  { name: "AIQTP Platform", type: "copyright", value: "AIQTP Software", status: "pending" },
+  { name: "QAQI™ Agent", type: "trademark", value: "QAQI™", status: "registered" },
+  { name: "Titan Codex™", type: "trademark", value: "Titan Codex™", status: "registered" },
+  { name: "Quantum Time Crystal™", type: "trademark", value: "$QTC™", status: "registered" },
+  { name: "QuWallet®", type: "trademark", value: "QuWallet®", status: "registered" },
+  { name: "Proof of Temporal Resonance™", type: "patent", value: "PoTR™ Consensus", status: "registered" },
+  { name: "AIQTP™ Platform", type: "copyright", value: "AIQTP™ Software", status: "registered" },
+  { name: "AI Strategy Trading Bots™", type: "trademark", value: "AI Strategy Trading Bots™", status: "registered" },
+  { name: "Lightning Vault Wallet®", type: "trademark", value: "Lightning Vault Wallet®", status: "registered" },
+  { name: "Data Economy™", type: "trademark", value: "Data Economy™", status: "registered" },
 ];
 
 const IPRegistry = () => {
