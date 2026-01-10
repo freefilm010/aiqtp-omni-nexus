@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,12 +13,18 @@ import { z } from "zod";
 
 const authSchema = z.object({
   email: z.string().email("Invalid email address").max(255, "Email must be less than 255 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters").max(72, "Password must be less than 72 characters"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(72, "Password must be less than 72 characters"),
   fullName: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters").optional(),
 });
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { session, loading: authLoading } = useAuth();
+
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,59 +35,55 @@ const Auth = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
+  const redirectedRef = useRef(false);
+
   useEffect(() => {
     // Parse both search params and hash for recovery token
     const urlParams = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
-    
-    const isRecoveryFromSearch = urlParams.get('type') === 'recovery';
-    const isRecoveryFromHash = hashParams.get('type') === 'recovery';
-    
+    const hashParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+
+    const isRecoveryFromSearch = urlParams.get("type") === "recovery";
+    const isRecoveryFromHash = hashParams.get("type") === "recovery";
+
     const isRecovery = isRecoveryFromSearch || isRecoveryFromHash;
-    
+
     if (isRecovery) {
       setRecoveryMode(true);
-      return; // Early exit for recovery mode
+    }
+  }, []);
+
+  useEffect(() => {
+    // reset redirect guard if we're not authenticated
+    if (!session?.user) {
+      redirectedRef.current = false;
+      return;
     }
 
-    let mounted = true;
+    if (authLoading || recoveryMode) return;
+    if (redirectedRef.current) return;
 
-    // Set up auth state listener FIRST
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event, 'Has session:', !!session);
-      
-      if (!mounted) return;
-      
-      if (event === "PASSWORD_RECOVERY") {
-        setRecoveryMode(true);
-        return;
+    redirectedRef.current = true;
+
+    const fromPath = (location.state as any)?.from?.pathname;
+    const safeFrom = typeof fromPath === "string" && fromPath !== "/auth" ? fromPath : null;
+
+    const doRedirect = async () => {
+      try {
+        const { data, error } = await supabase.rpc("has_role", {
+          _user_id: session.user.id,
+          _role: "admin",
+        });
+
+        const isAdmin = !error && Boolean(data);
+        navigate(isAdmin ? "/admin" : safeFrom ?? "/trading", { replace: true });
+      } catch {
+        navigate(safeFrom ?? "/trading", { replace: true });
       }
-
-      // Redirect on any session event (SIGNED_IN, INITIAL_SESSION, TOKEN_REFRESHED)
-      if (session && event !== "SIGNED_OUT") {
-        // Use setTimeout to ensure state is settled before navigation
-        setTimeout(() => {
-          if (mounted) {
-            window.location.href = "/trading";
-          }
-        }, 100);
-      }
-    });
-
-    // Also check for existing session immediately
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && mounted) {
-        window.location.href = "/trading";
-      }
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
     };
-  }, []);
+
+    // Defer any backend calls/navigation out of render cycle
+    setTimeout(() => void doRedirect(), 0);
+  }, [authLoading, recoveryMode, session?.user?.id, navigate, location.state]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
