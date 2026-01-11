@@ -458,6 +458,75 @@ export type Database = {
         }
         Relationships: []
       }
+      backtest_results: {
+        Row: {
+          avg_trade_duration: string | null
+          created_at: string
+          end_date: string
+          final_capital: number | null
+          id: string
+          initial_capital: number
+          losing_trades: number | null
+          max_drawdown: number | null
+          profit_factor: number | null
+          results_data: Json | null
+          sharpe_ratio: number | null
+          start_date: string
+          strategy_id: string | null
+          symbol: string
+          timeframe: string
+          total_return: number | null
+          total_trades: number | null
+          user_id: string
+          win_rate: number | null
+          winning_trades: number | null
+        }
+        Insert: {
+          avg_trade_duration?: string | null
+          created_at?: string
+          end_date: string
+          final_capital?: number | null
+          id?: string
+          initial_capital?: number
+          losing_trades?: number | null
+          max_drawdown?: number | null
+          profit_factor?: number | null
+          results_data?: Json | null
+          sharpe_ratio?: number | null
+          start_date: string
+          strategy_id?: string | null
+          symbol: string
+          timeframe: string
+          total_return?: number | null
+          total_trades?: number | null
+          user_id: string
+          win_rate?: number | null
+          winning_trades?: number | null
+        }
+        Update: {
+          avg_trade_duration?: string | null
+          created_at?: string
+          end_date?: string
+          final_capital?: number | null
+          id?: string
+          initial_capital?: number
+          losing_trades?: number | null
+          max_drawdown?: number | null
+          profit_factor?: number | null
+          results_data?: Json | null
+          sharpe_ratio?: number | null
+          start_date?: string
+          strategy_id?: string | null
+          symbol?: string
+          timeframe?: string
+          total_return?: number | null
+          total_trades?: number | null
+          user_id?: string
+          win_rate?: number | null
+          winning_trades?: number | null
+        }
+        Relationships: []
+      }
       bot_clones: {
         Row: {
           clone_name: string | null
@@ -1453,6 +1522,78 @@ export type Database = {
         }
         Relationships: []
       }
+      dex_tokens: {
+        Row: {
+          address: string
+          buy_tax: number | null
+          chain: string
+          created_at: string
+          holders: number | null
+          id: string
+          is_honeypot: boolean | null
+          is_verified: boolean | null
+          launch_time: string | null
+          liquidity: number | null
+          market_cap: number | null
+          name: string
+          price: number | null
+          price_change_1h: number | null
+          price_change_24h: number | null
+          score: number | null
+          sell_tax: number | null
+          symbol: string
+          trending: boolean | null
+          updated_at: string
+          volume_24h: number | null
+        }
+        Insert: {
+          address: string
+          buy_tax?: number | null
+          chain?: string
+          created_at?: string
+          holders?: number | null
+          id?: string
+          is_honeypot?: boolean | null
+          is_verified?: boolean | null
+          launch_time?: string | null
+          liquidity?: number | null
+          market_cap?: number | null
+          name: string
+          price?: number | null
+          price_change_1h?: number | null
+          price_change_24h?: number | null
+          score?: number | null
+          sell_tax?: number | null
+          symbol: string
+          trending?: boolean | null
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Update: {
+          address?: string
+          buy_tax?: number | null
+          chain?: string
+          created_at?: string
+          holders?: number | null
+          id?: string
+          is_honeypot?: boolean | null
+          is_verified?: boolean | null
+          launch_time?: string | null
+          liquidity?: number | null
+          market_cap?: number | null
+          name?: string
+          price?: number | null
+          price_change_1h?: number | null
+          price_change_24h?: number | null
+          score?: number | null
+          sell_tax?: number | null
+          symbol?: string
+          trending?: boolean | null
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Relationships: []
+      }
       economic_calendar_events: {
         Row: {
           actual: string | null
@@ -1972,6 +2113,48 @@ export type Database = {
           },
         ]
       }
+      forensic_transactions: {
+        Row: {
+          amount: number
+          block_number: number | null
+          chain: string | null
+          created_at: string
+          flag_reason: string | null
+          flagged: boolean | null
+          from_address: string
+          id: string
+          timestamp: string
+          to_address: string
+          tx_hash: string
+        }
+        Insert: {
+          amount: number
+          block_number?: number | null
+          chain?: string | null
+          created_at?: string
+          flag_reason?: string | null
+          flagged?: boolean | null
+          from_address: string
+          id?: string
+          timestamp?: string
+          to_address: string
+          tx_hash: string
+        }
+        Update: {
+          amount?: number
+          block_number?: number | null
+          chain?: string | null
+          created_at?: string
+          flag_reason?: string | null
+          flagged?: boolean | null
+          from_address?: string
+          id?: string
+          timestamp?: string
+          to_address?: string
+          tx_hash?: string
+        }
+        Relationships: []
+      }
       graduation_tests: {
         Row: {
           consistency_score: number | null
@@ -2024,6 +2207,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      heatmap_data: {
+        Row: {
+          change_24h: number | null
+          id: string
+          market_cap: number | null
+          name: string
+          price: number
+          sector: string | null
+          symbol: string
+          updated_at: string
+          volume_24h: number | null
+        }
+        Insert: {
+          change_24h?: number | null
+          id?: string
+          market_cap?: number | null
+          name: string
+          price?: number
+          sector?: string | null
+          symbol: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Update: {
+          change_24h?: number | null
+          id?: string
+          market_cap?: number | null
+          name?: string
+          price?: number
+          sector?: string | null
+          symbol?: string
+          updated_at?: string
+          volume_24h?: number | null
+        }
+        Relationships: []
       }
       influencer_partners: {
         Row: {
@@ -3895,6 +4114,63 @@ export type Database = {
           triggers?: string[] | null
           updated_at?: string
           volume_24h?: number | null
+        }
+        Relationships: []
+      }
+      script_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          profit_factor: number | null
+          script_code: string
+          script_name: string
+          sharpe_ratio: number | null
+          started_at: string | null
+          status: string | null
+          symbol: string | null
+          timeframe: string | null
+          total_return: number | null
+          total_trades: number | null
+          user_id: string
+          win_rate: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          profit_factor?: number | null
+          script_code: string
+          script_name: string
+          sharpe_ratio?: number | null
+          started_at?: string | null
+          status?: string | null
+          symbol?: string | null
+          timeframe?: string | null
+          total_return?: number | null
+          total_trades?: number | null
+          user_id: string
+          win_rate?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          profit_factor?: number | null
+          script_code?: string
+          script_name?: string
+          sharpe_ratio?: number | null
+          started_at?: string | null
+          status?: string | null
+          symbol?: string | null
+          timeframe?: string | null
+          total_return?: number | null
+          total_trades?: number | null
+          user_id?: string
+          win_rate?: number | null
         }
         Relationships: []
       }
