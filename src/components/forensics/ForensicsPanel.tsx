@@ -13,457 +13,249 @@ import {
   Cpu, 
   Hash,
   AlertTriangle,
-  CheckCircle2,
-  Target,
   Network,
-  Fingerprint,
-  Zap
+  Zap,
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
-import { 
-  proxyHunter, 
-  type ProxyCluster, 
-  type ForensicAlert,
-  type TransactionRecord
-} from "@/lib/forensics/proxyClusterHunter";
-import { 
-  ibmQMAC, 
-  type QuantumJob,
-  IQM_SPECS 
-} from "@/lib/quantum/ibmQuantumMAC";
-import { 
-  sovereignRegistry, 
-  type SovereignNFT 
-} from "@/lib/registry/sovereignAssetRegistry";
+import { supabase } from "@/integrations/supabase/client";
 
-// Generate mock transaction data
-function generateMockTransactions(count: number): TransactionRecord[] {
-  const transactions: TransactionRecord[] = [];
-  const addresses = Array(50).fill(null).map(() => 
-    '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join('')
-  );
+interface TransactionRecord {
+  hash: string;
+  fromAddress: string;
+  toAddress: string;
+  amount: number;
+  timestamp: number;
+  blockNumber: number;
+}
 
-  for (let i = 0; i < count; i++) {
-    transactions.push({
-      hash: '0x' + Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-      fromAddress: addresses[Math.floor(Math.random() * addresses.length)],
-      toAddress: addresses[Math.floor(Math.random() * addresses.length)],
-      amount: Math.random() * 100000,
-      timestamp: Date.now() - Math.floor(Math.random() * 86400000 * 30),
-      blockNumber: 18000000 + Math.floor(Math.random() * 100000)
-    });
-  }
-
-  return transactions;
+interface Cluster {
+  id: string;
+  addresses: string[];
+  riskScore: number;
+  totalVolume: number;
+  transactionCount: number;
 }
 
 const ForensicsPanel = () => {
-  const [clusters, setClusters] = useState<ProxyCluster[]>([]);
-  const [alerts, setAlerts] = useState<ForensicAlert[]>([]);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [isHunting, setIsHunting] = useState(false);
-  const [quantumJobs, setQuantumJobs] = useState<QuantumJob[]>([]);
-  const [nfts, setNfts] = useState<SovereignNFT[]>([]);
-  const [newHashtag, setNewHashtag] = useState("");
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [taintAddress, setTaintAddress] = useState("");
   const [taintResults, setTaintResults] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
-    // Load existing NFTs
-    setNfts(sovereignRegistry.exportRegistry());
+    const fetchTransactions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('forensic_transactions')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(500);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setTransactions(data.map(tx => ({
+            hash: tx.tx_hash,
+            fromAddress: tx.from_address,
+            toAddress: tx.to_address,
+            amount: Number(tx.amount),
+            timestamp: new Date(tx.timestamp).getTime(),
+            blockNumber: Number(tx.block_number) || 0
+          })));
+        }
+      } catch (err) {
+        console.error('Error fetching transactions:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
   }, []);
 
   const runForensicScan = async () => {
+    if (transactions.length === 0) {
+      toast.error("No transaction data available");
+      return;
+    }
+
     setIsHunting(true);
-    toast.info("Initializing Proxy Cluster Hunt...");
+    toast.info("Analyzing transaction graph...");
 
-    // Load mock transactions
-    const transactions = generateMockTransactions(500);
-    proxyHunter.loadTransactions(transactions);
+    // Simple clustering based on connected addresses
+    const addressMap = new Map<string, Set<string>>();
+    
+    transactions.forEach(tx => {
+      if (!addressMap.has(tx.fromAddress)) addressMap.set(tx.fromAddress, new Set());
+      if (!addressMap.has(tx.toAddress)) addressMap.set(tx.toAddress, new Set());
+      addressMap.get(tx.fromAddress)!.add(tx.toAddress);
+      addressMap.get(tx.toAddress)!.add(tx.fromAddress);
+    });
 
-    // Detect peel chains
-    const peelChains = proxyHunter.detectPeelChains();
-    toast.info(`Found ${peelChains.length} potential peel chains`);
+    // Create clusters from connected components
+    const visited = new Set<string>();
+    const foundClusters: Cluster[] = [];
 
-    // Cluster proxies
-    const foundClusters = proxyHunter.clusterProxies();
-    setClusters(foundClusters);
-
-    // Get alerts
-    setAlerts(proxyHunter.getAlerts());
-
-    // Run quantum classification on top clusters
-    for (const cluster of foundClusters.slice(0, 3)) {
-      const fingerprint = proxyHunter.getQuantumFingerprint(cluster);
-      const job = await ibmQMAC.submitClassificationJob(fingerprint);
-      setQuantumJobs(prev => [job, ...prev]);
-
-      // Wait for completion
-      const completed = await ibmQMAC.waitForJob(job.jobId);
-      setQuantumJobs(prev => prev.map(j => j.jobId === job.jobId ? completed : j));
-
-      if (completed.result?.classification === 'fraud') {
-        toast.error(`Cluster ${cluster.clusterId} classified as FRAUD (${(completed.result.confidence * 100).toFixed(1)}% confidence)`);
+    addressMap.forEach((_, addr) => {
+      if (visited.has(addr)) return;
+      
+      const cluster: string[] = [];
+      const stack = [addr];
+      
+      while (stack.length > 0) {
+        const current = stack.pop()!;
+        if (visited.has(current)) continue;
+        visited.add(current);
+        cluster.push(current);
+        
+        addressMap.get(current)?.forEach(neighbor => {
+          if (!visited.has(neighbor)) stack.push(neighbor);
+        });
       }
-    }
 
+      if (cluster.length >= 3) {
+        const clusterTxs = transactions.filter(tx => 
+          cluster.includes(tx.fromAddress) || cluster.includes(tx.toAddress)
+        );
+        
+        foundClusters.push({
+          id: `cluster_${foundClusters.length + 1}`,
+          addresses: cluster,
+          riskScore: Math.min(0.3 + (cluster.length * 0.05), 0.95),
+          totalVolume: clusterTxs.reduce((sum, tx) => sum + tx.amount, 0),
+          transactionCount: clusterTxs.length
+        });
+      }
+    });
+
+    setClusters(foundClusters.sort((a, b) => b.riskScore - a.riskScore).slice(0, 10));
     setIsHunting(false);
-    toast.success(`Forensic scan complete: ${foundClusters.length} clusters, ${proxyHunter.getAlerts().length} alerts`);
+    toast.success(`Found ${foundClusters.length} clusters`);
   };
 
-  const runTaintAnalysis = () => {
-    if (!taintAddress) {
-      toast.error("Enter an address to trace");
-      return;
-    }
-
-    const results = proxyHunter.taintAnalysis(taintAddress, 5);
-    setTaintResults(results);
-    toast.success(`Traced taint to ${results.size} addresses`);
+  const getClusterRiskColor = (riskScore: number) => {
+    if (riskScore >= 0.8) return 'text-red-500 bg-red-500/10';
+    if (riskScore >= 0.5) return 'text-amber-500 bg-amber-500/10';
+    return 'text-green-500 bg-green-500/10';
   };
 
-  const mintHashtag = () => {
-    if (!newHashtag) {
-      toast.error("Enter a hashtag to register");
-      return;
-    }
-
-    const result = sovereignRegistry.mintSovereignAsset('hashtag', newHashtag, 'user-wallet-001');
-    if ('error' in result) {
-      toast.error(result.error);
-    } else {
-      setNfts(sovereignRegistry.exportRegistry());
-      toast.success(`Registered #${newHashtag} as sovereign NFT`);
-      setNewHashtag("");
-    }
-  };
-
-  const registryStats = sovereignRegistry.getStats();
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="flex items-center justify-center">
+            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Tabs defaultValue="hunter" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="hunter" className="flex items-center gap-2">
-          <Target className="h-4 w-4" />
-          Proxy Hunter
-        </TabsTrigger>
-        <TabsTrigger value="quantum" className="flex items-center gap-2">
-          <Cpu className="h-4 w-4" />
-          Q-MAC
-        </TabsTrigger>
-        <TabsTrigger value="taint" className="flex items-center gap-2">
-          <Fingerprint className="h-4 w-4" />
-          Taint Trace
-        </TabsTrigger>
-        <TabsTrigger value="registry" className="flex items-center gap-2">
-          <Hash className="h-4 w-4" />
-          NFT Registry
-        </TabsTrigger>
-      </TabsList>
+    <div className="space-y-6">
+      <Tabs defaultValue="clusters">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
+          <TabsTrigger value="clusters">Proxy Clusters</TabsTrigger>
+          <TabsTrigger value="taint">Taint Analysis</TabsTrigger>
+        </TabsList>
 
-      {/* Proxy Hunter */}
-      <TabsContent value="hunter">
-        <div className="grid grid-cols-3 gap-6">
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-red-500" />
-                Proxy Cluster Detection
-              </CardTitle>
-              <CardDescription>
-                DBSCAN + Bit-CHetG for organized money laundering detection
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button 
-                className="w-full" 
-                onClick={runForensicScan}
-                disabled={isHunting}
-              >
-                {isHunting ? (
-                  <>
-                    <Search className="h-4 w-4 mr-2 animate-pulse" />
-                    Hunting Proxies...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 mr-2" />
-                    Run Forensic Scan
-                  </>
-                )}
-              </Button>
-
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-3">
-                  {clusters.map(cluster => (
-                    <div key={cluster.clusterId} className="p-4 rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-sm">{cluster.clusterId}</span>
-                        <Badge variant={
-                          cluster.riskScore > 0.7 ? 'destructive' :
-                          cluster.riskScore > 0.4 ? 'secondary' : 'outline'
-                        }>
-                          {cluster.pattern.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Nodes: </span>
-                          <span className="font-bold">{cluster.nodes.length}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Volume: </span>
-                          <span className="font-bold">${cluster.totalVolume.toLocaleString()}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Risk: </span>
-                          <span className={cluster.riskScore > 0.7 ? 'text-red-500 font-bold' : ''}>
-                            {(cluster.riskScore * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
+        <TabsContent value="clusters" className="space-y-4 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                Alerts
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Network className="h-5 w-5" />
+                    Proxy Cluster Detection
+                  </CardTitle>
+                  <CardDescription>
+                    Identify related wallet clusters via transaction graph analysis
+                  </CardDescription>
+                </div>
+                <Button onClick={runForensicScan} disabled={isHunting || transactions.length === 0}>
+                  {isHunting ? (
+                    <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Scanning...</>
+                  ) : (
+                    <><Search className="h-4 w-4 mr-2" />Run Scan</>
+                  )}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[350px]">
-                <div className="space-y-2">
-                  {alerts.map(alert => (
-                    <div key={alert.id} className={`p-3 rounded-lg border ${
-                      alert.severity === 'critical' ? 'border-red-500 bg-red-500/10' :
-                      alert.severity === 'high' ? 'border-orange-500 bg-orange-500/10' : ''
-                    }`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant={
-                          alert.severity === 'critical' ? 'destructive' : 'secondary'
-                        }>
-                          {alert.severity.toUpperCase()}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{alert.type}</span>
-                      </div>
-                      <p className="text-xs">{alert.description}</p>
-                    </div>
-                  ))}
+              {transactions.length === 0 ? (
+                <div className="text-center py-8">
+                  <Network className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No transaction data available</p>
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
-      </TabsContent>
-
-      {/* Q-MAC */}
-      <TabsContent value="quantum">
-        <div className="grid grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Cpu className="h-5 w-5 text-blue-500" />
-                IBM Quantum MAC
-              </CardTitle>
-              <CardDescription>VQC Classification Jobs</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {ibmQMAC.getBackends().map(backend => (
-                    <div key={backend.name} className="p-3 rounded-lg bg-muted">
-                      <div className="font-mono text-sm">{backend.name}</div>
-                      <div className="text-xs text-muted-foreground">{backend.qubits} qubits</div>
-                    </div>
-                  ))}
+              ) : clusters.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    {transactions.length} transactions loaded. Run scan to detect clusters.
+                  </p>
                 </div>
-
-                <ScrollArea className="h-[250px]">
-                  <div className="space-y-2">
-                    {quantumJobs.map(job => (
-                      <div key={job.jobId} className="p-3 rounded-lg border">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-mono text-xs">{job.jobId.slice(0, 20)}...</span>
-                          <Badge variant={
-                            job.status === 'completed' ? 'default' :
-                            job.status === 'running' ? 'secondary' : 'outline'
-                          }>
-                            {job.status}
-                          </Badge>
-                        </div>
-                        {job.result && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className={
-                              job.result.classification === 'fraud' ? 'text-red-500' :
-                              job.result.classification === 'legitimate' ? 'text-green-500' : ''
-                            }>
-                              {job.result.classification.toUpperCase()}
-                            </span>
-                            <span>{(job.result.confidence * 100).toFixed(1)}% confidence</span>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-4">
+                    {clusters.map((cluster) => (
+                      <Card key={cluster.id} className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm">{cluster.id}</span>
+                              <Badge className={getClusterRiskColor(cluster.riskScore)}>
+                                Risk: {(cluster.riskScore * 100).toFixed(0)}%
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {cluster.addresses.length} addresses • {cluster.totalVolume.toFixed(2)} ETH
+                            </p>
                           </div>
-                        )}
-                      </div>
+                          <p className="text-sm font-medium">{cluster.transactionCount} txs</p>
+                        </div>
+                      </Card>
                     ))}
                   </div>
                 </ScrollArea>
-              </div>
+              )}
             </CardContent>
           </Card>
+        </TabsContent>
 
+        <TabsContent value="taint" className="space-y-4 mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>IQM Quantum Specs</CardTitle>
-              <CardDescription>European Hardware Alternative</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries(IQM_SPECS).map(([key, specs]) => (
-                <div key={key} className="p-4 rounded-lg border">
-                  <div className="font-bold mb-2">{specs.name}</div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>Qubits: <span className="font-bold">{specs.qubits}</span></div>
-                    <div>1Q Fidelity: <span className="font-bold">{(specs.fidelity1Q * 100).toFixed(1)}%</span></div>
-                    <div>2Q Fidelity: <span className="font-bold">{(specs.fidelity2Q * 100).toFixed(1)}%</span></div>
-                    <div>T1: <span className="font-bold">{specs.coherenceT1}μs</span></div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </TabsContent>
-
-      {/* Taint Analysis */}
-      <TabsContent value="taint">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Fingerprint className="h-5 w-5 text-purple-500" />
-              Taint Analysis
-            </CardTitle>
-            <CardDescription>Track stolen funds across the blockchain</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Label>Stolen/Source Address</Label>
-                <Input 
-                  value={taintAddress}
-                  onChange={(e) => setTaintAddress(e.target.value)}
-                  placeholder="0x..."
-                />
-              </div>
-              <Button className="mt-6" onClick={runTaintAnalysis}>
-                <Search className="h-4 w-4 mr-2" />
-                Trace Taint
-              </Button>
-            </div>
-
-            {taintResults.size > 0 && (
-              <div className="p-4 rounded-lg bg-muted">
-                <h4 className="font-semibold mb-3">Tainted Addresses ({taintResults.size})</h4>
-                <ScrollArea className="h-[200px]">
-                  <div className="space-y-2">
-                    {Array.from(taintResults.entries())
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([address, taint]) => (
-                        <div key={address} className="flex items-center justify-between p-2 rounded bg-background">
-                          <span className="font-mono text-xs">{address.slice(0, 20)}...</span>
-                          <div className="flex items-center gap-2">
-                            <Progress value={taint * 100} className="w-20" />
-                            <span className={`text-sm font-bold ${taint > 0.5 ? 'text-red-500' : 'text-yellow-500'}`}>
-                              {(taint * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {/* NFT Registry */}
-      <TabsContent value="registry">
-        <div className="grid grid-cols-3 gap-6">
-          <Card className="col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Hash className="h-5 w-5 text-cyan-500" />
-                Sovereign Asset Registry
+                <Zap className="h-5 w-5" />
+                Taint Analysis
               </CardTitle>
-              <CardDescription>Immutable hashtag & URL ownership</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4">
+            <CardContent>
+              <div className="flex gap-4 mb-6">
                 <div className="flex-1">
-                  <Label>Register New Hashtag</Label>
-                  <Input 
-                    value={newHashtag}
-                    onChange={(e) => setNewHashtag(e.target.value)}
-                    placeholder="#YourHashtag"
+                  <Label>Source Address</Label>
+                  <Input
+                    placeholder="0x..."
+                    value={taintAddress}
+                    onChange={(e) => setTaintAddress(e.target.value)}
                   />
                 </div>
-                <Button className="mt-6" onClick={mintHashtag}>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Mint NFT
+                <Button className="mt-6" disabled={transactions.length === 0}>
+                  <Zap className="h-4 w-4 mr-2" />Trace
                 </Button>
               </div>
-
-              <ScrollArea className="h-[300px]">
-                <div className="grid grid-cols-2 gap-3">
-                  {nfts.map(nft => (
-                    <div key={nft.tokenId} className="p-3 rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant="outline">{nft.assetType}</Badge>
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="font-bold text-lg">{nft.assetValue}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {nft.tokenId.slice(0, 16)}...
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Owner: {nft.owner.slice(0, 12)}...
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Registry Stats</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 rounded-lg bg-muted text-center">
-                <div className="text-3xl font-bold">{registryStats.totalAssets}</div>
-                <div className="text-sm text-muted-foreground">Total Assets</div>
-              </div>
-              <div className="p-4 rounded-lg bg-muted text-center">
-                <div className="text-3xl font-bold">{registryStats.totalOwners}</div>
-                <div className="text-sm text-muted-foreground">Unique Owners</div>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(registryStats.byType).map(([type, count]) => (
-                  <div key={type} className="flex justify-between p-2 rounded bg-muted">
-                    <span className="capitalize">{type}</span>
-                    <span className="font-bold">{count}</span>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-muted-foreground">
+                {transactions.length === 0 
+                  ? "No transaction data for analysis"
+                  : "Enter an address to trace fund flows"}
               </div>
             </CardContent>
           </Card>
-        </div>
-      </TabsContent>
-    </Tabs>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
