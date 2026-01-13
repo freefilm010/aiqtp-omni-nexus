@@ -5155,8 +5155,22 @@ export type Database = {
         }
         Returns: string
       }
-      get_factor_code: { Args: { factor_id: string }; Returns: string }
-      get_strategy_code: { Args: { strategy_id: string }; Returns: string }
+      get_factor_code: {
+        Args: { p_factor_id: string }
+        Returns: {
+          code: string
+          is_owner: boolean
+          is_protected: boolean
+        }[]
+      }
+      get_strategy_code: {
+        Args: { p_strategy_id: string }
+        Returns: {
+          code: string
+          is_owner: boolean
+          is_protected: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

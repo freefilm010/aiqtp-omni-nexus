@@ -107,16 +107,16 @@ const Watchlist = () => {
       if (error) throw error;
 
       // Map database items to UI format with live prices
-      const items: WatchlistItem[] = (data || []).map(item => {
-        const livePrice = getPrice(item.symbol);
+      const items: WatchlistItem[] = (data || []).map((item: Record<string, unknown>) => {
+        const livePrice = getPrice(item.symbol as string);
         return {
-          id: item.id,
-          symbol: item.symbol,
-          name: item.name,
+          id: item.id as string,
+          symbol: item.symbol as string,
+          name: item.name as string,
           price: livePrice?.priceNumeric || 0,
           change: 0,
           changePercent: livePrice?.changePercent || 0,
-          alertEnabled: false,
+          alertEnabled: (item.alert_enabled as boolean) || false,
           alertPrice: undefined
         };
       });
@@ -204,7 +204,7 @@ const Watchlist = () => {
     try {
       const { error } = await supabase
         .from('watchlist')
-        .update({ alert_enabled: !item.alertEnabled })
+        .update({ alert_enabled: !item.alertEnabled } as Record<string, unknown>)
         .eq('id', id)
         .eq('user_id', user.id);
 
