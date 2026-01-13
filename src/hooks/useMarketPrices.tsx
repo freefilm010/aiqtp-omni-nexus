@@ -1,8 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  fetchCoinGeckoUsdQuotes,
-  type CryptoSymbol,
-} from "@/lib/market/coingecko";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface MarketPrice {
   symbol: string;
@@ -12,208 +9,211 @@ export interface MarketPrice {
   change: string;
   changePercent: number;
   volume: string;
+  volumeNumeric: number;
+  marketCap: number;
   trend: "up" | "down";
   lastUpdate: Date;
 }
 
-const INITIAL_PRICES: Record<string, MarketPrice> = {
-  "BTC/USD": {
-    symbol: "BTC/USD",
-    name: "Bitcoin",
-    price: "67234.89",
-    priceNumeric: 67234.89,
-    change: "+5.23%",
-    changePercent: 5.23,
-    volume: "$2.4B",
-    trend: "up",
-    lastUpdate: new Date(),
-  },
-  "ETH/USD": {
-    symbol: "ETH/USD",
-    name: "Ethereum",
-    price: "3456.12",
-    priceNumeric: 3456.12,
-    change: "+3.45%",
-    changePercent: 3.45,
-    volume: "$1.2B",
-    trend: "up",
-    lastUpdate: new Date(),
-  },
-  "GOLD/USD": {
-    symbol: "GOLD/USD",
-    name: "Gold",
-    price: "2123.45",
-    priceNumeric: 2123.45,
-    change: "-0.23%",
-    changePercent: -0.23,
-    volume: "$890M",
-    trend: "down",
-    lastUpdate: new Date(),
-  },
-  AAPL: {
-    symbol: "AAPL",
-    name: "Apple Inc",
-    price: "178.34",
-    priceNumeric: 178.34,
-    change: "+1.23%",
-    changePercent: 1.23,
-    volume: "$3.2B",
-    trend: "up",
-    lastUpdate: new Date(),
-  },
-  "RE-NYC-01": {
-    symbol: "RE-NYC-01",
-    name: "NYC Property Token",
-    price: "245.67",
-    priceNumeric: 245.67,
-    change: "+2.34%",
-    changePercent: 2.34,
-    volume: "$45M",
-    trend: "up",
-    lastUpdate: new Date(),
-  },
-  "ART-MON-01": {
-    symbol: "ART-MON-01",
-    name: "Monet NFT",
-    price: "1234567",
-    priceNumeric: 1234567,
-    change: "-1.23%",
-    changePercent: -1.23,
-    volume: "$12M",
-    trend: "down",
-    lastUpdate: new Date(),
-  },
-  BTC: {
-    symbol: "BTC",
-    name: "Bitcoin",
-    price: "67234.89",
-    priceNumeric: 67234.89,
-    change: "+5.23%",
-    changePercent: 5.23,
-    volume: "$2.4B",
-    trend: "up",
-    lastUpdate: new Date(),
-  },
-  ETH: {
-    symbol: "ETH",
-    name: "Ethereum",
-    price: "3456.12",
-    priceNumeric: 3456.12,
-    change: "+3.45%",
-    changePercent: 3.45,
-    volume: "$1.2B",
-    trend: "up",
-    lastUpdate: new Date(),
-  },
-  USDC: {
-    symbol: "USDC",
-    name: "USD Coin",
-    price: "1.00",
-    priceNumeric: 1.0,
-    change: "+0.00%",
-    changePercent: 0,
-    volume: "$450M",
-    trend: "up",
-    lastUpdate: new Date(),
-  },
+// Symbol to CoinGecko ID mapping
+const COINGECKO_IDS: Record<string, string> = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  SOL: "solana",
+  USDC: "usd-coin",
+  USDT: "tether",
+  BNB: "binancecoin",
+  XRP: "ripple",
+  ADA: "cardano",
+  DOGE: "dogecoin",
+  AVAX: "avalanche-2",
+  DOT: "polkadot",
+  LINK: "chainlink",
+  MATIC: "matic-network",
+  UNI: "uniswap",
+  AAVE: "aave",
+  ARB: "arbitrum",
+  OP: "optimism",
+  PEPE: "pepe",
+  BONK: "bonk",
+  WIF: "dogwifcoin",
+  LTC: "litecoin",
+  NEAR: "near",
+  ATOM: "cosmos",
+  FTM: "fantom",
+  INJ: "injective-protocol",
+  SUI: "sui",
+  APT: "aptos",
+  RNDR: "render-token",
+  FET: "fetch-ai",
+  GRT: "the-graph",
+  FIL: "filecoin",
 };
 
-const LIVE_CRYPTO: CryptoSymbol[] = ["BTC", "ETH", "USDC"];
-
-const SYMBOL_ALIASES: Record<CryptoSymbol, string[]> = {
-  BTC: ["BTC", "BTC/USD"],
-  ETH: ["ETH", "ETH/USD"],
-  USDC: ["USDC"],
-  SOL: ["SOL"],
-  PEPE: ["PEPE"],
-  WIF: ["WIF"],
-  UNI: ["UNI"],
-  AAVE: ["AAVE"],
-  ARB: ["ARB"],
-  BONK: ["BONK"],
+const formatPrice = (price: number): string => {
+  if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (price >= 1) return price.toFixed(2);
+  if (price >= 0.01) return price.toFixed(4);
+  return price.toFixed(8);
 };
 
-const formatPrice = (symbolKey: string, priceUsd: number) => {
-  if (symbolKey.includes("ART")) return priceUsd.toFixed(0);
-  return priceUsd.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+const formatVolume = (vol: number): string => {
+  if (vol >= 1e9) return `$${(vol / 1e9).toFixed(1)}B`;
+  if (vol >= 1e6) return `$${(vol / 1e6).toFixed(1)}M`;
+  if (vol >= 1e3) return `$${(vol / 1e3).toFixed(1)}K`;
+  return `$${vol.toFixed(0)}`;
 };
 
-const formatChange = (pct: number) =>
-  `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`;
-
-export const useMarketPrices = (pollIntervalMs: number = 15000) => {
-  const [prices, setPrices] = useState<Record<string, MarketPrice>>(INITIAL_PRICES);
+export const useMarketPrices = (pollIntervalMs: number = 30000) => {
+  const [prices, setPrices] = useState<Record<string, MarketPrice>>({});
   const [isLive, setIsLive] = useState(true);
   const [lastSyncError, setLastSyncError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const effectivePollInterval = useMemo(
-    () => Math.max(15000, pollIntervalMs),
+    () => Math.max(30000, pollIntervalMs), // Min 30s to respect rate limits
     [pollIntervalMs]
   );
+
+  const fetchFromDatabase = useCallback(async () => {
+    try {
+      // First try to get cached prices from database
+      const { data: cachedPrices, error } = await supabase
+        .from('market_prices')
+        .select(`
+          coin_id,
+          price_usd,
+          price_change_percentage_24h,
+          total_volume,
+          market_cap,
+          last_updated,
+          market_coins!inner(symbol, name)
+        `)
+        .in('coin_id', Object.values(COINGECKO_IDS))
+        .order('market_cap', { ascending: false, nullsFirst: false });
+
+      if (!error && cachedPrices && cachedPrices.length > 0) {
+        const priceMap: Record<string, MarketPrice> = {};
+        
+        for (const row of cachedPrices) {
+          const coinData = row.market_coins as any;
+          const symbol = coinData?.symbol || 'UNKNOWN';
+          const change = row.price_change_percentage_24h || 0;
+          
+          priceMap[symbol] = {
+            symbol,
+            name: coinData?.name || symbol,
+            price: formatPrice(row.price_usd || 0),
+            priceNumeric: row.price_usd || 0,
+            change: `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`,
+            changePercent: change,
+            volume: formatVolume(row.total_volume || 0),
+            volumeNumeric: row.total_volume || 0,
+            marketCap: row.market_cap || 0,
+            trend: change >= 0 ? 'up' : 'down',
+            lastUpdate: new Date(row.last_updated || Date.now()),
+          };
+
+          // Also add with /USD suffix for compatibility
+          priceMap[`${symbol}/USD`] = priceMap[symbol];
+        }
+
+        setPrices(prev => ({ ...prev, ...priceMap }));
+        setLastSyncError(null);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error('Database fetch error:', e);
+      return false;
+    }
+  }, []);
+
+  const fetchFromAPI = useCallback(async () => {
+    try {
+      // Call edge function to get fresh data (avoids CORS/rate limits)
+      const { data, error } = await supabase.functions.invoke('market-data-sync', {
+        body: { 
+          action: 'get_price',
+          params: { coinIds: Object.values(COINGECKO_IDS).slice(0, 20) }
+        }
+      });
+
+      if (error) throw error;
+      if (!data?.success || !data?.prices) return false;
+
+      const priceMap: Record<string, MarketPrice> = {};
+      
+      for (const [coinId, priceData] of Object.entries(data.prices) as [string, any][]) {
+        const symbol = Object.entries(COINGECKO_IDS).find(([_, id]) => id === coinId)?.[0];
+        if (!symbol) continue;
+
+        const change = priceData.usd_24h_change || 0;
+        
+        priceMap[symbol] = {
+          symbol,
+          name: coinId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          price: formatPrice(priceData.usd || 0),
+          priceNumeric: priceData.usd || 0,
+          change: `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`,
+          changePercent: change,
+          volume: formatVolume(priceData.usd_24h_vol || 0),
+          volumeNumeric: priceData.usd_24h_vol || 0,
+          marketCap: priceData.usd_market_cap || 0,
+          trend: change >= 0 ? 'up' : 'down',
+          lastUpdate: new Date(),
+        };
+
+        priceMap[`${symbol}/USD`] = priceMap[symbol];
+      }
+
+      setPrices(prev => ({ ...prev, ...priceMap }));
+      setLastSyncError(null);
+      return true;
+    } catch (e) {
+      console.error('API fetch error:', e);
+      setLastSyncError(e instanceof Error ? e.message : 'Failed to fetch prices');
+      return false;
+    }
+  }, []);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    
+    // Try database first (faster, no rate limits)
+    const dbSuccess = await fetchFromDatabase();
+    
+    // If DB is stale or empty, fetch from API
+    if (!dbSuccess) {
+      await fetchFromAPI();
+    }
+    
+    setLoading(false);
+  }, [fetchFromDatabase, fetchFromAPI]);
 
   useEffect(() => {
     if (!isLive) return;
 
-    const ac = new AbortController();
-
-    const refresh = async () => {
-      try {
-        const quotes = await fetchCoinGeckoUsdQuotes(LIVE_CRYPTO, ac.signal);
-
-        setPrices((prev) => {
-          const next = { ...prev };
-
-          for (const symbol of LIVE_CRYPTO) {
-            const q = quotes[symbol];
-            if (!q) continue;
-
-            const aliases = SYMBOL_ALIASES[symbol] ?? [symbol];
-            for (const key of aliases) {
-              if (!next[key]) continue;
-
-              const changePct =
-                typeof q.change24hPercent === "number"
-                  ? q.change24hPercent
-                  : next[key].changePercent;
-
-              next[key] = {
-                ...next[key],
-                priceNumeric: q.priceUsd,
-                price: formatPrice(key, q.priceUsd),
-                changePercent: changePct,
-                change: formatChange(changePct),
-                trend: changePct >= 0 ? "up" : "down",
-                lastUpdate: new Date(),
-              };
-            }
-          }
-
-          return next;
-        });
-
-        setLastSyncError(null);
-      } catch (e) {
-        if (ac.signal.aborted) return;
-        setLastSyncError(e instanceof Error ? e.message : "Failed to sync prices");
-      }
-    };
-
-    // initial sync + interval polling
     refresh();
     const interval = setInterval(refresh, effectivePollInterval);
 
-    return () => {
-      ac.abort();
-      clearInterval(interval);
-    };
-  }, [effectivePollInterval, isLive]);
+    return () => clearInterval(interval);
+  }, [effectivePollInterval, isLive, refresh]);
 
-  const getPrice = (symbol: string): MarketPrice | undefined => prices[symbol];
+  const getPrice = useCallback((symbol: string): MarketPrice | undefined => {
+    const normalizedSymbol = symbol.toUpperCase().replace('/USD', '');
+    return prices[normalizedSymbol] || prices[symbol];
+  }, [prices]);
 
-  const getAllPrices = (): MarketPrice[] => Object.values(prices);
+  const getAllPrices = useCallback((): MarketPrice[] => {
+    // Filter out duplicates (symbol/USD pairs)
+    const seen = new Set<string>();
+    return Object.values(prices).filter(p => {
+      if (seen.has(p.symbol) || p.symbol.includes('/')) return false;
+      seen.add(p.symbol);
+      return true;
+    });
+  }, [prices]);
 
   const toggleLive = () => setIsLive((v) => !v);
 
@@ -224,6 +224,8 @@ export const useMarketPrices = (pollIntervalMs: number = 15000) => {
     isLive,
     toggleLive,
     lastSyncError,
+    loading,
+    refresh,
   };
 };
 
