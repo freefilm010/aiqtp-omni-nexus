@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import {
   BookOpen,
   Layers,
@@ -34,21 +35,31 @@ interface UnifiedBook {
 const exchanges = ['Binance', 'Coinbase', 'Kraken', 'KuCoin', 'OKX', 'Bybit'];
 const pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'BNB/USDT'];
 
-const generateUnifiedBook = (basePrice: number): UnifiedBook => {
+// Deterministic pseudo-random generator for stable order book
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+};
+
+const generateUnifiedBook = (basePrice: number, seed: number): UnifiedBook => {
   const generateLevels = (side: 'bid' | 'ask', count: number): OrderLevel[] => {
     let cumulative = 0;
+    let localSeed = seed + (side === 'bid' ? 0 : 1000);
+    
     return Array.from({ length: count }, (_, i) => {
-      const offset = side === 'bid' ? -(i + 1) * 0.5 : (i + 1) * 0.5;
+      const offset = side === 'bid' ? -(i + 1) * (basePrice * 0.0001) : (i + 1) * (basePrice * 0.0001);
       const price = basePrice + offset;
       
-      // Random exchanges contributing to this level
-      const numExchanges = Math.floor(Math.random() * 4) + 1;
-      const selectedExchanges = [...exchanges]
-        .sort(() => Math.random() - 0.5)
+      // Deterministic exchange selection based on seed
+      const numExchanges = Math.floor(seededRandom(localSeed + i) * 4) + 1;
+      const exchangeOrder = exchanges.map((e, idx) => ({ name: e, sortVal: seededRandom(localSeed + i + idx) }))
+        .sort((a, b) => a.sortVal - b.sortVal);
+      
+      const selectedExchanges = exchangeOrder
         .slice(0, numExchanges)
-        .map(name => ({
-          name,
-          amount: Math.random() * 5 + 0.1
+        .map((ex, idx) => ({
+          name: ex.name,
+          amount: seededRandom(localSeed + i * 10 + idx) * 5 + 0.1
         }));
       
       const amount = selectedExchanges.reduce((sum, e) => sum + e.amount, 0);
@@ -74,25 +85,33 @@ const generateUnifiedBook = (basePrice: number): UnifiedBook => {
     bids,
     asks,
     spread: bestAsk - bestBid,
-    spreadPercent: ((bestAsk - bestBid) / bestBid) * 100,
+    spreadPercent: bestBid > 0 ? ((bestAsk - bestBid) / bestBid) * 100 : 0,
     midPrice: (bestBid + bestAsk) / 2
   };
 };
 
 const UnifiedOrderBook = () => {
+  const { prices } = useMarketPrices(5000);
   const [selectedPair, setSelectedPair] = useState("BTC/USDT");
-  const [basePrice] = useState(67500);
-  const [book, setBook] = useState<UnifiedBook>(() => generateUnifiedBook(basePrice));
   const [grouping, setGrouping] = useState("0.5");
   const [showExchangeBreakdown, setShowExchangeBreakdown] = useState(true);
   const [selectedExchanges, setSelectedExchanges] = useState<string[]>(exchanges);
-
+  const [updateSeed, setUpdateSeed] = useState(Date.now());
+  
+  // Get base price from real market data
+  const baseSymbol = selectedPair.split('/')[0];
+  const basePrice = prices[baseSymbol]?.priceNumeric || 
+    (baseSymbol === 'BTC' ? 67500 : baseSymbol === 'ETH' ? 3500 : 100);
+  
+  const book = useMemo(() => generateUnifiedBook(basePrice, updateSeed), [basePrice, updateSeed]);
+  
+  // Update order book every 2 seconds with new seed
   useEffect(() => {
     const interval = setInterval(() => {
-      setBook(generateUnifiedBook(basePrice));
-    }, 1000);
+      setUpdateSeed(Date.now());
+    }, 2000);
     return () => clearInterval(interval);
-  }, [basePrice]);
+  }, []);
 
   const maxCumulative = Math.max(
     ...book.bids.map(b => b.cumulative),

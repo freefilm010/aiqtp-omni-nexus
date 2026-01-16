@@ -63,18 +63,32 @@ const AIPredictionEngine = () => {
     
     try {
       const currentPrice = prices[selectedSymbol]?.priceNumeric || 0;
+      const changeStr = prices[selectedSymbol]?.change || '0';
+      const change24h = parseFloat(String(changeStr).replace(/[^0-9.-]/g, '')) || 0;
       
-      // Generate mock historical prices for the model
-      const historicalPrices = Array.from({ length: 24 }, (_, i) => 
-        currentPrice * (1 + (Math.random() - 0.5) * 0.05)
-      );
+      // Derive historical price estimates from current price and 24h change
+      // This provides a realistic trend rather than random noise
+      const priceYesterday = currentPrice / (1 + change24h / 100);
+      const historicalPrices: number[] = [];
+      
+      for (let i = 0; i < 24; i++) {
+        // Linear interpolation from yesterday to now with slight volatility
+        const progress = i / 23;
+        const basePrice = priceYesterday + (currentPrice - priceYesterday) * progress;
+        // Add small controlled variance based on typical hourly volatility
+        const hourlyVolatility = 0.005; // 0.5% per hour typical
+        const variance = Math.sin(i * 0.5) * hourlyVolatility * basePrice;
+        historicalPrices.push(basePrice + variance);
+      }
 
       const { data, error } = await supabase.functions.invoke('ml-predictions', {
         body: {
           symbol: selectedSymbol,
           timeframe: selectedTimeframe,
           model: selectedModel,
-          historicalPrices
+          historicalPrices,
+          currentPrice,
+          change24h
         }
       });
 
