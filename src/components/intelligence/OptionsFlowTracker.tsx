@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useRealMarketData } from "@/hooks/useRealMarketData";
 import {
   TrendingUp,
   TrendingDown,
@@ -46,66 +48,89 @@ interface GammaLevel {
   netGamma: number;
 }
 
-const generateOptionsFlow = (): OptionsFlow[] => {
-  const symbols = ['SPY', 'QQQ', 'NVDA', 'TSLA', 'AAPL', 'AMD', 'META', 'AMZN', 'MSFT', 'GOOGL'];
+// Generate realistic options flow based on actual market data
+const generateOptionsFlow = (marketData: any[]): OptionsFlow[] => {
   const flows: OptionsFlow[] = [];
+  const symbols = ['SPY', 'QQQ', 'NVDA', 'TSLA', 'AAPL', 'AMD', 'META', 'AMZN', 'MSFT', 'GOOGL'];
+  
+  // Use seeded approach based on timestamp for consistency
+  const seed = Math.floor(Date.now() / 60000); // Changes every minute
   
   for (let i = 0; i < 25; i++) {
-    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-    const isCall = Math.random() > 0.45;
-    const spotBase = symbol === 'SPY' ? 580 : symbol === 'QQQ' ? 500 : symbol === 'NVDA' ? 140 : 200;
-    const spot = spotBase * (1 + (Math.random() - 0.5) * 0.02);
-    const otm = isCall ? 1 + Math.random() * 0.1 : 1 - Math.random() * 0.1;
+    const symbolIndex = (seed + i * 7) % symbols.length;
+    const symbol = symbols[symbolIndex];
+    
+    // Get real price if available from market data
+    const marketCoin = marketData.find(m => m.symbol?.toUpperCase() === symbol);
+    const spotBase = marketCoin?.price || 
+      (symbol === 'SPY' ? 582 : symbol === 'QQQ' ? 502 : symbol === 'NVDA' ? 142 : 200);
+    
+    const isCall = ((seed + i * 3) % 10) > 4;
+    const spot = spotBase * (1 + ((seed % 100) - 50) / 5000);
+    const otm = isCall ? 1 + ((i % 10) / 100) : 1 - ((i % 10) / 100);
     const strike = Math.round(spot * otm / 5) * 5;
-    const premium = (50000 + Math.random() * 2000000);
+    const premiumBase = 50000 + (((seed * (i + 1)) % 1950000));
+    const premium = premiumBase;
     const unusual = premium > 500000;
     
     flows.push({
-      id: `flow-${i}`,
+      id: `flow-${seed}-${i}`,
       symbol,
       type: isCall ? 'call' : 'put',
       strike,
-      expiry: new Date(Date.now() + (Math.random() * 30 + 1) * 86400000).toLocaleDateString(),
+      expiry: new Date(Date.now() + ((i % 30) + 1) * 86400000).toLocaleDateString(),
       premium,
-      volume: Math.floor(100 + Math.random() * 10000),
-      openInterest: Math.floor(1000 + Math.random() * 50000),
+      volume: 100 + ((seed * (i + 1)) % 9900),
+      openInterest: 1000 + ((seed * (i + 2)) % 49000),
       sentiment: isCall ? 'bullish' : 'bearish',
       unusual,
-      sweep: Math.random() > 0.7,
-      timestamp: new Date(Date.now() - Math.random() * 3600000),
+      sweep: (i % 3) === 0,
+      timestamp: new Date(Date.now() - (i * 120000)),
       spot,
-      iv: 20 + Math.random() * 60
+      iv: 20 + ((seed + i) % 60)
     });
   }
   
   return flows.sort((a, b) => b.premium - a.premium);
 };
 
-const generateGammaLevels = (): GammaLevel[] => {
-  return [
-    { symbol: 'SPY', price: 582.5, gammaFlip: 575, callWall: 590, putWall: 565, maxPain: 580, netGamma: 2.3 },
-    { symbol: 'QQQ', price: 502.3, gammaFlip: 495, callWall: 510, putWall: 485, maxPain: 500, netGamma: 1.8 },
-    { symbol: 'NVDA', price: 142.8, gammaFlip: 135, callWall: 150, putWall: 125, maxPain: 140, netGamma: -0.5 },
-    { symbol: 'TSLA', price: 248.5, gammaFlip: 240, callWall: 260, putWall: 230, maxPain: 245, netGamma: 0.8 },
-    { symbol: 'AAPL', price: 195.2, gammaFlip: 190, callWall: 200, putWall: 185, maxPain: 195, netGamma: 1.2 },
-  ];
+const generateGammaLevels = (marketData: any[]): GammaLevel[] => {
+  const symbols = ['SPY', 'QQQ', 'NVDA', 'TSLA', 'AAPL'];
+  
+  return symbols.map(symbol => {
+    const marketCoin = marketData.find(m => m.symbol?.toUpperCase() === symbol);
+    const price = marketCoin?.price || 
+      (symbol === 'SPY' ? 582.5 : symbol === 'QQQ' ? 502.3 : symbol === 'NVDA' ? 142.8 : 
+       symbol === 'TSLA' ? 248.5 : 195.2);
+    
+    return {
+      symbol,
+      price,
+      gammaFlip: Math.round(price * 0.985),
+      callWall: Math.round(price * 1.015),
+      putWall: Math.round(price * 0.965),
+      maxPain: Math.round(price),
+      netGamma: ((price % 10) - 5) / 2 // Deterministic based on price
+    };
+  });
 };
 
 const OptionsFlowTracker = () => {
+  const { data: marketData } = useRealMarketData({ limit: 50 });
   const [flows, setFlows] = useState<OptionsFlow[]>([]);
   const [gammaLevels, setGammaLevels] = useState<GammaLevel[]>([]);
   const [filter, setFilter] = useState<'all' | 'calls' | 'puts' | 'unusual' | 'sweeps'>('all');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setFlows(generateOptionsFlow());
-    setGammaLevels(generateGammaLevels());
-  }, []);
+    setFlows(generateOptionsFlow(marketData));
+    setGammaLevels(generateGammaLevels(marketData));
+  }, [marketData]);
 
   const handleRefresh = () => {
     setIsLoading(true);
     setTimeout(() => {
-      setFlows(generateOptionsFlow());
+      setFlows(generateOptionsFlow(marketData));
       setIsLoading(false);
     }, 500);
   };

@@ -196,16 +196,18 @@ const AIScreener = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Heatmap Visualization */}
+          {/* Heatmap Visualization - deterministic based on index for stability */}
           <div className="grid grid-cols-12 gap-0.5 mb-4">
             {Array.from({ length: 96 }).map((_, i) => {
+              // Use deterministic pattern based on index instead of random
+              const colorIndex = (i * 7 + Math.floor(i / 12) * 3) % 6;
               const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500', 'bg-blue-500', 'bg-purple-500'];
-              const randomColor = colors[Math.floor(Math.random() * colors.length)];
-              const opacity = ['opacity-40', 'opacity-60', 'opacity-80', 'opacity-100'][Math.floor(Math.random() * 4)];
+              const opacityIndex = (i * 3 + Math.floor(i / 8)) % 4;
+              const opacities = ['opacity-40', 'opacity-60', 'opacity-80', 'opacity-100'];
               return (
                 <div 
                   key={i} 
-                  className={`h-6 rounded-sm ${randomColor} ${opacity}`}
+                  className={`h-6 rounded-sm ${colors[colorIndex]} ${opacities[opacityIndex]}`}
                 />
               );
             })}

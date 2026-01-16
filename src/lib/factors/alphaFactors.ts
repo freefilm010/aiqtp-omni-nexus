@@ -18,9 +18,50 @@ export interface AlphaFactorResult {
  */
 export function alpha001(prices: PriceData[]): number[] {
   const closes = prices.map(p => p.close);
-  const returns = closes.slice(1).map((close, i) => (close - closes[i]) / closes[i]);
+  const n = closes.length;
+  const returns: number[] = [0];
   
-  return closes.map(() => Math.random() - 0.5); // Simplified placeholder
+  for (let i = 1; i < n; i++) {
+    returns.push((closes[i] - closes[i - 1]) / closes[i - 1]);
+  }
+  
+  const result: number[] = [];
+  const windowSize = 20;
+  const argMaxWindow = 5;
+  
+  for (let i = 0; i < n; i++) {
+    if (i < windowSize + argMaxWindow - 1) {
+      result.push(NaN);
+      continue;
+    }
+    
+    // Calculate stddev of returns over 20 periods
+    const returnSlice = returns.slice(i - windowSize + 1, i + 1);
+    const mean = returnSlice.reduce((a, b) => a + b, 0) / windowSize;
+    const stddev = Math.sqrt(returnSlice.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / windowSize);
+    
+    // For each of last 5 periods, compute SignedPower
+    const signedPowers: number[] = [];
+    for (let j = i - argMaxWindow + 1; j <= i; j++) {
+      const val = returns[j] < 0 ? stddev : closes[j];
+      signedPowers.push(Math.sign(val) * Math.pow(Math.abs(val), 2));
+    }
+    
+    // Find argmax (position of max value)
+    let maxIdx = 0;
+    let maxVal = signedPowers[0];
+    for (let k = 1; k < signedPowers.length; k++) {
+      if (signedPowers[k] > maxVal) {
+        maxVal = signedPowers[k];
+        maxIdx = k;
+      }
+    }
+    
+    // Rank and normalize to [-0.5, 0.5]
+    result.push((maxIdx / (argMaxWindow - 1)) - 0.5);
+  }
+  
+  return result;
 }
 
 /**
