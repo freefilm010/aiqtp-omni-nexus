@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Bot, 
-  Send, 
-  Zap, 
-  Shield, 
-  TrendingUp, 
-  Cpu, 
+import {
+  Bot,
+  Send,
+  Zap,
+  Shield,
+  TrendingUp,
+  Cpu,
   Activity,
   Terminal,
   CheckCircle2,
@@ -21,9 +21,10 @@ import {
   FileText,
   Settings,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { ChatHistory } from "@/components/chat/ChatHistory";
 import { useChatPersistence } from "@/hooks/useChatPersistence";
 import { useAuth } from "@/hooks/useAuth";
@@ -112,41 +113,36 @@ const AIQTPAgent = () => {
     setIsProcessing(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qaqi-agent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke("qaqi-agent", {
+        body: {
           action: "chat",
-          messages: messages.filter(m => m.role !== "system").map(m => ({
-            role: m.role,
-            content: m.content,
-          })).concat([{ role: "user", content: content.trim() }]),
+          messages: messages
+            .filter((m) => m.role !== "system")
+            .map((m) => ({ role: m.role, content: m.content }))
+            .concat([{ role: "user", content: content.trim() }]),
           context: {
             module: "aiqtp",
             mode: "classical",
             permissions: ["read", "write", "execute"],
-          }
-        }),
+          },
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(`AIQTP Error: ${response.status}`);
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
+      const response = (data ?? {}) as any;
 
       const assistantMessage: Message = {
         id: `msg_${Date.now()}_resp`,
         role: "assistant",
-        content: data.response || "Task executed successfully.",
+        content: response.response || "Task executed successfully.",
         timestamp: new Date(),
-        toolExecutions: data.tool_executions,
+        toolExecutions: response.tool_executions,
       };
 
-      addMessage(assistantMessage, data.model_used);
+      addMessage(assistantMessage, response.model_used);
       setStatus(prev => ({ ...prev, lastActivity: new Date() }));
 
       if (data.tool_executions?.length > 0) {
