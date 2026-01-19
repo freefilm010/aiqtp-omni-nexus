@@ -156,58 +156,51 @@ const QAQIAgent = () => {
     setIsProcessing(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qaqi-agent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke("qaqi-agent", {
+        body: {
           action: "chat",
-          messages: messages.filter(m => m.role !== "system").map(m => ({
-            role: m.role,
-            content: m.content,
-          })).concat([{ role: "user", content: content.trim() }]),
+          messages: messages
+            .filter((m) => m.role !== "system")
+            .map((m) => ({ role: m.role, content: m.content }))
+            .concat([{ role: "user", content: content.trim() }]),
           context: {
             module: "qaqi_autonomous",
             permissions: ["read", "write", "execute", "admin", "automate"],
             adminApproval: true,
-          }
-        }),
+          },
+        },
       });
 
-      if (response.status === 429) {
-        toast.error("Rate limit exceeded. Please wait a moment.");
-        throw new Error("Rate limited");
-      }
-      
-      if (response.status === 402) {
-        toast.error("Credits exhausted. Please add funds.");
-        throw new Error("Payment required");
-      }
-
-      if (!response.ok) {
-        throw new Error(`QAQI Error: ${response.status}`);
+      if (error) {
+        // Preserve existing UX for common HTTP failures
+        const msg = (error as any)?.message?.toString?.() ?? "";
+        if (msg.includes("429")) {
+          toast.error("Rate limit exceeded. Please wait a moment.");
+        }
+        if (msg.includes("402")) {
+          toast.error("Credits exhausted. Please add funds.");
+        }
+        throw error;
       }
 
-      const data = await response.json();
+      const response = (data ?? {}) as any;
 
       const assistantMessage: Message = {
         id: `msg_${Date.now()}_resp`,
         role: "assistant",
-        content: data.response || "Task executed successfully.",
+        content: response.response || "Task executed successfully.",
         timestamp: new Date(),
-        toolExecutions: data.tool_executions,
+        toolExecutions: response.tool_executions,
       };
 
-      addMessage(assistantMessage, data.model_used);
-      
-      setStatus(prev => ({ 
-        ...prev, 
+      addMessage(assistantMessage, response.model_used);
+
+      setStatus((prev) => ({
+        ...prev,
         lastActivity: new Date(),
-        toolsExecuted: prev.toolsExecuted + (data.tool_executions?.length || 0),
-        capabilities: data.capabilities || prev.capabilities,
-        version: data.qaqi_version || prev.version,
+        toolsExecuted: prev.toolsExecuted + (response.tool_executions?.length || 0),
+        capabilities: response.capabilities || prev.capabilities,
+        version: response.qaqi_version || prev.version,
       }));
 
       if (data.tool_executions?.length > 0) {

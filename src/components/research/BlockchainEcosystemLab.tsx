@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Brain,
   Sparkles,
@@ -59,27 +61,37 @@ const ECOSYSTEM_IDEAS = [
 ];
 
 export const BlockchainEcosystemLab = () => {
+  const { user } = useAuth();
   const [selectedResearch, setSelectedResearch] = useState(RESEARCH_TYPES[0].id);
   const [context, setContext] = useState('');
   const [isResearching, setIsResearching] = useState(false);
   const [researchOutput, setResearchOutput] = useState('');
 
   const runResearch = async () => {
+    if (!user) {
+      toast.error('Sign in required to run research.');
+      return;
+    }
+
     setIsResearching(true);
     setResearchOutput('');
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Missing session token');
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/blockchain-research`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             researchType: selectedResearch,
-            context: context || undefined
+            context: context || undefined,
           }),
         }
       );
