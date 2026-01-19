@@ -29,40 +29,61 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication required
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    const parsedBody = await req.json().catch(() => ({ action: null, params: null }));
+    const action = parsedBody?.action;
+    const params = parsedBody?.params;
+
+    if (!action) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Missing action" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const apiKey = Deno.env.get('COINGECKO_API_KEY');
+    const baseUrl = apiKey ? COINGECKO_PRO_API : COINGECKO_API;
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (apiKey) headers['x-cg-pro-api-key'] = apiKey;
+
+    // Allow public read actions so home/marketing pages can show live prices.
+    // Writes (DB sync) remain gated by authentication.
+    const publicActions = new Set(['get_price', 'get_global', 'search_coins', 'get_exchanges', 'sync_trending']);
+    const isPublicAction = publicActions.has(action);
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+    const authHeader = req.headers.get('Authorization') ?? '';
+    let isAuthedUser = false;
+
+    // Only attempt user verification when needed for writes, or when a real user token is present.
+    if (!isPublicAction || authHeader.includes('.') ) {
+      if (authHeader) {
+        const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+
+        const { data: { user }, error: authError } = await authClient.auth.getUser();
+        isAuthedUser = Boolean(user) && !authError;
+      }
+    }
+
+    if (!isPublicAction && !isAuthedUser) {
       return new Response(
         JSON.stringify({ success: false, error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const { data: { user }, error: authError } = await authClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Use service role for database operations after auth verified
+    // Service role client is used for DB writes after auth is verified.
+    // NOTE: write operations are still gated by isAuthedUser.
     const supabase = createClient(
       supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { action, params } = await req.json();
-    const apiKey = Deno.env.get('COINGECKO_API_KEY');
-    const baseUrl = apiKey ? COINGECKO_PRO_API : COINGECKO_API;
-    const headers: Record<string, string> = { 'Accept': 'application/json' };
-    if (apiKey) headers['x-cg-pro-api-key'] = apiKey;
+    const canWrite = isAuthedUser;
+
 
     console.log(`Market data sync action: ${action}`);
 
@@ -217,17 +238,19 @@ serve(async (req) => {
         if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
         const prices = await response.json();
 
-        // Update database with fresh prices
-        for (const [coinId, data] of Object.entries(prices) as [string, any][]) {
-          await supabase.rpc('update_market_price', {
-            p_coin_id: coinId,
-            p_price_usd: data.usd,
-            p_price_btc: data.btc,
-            p_price_eth: data.eth,
-            p_market_cap: data.usd_market_cap,
-            p_volume: data.usd_24h_vol,
-            p_change_24h: data.usd_24h_change
-          });
+        // Update database with fresh prices (only when called by an authenticated user)
+        if (canWrite) {
+          for (const [coinId, data] of Object.entries(prices) as [string, any][]) {
+            await supabase.rpc('update_market_price', {
+              p_coin_id: coinId,
+              p_price_usd: data.usd,
+              p_price_btc: data.btc,
+              p_price_eth: data.eth,
+              p_market_cap: data.usd_market_cap,
+              p_volume: data.usd_24h_vol,
+              p_change_24h: data.usd_24h_change
+            });
+          }
         }
 
         return new Response(JSON.stringify({ success: true, prices }), {

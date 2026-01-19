@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface MarketCoin {
   id: string;
@@ -44,6 +45,9 @@ export function useRealMarketData(options?: {
     refreshInterval = 30000 
   } = options || {};
 
+  const { user } = useAuth();
+  const seedAttemptedRef = useRef(false);
+
   const [data, setData] = useState<CombinedMarketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,37 +57,54 @@ export function useRealMarketData(options?: {
     try {
       setError(null);
 
-      // Build query for coins with prices
-      let query = supabase
-        .from('market_prices')
-        .select(`
-          *,
-          market_coins:coin_id (
-            id,
-            symbol,
-            name,
-            thumb_url,
-            market_cap_rank
-          )
-        `)
-        .order('market_cap_rank', { ascending: true, nullsFirst: false })
-        .limit(limit);
+      const runQuery = async () => {
+        // Build query for coins with prices
+        let query = supabase
+          .from('market_prices')
+          .select(`
+            *,
+            market_coins:coin_id (
+              id,
+              symbol,
+              name,
+              thumb_url,
+              market_cap_rank
+            )
+          `)
+          .order('market_cap_rank', { ascending: true, nullsFirst: false })
+          .limit(limit);
 
-      // Filter by symbols if provided
-      if (symbols?.length) {
-        const { data: coinIds } = await supabase
-          .from('market_coins')
-          .select('id')
-          .in('symbol', symbols.map(s => s.toUpperCase()));
-        
-        if (coinIds?.length) {
-          query = query.in('coin_id', coinIds.map(c => c.id));
+        // Filter by symbols if provided
+        if (symbols?.length) {
+          const { data: coinIds } = await supabase
+            .from('market_coins')
+            .select('id')
+            .in('symbol', symbols.map((s) => s.toUpperCase()));
+
+          if (coinIds?.length) {
+            query = query.in('coin_id', coinIds.map((c) => c.id));
+          }
+        }
+
+        return await query;
+      };
+
+      let { data: prices, error: fetchError } = await runQuery();
+      if (fetchError) throw fetchError;
+
+      // Auto-seed the DB once for authenticated users if empty.
+      if ((prices?.length ?? 0) === 0 && user && !seedAttemptedRef.current) {
+        seedAttemptedRef.current = true;
+        try {
+          await supabase.functions.invoke('market-data-sync', {
+            body: { action: 'sync_market_prices', params: { pages: 2, perPage: 250 } },
+          });
+          ({ data: prices, error: fetchError } = await runQuery());
+          if (fetchError) throw fetchError;
+        } catch {
+          // If seeding fails, we still return empty data gracefully.
         }
       }
-
-      const { data: prices, error: fetchError } = await query;
-
-      if (fetchError) throw fetchError;
 
       // Transform data
       const combined: CombinedMarketData[] = (prices || []).map((p: any) => ({
@@ -92,7 +113,7 @@ export function useRealMarketData(options?: {
         symbol: p.market_coins?.symbol || 'UNKNOWN',
         name: p.market_coins?.name || 'Unknown',
         thumb_url: p.market_coins?.thumb_url,
-        market_cap_rank: p.market_coins?.market_cap_rank || p.market_cap_rank
+        market_cap_rank: p.market_coins?.market_cap_rank || p.market_cap_rank,
       }));
 
       setData(combined);
@@ -103,7 +124,7 @@ export function useRealMarketData(options?: {
       setError(err.message);
       setLoading(false);
     }
-  }, [symbols, limit]);
+  }, [symbols, limit, user]);
 
   // Initial fetch
   useEffect(() => {
