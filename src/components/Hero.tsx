@@ -2,32 +2,36 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity, ChevronDown, Wifi, BarChart2, Crosshair, Minus, TrendingDown, Square, Circle, PenTool, Search, FileCode, FlaskConical, SlidersHorizontal, Eye, Maximize2, Layout, Terminal, Cpu, LineChart, CandlestickChart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useBinanceTickers } from "@/hooks/useBinanceTickers";
 
-// TradingView-style Live Price Ticker
+// TradingView-style Live Price Ticker (real-time via public exchange websocket)
 const LiveTicker = () => {
-  const [prices, setPrices] = useState([
-    { symbol: 'BTCUSD', price: 96847.32, change: 2.34, positive: true },
-    { symbol: 'ETHUSD', price: 3421.56, change: -0.87, positive: false },
-    { symbol: 'SOLUSD', price: 187.43, change: 5.21, positive: true },
-    { symbol: 'XRPUSD', price: 2.31, change: 1.45, positive: true },
-    { symbol: 'ADAUSD', price: 1.02, change: -2.12, positive: false },
-    { symbol: 'AVAXUSD', price: 38.92, change: 4.28, positive: true },
-    { symbol: 'LINKUSD', price: 23.41, change: -0.34, positive: false },
-    { symbol: 'DOGEUSD', price: 0.3847, change: 3.67, positive: true },
-  ]);
+  const symbols = [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "XRPUSDT",
+    "ADAUSDT",
+    "AVAXUSDT",
+    "LINKUSDT",
+    "DOGEUSDT",
+  ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPrices(prev => prev.map(p => ({
-        ...p,
-        price: p.price * (1 + (Math.random() - 0.5) * 0.001),
-        change: p.change + (Math.random() - 0.5) * 0.1,
-        positive: p.change + (Math.random() - 0.5) * 0.1 > 0
-      })));
-    }, 1500);
-    return () => clearInterval(interval);
-  }, []);
+  const { tickers } = useBinanceTickers(symbols);
+
+  const prices = symbols.map((s) => {
+    const t = tickers[s];
+    const change = t?.priceChangePercent ?? 0;
+    const positive = change >= 0;
+    return {
+      symbol: s.replace("USDT", "USD"),
+      price: t?.lastPrice ?? 0,
+      change,
+      positive,
+      ready: Boolean(t),
+    };
+  });
 
   return (
     <div className="absolute top-0 left-0 right-0 h-7 bg-[hsl(223,18%,9%)] border-b border-[hsl(222,14%,17%)] overflow-hidden z-20">
@@ -36,10 +40,12 @@ const LiveTicker = () => {
           <div key={i} className="flex items-center px-3 h-full border-r border-[hsl(222,14%,17%)] gap-2">
             <span className="font-mono text-[11px] font-medium text-foreground/90">{ticker.symbol}</span>
             <span className={`font-mono text-[11px] font-semibold ${ticker.positive ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
-              {ticker.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {ticker.ready
+                ? ticker.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                : "—"}
             </span>
             <span className={`font-mono text-[10px] ${ticker.positive ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
-              {ticker.positive ? '+' : ''}{ticker.change.toFixed(2)}%
+              {ticker.ready ? `${ticker.positive ? '+' : ''}${ticker.change.toFixed(2)}%` : ""}
             </span>
           </div>
         ))}
