@@ -234,27 +234,42 @@ const BottomToolbar = () => (
   </div>
 );
 
-// AI Bot Minion
-const AIBotMinion = ({ className, delay = 0, color = 'purple' }: { className?: string; delay?: number; color?: 'purple' | 'gold' | 'green' | 'blue' }) => {
-  const colorMap = {
-    purple: { bg: 'from-[hsl(270,91%,65%)] to-[hsl(224,100%,58%)]', glow: '270,91%,65%' },
-    gold: { bg: 'from-[hsl(43,96%,56%)] to-[hsl(38,92%,50%)]', glow: '43,96%,56%' },
-    green: { bg: 'from-[hsl(162,91%,32%)] to-[hsl(188,94%,45%)]', glow: '162,91%,32%' },
-    blue: { bg: 'from-[hsl(224,100%,58%)] to-[hsl(270,91%,65%)]', glow: '224,100%,58%' }
-  };
-
-  return (
-    <div className={`absolute opacity-40 hover:opacity-70 transition-opacity ${className}`} style={{ animationDelay: `${delay}s` }}>
-      <div className="relative animate-float">
-        <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${colorMap[color].bg} flex items-center justify-center`}
-          style={{ boxShadow: `0 0 10px hsl(${colorMap[color].glow}, 0.4)` }}>
-          <Bot className="w-3 h-3 text-white" />
-        </div>
-        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[hsl(162,91%,32%)] animate-pulse" />
-      </div>
-    </div>
-  );
-};
+// Terminal Grid Background - Professional Next-Gen Aesthetic
+const TerminalGridBackground = () => (
+  <>
+    {/* Subtle grid pattern */}
+    <svg className="absolute inset-0 w-full h-full opacity-[0.03] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="terminalGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="hsl(220,15%,60%)" strokeWidth="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#terminalGrid)" />
+    </svg>
+    
+    {/* Horizontal scan lines */}
+    <div className="absolute inset-0 pointer-events-none opacity-[0.015]" style={{
+      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(220,15%,50%) 2px, hsl(220,15%,50%) 3px)',
+      backgroundSize: '100% 4px'
+    }} />
+    
+    {/* Corner accent lines - top left */}
+    <div className="absolute top-0 left-0 w-32 h-px bg-gradient-to-r from-[hsl(224,100%,58%,0.5)] to-transparent" />
+    <div className="absolute top-0 left-0 w-px h-32 bg-gradient-to-b from-[hsl(224,100%,58%,0.5)] to-transparent" />
+    
+    {/* Corner accent lines - top right */}
+    <div className="absolute top-0 right-0 w-32 h-px bg-gradient-to-l from-[hsl(270,91%,65%,0.5)] to-transparent" />
+    <div className="absolute top-0 right-0 w-px h-32 bg-gradient-to-b from-[hsl(270,91%,65%,0.5)] to-transparent" />
+    
+    {/* Corner accent lines - bottom left */}
+    <div className="absolute bottom-0 left-0 w-32 h-px bg-gradient-to-r from-[hsl(162,91%,32%,0.5)] to-transparent" />
+    <div className="absolute bottom-0 left-0 w-px h-32 bg-gradient-to-t from-[hsl(162,91%,32%,0.5)] to-transparent" />
+    
+    {/* Corner accent lines - bottom right */}
+    <div className="absolute bottom-0 right-0 w-32 h-px bg-gradient-to-l from-[hsl(43,96%,56%,0.4)] to-transparent" />
+    <div className="absolute bottom-0 right-0 w-px h-32 bg-gradient-to-t from-[hsl(43,96%,56%,0.4)] to-transparent" />
+  </>
+);
 
 const Hero = () => {
   const miniCharts = [
@@ -267,25 +282,19 @@ const Hero = () => {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[hsl(225,20%,7%)]">
-      {/* Award-Winning Mesh Gradient Background */}
-      <div className="absolute inset-0 bg-mesh-hero opacity-80" />
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[hsl(225,20%,6%)]">
+      {/* Professional Terminal Grid Background */}
+      <TerminalGridBackground />
+      
+      {/* Subtle vignette effect */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse at center, transparent 0%, hsl(225,20%,4%) 100%)'
+      }} />
       
       {/* TradingView-style Interface */}
       <LiveTicker />
       <LeftToolbar />
       <BottomToolbar />
-      
-      {/* Subtle Ambient Glow with Breathing Animation */}
-      <div className="absolute top-[20%] right-[10%] w-[400px] h-[400px] bg-[hsl(355,88%,58%,0.04)] rounded-full blur-[150px] animate-breathe" style={{ animationDuration: '8s' }} />
-      <div className="absolute bottom-[30%] left-[10%] w-[350px] h-[350px] bg-[hsl(224,100%,58%,0.04)] rounded-full blur-[120px] animate-breathe" style={{ animationDuration: '10s', animationDelay: '2s' }} />
-      <div className="absolute top-[50%] left-[50%] w-[500px] h-[500px] bg-[hsl(270,91%,65%,0.03)] rounded-full blur-[180px] animate-breathe" style={{ animationDuration: '12s', animationDelay: '4s' }} />
-      
-      {/* AI Bot Minions with Enhanced Animations */}
-      <AIBotMinion className="top-[12%] left-[8%]" delay={0} color="purple" />
-      <AIBotMinion className="top-[15%] right-[12%]" delay={0.5} color="gold" />
-      <AIBotMinion className="bottom-[25%] left-[12%]" delay={1} color="green" />
-      <AIBotMinion className="bottom-[20%] right-[8%]" delay={1.5} color="blue" />
 
       {/* Main Content - Centered */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 pt-16 pb-12 ml-11">
