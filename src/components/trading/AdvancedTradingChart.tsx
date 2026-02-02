@@ -2,14 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   TrendingUp,
   TrendingDown,
@@ -22,8 +14,11 @@ import {
   PenTool,
   Ruler,
   Type,
-  Shapes
+  Shapes,
+  Loader2
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useBinanceTickers } from "@/hooks/useBinanceTickers";
 
 interface CandleData {
   time: number;
@@ -34,50 +29,107 @@ interface CandleData {
   volume: number;
 }
 
-const generateCandleData = (basePrice: number, count: number): CandleData[] => {
-  const data: CandleData[] = [];
-  let price = basePrice;
-  const now = Date.now();
-  
-  for (let i = count - 1; i >= 0; i--) {
-    const volatility = price * 0.02;
-    const open = price;
-    const change = (Math.random() - 0.48) * volatility;
-    const close = open + change;
-    const high = Math.max(open, close) + Math.random() * volatility * 0.5;
-    const low = Math.min(open, close) - Math.random() * volatility * 0.5;
-    
-    data.push({
-      time: now - i * 60000 * 15,
-      open,
-      high,
-      low,
-      close,
-      volume: Math.random() * 1000000 + 500000
-    });
-    
-    price = close;
-  }
-  
-  return data;
-};
-
 interface AdvancedChartProps {
   symbol?: string;
   basePrice?: number;
 }
 
-const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: AdvancedChartProps) => {
-  const [candleData, setCandleData] = useState<CandleData[]>(() => generateCandleData(basePrice, 100));
+// Map display symbol to Binance symbol
+const symbolMap: Record<string, string> = {
+  'BTC/USDT': 'BTCUSDT',
+  'ETH/USDT': 'ETHUSDT',
+  'SOL/USDT': 'SOLUSDT',
+  'XRP/USDT': 'XRPUSDT',
+  'ADA/USDT': 'ADAUSDT',
+  'AVAX/USDT': 'AVAXUSDT',
+  'LINK/USDT': 'LINKUSDT',
+  'DOGE/USDT': 'DOGEUSDT',
+};
+
+// Map display symbol to CoinGecko ID
+const coinGeckoMap: Record<string, string> = {
+  'BTC/USDT': 'bitcoin',
+  'ETH/USDT': 'ethereum',
+  'SOL/USDT': 'solana',
+  'XRP/USDT': 'ripple',
+  'ADA/USDT': 'cardano',
+  'AVAX/USDT': 'avalanche-2',
+  'LINK/USDT': 'chainlink',
+  'DOGE/USDT': 'dogecoin',
+};
+
+const AdvancedTradingChart = ({ symbol = "BTC/USDT" }: AdvancedChartProps) => {
+  const [candleData, setCandleData] = useState<CandleData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("15m");
   const [chartType, setChartType] = useState<'candle' | 'line' | 'bar'>('candle');
   const [indicators, setIndicators] = useState<string[]>(['MA20', 'Volume']);
   const [drawingTool, setDrawingTool] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const binanceSymbol = symbolMap[symbol] || 'BTCUSDT';
+  const coinGeckoId = coinGeckoMap[symbol] || 'bitcoin';
+  const { tickers } = useBinanceTickers([binanceSymbol]);
+  const liveTicker = tickers[binanceSymbol];
+
   const latestCandle = candleData[candleData.length - 1];
   const previousCandle = candleData[candleData.length - 2];
-  const priceChange = latestCandle ? ((latestCandle.close - previousCandle?.close) / previousCandle?.close * 100) : 0;
+  const priceChange = latestCandle && previousCandle
+    ? ((latestCandle.close - previousCandle.close) / previousCandle.close * 100)
+    : 0;
+
+  // Fetch real OHLCV data from database
+  useEffect(() => {
+    const fetchOHLCV = async () => {
+      setLoading(true);
+      try {
+        // Try market_ohlcv table first
+        const { data, error } = await supabase
+          .from('market_ohlcv')
+          .select('*')
+          .eq('coin_id', coinGeckoId)
+          .order('open_time', { ascending: true })
+          .limit(100);
+
+        if (!error && data && data.length > 0) {
+          const mapped: CandleData[] = data.map(c => ({
+            time: new Date(c.open_time).getTime(),
+            open: Number(c.open),
+            high: Number(c.high),
+            low: Number(c.low),
+            close: Number(c.close),
+            volume: 50000 + (Number(c.close) * 100) // Approximate volume
+          }));
+          setCandleData(mapped);
+        } else {
+          // No data available - show empty state
+          setCandleData([]);
+        }
+      } catch (err) {
+        console.error('Error fetching OHLCV:', err);
+        setCandleData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOHLCV();
+  }, [coinGeckoId, timeframe]);
+
+  // Update last candle with live price
+  useEffect(() => {
+    if (!liveTicker || candleData.length === 0) return;
+    
+    setCandleData(prev => {
+      const newData = [...prev];
+      const lastCandle = { ...newData[newData.length - 1] };
+      lastCandle.close = liveTicker.lastPrice;
+      lastCandle.high = Math.max(lastCandle.high, liveTicker.lastPrice);
+      lastCandle.low = Math.min(lastCandle.low, liveTicker.lastPrice);
+      newData[newData.length - 1] = lastCandle;
+      return newData;
+    });
+  }, [liveTicker?.lastPrice]);
 
   // Calculate indicators
   const calculateMA = (period: number): number[] => {
@@ -94,7 +146,7 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: Advanc
   // Draw chart on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || candleData.length === 0) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -107,8 +159,6 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: Advanc
     // Clear canvas
     ctx.fillStyle = 'hsl(var(--background))';
     ctx.fillRect(0, 0, width, height);
-
-    if (candleData.length === 0) return;
 
     // Calculate price range
     const prices = candleData.flatMap(c => [c.high, c.low]);
@@ -222,7 +272,7 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: Advanc
     if (latestCandle) {
       const currentY = ((maxPrice - latestCandle.close) / priceRange) * chartHeight;
       ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = latestCandle.close >= previousCandle?.close ? '#22c55e' : '#ef4444';
+      ctx.strokeStyle = latestCandle.close >= (previousCandle?.close || 0) ? '#22c55e' : '#ef4444';
       ctx.beginPath();
       ctx.moveTo(0, currentY);
       ctx.lineTo(width - 60, currentY);
@@ -230,7 +280,7 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: Advanc
       ctx.setLineDash([]);
 
       // Price tag
-      ctx.fillStyle = latestCandle.close >= previousCandle?.close ? '#22c55e' : '#ef4444';
+      ctx.fillStyle = latestCandle.close >= (previousCandle?.close || 0) ? '#22c55e' : '#ef4444';
       ctx.fillRect(width - 58, currentY - 10, 58, 20);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 10px monospace';
@@ -239,25 +289,6 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: Advanc
     }
 
   }, [candleData, chartType, indicators, ma20, ma50, latestCandle, previousCandle]);
-
-  // Real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCandleData(prev => {
-        const newData = [...prev];
-        const lastCandle = { ...newData[newData.length - 1] };
-        const change = (Math.random() - 0.5) * lastCandle.close * 0.002;
-        lastCandle.close += change;
-        lastCandle.high = Math.max(lastCandle.high, lastCandle.close);
-        lastCandle.low = Math.min(lastCandle.low, lastCandle.close);
-        lastCandle.volume += Math.random() * 10000;
-        newData[newData.length - 1] = lastCandle;
-        return newData;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const toggleIndicator = (indicator: string) => {
     setIndicators(prev =>
@@ -274,13 +305,20 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: Advanc
           <div className="flex items-center gap-4">
             <CardTitle className="text-xl">{symbol}</CardTitle>
             <div className="flex items-center gap-2">
-              <span className={`text-2xl font-bold ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                ${latestCandle?.close.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </span>
-              <Badge variant={priceChange >= 0 ? 'default' : 'destructive'}>
-                {priceChange >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-                {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
-              </Badge>
+              {liveTicker ? (
+                <>
+                  <span className={`text-2xl font-bold ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    ${liveTicker.lastPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                  <Badge variant={liveTicker.priceChangePercent >= 0 ? 'default' : 'destructive'}>
+                    {liveTicker.priceChangePercent >= 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                    {liveTicker.priceChangePercent >= 0 ? '+' : ''}{liveTicker.priceChangePercent.toFixed(2)}%
+                  </Badge>
+                  <Badge variant="outline" className="text-green-500 border-green-500 text-[10px]">LIVE</Badge>
+                </>
+              ) : (
+                <span className="text-2xl font-bold text-muted-foreground">--</span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -369,13 +407,25 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT", basePrice = 67500 }: Advanc
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <canvas
-          ref={canvasRef}
-          width={900}
-          height={500}
-          className="w-full h-[500px]"
-          style={{ imageRendering: 'crisp-edges' }}
-        />
+        {loading ? (
+          <div className="w-full h-[500px] flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : candleData.length === 0 ? (
+          <div className="w-full h-[500px] flex flex-col items-center justify-center text-muted-foreground">
+            <BarChart3 className="h-16 w-16 mb-4 opacity-30" />
+            <p className="font-medium">No Chart Data Available</p>
+            <p className="text-sm">OHLCV data will appear once synced from market feeds.</p>
+          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            width={900}
+            height={500}
+            className="w-full h-[500px]"
+            style={{ imageRendering: 'crisp-edges' }}
+          />
+        )}
       </CardContent>
     </Card>
   );

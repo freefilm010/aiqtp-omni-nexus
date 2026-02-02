@@ -56,23 +56,35 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization') ?? '';
     let isAuthedUser = false;
 
-    // Only attempt user verification when needed for writes, or when a real user token is present.
-    if (!isPublicAction || authHeader.includes('.') ) {
-      if (authHeader) {
+    // Only verify auth for write operations. Public actions pass through without auth.
+    if (!isPublicAction) {
+      if (authHeader && authHeader !== `Bearer ${supabaseAnonKey}`) {
         const authClient = createClient(supabaseUrl, supabaseAnonKey, {
           global: { headers: { Authorization: authHeader } },
         });
-
         const { data: { user }, error: authError } = await authClient.auth.getUser();
         isAuthedUser = Boolean(user) && !authError;
       }
-    }
 
-    if (!isPublicAction && !isAuthedUser) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!isAuthedUser) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } else {
+      // For public actions, attempt auth only if a real user JWT is present
+      if (authHeader && authHeader !== `Bearer ${supabaseAnonKey}`) {
+        try {
+          const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: authHeader } },
+          });
+          const { data: { user }, error: authError } = await authClient.auth.getUser();
+          isAuthedUser = Boolean(user) && !authError;
+        } catch {
+          // Ignore auth errors for public actions
+        }
+      }
     }
 
     // Service role client is used for DB writes after auth is verified.

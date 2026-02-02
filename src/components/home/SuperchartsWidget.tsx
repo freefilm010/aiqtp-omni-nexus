@@ -97,7 +97,7 @@ const SuperchartsWidget = () => {
           high: Number(c.high),
           low: Number(c.low),
           close: Number(c.close),
-          volume: 50 + Math.random() * 100, // Volume not in this table
+          volume: Number(c.volume) || 50,
           isBull: Number(c.close) > Number(c.open)
         }));
         setCandles(mapped);
@@ -105,35 +105,8 @@ const SuperchartsWidget = () => {
         return;
       }
 
-      // Generate realistic candles based on current price
-      const basePrice = price || (activeSymbol === 'BTC' ? 93500 : activeSymbol === 'ETH' ? 3200 : 180);
-      const volatility = activeSymbol === 'BTC' ? 0.015 : activeSymbol === 'ETH' ? 0.02 : 0.03;
-      
-      const generatedCandles: Candle[] = [];
-      let currentPrice = basePrice * (1 - volatility * 20); // Start lower to show trend
-      
-      for (let i = 0; i < 40; i++) {
-        const trend = Math.random() > 0.45 ? 1 : -1; // Slight bullish bias
-        const range = currentPrice * volatility * (0.5 + Math.random());
-        
-        const open = currentPrice;
-        const close = currentPrice + (trend * range * (0.3 + Math.random() * 0.7));
-        const high = Math.max(open, close) + Math.abs(range * Math.random() * 0.3);
-        const low = Math.min(open, close) - Math.abs(range * Math.random() * 0.3);
-        
-        generatedCandles.push({
-          open,
-          high,
-          low,
-          close,
-          volume: 50 + Math.random() * 150,
-          isBull: close > open
-        });
-        
-        currentPrice = close;
-      }
-      
-      setCandles(generatedCandles);
+      // No cached OHLCV data - show empty state (no simulation)
+      setCandles([]);
     } catch (err) {
       console.error('Error fetching OHLCV data:', err);
       setCandles([]);

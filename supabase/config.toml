@@ -13,6 +13,9 @@ verify_jwt = false
 [functions.aiqtp-agent]
 verify_jwt = false
 
+[functions.blockchain-research]
+verify_jwt = false
+
 [functions.claude-assistant]
 verify_jwt = false
 
@@ -22,13 +25,25 @@ verify_jwt = false
 [functions.generate-strategy]
 verify_jwt = false
 
+[functions.market-data-sync]
+verify_jwt = false
+
 [functions.ml-predictions]
 verify_jwt = false
 
 [functions.qaqi-agent]
 verify_jwt = false
 
+[functions.qtc-network]
+verify_jwt = false
+
 [functions.quantum-compute]
+verify_jwt = false
+
+[functions.quwallet]
+verify_jwt = false
+
+[functions.solana-operations]
 verify_jwt = false
 
 [functions.stripe-checkout]
@@ -37,14 +52,5 @@ verify_jwt = false
 [functions.stripe-webhook]
 verify_jwt = false
 
-[functions.quwallet]
-verify_jwt = false
-
-[functions.qtc-network]
-verify_jwt = false
-
-[functions.market-data-sync]
-verify_jwt = false
-
-[functions.solana-operations]
+[functions.trade-execute]
 verify_jwt = false
