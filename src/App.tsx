@@ -60,6 +60,7 @@ const PopoutTool = lazy(() => import("./pages/PopoutTool"));
 const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
+const IncomeFactory = lazy(() => import("./pages/IncomeFactory"));
 
 const queryClient = new QueryClient();
 
@@ -415,6 +416,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <DataEcosystem />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/income-factory"
+                        element={
+                          <ProtectedRoute>
+                            <IncomeFactory />
                           </ProtectedRoute>
                         }
                       />
