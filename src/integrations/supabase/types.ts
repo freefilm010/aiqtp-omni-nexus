@@ -592,6 +592,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bot_clones_master_strategy_id_fkey"
+            columns: ["master_strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bot_clones_rental_id_fkey"
             columns: ["rental_id"]
             isOneToOne: false
@@ -652,6 +659,13 @@ export type Database = {
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_training_queue_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2206,6 +2220,13 @@ export type Database = {
             referencedRelation: "ai_strategies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "graduation_tests_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       heatmap_data: {
@@ -3079,6 +3100,13 @@ export type Database = {
             columns: ["linked_strategy_id"]
             isOneToOne: false
             referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operators_linked_strategy_id_fkey"
+            columns: ["linked_strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
             referencedColumns: ["id"]
           },
           {
@@ -4174,6 +4202,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown
+          severity: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown
+          severity?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       security_logs: {
         Row: {
           created_at: string
@@ -4520,6 +4581,13 @@ export type Database = {
             referencedRelation: "ai_strategies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_strategy"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       strategy_rentals: {
@@ -4565,6 +4633,13 @@ export type Database = {
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_rentals_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
             referencedColumns: ["id"]
           },
         ]
@@ -5141,7 +5216,78 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ai_strategies_public: {
+        Row: {
+          admin_approved: boolean | null
+          backtest_count: number | null
+          code: string | null
+          code_protected: boolean | null
+          consistency_score: number | null
+          created_at: string | null
+          creator_earnings: number | null
+          creator_profit_share: number | null
+          description: string | null
+          factors: string[] | null
+          graduation_date: string | null
+          id: string | null
+          is_available_for_rent: boolean | null
+          is_graduated: boolean | null
+          name: string | null
+          profitability_score: number | null
+          rental_price_monthly: number | null
+          status: Database["public"]["Enums"]["strategy_status"] | null
+          total_rentals: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_approved?: boolean | null
+          backtest_count?: number | null
+          code?: never
+          code_protected?: boolean | null
+          consistency_score?: number | null
+          created_at?: string | null
+          creator_earnings?: number | null
+          creator_profit_share?: number | null
+          description?: string | null
+          factors?: string[] | null
+          graduation_date?: string | null
+          id?: string | null
+          is_available_for_rent?: boolean | null
+          is_graduated?: boolean | null
+          name?: string | null
+          profitability_score?: number | null
+          rental_price_monthly?: number | null
+          status?: Database["public"]["Enums"]["strategy_status"] | null
+          total_rentals?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_approved?: boolean | null
+          backtest_count?: number | null
+          code?: never
+          code_protected?: boolean | null
+          consistency_score?: number | null
+          created_at?: string | null
+          creator_earnings?: number | null
+          creator_profit_share?: number | null
+          description?: string | null
+          factors?: string[] | null
+          graduation_date?: string | null
+          id?: string | null
+          is_available_for_rent?: boolean | null
+          is_graduated?: boolean | null
+          name?: string | null
+          profitability_score?: number | null
+          rental_price_monthly?: number | null
+          status?: Database["public"]["Enums"]["strategy_status"] | null
+          total_rentals?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_operator_with_wallet: {
@@ -5177,6 +5323,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: { p_details?: Json; p_event_type: string; p_severity?: string }
+        Returns: string
       }
       process_profit_distribution: {
         Args: { p_revenue_id: string }
