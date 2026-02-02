@@ -3125,6 +3125,87 @@ export type Database = {
           },
         ]
       }
+      paper_portfolio: {
+        Row: {
+          avg_price: number
+          created_at: string
+          id: string
+          quantity: number
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_price?: number
+          created_at?: string
+          id?: string
+          quantity?: number
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_price?: number
+          created_at?: string
+          id?: string
+          quantity?: number
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      paper_trades: {
+        Row: {
+          created_at: string
+          executed_at: string | null
+          filled_price: number | null
+          filled_quantity: number | null
+          id: string
+          order_type: string
+          price: number | null
+          quantity: number
+          side: string
+          status: string
+          stop_price: number | null
+          symbol: string
+          time_in_force: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          executed_at?: string | null
+          filled_price?: number | null
+          filled_quantity?: number | null
+          id: string
+          order_type: string
+          price?: number | null
+          quantity: number
+          side: string
+          status?: string
+          stop_price?: number | null
+          symbol: string
+          time_in_force?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          executed_at?: string | null
+          filled_price?: number | null
+          filled_quantity?: number | null
+          id?: string
+          order_type?: string
+          price?: number | null
+          quantity?: number
+          side?: string
+          status?: string
+          stop_price?: number | null
+          symbol?: string
+          time_in_force?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_processors: {
         Row: {
           config: Json | null
@@ -5005,6 +5086,51 @@ export type Database = {
           },
         ]
       }
+      trade_logs: {
+        Row: {
+          action: string
+          created_at: string
+          error_message: string | null
+          exchange_account_id: string | null
+          exchange_order_id: string | null
+          id: string
+          price: number | null
+          quantity: number | null
+          side: string | null
+          status: string
+          symbol: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_message?: string | null
+          exchange_account_id?: string | null
+          exchange_order_id?: string | null
+          id?: string
+          price?: number | null
+          quantity?: number | null
+          side?: string | null
+          status: string
+          symbol?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          exchange_account_id?: string | null
+          exchange_order_id?: string | null
+          id?: string
+          price?: number | null
+          quantity?: number | null
+          side?: string | null
+          status?: string
+          symbol?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           created_at: string
@@ -5357,6 +5483,15 @@ export type Database = {
           p_price_eth?: number
           p_price_usd: number
           p_volume?: number
+        }
+        Returns: undefined
+      }
+      update_paper_portfolio: {
+        Args: {
+          p_amount_change: number
+          p_price: number
+          p_symbol: string
+          p_user_id: string
         }
         Returns: undefined
       }

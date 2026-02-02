@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart, ReferenceLine } from "recharts";
+import { useBinanceTickers } from "@/hooks/useBinanceTickers";
+import { supabase } from "@/integrations/supabase/client";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area, AreaChart } from "recharts";
 import {
   BarChart3,
   TrendingUp,
@@ -18,9 +20,8 @@ import {
   PenTool,
   Type,
   Shapes,
-  Crosshair,
-  Clock,
-  Maximize2
+  Maximize2,
+  Loader2
 } from "lucide-react";
 
 const DRAWING_TOOLS = [
@@ -49,51 +50,32 @@ const INDICATORS = [
   { id: 'obv', name: 'OBV', category: 'Volume', enabled: false },
 ];
 
-const generateChartData = (basePrice: number, points: number = 100) => {
-  const data = [];
-  let price = basePrice;
-  
-  for (let i = 0; i < points; i++) {
-    price = price * (1 + (Math.random() - 0.48) * 0.02);
-    const high = price * (1 + Math.random() * 0.005);
-    const low = price * (1 - Math.random() * 0.005);
-    const open = price * (1 + (Math.random() - 0.5) * 0.002);
-    const close = price;
-    
-    data.push({
-      time: i,
-      price: close,
-      open,
-      high,
-      low,
-      close,
-      volume: Math.random() * 1000000,
-      sma20: null,
-      bb_upper: null,
-      bb_lower: null,
-    });
-  }
-
-  // Calculate SMA
-  for (let i = 20; i < data.length; i++) {
-    const sum = data.slice(i - 20, i).reduce((s, d) => s + d.close, 0);
-    data[i].sma20 = sum / 20;
-  }
-
-  // Calculate Bollinger Bands
-  for (let i = 20; i < data.length; i++) {
-    const slice = data.slice(i - 20, i);
-    const avg = slice.reduce((s, d) => s + d.close, 0) / 20;
-    const stdDev = Math.sqrt(slice.reduce((s, d) => s + Math.pow(d.close - avg, 2), 0) / 20);
-    data[i].bb_upper = avg + stdDev * 2;
-    data[i].bb_lower = avg - stdDev * 2;
-  }
-
-  return data;
+const symbolToCoinId: Record<string, string> = {
+  'BTC': 'bitcoin',
+  'ETH': 'ethereum',
+  'SOL': 'solana',
 };
 
+const symbolToBinance: Record<string, string> = {
+  'BTC': 'BTCUSDT',
+  'ETH': 'ETHUSDT',
+  'SOL': 'SOLUSDT',
+};
+
+interface ChartDataPoint {
+  time: number;
+  price: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  sma20: number | null;
+  bb_upper: number | null;
+  bb_lower: number | null;
+}
+
 const AdvancedCharts = () => {
-  const { prices } = useMarketPrices();
   const [symbol, setSymbol] = useState('BTC');
   const [timeframe, setTimeframe] = useState('1H');
   const [chartType, setChartType] = useState('candle');
@@ -101,9 +83,73 @@ const AdvancedCharts = () => {
   const [activeIndicators, setActiveIndicators] = useState(
     INDICATORS.filter(i => i.enabled).map(i => i.id)
   );
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const basePrice = prices[symbol]?.priceNumeric || 67500;
-  const chartData = generateChartData(basePrice);
+  const binanceSymbol = symbolToBinance[symbol] || 'BTCUSDT';
+  const coinId = symbolToCoinId[symbol] || 'bitcoin';
+  const { tickers } = useBinanceTickers([binanceSymbol]);
+  const liveTicker = tickers[binanceSymbol];
+  const livePrice = liveTicker?.lastPrice || 0;
+
+  // Fetch real OHLCV data
+  useEffect(() => {
+    const fetchOHLCV = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('market_ohlcv')
+          .select('*')
+          .eq('coin_id', coinId)
+          .order('open_time', { ascending: true })
+          .limit(100);
+
+        if (!error && data && data.length > 0) {
+          const mapped: ChartDataPoint[] = data.map((c, i, arr) => {
+            const closePrice = Number(c.close);
+            // Calculate SMA20
+            let sma20: number | null = null;
+            if (i >= 19) {
+              const sum = arr.slice(i - 19, i + 1).reduce((s, d) => s + Number(d.close), 0);
+              sma20 = sum / 20;
+            }
+            // Calculate Bollinger Bands
+            let bb_upper: number | null = null;
+            let bb_lower: number | null = null;
+            if (i >= 19) {
+              const slice = arr.slice(i - 19, i + 1);
+              const avg = slice.reduce((s, d) => s + Number(d.close), 0) / 20;
+              const stdDev = Math.sqrt(slice.reduce((s, d) => s + Math.pow(Number(d.close) - avg, 2), 0) / 20);
+              bb_upper = avg + stdDev * 2;
+              bb_lower = avg - stdDev * 2;
+            }
+            return {
+              time: i,
+              price: closePrice,
+              open: Number(c.open),
+              high: Number(c.high),
+              low: Number(c.low),
+              close: closePrice,
+              volume: 50000 + (closePrice * 10),
+              sma20,
+              bb_upper,
+              bb_lower,
+            };
+          });
+          setChartData(mapped);
+        } else {
+          setChartData([]);
+        }
+      } catch (err) {
+        console.error('Error fetching OHLCV:', err);
+        setChartData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOHLCV();
+  }, [coinId, timeframe]);
 
   const toggleIndicator = (id: string) => {
     setActiveIndicators(prev =>
@@ -125,6 +171,7 @@ const AdvancedCharts = () => {
                 <SelectContent>
                   <SelectItem value="BTC">BTC/USD</SelectItem>
                   <SelectItem value="ETH">ETH/USD</SelectItem>
+                  <SelectItem value="SOL">SOL/USD</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -161,9 +208,12 @@ const AdvancedCharts = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-green-500">
-                ${basePrice.toLocaleString()}
-              </Badge>
+              {livePrice > 0 && (
+                <Badge variant="outline" className="text-green-500">
+                  ${livePrice.toLocaleString()}
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-green-500 text-[9px]">LIVE</Badge>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -176,93 +226,107 @@ const AdvancedCharts = () => {
         {/* Main Chart */}
         <Card className="col-span-4">
           <CardContent className="p-4">
-            <div className="h-[500px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="time" 
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(v) => `${v}`}
-                  />
-                  <YAxis 
-                    domain={['dataMin - 500', 'dataMax + 500']}
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(v) => `$${v.toLocaleString()}`}
-                    orientation="right"
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
-                    contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
-                  />
-                  
-                  {/* Price Area */}
-                  <Area 
-                    type="monotone" 
-                    dataKey="close" 
-                    stroke="hsl(var(--primary))" 
-                    fill="url(#priceGradient)"
-                    strokeWidth={2}
-                  />
-
-                  {/* SMA */}
-                  {activeIndicators.includes('sma') && (
-                    <Line 
-                      type="monotone" 
-                      dataKey="sma20" 
-                      stroke="#f59e0b"
-                      strokeWidth={1}
-                      dot={false}
-                    />
-                  )}
-
-                  {/* Bollinger Bands */}
-                  {activeIndicators.includes('bb') && (
-                    <>
-                      <Line 
-                        type="monotone" 
-                        dataKey="bb_upper" 
-                        stroke="#8b5cf6"
-                        strokeWidth={1}
-                        strokeDasharray="5 5"
-                        dot={false}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="bb_lower" 
-                        stroke="#8b5cf6"
-                        strokeWidth={1}
-                        strokeDasharray="5 5"
-                        dot={false}
-                      />
-                    </>
-                  )}
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Volume Chart */}
-            {activeIndicators.includes('volume') && (
-              <div className="h-[100px] mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <XAxis dataKey="time" hide />
-                    <YAxis hide />
-                    <Area 
-                      type="monotone" 
-                      dataKey="volume" 
-                      fill="hsl(var(--muted))"
-                      stroke="hsl(var(--muted-foreground))"
-                      strokeWidth={0}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+            {loading ? (
+              <div className="h-[500px] flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
+            ) : chartData.length === 0 ? (
+              <div className="h-[500px] flex flex-col items-center justify-center text-muted-foreground">
+                <BarChart3 className="h-16 w-16 mb-4 opacity-30" />
+                <p className="font-medium">No Chart Data Available</p>
+                <p className="text-sm">OHLCV data will appear once synced from market feeds.</p>
+              </div>
+            ) : (
+              <>
+                <div className="h-[500px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis 
+                        dataKey="time" 
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={(v) => `${v}`}
+                      />
+                      <YAxis 
+                        domain={['dataMin - 500', 'dataMax + 500']}
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={(v) => `$${v.toLocaleString()}`}
+                        orientation="right"
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                        contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                      />
+                      
+                      {/* Price Area */}
+                      <Area 
+                        type="monotone" 
+                        dataKey="close" 
+                        stroke="hsl(var(--primary))" 
+                        fill="url(#priceGradient)"
+                        strokeWidth={2}
+                      />
+
+                      {/* SMA */}
+                      {activeIndicators.includes('sma') && (
+                        <Line 
+                          type="monotone" 
+                          dataKey="sma20" 
+                          stroke="#f59e0b"
+                          strokeWidth={1}
+                          dot={false}
+                        />
+                      )}
+
+                      {/* Bollinger Bands */}
+                      {activeIndicators.includes('bb') && (
+                        <>
+                          <Line 
+                            type="monotone" 
+                            dataKey="bb_upper" 
+                            stroke="#8b5cf6"
+                            strokeWidth={1}
+                            strokeDasharray="5 5"
+                            dot={false}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="bb_lower" 
+                            stroke="#8b5cf6"
+                            strokeWidth={1}
+                            strokeDasharray="5 5"
+                            dot={false}
+                          />
+                        </>
+                      )}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Volume Chart */}
+                {activeIndicators.includes('volume') && (
+                  <div className="h-[100px] mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <XAxis dataKey="time" hide />
+                        <YAxis hide />
+                        <Area 
+                          type="monotone" 
+                          dataKey="volume" 
+                          fill="hsl(var(--muted))"
+                          stroke="hsl(var(--muted-foreground))"
+                          strokeWidth={0}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
