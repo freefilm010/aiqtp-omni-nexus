@@ -60,7 +60,7 @@ const PopoutTool = lazy(() => import("./pages/PopoutTool"));
 const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
-const IncomeFactory = lazy(() => import("./pages/IncomeFactory"));
+const WalletAssets = lazy(() => import("./pages/WalletAssets"));
 
 const queryClient = new QueryClient();
 
@@ -420,10 +420,10 @@ const App = () => (
                         }
                       />
                       <Route
-                        path="/income-factory"
+                        path="/wallet-assets"
                         element={
                           <ProtectedRoute>
-                            <IncomeFactory />
+                            <WalletAssets />
                           </ProtectedRoute>
                         }
                       />

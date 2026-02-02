@@ -49,7 +49,7 @@ interface StripeStats {
   oneTimePayments: number;
 }
 
-const IncomeFactory = () => {
+const WalletAssets = () => {
   const [loading, setLoading] = useState(false);
   const [stripeStats, setStripeStats] = useState<StripeStats>({
     totalRevenue: 0,
@@ -125,7 +125,7 @@ const IncomeFactory = () => {
             productName: "AIQTP Pro Subscription",
             productDescription: "Monthly access to all premium features",
             successUrl: `${window.location.origin}/payment-success?type=subscription`,
-            cancelUrl: `${window.location.origin}/income-factory`,
+            cancelUrl: `${window.location.origin}/wallet-assets`,
           }
         : {
             mode: "payment" as const,
@@ -133,7 +133,7 @@ const IncomeFactory = () => {
             productName: "Platform Credits",
             productDescription: "Add $100 trading credits to your account",
             successUrl: `${window.location.origin}/payment-success?type=credits`,
-            cancelUrl: `${window.location.origin}/income-factory`,
+            cancelUrl: `${window.location.origin}/wallet-assets`,
           };
 
       const { data, error } = await supabase.functions.invoke("stripe-checkout", {
@@ -181,7 +181,7 @@ const IncomeFactory = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                Income Factory™
+                Wallet & Assets
               </h1>
               <p className="text-muted-foreground">
                 Autonomous revenue generation • 24/7 profit engines
@@ -630,4 +630,4 @@ const IncomeFactory = () => {
   );
 };
 
-export default IncomeFactory;
+export default WalletAssets;
