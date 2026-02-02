@@ -5,7 +5,11 @@ export type FloatingWindowKey =
   | "heat_map"
   | "watchlist"
   | "token_creator"
-  | "nft_creator";
+  | "nft_creator"
+  | "advanced_charts"
+  | "unified_order_book"
+  | "order_entry"
+  | "positions_orders";
 
 export type FloatingWindowInstance = {
   id: string;
@@ -51,7 +55,29 @@ const WINDOW_CONFIG: Record<FloatingWindowKey, WindowConfig> = {
     defaultSize: { width: 980, height: 680 },
     defaultPosition: { x: 90, y: 70 },
   },
+  advanced_charts: {
+    title: "Advanced Charts",
+    defaultSize: { width: 1100, height: 720 },
+    defaultPosition: { x: 70, y: 70 },
+  },
+  unified_order_book: {
+    title: "Unified Order Book",
+    defaultSize: { width: 1100, height: 720 },
+    defaultPosition: { x: 90, y: 90 },
+  },
+  order_entry: {
+    title: "Order Entry",
+    defaultSize: { width: 520, height: 720 },
+    defaultPosition: { x: 120, y: 110 },
+  },
+  positions_orders: {
+    title: "Positions & Orders",
+    defaultSize: { width: 980, height: 620 },
+    defaultPosition: { x: 140, y: 120 },
+  },
 };
+
+const MULTI_INSTANCE_KEYS = new Set<FloatingWindowKey>(["advanced_charts"]);
 
 type FloatingWindowsContextValue = {
   windows: FloatingWindowInstance[];
@@ -98,7 +124,9 @@ export const FloatingWindowsProvider = ({ children }: { children: React.ReactNod
         const existing = prev.find((w) => w.key === key);
         const maxZ = prev.reduce((m, w) => Math.max(m, w.zIndex), 60);
 
-        if (existing) {
+        const allowMultiple = MULTI_INSTANCE_KEYS.has(key);
+
+        if (existing && !allowMultiple) {
           return prev.map((w) =>
             w.id === existing.id
               ? { ...w, minimized: false, zIndex: maxZ + 1 }
@@ -107,14 +135,18 @@ export const FloatingWindowsProvider = ({ children }: { children: React.ReactNod
         }
 
         const cfg = WINDOW_CONFIG[key];
+
+        // If multiple instances are allowed, cascade windows so they don't stack perfectly.
+        const sameKeyCount = prev.filter((w) => w.key === key).length;
+        const offset = allowMultiple ? sameKeyCount * 28 : 0;
         return [
           ...prev,
           {
             id: createId(),
             key,
             title: cfg.title,
-            x: cfg.defaultPosition.x,
-            y: cfg.defaultPosition.y,
+            x: cfg.defaultPosition.x + offset,
+            y: cfg.defaultPosition.y + offset,
             width: cfg.defaultSize.width,
             height: cfg.defaultSize.height,
             minimized: false,

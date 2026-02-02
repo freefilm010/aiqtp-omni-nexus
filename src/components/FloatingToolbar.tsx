@@ -63,8 +63,8 @@ const ALL_TOOLS: ToolItem[] = [
   { id: 'calendar', name: 'Economic Calendar', icon: Calendar, path: '/calendar', description: 'Global events & data releases', category: 'Trading', windowKey: 'economic_calendar' },
   { id: 'watchlist', name: 'Watchlist', icon: TrendingUp, path: '/watchlist', description: 'Track your favorite assets', category: 'Trading', windowKey: 'watchlist' },
   { id: 'screener', name: 'Screener', icon: Search, path: '/screener', description: 'Find trading opportunities', category: 'Trading' },
-  { id: 'orderbook', name: 'Level II Data', icon: Layers, path: '/advanced-trading', description: 'Order book depth', category: 'Trading' },
-  { id: 'charts', name: 'Advanced Charts', icon: LineChart, path: '/advanced-trading', description: 'Technical analysis', category: 'Trading' },
+  { id: 'orderbook', name: 'Unified Order Book', icon: Layers, path: '/exchange', description: 'Aggregated depth across venues', category: 'Trading', windowKey: 'unified_order_book' },
+  { id: 'charts', name: 'Advanced Charts', icon: LineChart, path: '/advanced-trading', description: 'Technical analysis', category: 'Trading', windowKey: 'advanced_charts' },
   { id: 'patterns', name: 'Pattern Recognition', icon: Activity, path: '/advanced-trading', description: 'AI pattern detection', category: 'Trading' },
   { id: 'smartorders', name: 'Smart Orders', icon: Target, path: '/advanced-trading', description: 'TWAP, VWAP, Iceberg', category: 'Trading' },
 
