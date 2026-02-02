@@ -360,24 +360,37 @@ const WalletAssets = () => {
           </TabsContent>
 
           <TabsContent value="funding" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+            {/* Payment Methods Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <Badge variant="outline" className="gap-1">
+                <Shield className="h-3 w-3" />
+                256-bit Encryption
+              </Badge>
+              <Badge variant="outline" className="gap-1">
+                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                Instant Deposits
+              </Badge>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Stripe Card Payments */}
               <Card className="border-emerald-500/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-emerald-400" />
-                    Add Trading Credits
+                    Card / Bank
                   </CardTitle>
                   <CardDescription>
-                    Fund your account to start generating profits
+                    Pay with credit/debit card or bank transfer
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     {[50, 100, 500].map((amount) => (
                       <Button
                         key={amount}
                         variant="outline"
-                        className="h-16 text-lg"
+                        className="h-14 text-lg font-semibold"
                         onClick={() => handleStripeCheckout("credits")}
                         disabled={loading}
                       >
@@ -386,64 +399,186 @@ const WalletAssets = () => {
                     ))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input placeholder="Custom amount" type="number" />
+                    <Input placeholder="Custom $" type="number" className="flex-1" />
                     <Button 
                       className="bg-emerald-600 hover:bg-emerald-700"
                       onClick={() => handleStripeCheckout("credits")}
                       disabled={loading}
                     >
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Add Funds
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Pay
                     </Button>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Shield className="h-4 w-4" />
-                    Secured by Stripe • Instant deposit
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <img src="https://js.stripe.com/v3/fingerprinted/img/visa-729c05c240c4bdb47b03ac81d9945bfe.svg" alt="Visa" className="h-5" />
+                    <img src="https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28c9848f.svg" alt="Mastercard" className="h-5" />
+                    <img src="https://js.stripe.com/v3/fingerprinted/img/amex-a49b82f46c5cd6a96a6e418a6ca1717c.svg" alt="Amex" className="h-5" />
+                    <span className="ml-auto">Powered by Stripe</span>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-purple-500/30">
+              {/* Crypto Onramp - MoonPay/Onramper */}
+              <Card className="border-orange-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-orange-400" />
+                    Buy Crypto
+                  </CardTitle>
+                  <CardDescription>
+                    Purchase crypto with card via MoonPay
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    {["BTC", "ETH", "SOL", "USDT"].map((coin) => (
+                      <Button
+                        key={coin}
+                        variant="outline"
+                        className="h-12 gap-2"
+                        onClick={() => {
+                          window.open(
+                            `https://www.moonpay.com/buy?apiKey=pk_live_demo&currencyCode=${coin.toLowerCase()}&baseCurrencyAmount=100`,
+                            "_blank"
+                          );
+                        }}
+                      >
+                        <span className="font-bold">{coin}</span>
+                      </Button>
+                    ))}
+                  </div>
+                  <Button 
+                    variant="outline"
+                    className="w-full border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                    onClick={() => {
+                      window.open("https://widget.onramper.com", "_blank");
+                    }}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Onramper Widget
+                  </Button>
+                  <div className="text-xs text-muted-foreground text-center">
+                    Supports 100+ cryptos • 40+ fiat currencies
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pro Subscription */}
+              <Card className="border-purple-500/30 lg:row-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-purple-400" />
                     Pro Subscription
                   </CardTitle>
                   <CardDescription>
-                    Unlock all premium features and higher limits
+                    Unlock all premium features
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/30">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-2xl font-bold">$49<span className="text-sm text-muted-foreground">/mo</span></p>
-                        <p className="text-sm text-muted-foreground">Billed monthly</p>
+                        <p className="text-3xl font-bold">$49<span className="text-sm text-muted-foreground">/mo</span></p>
+                        <p className="text-xs text-muted-foreground">Cancel anytime</p>
                       </div>
-                      <Badge className="bg-purple-500/20 text-purple-400">Most Popular</Badge>
+                      <Badge className="bg-purple-500/20 text-purple-400">Popular</Badge>
                     </div>
                     <ul className="space-y-2 mb-4">
                       {[
                         "Unlimited trading strategies",
                         "Priority bot execution",
-                        "Advanced analytics",
-                        "24/7 support",
+                        "Real-time ML signals",
+                        "Advanced analytics suite",
+                        "Quantum computing access",
+                        "24/7 priority support",
                       ].map((feature) => (
                         <li key={feature} className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                           {feature}
                         </li>
                       ))}
                     </ul>
                     <Button 
-                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700"
                       onClick={() => handleStripeCheckout("subscription")}
                       disabled={loading}
                     >
-                      Subscribe Now
+                      Start Pro Trial
                       <ArrowUpRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
+                  
+                  {/* Annual option */}
+                  <div className="p-3 rounded-lg border border-dashed border-emerald-500/50 bg-emerald-500/5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">Annual Plan</p>
+                        <p className="text-xs text-muted-foreground">$399/yr (save 32%)</p>
+                      </div>
+                      <Button size="sm" variant="outline" className="border-emerald-500/50">
+                        Upgrade
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Wire Transfer */}
+              <Card className="border-cyan-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-cyan-400" />
+                    Wire Transfer
+                  </CardTitle>
+                  <CardDescription>
+                    For large deposits ($10k+)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-sm">
+                    <p className="font-medium mb-2">Bank Details</p>
+                    <div className="space-y-1 text-muted-foreground text-xs">
+                      <p>Account: AIQTP Holdings LLC</p>
+                      <p>Routing: Available on request</p>
+                      <p>Reference: Your user ID</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    Request Wire Instructions
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    1-3 business days • No fees on deposits over $25k
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Plaid Bank Link */}
+              <Card className="border-blue-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-blue-400" />
+                    Link Bank (Plaid)
+                  </CardTitle>
+                  <CardDescription>
+                    Connect your bank for instant ACH
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 rounded-lg border">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Shield className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Secure Connection</p>
+                      <p className="text-xs text-muted-foreground">Bank-level encryption</p>
+                    </div>
+                  </div>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    Connect with Plaid
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Supports 12,000+ banks • Free ACH transfers
+                  </p>
                 </CardContent>
               </Card>
             </div>
