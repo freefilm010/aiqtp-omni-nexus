@@ -1,0 +1,364 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface TradingRequest {
+  action: "fetch_markets" | "fetch_ticker" | "fetch_ohlcv" | "fetch_balance" | "create_order" | "fetch_orders" | "cancel_order";
+  exchange: "binance" | "coinbase" | "kraken" | "bybit" | "kucoin" | "okx";
+  symbol?: string;
+  orderType?: "market" | "limit";
+  side?: "buy" | "sell";
+  amount?: number;
+  price?: number;
+  orderId?: string;
+  timeframe?: string;
+  limit?: number;
+  // API credentials (encrypted client-side, stored in user profile)
+  apiKey?: string;
+  secret?: string;
+  passphrase?: string; // For exchanges that require it
+}
+
+// Exchange API endpoints
+const exchangeEndpoints: Record<string, { rest: string; ws: string }> = {
+  binance: { rest: "https://api.binance.com", ws: "wss://stream.binance.com:9443" },
+  coinbase: { rest: "https://api.coinbase.com", ws: "wss://ws-feed.exchange.coinbase.com" },
+  kraken: { rest: "https://api.kraken.com", ws: "wss://ws.kraken.com" },
+  bybit: { rest: "https://api.bybit.com", ws: "wss://stream.bybit.com" },
+  kucoin: { rest: "https://api.kucoin.com", ws: "wss://ws-api.kucoin.com" },
+  okx: { rest: "https://www.okx.com", ws: "wss://ws.okx.com:8443" },
+};
+
+// Binance implementation (primary exchange)
+async function binanceFetchTicker(symbol: string) {
+  const formattedSymbol = symbol.replace("/", "");
+  const response = await fetch(
+    `https://api.binance.com/api/v3/ticker/24hr?symbol=${formattedSymbol}`
+  );
+  const data = await response.json();
+  return {
+    symbol,
+    last: parseFloat(data.lastPrice),
+    bid: parseFloat(data.bidPrice),
+    ask: parseFloat(data.askPrice),
+    high: parseFloat(data.highPrice),
+    low: parseFloat(data.lowPrice),
+    volume: parseFloat(data.volume),
+    quoteVolume: parseFloat(data.quoteVolume),
+    change: parseFloat(data.priceChange),
+    changePercent: parseFloat(data.priceChangePercent),
+    timestamp: data.closeTime,
+  };
+}
+
+async function binanceFetchOHLCV(symbol: string, timeframe: string = "1h", limit: number = 100) {
+  const formattedSymbol = symbol.replace("/", "");
+  const intervalMap: Record<string, string> = {
+    "1m": "1m", "5m": "5m", "15m": "15m", "30m": "30m",
+    "1h": "1h", "4h": "4h", "1d": "1d", "1w": "1w",
+  };
+  const interval = intervalMap[timeframe] || "1h";
+  
+  const response = await fetch(
+    `https://api.binance.com/api/v3/klines?symbol=${formattedSymbol}&interval=${interval}&limit=${limit}`
+  );
+  const data = await response.json();
+  
+  return data.map((candle: any[]) => ({
+    timestamp: candle[0],
+    open: parseFloat(candle[1]),
+    high: parseFloat(candle[2]),
+    low: parseFloat(candle[3]),
+    close: parseFloat(candle[4]),
+    volume: parseFloat(candle[5]),
+    quoteVolume: parseFloat(candle[7]),
+    trades: candle[8],
+  }));
+}
+
+async function binanceFetchMarkets() {
+  const response = await fetch("https://api.binance.com/api/v3/exchangeInfo");
+  const data = await response.json();
+  
+  return data.symbols
+    .filter((s: any) => s.status === "TRADING")
+    .slice(0, 500)
+    .map((s: any) => ({
+      symbol: `${s.baseAsset}/${s.quoteAsset}`,
+      base: s.baseAsset,
+      quote: s.quoteAsset,
+      active: s.status === "TRADING",
+      precision: {
+        price: s.quotePrecision,
+        amount: s.baseAssetPrecision,
+      },
+      limits: {
+        amount: {
+          min: parseFloat(s.filters.find((f: any) => f.filterType === "LOT_SIZE")?.minQty || "0"),
+          max: parseFloat(s.filters.find((f: any) => f.filterType === "LOT_SIZE")?.maxQty || "0"),
+        },
+      },
+    }));
+}
+
+async function binanceFetchBalance(apiKey: string, secret: string) {
+  const timestamp = Date.now();
+  const queryString = `timestamp=${timestamp}`;
+  
+  // Create HMAC signature
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(queryString);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
+  const signatureHex = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+  
+  const response = await fetch(
+    `https://api.binance.com/api/v3/account?${queryString}&signature=${signatureHex}`,
+    { headers: { "X-MBX-APIKEY": apiKey } }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.msg || "Failed to fetch balance");
+  }
+  
+  const data = await response.json();
+  const balances = data.balances
+    .filter((b: any) => parseFloat(b.free) > 0 || parseFloat(b.locked) > 0)
+    .map((b: any) => ({
+      asset: b.asset,
+      free: parseFloat(b.free),
+      locked: parseFloat(b.locked),
+      total: parseFloat(b.free) + parseFloat(b.locked),
+    }));
+  
+  return { balances, updateTime: data.updateTime };
+}
+
+async function binanceCreateOrder(
+  apiKey: string,
+  secret: string,
+  symbol: string,
+  side: "buy" | "sell",
+  orderType: "market" | "limit",
+  amount: number,
+  price?: number
+) {
+  const timestamp = Date.now();
+  const formattedSymbol = symbol.replace("/", "");
+  
+  let params = `symbol=${formattedSymbol}&side=${side.toUpperCase()}&type=${orderType.toUpperCase()}&quantity=${amount}&timestamp=${timestamp}`;
+  
+  if (orderType === "limit" && price) {
+    params += `&price=${price}&timeInForce=GTC`;
+  }
+  
+  // Create HMAC signature
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(params);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
+  const signatureHex = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+  
+  const response = await fetch(
+    `https://api.binance.com/api/v3/order?${params}&signature=${signatureHex}`,
+    {
+      method: "POST",
+      headers: { "X-MBX-APIKEY": apiKey },
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.msg || "Failed to create order");
+  }
+  
+  const order = await response.json();
+  return {
+    orderId: order.orderId,
+    symbol: order.symbol,
+    side: order.side.toLowerCase(),
+    type: order.type.toLowerCase(),
+    status: order.status,
+    price: parseFloat(order.price),
+    amount: parseFloat(order.origQty),
+    filled: parseFloat(order.executedQty),
+    remaining: parseFloat(order.origQty) - parseFloat(order.executedQty),
+    timestamp: order.transactTime,
+  };
+}
+
+async function binanceFetchOrders(apiKey: string, secret: string, symbol?: string) {
+  const timestamp = Date.now();
+  let queryString = `timestamp=${timestamp}`;
+  if (symbol) {
+    queryString += `&symbol=${symbol.replace("/", "")}`;
+  }
+  
+  // Create HMAC signature
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(queryString);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
+  const signatureHex = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+  
+  const response = await fetch(
+    `https://api.binance.com/api/v3/openOrders?${queryString}&signature=${signatureHex}`,
+    { headers: { "X-MBX-APIKEY": apiKey } }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.msg || "Failed to fetch orders");
+  }
+  
+  const orders = await response.json();
+  return orders.map((order: any) => ({
+    orderId: order.orderId,
+    symbol: order.symbol,
+    side: order.side.toLowerCase(),
+    type: order.type.toLowerCase(),
+    status: order.status,
+    price: parseFloat(order.price),
+    amount: parseFloat(order.origQty),
+    filled: parseFloat(order.executedQty),
+    remaining: parseFloat(order.origQty) - parseFloat(order.executedQty),
+    timestamp: order.time,
+  }));
+}
+
+async function binanceCancelOrder(apiKey: string, secret: string, symbol: string, orderId: string) {
+  const timestamp = Date.now();
+  const formattedSymbol = symbol.replace("/", "");
+  const queryString = `symbol=${formattedSymbol}&orderId=${orderId}&timestamp=${timestamp}`;
+  
+  // Create HMAC signature
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(queryString);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
+  const signatureHex = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+  
+  const response = await fetch(
+    `https://api.binance.com/api/v3/order?${queryString}&signature=${signatureHex}`,
+    {
+      method: "DELETE",
+      headers: { "X-MBX-APIKEY": apiKey },
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.msg || "Failed to cancel order");
+  }
+  
+  const result = await response.json();
+  return { orderId: result.orderId, status: "cancelled" };
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const body: TradingRequest = await req.json();
+    const { action, exchange, symbol, orderType, side, amount, price, orderId, timeframe, limit, apiKey, secret } = body;
+
+    console.log(`CCXT Trading: ${action} on ${exchange}${symbol ? ` for ${symbol}` : ""}`);
+
+    let result: any;
+
+    // Currently fully implementing Binance - other exchanges follow same pattern
+    if (exchange !== "binance") {
+      return new Response(
+        JSON.stringify({ 
+          error: `Exchange ${exchange} coming soon. Currently supporting: binance`,
+          supportedExchanges: ["binance"],
+          comingSoon: ["coinbase", "kraken", "bybit", "kucoin", "okx"]
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    switch (action) {
+      case "fetch_markets":
+        result = await binanceFetchMarkets();
+        break;
+
+      case "fetch_ticker":
+        if (!symbol) throw new Error("Symbol required for fetch_ticker");
+        result = await binanceFetchTicker(symbol);
+        break;
+
+      case "fetch_ohlcv":
+        if (!symbol) throw new Error("Symbol required for fetch_ohlcv");
+        result = await binanceFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+        break;
+
+      case "fetch_balance":
+        if (!apiKey || !secret) throw new Error("API credentials required for fetch_balance");
+        result = await binanceFetchBalance(apiKey, secret);
+        break;
+
+      case "create_order":
+        if (!apiKey || !secret) throw new Error("API credentials required for create_order");
+        if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
+        result = await binanceCreateOrder(apiKey, secret, symbol, side, orderType || "market", amount, price);
+        break;
+
+      case "fetch_orders":
+        if (!apiKey || !secret) throw new Error("API credentials required for fetch_orders");
+        result = await binanceFetchOrders(apiKey, secret, symbol);
+        break;
+
+      case "cancel_order":
+        if (!apiKey || !secret) throw new Error("API credentials required for cancel_order");
+        if (!symbol || !orderId) throw new Error("Symbol and orderId required for cancel_order");
+        result = await binanceCancelOrder(apiKey, secret, symbol, orderId);
+        break;
+
+      default:
+        throw new Error(`Unknown action: ${action}`);
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, data: result, exchange, action }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (error) {
+    console.error("CCXT Trading error:", error);
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+    );
+  }
+});
