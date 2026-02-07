@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,13 +27,6 @@ interface AIQTPRequest {
     parameters: Record<string, any>;
     requiresApproval?: boolean;
   };
-}
-
-interface RevenueGenerator {
-  id: string;
-  name: string;
-  type: string;
-  execute: (params: any) => Promise<{ success: boolean; profit: number; details: string }>;
 }
 
 // Available AI models for multi-model orchestration
@@ -182,7 +176,6 @@ Be concise, profitable, and safe. Protect capital while maximizing returns.`;
 async function executeToolCall(name: string, args: Record<string, any>): Promise<any> {
   switch (name) {
     case "analyze_arbitrage":
-      // Simulate arbitrage scan
       return {
         opportunities: [
           {
@@ -282,6 +275,33 @@ serve(async (req) => {
   }
 
   try {
+    // Validate authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required', aiqtp_status: 'unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token', aiqtp_status: 'unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log(`Authenticated user ${userId} accessing aiqtp-agent`);
+
     const request: AIQTPRequest = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
@@ -393,7 +413,7 @@ serve(async (req) => {
     console.error("AIQTP Agent error:", error);
     return new Response(JSON.stringify({
       aiqtp_status: "error",
-      error: error.message
+      error: error instanceof Error ? error.message : "Unknown error"
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
