@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface MarketPrice {
@@ -50,8 +51,19 @@ const COINGECKO_IDS: Record<string, string> = {
   FIL: "filecoin",
 };
 
+const MIN_POLL_MS = 30_000;
+const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
+
+// Cross-hook memory to prevent spamming the provider when multiple widgets mount.
+let lastGoodPriceMap: Record<string, MarketPrice> = {};
+let cooldownUntilTs = 0;
+
 const formatPrice = (price: number): string => {
-  if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (price >= 1000)
+    return price.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   if (price >= 1) return price.toFixed(2);
   if (price >= 0.01) return price.toFixed(4);
   return price.toFixed(8);
@@ -64,158 +76,227 @@ const formatVolume = (vol: number): string => {
   return `$${vol.toFixed(0)}`;
 };
 
+type MarketPricesResult = {
+  priceMap: Record<string, MarketPrice>;
+  lastSyncError: string | null;
+};
+
+const titleizeCoinId = (coinId: string) =>
+  coinId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+const buildPriceMapFromDbRows = (rows: any[]): Record<string, MarketPrice> => {
+  const priceMap: Record<string, MarketPrice> = {};
+
+  for (const row of rows) {
+    const coinId = String(row.coin_id ?? "");
+    const mappedSymbol = Object.entries(COINGECKO_IDS).find(([, id]) => id === coinId)?.[0];
+
+    const symbol = String((row.market_coins?.symbol ?? mappedSymbol ?? "UNKNOWN")).toUpperCase();
+    const name = String(row.market_coins?.name ?? (coinId ? titleizeCoinId(coinId) : symbol));
+
+    const priceUsd = Number(row.price_usd ?? 0);
+    const change = Number(row.price_change_percentage_24h ?? 0);
+    const vol = Number(row.total_volume ?? 0);
+    const marketCap = Number(row.market_cap ?? 0);
+
+    priceMap[symbol] = {
+      symbol,
+      name,
+      price: formatPrice(priceUsd),
+      priceNumeric: priceUsd,
+      change: `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`,
+      changePercent: change,
+      volume: formatVolume(vol),
+      volumeNumeric: vol,
+      marketCap,
+      trend: change >= 0 ? "up" : "down",
+      lastUpdate: new Date(row.last_updated || Date.now()),
+    };
+
+    // Compatibility key used across the app
+    priceMap[`${symbol}/USD`] = priceMap[symbol];
+  }
+
+  return priceMap;
+};
+
+const fetchFromDatabase = async (): Promise<Record<string, MarketPrice> | null> => {
+  try {
+    const { data: cachedPrices, error } = await supabase
+      .from("market_prices")
+      .select(
+        `
+        coin_id,
+        price_usd,
+        price_change_percentage_24h,
+        total_volume,
+        market_cap,
+        last_updated,
+        market_coins(symbol, name)
+      `
+      )
+      .in("coin_id", Object.values(COINGECKO_IDS))
+      .order("market_cap", { ascending: false, nullsFirst: false });
+
+    if (error) return null;
+    if (!cachedPrices || cachedPrices.length === 0) return null;
+
+    const mapped = buildPriceMapFromDbRows(cachedPrices);
+    return Object.keys(mapped).length > 0 ? mapped : null;
+  } catch {
+    return null;
+  }
+};
+
+const fetchFromAPI = async (): Promise<
+  | { ok: true; priceMap: Record<string, MarketPrice> }
+  | { ok: false; error: string; rateLimited: boolean; retryAfterMs?: number }
+> => {
+  try {
+    const coinIds = Object.values(COINGECKO_IDS).slice(0, 20);
+
+    const { data, error } = await supabase.functions.invoke("market-data-sync", {
+      body: {
+        action: "get_price",
+        params: { coinIds },
+      },
+    });
+
+    // If the backend returns non-2xx, supabase-js surfaces it as `error`
+    if (error) {
+      const msg = error.message || "Failed to fetch prices";
+      const rateLimited = /429/.test(msg) || /rate limit/i.test(msg);
+      return { ok: false, error: msg, rateLimited };
+    }
+
+    if (!data?.success || !data?.prices) {
+      const msg = String(data?.error || "Failed to fetch prices");
+      const rateLimited = Boolean(data?.rateLimited) || /429/.test(msg) || /rate limit/i.test(msg);
+      const retryAfterMs = typeof data?.retryAfterMs === "number" ? data.retryAfterMs : undefined;
+      return { ok: false, error: msg, rateLimited, retryAfterMs };
+    }
+
+    const priceMap: Record<string, MarketPrice> = {};
+
+    for (const [coinId, priceData] of Object.entries(data.prices) as [string, any][]) {
+      const symbol = Object.entries(COINGECKO_IDS).find(([, id]) => id === coinId)?.[0];
+      if (!symbol) continue;
+
+      const change = Number(priceData.usd_24h_change ?? 0);
+      const priceUsd = Number(priceData.usd ?? 0);
+      const vol = Number(priceData.usd_24h_vol ?? 0);
+      const marketCap = Number(priceData.usd_market_cap ?? 0);
+
+      priceMap[symbol] = {
+        symbol,
+        name: titleizeCoinId(coinId),
+        price: formatPrice(priceUsd),
+        priceNumeric: priceUsd,
+        change: `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`,
+        changePercent: change,
+        volume: formatVolume(vol),
+        volumeNumeric: vol,
+        marketCap,
+        trend: change >= 0 ? "up" : "down",
+        lastUpdate: new Date(),
+      };
+
+      priceMap[`${symbol}/USD`] = priceMap[symbol];
+    }
+
+    return { ok: true, priceMap };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed to fetch prices";
+    const rateLimited = /429/.test(msg) || /rate limit/i.test(msg);
+    return { ok: false, error: msg, rateLimited };
+  }
+};
+
+const loadMarketPrices = async (): Promise<MarketPricesResult> => {
+  const dbMap = await fetchFromDatabase();
+  if (dbMap && Object.keys(dbMap).length > 0) {
+    lastGoodPriceMap = dbMap;
+    cooldownUntilTs = 0;
+    return { priceMap: dbMap, lastSyncError: null };
+  }
+
+  const now = Date.now();
+  if (now < cooldownUntilTs) {
+    const seconds = Math.max(1, Math.ceil((cooldownUntilTs - now) / 1000));
+    return {
+      priceMap: lastGoodPriceMap,
+      lastSyncError: `Rate limited — retrying in ${seconds}s`,
+    };
+  }
+
+  const api = await fetchFromAPI();
+
+  if (api.ok) {
+    if (Object.keys(api.priceMap).length > 0) lastGoodPriceMap = api.priceMap;
+    cooldownUntilTs = 0;
+    return { priceMap: lastGoodPriceMap, lastSyncError: null };
+  } else {
+    const failure = api as {
+      ok: false;
+      error: string;
+      rateLimited: boolean;
+      retryAfterMs?: number;
+    };
+
+    if (failure.rateLimited) {
+      cooldownUntilTs = now + (failure.retryAfterMs ?? DEFAULT_RATE_LIMIT_COOLDOWN_MS);
+    }
+
+    return {
+      priceMap: lastGoodPriceMap,
+      lastSyncError: failure.error,
+    };
+  }
+};
+
 export const useMarketPrices = (pollIntervalMs: number = 30000) => {
-  const [prices, setPrices] = useState<Record<string, MarketPrice>>({});
   const [isLive, setIsLive] = useState(true);
-  const [lastSyncError, setLastSyncError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const effectivePollInterval = useMemo(
-    () => Math.max(30000, pollIntervalMs), // Min 30s to respect rate limits
+    () => Math.max(MIN_POLL_MS, pollIntervalMs),
     [pollIntervalMs]
   );
 
-  const fetchFromDatabase = useCallback(async () => {
-    try {
-      // First try to get cached prices from database
-      const { data: cachedPrices, error } = await supabase
-        .from('market_prices')
-        .select(`
-          coin_id,
-          price_usd,
-          price_change_percentage_24h,
-          total_volume,
-          market_cap,
-          last_updated,
-          market_coins!inner(symbol, name)
-        `)
-        .in('coin_id', Object.values(COINGECKO_IDS))
-        .order('market_cap', { ascending: false, nullsFirst: false });
+  const query = useQuery({
+    queryKey: ["marketPrices"],
+    queryFn: loadMarketPrices,
+    enabled: isLive,
+    refetchInterval: isLive ? effectivePollInterval : false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
 
-      if (!error && cachedPrices && cachedPrices.length > 0) {
-        const priceMap: Record<string, MarketPrice> = {};
-        
-        for (const row of cachedPrices) {
-          const coinData = row.market_coins as any;
-          const symbol = coinData?.symbol || 'UNKNOWN';
-          const change = row.price_change_percentage_24h || 0;
-          
-          priceMap[symbol] = {
-            symbol,
-            name: coinData?.name || symbol,
-            price: formatPrice(row.price_usd || 0),
-            priceNumeric: row.price_usd || 0,
-            change: `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`,
-            changePercent: change,
-            volume: formatVolume(row.total_volume || 0),
-            volumeNumeric: row.total_volume || 0,
-            marketCap: row.market_cap || 0,
-            trend: change >= 0 ? 'up' : 'down',
-            lastUpdate: new Date(row.last_updated || Date.now()),
-          };
+  const prices = query.data?.priceMap ?? lastGoodPriceMap;
+  const lastSyncError = query.data?.lastSyncError ?? null;
+  const loading = query.isLoading;
 
-          // Also add with /USD suffix for compatibility
-          priceMap[`${symbol}/USD`] = priceMap[symbol];
-        }
-
-        setPrices(prev => ({ ...prev, ...priceMap }));
-        setLastSyncError(null);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      console.error('Database fetch error:', e);
-      return false;
-    }
-  }, []);
-
-  const fetchFromAPI = useCallback(async () => {
-    try {
-      // Call edge function to get fresh data (avoids CORS/rate limits)
-      const { data, error } = await supabase.functions.invoke('market-data-sync', {
-        body: { 
-          action: 'get_price',
-          params: { coinIds: Object.values(COINGECKO_IDS).slice(0, 20) }
-        }
-      });
-
-      if (error) throw error;
-      if (!data?.success || !data?.prices) return false;
-
-      const priceMap: Record<string, MarketPrice> = {};
-      
-      for (const [coinId, priceData] of Object.entries(data.prices) as [string, any][]) {
-        const symbol = Object.entries(COINGECKO_IDS).find(([_, id]) => id === coinId)?.[0];
-        if (!symbol) continue;
-
-        const change = priceData.usd_24h_change || 0;
-        
-        priceMap[symbol] = {
-          symbol,
-          name: coinId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-          price: formatPrice(priceData.usd || 0),
-          priceNumeric: priceData.usd || 0,
-          change: `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`,
-          changePercent: change,
-          volume: formatVolume(priceData.usd_24h_vol || 0),
-          volumeNumeric: priceData.usd_24h_vol || 0,
-          marketCap: priceData.usd_market_cap || 0,
-          trend: change >= 0 ? 'up' : 'down',
-          lastUpdate: new Date(),
-        };
-
-        priceMap[`${symbol}/USD`] = priceMap[symbol];
-      }
-
-      setPrices(prev => ({ ...prev, ...priceMap }));
-      setLastSyncError(null);
-      return true;
-    } catch (e) {
-      console.error('API fetch error:', e);
-      setLastSyncError(e instanceof Error ? e.message : 'Failed to fetch prices');
-      return false;
-    }
-  }, []);
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    
-    // Try database first (faster, no rate limits)
-    const dbSuccess = await fetchFromDatabase();
-    
-    // If DB is stale or empty, fetch from API
-    if (!dbSuccess) {
-      await fetchFromAPI();
-    }
-    
-    setLoading(false);
-  }, [fetchFromDatabase, fetchFromAPI]);
-
-  useEffect(() => {
-    if (!isLive) return;
-
-    refresh();
-    const interval = setInterval(refresh, effectivePollInterval);
-
-    return () => clearInterval(interval);
-  }, [effectivePollInterval, isLive, refresh]);
-
-  const getPrice = useCallback((symbol: string): MarketPrice | undefined => {
-    const normalizedSymbol = symbol.toUpperCase().replace('/USD', '');
-    return prices[normalizedSymbol] || prices[symbol];
-  }, [prices]);
+  const getPrice = useCallback(
+    (symbol: string): MarketPrice | undefined => {
+      const normalizedSymbol = symbol.toUpperCase().replace("/USD", "");
+      return prices[normalizedSymbol] || prices[symbol];
+    },
+    [prices]
+  );
 
   const getAllPrices = useCallback((): MarketPrice[] => {
-    // Filter out duplicates (symbol/USD pairs)
     const seen = new Set<string>();
-    return Object.values(prices).filter(p => {
-      if (seen.has(p.symbol) || p.symbol.includes('/')) return false;
+    return Object.values(prices).filter((p) => {
+      if (seen.has(p.symbol) || p.symbol.includes("/")) return false;
       seen.add(p.symbol);
       return true;
     });
   }, [prices]);
 
   const toggleLive = () => setIsLive((v) => !v);
+
+  const refresh = useCallback(async () => {
+    await query.refetch();
+  }, [query]);
 
   return {
     prices,

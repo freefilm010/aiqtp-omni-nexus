@@ -116,7 +116,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const canWrite = isAuthedUser;
+    const canWrite = isAuthedUser || action === 'get_price';
 
     console.log(`Market data sync action: ${action}`);
 
@@ -275,62 +275,102 @@ serve(async (req) => {
       case 'get_price': {
         const { coinIds } = params;
         const ids = Array.isArray(coinIds) ? coinIds : [coinIds];
-        
+
+        const respond = (payload: unknown) =>
+          new Response(JSON.stringify(payload), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+
         // Always try cache first
         const cached = await getCachedPrices(ids);
         if (cached && Object.keys(cached).length >= ids.length * 0.5) {
           console.log('Returning cached prices');
-          return new Response(JSON.stringify({ success: true, prices: cached, cached: true }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+          return respond({ success: true, prices: cached, cached: true });
         }
 
-        // Fetch fresh data
         const idsStr = ids.join(',');
         const url = `${baseUrl}/simple/price?ids=${idsStr}&vs_currencies=usd,btc,eth&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`;
-        
+
         try {
           const response = await fetchWithRateLimit(url, headers, 1);
-          
+
+          // Handle provider errors without returning non-2xx (so the client doesn't throw)
           if (!response.ok) {
-            // On API error, return cached data if available
-            if (cached) {
-              console.log('API failed, returning stale cache');
-              return new Response(JSON.stringify({ success: true, prices: cached, cached: true, stale: true }), {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            if (response.status === 429) {
+              const retryAfterSeconds = Number(response.headers.get('retry-after') ?? '0') || 120;
+              const retryAfterMs = retryAfterSeconds * 1000;
+
+              if (cached) {
+                console.log('Rate limited, returning stale cache');
+                return respond({
+                  success: true,
+                  prices: cached,
+                  cached: true,
+                  stale: true,
+                  rateLimited: true,
+                  retryAfterMs,
+                });
+              }
+
+              return respond({
+                success: false,
+                error: 'Rate limited by data provider',
+                rateLimited: true,
+                retryAfterMs,
               });
             }
-            throw new Error(`CoinGecko API error: ${response.status}`);
+
+            if (cached) {
+              console.log('API failed, returning stale cache');
+              return respond({
+                success: true,
+                prices: cached,
+                cached: true,
+                stale: true,
+                providerStatus: response.status,
+              });
+            }
+
+            return respond({
+              success: false,
+              error: `Data provider error: ${response.status}`,
+              providerStatus: response.status,
+            });
           }
-          
+
           const prices = await response.json();
 
-          // Update database with fresh prices
+          // Update database with fresh prices (safe for public data)
           if (canWrite) {
-            for (const [coinId, data] of Object.entries(prices) as [string, any][]) {
-              await supabase.from('market_prices').upsert({
-                coin_id: coinId,
-                price_usd: data.usd,
-                market_cap: data.usd_market_cap,
-                total_volume: data.usd_24h_vol,
-                price_change_percentage_24h: data.usd_24h_change,
-                last_updated: new Date().toISOString()
-              }, { onConflict: 'coin_id' });
+            const rows = Object.entries(prices).map(([coinId, data]: [string, any]) => ({
+              coin_id: coinId,
+              price_usd: data.usd,
+              market_cap: data.usd_market_cap,
+              total_volume: data.usd_24h_vol,
+              price_change_percentage_24h: data.usd_24h_change,
+              last_updated: new Date().toISOString(),
+            }));
+
+            if (rows.length > 0) {
+              await supabase.from('market_prices').upsert(rows, { onConflict: 'coin_id' });
             }
           }
 
-          return new Response(JSON.stringify({ success: true, prices }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+          return respond({ success: true, prices });
         } catch (e: any) {
-          // Return cache on any error
           if (cached) {
             console.log('Error fetching, returning stale cache:', e.message);
-            return new Response(JSON.stringify({ success: true, prices: cached, cached: true, stale: true }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            return respond({
+              success: true,
+              prices: cached,
+              cached: true,
+              stale: true,
+              error: e.message,
             });
           }
-          throw e;
+
+          // Don't throw → avoid 500s → client can handle gracefully
+          return respond({ success: false, error: e?.message || 'Failed to fetch prices' });
         }
       }
 
