@@ -38,18 +38,35 @@ async function binanceFetchTicker(symbol: string) {
   const response = await fetch(
     `https://api.binance.com/api/v3/ticker/24hr?symbol=${formattedSymbol}`
   );
-  const data = await response.json();
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const msg =
+      typeof data?.msg === "string"
+        ? data.msg
+        : typeof data?.message === "string"
+          ? data.message
+          : `HTTP ${response.status}`;
+    throw new Error(`Binance ticker error [${response.status}]: ${msg}`);
+  }
+
+  // Guard against malformed payloads (Binance sometimes returns an error object with 200/JSON)
+  if (typeof data?.lastPrice !== "string" && typeof data?.lastPrice !== "number") {
+    throw new Error(`Binance ticker malformed response: ${JSON.stringify(data)}`);
+  }
+
   return {
     symbol,
-    last: parseFloat(data.lastPrice),
-    bid: parseFloat(data.bidPrice),
-    ask: parseFloat(data.askPrice),
-    high: parseFloat(data.highPrice),
-    low: parseFloat(data.lowPrice),
-    volume: parseFloat(data.volume),
-    quoteVolume: parseFloat(data.quoteVolume),
-    change: parseFloat(data.priceChange),
-    changePercent: parseFloat(data.priceChangePercent),
+    last: Number.parseFloat(String(data.lastPrice)),
+    bid: Number.parseFloat(String(data.bidPrice)),
+    ask: Number.parseFloat(String(data.askPrice)),
+    high: Number.parseFloat(String(data.highPrice)),
+    low: Number.parseFloat(String(data.lowPrice)),
+    volume: Number.parseFloat(String(data.volume)),
+    quoteVolume: Number.parseFloat(String(data.quoteVolume)),
+    change: Number.parseFloat(String(data.priceChange)),
+    changePercent: Number.parseFloat(String(data.priceChangePercent)),
     timestamp: data.closeTime,
   };
 }
@@ -57,16 +74,38 @@ async function binanceFetchTicker(symbol: string) {
 async function binanceFetchOHLCV(symbol: string, timeframe: string = "1h", limit: number = 100) {
   const formattedSymbol = symbol.replace("/", "");
   const intervalMap: Record<string, string> = {
-    "1m": "1m", "5m": "5m", "15m": "15m", "30m": "30m",
-    "1h": "1h", "4h": "4h", "1d": "1d", "1w": "1w",
+    "1m": "1m",
+    "5m": "5m",
+    "15m": "15m",
+    "30m": "30m",
+    "1h": "1h",
+    "4h": "4h",
+    "1d": "1d",
+    "1w": "1w",
   };
   const interval = intervalMap[timeframe] || "1h";
-  
+
   const response = await fetch(
     `https://api.binance.com/api/v3/klines?symbol=${formattedSymbol}&interval=${interval}&limit=${limit}`
   );
-  const data = await response.json();
-  
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const msg =
+      typeof (data as any)?.msg === "string"
+        ? (data as any).msg
+        : typeof (data as any)?.message === "string"
+          ? (data as any).message
+          : `HTTP ${response.status}`;
+    throw new Error(`Binance OHLCV error [${response.status}]: ${msg}`);
+  }
+
+  if (!Array.isArray(data)) {
+    // This is the root cause of: "data.map is not a function"
+    throw new Error(`Binance OHLCV malformed response: ${JSON.stringify(data)}`);
+  }
+
   return data.map((candle: any[]) => ({
     timestamp: candle[0],
     open: parseFloat(candle[1]),
@@ -81,8 +120,22 @@ async function binanceFetchOHLCV(symbol: string, timeframe: string = "1h", limit
 
 async function binanceFetchMarkets() {
   const response = await fetch("https://api.binance.com/api/v3/exchangeInfo");
-  const data = await response.json();
-  
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const msg =
+      typeof data?.msg === "string"
+        ? data.msg
+        : typeof data?.message === "string"
+          ? data.message
+          : `HTTP ${response.status}`;
+    throw new Error(`Binance markets error [${response.status}]: ${msg}`);
+  }
+
+  if (!Array.isArray(data?.symbols)) {
+    throw new Error(`Binance markets malformed response: ${JSON.stringify(data)}`);
+  }
+
   return data.symbols
     .filter((s: any) => s.status === "TRADING")
     .slice(0, 500)
