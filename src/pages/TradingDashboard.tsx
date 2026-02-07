@@ -5,6 +5,7 @@ import { useMarketPrices } from "@/hooks/useMarketPrices";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import TradingViewChart from "@/components/trading/TradingViewChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -214,6 +215,11 @@ const TradingDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Chart Section */}
+          <div className="mb-8">
+            <TradingViewChart height={450} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
