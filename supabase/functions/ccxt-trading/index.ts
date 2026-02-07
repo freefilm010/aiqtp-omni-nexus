@@ -157,6 +157,164 @@ async function binanceFetchMarkets() {
     }));
 }
 
+// Kraken implementation (public market data)
+function krakenPairFromSymbol(symbol: string) {
+  const [baseRaw, quoteRaw] = symbol.split("/");
+  const base = baseRaw === "BTC" ? "XBT" : baseRaw;
+  const quote = quoteRaw || "USD";
+  return `${base}${quote}`;
+}
+
+function krakenIntervalFromTimeframe(timeframe: string) {
+  const map: Record<string, number> = {
+    "1m": 1,
+    "5m": 5,
+    "15m": 15,
+    "30m": 30,
+    "1h": 60,
+    "4h": 240,
+    "1d": 1440,
+    "1w": 10080,
+  };
+  return map[timeframe] ?? 60;
+}
+
+async function krakenFetchTicker(symbol: string) {
+  const pair = krakenPairFromSymbol(symbol);
+  const response = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${pair}`);
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(`Kraken ticker error [${response.status}]: ${JSON.stringify(data)}`);
+  }
+
+  const apiErrors = Array.isArray((data as any)?.error) ? (data as any).error : [];
+  if (apiErrors.length) {
+    throw new Error(`Kraken ticker error: ${apiErrors.join("; ")}`);
+  }
+
+  const result = (data as any)?.result;
+  const key = result && typeof result === "object" ? Object.keys(result)[0] : null;
+  const t = key ? result[key] : null;
+  if (!t) {
+    throw new Error(`Kraken ticker malformed response: ${JSON.stringify(data)}`);
+  }
+
+  const last = Number(t?.c?.[0]);
+  const bid = Number(t?.b?.[0]);
+  const ask = Number(t?.a?.[0]);
+  const high = Number(t?.h?.[1] ?? t?.h?.[0]);
+  const low = Number(t?.l?.[1] ?? t?.l?.[0]);
+  const volume = Number(t?.v?.[1] ?? t?.v?.[0]);
+  const open = Number(t?.o);
+  const change = Number.isFinite(open) && open > 0 ? last - open : 0;
+  const changePercent = Number.isFinite(open) && open > 0 ? (change / open) * 100 : 0;
+
+  if (!Number.isFinite(last)) {
+    throw new Error(`Kraken ticker missing last price: ${JSON.stringify(t)}`);
+  }
+
+  return {
+    symbol,
+    last,
+    bid: Number.isFinite(bid) ? bid : last,
+    ask: Number.isFinite(ask) ? ask : last,
+    high: Number.isFinite(high) ? high : last,
+    low: Number.isFinite(low) ? low : last,
+    volume: Number.isFinite(volume) ? volume : 0,
+    quoteVolume: Number.isFinite(volume) ? volume * last : 0,
+    change,
+    changePercent,
+    timestamp: Date.now(),
+  };
+}
+
+async function krakenFetchOHLCV(symbol: string, timeframe: string = "1h", limit: number = 100) {
+  const pair = krakenPairFromSymbol(symbol);
+  const interval = krakenIntervalFromTimeframe(timeframe);
+
+  const response = await fetch(`https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${interval}`);
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(`Kraken OHLCV error [${response.status}]: ${JSON.stringify(data)}`);
+  }
+
+  const apiErrors = Array.isArray((data as any)?.error) ? (data as any).error : [];
+  if (apiErrors.length) {
+    throw new Error(`Kraken OHLCV error: ${apiErrors.join("; ")}`);
+  }
+
+  const result = (data as any)?.result;
+  const key = result && typeof result === "object" ? Object.keys(result).find((k) => k !== "last") : null;
+  const rows: any[] | null = key ? result[key] : null;
+  if (!Array.isArray(rows)) {
+    throw new Error(`Kraken OHLCV malformed response: ${JSON.stringify(data)}`);
+  }
+
+  const sliced = rows.slice(Math.max(0, rows.length - Math.max(1, limit)));
+
+  return sliced.map((c: any[]) => {
+    const tsSec = Number(c?.[0]);
+    const open = Number(c?.[1]);
+    const high = Number(c?.[2]);
+    const low = Number(c?.[3]);
+    const close = Number(c?.[4]);
+    const volume = Number(c?.[6]);
+    const trades = Number(c?.[7]);
+
+    return {
+      timestamp: tsSec * 1000,
+      open,
+      high,
+      low,
+      close,
+      volume: Number.isFinite(volume) ? volume : 0,
+      quoteVolume: Number.isFinite(volume) && Number.isFinite(close) ? volume * close : 0,
+      trades: Number.isFinite(trades) ? trades : 0,
+    };
+  });
+}
+
+async function krakenFetchMarkets() {
+  const response = await fetch("https://api.kraken.com/0/public/AssetPairs");
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(`Kraken markets error [${response.status}]: ${JSON.stringify(data)}`);
+  }
+
+  const apiErrors = Array.isArray((data as any)?.error) ? (data as any).error : [];
+  if (apiErrors.length) {
+    throw new Error(`Kraken markets error: ${apiErrors.join("; ")}`);
+  }
+
+  const result = (data as any)?.result;
+  if (!result || typeof result !== "object") {
+    throw new Error(`Kraken markets malformed response: ${JSON.stringify(data)}`);
+  }
+
+  const pairs = Object.values(result)
+    .map((p: any) => {
+      const wsname: string | undefined = p?.wsname;
+      if (!wsname || !wsname.includes("/")) return null;
+      const [base, quote] = wsname.split("/");
+      const baseNorm = base === "XBT" ? "BTC" : base;
+      return {
+        symbol: `${baseNorm}/${quote}`,
+        base: baseNorm,
+        quote,
+        active: true,
+        precision: { price: 8, amount: 8 },
+        limits: { amount: { min: 0, max: 0 } },
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 500);
+
+  return pairs;
+}
+
 async function binanceFetchBalance(apiKey: string, secret: string) {
   const timestamp = Date.now();
   const queryString = `timestamp=${timestamp}`;
@@ -349,13 +507,24 @@ serve(async (req) => {
 
     let result: any;
 
-    // Currently fully implementing Binance - other exchanges follow same pattern
-    if (exchange !== "binance") {
+    const supportedExchanges = ["binance", "kraken"] as const;
+    if (!(supportedExchanges as readonly string[]).includes(exchange)) {
       return new Response(
-        JSON.stringify({ 
-          error: `Exchange ${exchange} coming soon. Currently supporting: binance`,
-          supportedExchanges: ["binance"],
-          comingSoon: ["coinbase", "kraken", "bybit", "kucoin", "okx"]
+        JSON.stringify({
+          success: false,
+          error: `Exchange ${exchange} not supported`,
+          supportedExchanges,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    const isPublicAction = action === "fetch_markets" || action === "fetch_ticker" || action === "fetch_ohlcv";
+    if (exchange === "kraken" && !isPublicAction) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Action ${action} is not supported for kraken (public market data only)`,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
@@ -363,36 +532,43 @@ serve(async (req) => {
 
     switch (action) {
       case "fetch_markets":
-        result = await binanceFetchMarkets();
+        result = exchange === "binance" ? await binanceFetchMarkets() : await krakenFetchMarkets();
         break;
 
       case "fetch_ticker":
         if (!symbol) throw new Error("Symbol required for fetch_ticker");
-        result = await binanceFetchTicker(symbol);
+        result = exchange === "binance" ? await binanceFetchTicker(symbol) : await krakenFetchTicker(symbol);
         break;
 
       case "fetch_ohlcv":
         if (!symbol) throw new Error("Symbol required for fetch_ohlcv");
-        result = await binanceFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+        result =
+          exchange === "binance"
+            ? await binanceFetchOHLCV(symbol, timeframe || "1h", limit || 100)
+            : await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
         break;
 
       case "fetch_balance":
+        if (exchange !== "binance") throw new Error("fetch_balance is only supported for binance");
         if (!apiKey || !secret) throw new Error("API credentials required for fetch_balance");
         result = await binanceFetchBalance(apiKey, secret);
         break;
 
       case "create_order":
+        if (exchange !== "binance") throw new Error("create_order is only supported for binance");
         if (!apiKey || !secret) throw new Error("API credentials required for create_order");
         if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
         result = await binanceCreateOrder(apiKey, secret, symbol, side, orderType || "market", amount, price);
         break;
 
       case "fetch_orders":
+        if (exchange !== "binance") throw new Error("fetch_orders is only supported for binance");
         if (!apiKey || !secret) throw new Error("API credentials required for fetch_orders");
         result = await binanceFetchOrders(apiKey, secret, symbol);
         break;
 
       case "cancel_order":
+        if (exchange !== "binance") throw new Error("cancel_order is only supported for binance");
         if (!apiKey || !secret) throw new Error("API credentials required for cancel_order");
         if (!symbol || !orderId) throw new Error("Symbol and orderId required for cancel_order");
         result = await binanceCancelOrder(apiKey, secret, symbol, orderId);

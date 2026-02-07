@@ -4,16 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import TradingViewChart from "@/components/trading/TradingViewChart";
-import { useBinanceTickers } from "@/hooks/useBinanceTickers";
+import { useExchangeTicker } from "@/hooks/useExchangeTicker";
 import { Maximize2 } from "lucide-react";
 
 const SYMBOLS = [
-  { value: "BTC/USDT", label: "BTC", binance: "BTCUSDT" },
-  { value: "ETH/USDT", label: "ETH", binance: "ETHUSDT" },
-  { value: "SOL/USDT", label: "SOL", binance: "SOLUSDT" },
+  { value: "BTC/USDT", label: "BTC" },
+  { value: "ETH/USDT", label: "ETH" },
+  { value: "SOL/USDT", label: "SOL" },
 ] as const;
-
-type SymbolValue = (typeof SYMBOLS)[number]["value"];
 
 type ChartSymbol =
   | "BTC/USDT"
@@ -44,8 +42,8 @@ const SuperchartsWidget = () => {
   const [symbol, setSymbol] = useState<ChartSymbol>("BTC/USDT");
   const [timeframe, setTimeframe] = useState<TimeframeValue>("1h");
   const symbolCfg = useMemo(() => SYMBOLS.find((s) => s.value === symbol) ?? SYMBOLS[0], [symbol]);
-  const { tickers, connected } = useBinanceTickers([symbolCfg.binance]);
-  const live = tickers[symbolCfg.binance];
+
+  const { ticker, isLive } = useExchangeTicker({ exchange: "kraken", symbol, pollMs: 10_000 });
 
   return (
     <Card className="overflow-hidden card-premium border-none">
@@ -70,27 +68,30 @@ const SuperchartsWidget = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {live ? (
+            {ticker ? (
               <>
-                <span className="font-mono text-lg font-bold text-foreground">${formatPrice(live.lastPrice)}</span>
+                <span className="font-mono text-lg font-bold text-foreground">${formatPrice(ticker.last)}</span>
                 <Badge
                   variant="outline"
                   className={
-                    live.priceChangePercent >= 0
+                    ticker.changePercent >= 0
                       ? "text-success border-success/50 text-[9px]"
                       : "text-destructive border-destructive/50 text-[9px]"
                   }
                 >
-                  {live.priceChangePercent >= 0 ? "+" : ""}
-                  {live.priceChangePercent.toFixed(2)}%
+                  {ticker.changePercent >= 0 ? "+" : ""}
+                  {ticker.changePercent.toFixed(2)}%
                 </Badge>
               </>
             ) : (
               <span className="font-mono text-sm text-muted-foreground">Loading…</span>
             )}
 
-            <Badge variant="outline" className={connected ? "text-success border-success/50 text-[8px]" : "text-muted-foreground text-[8px]"}>
-              {connected ? "LIVE" : "CONNECTING"}
+            <Badge
+              variant="outline"
+              className={isLive ? "text-success border-success/50 text-[8px]" : "text-muted-foreground text-[8px]"}
+            >
+              {isLive ? "LIVE" : "DELAYED"}
             </Badge>
           </div>
         </div>
@@ -126,7 +127,7 @@ const SuperchartsWidget = () => {
         <TradingViewChart
           height={220}
           showToolbar={false}
-          symbol={symbol}
+          symbol={symbolCfg.value}
           timeframe={timeframe}
           onSymbolChange={(s) => setSymbol(s as ChartSymbol)}
           onTimeframeChange={(tf) => setTimeframe(tf)}
