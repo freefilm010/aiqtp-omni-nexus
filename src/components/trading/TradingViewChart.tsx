@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useBinanceTickers } from "@/hooks/useBinanceTickers";
+import { useExchangeTicker } from "@/hooks/useExchangeTicker";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2,
@@ -34,14 +34,14 @@ import {
 } from "lucide-react";
 
 const SYMBOLS = [
-  { value: "BTC/USDT", label: "BTC/USDT", binance: "BTCUSDT" },
-  { value: "ETH/USDT", label: "ETH/USDT", binance: "ETHUSDT" },
-  { value: "SOL/USDT", label: "SOL/USDT", binance: "SOLUSDT" },
-  { value: "BNB/USDT", label: "BNB/USDT", binance: "BNBUSDT" },
-  { value: "XRP/USDT", label: "XRP/USDT", binance: "XRPUSDT" },
-  { value: "ADA/USDT", label: "ADA/USDT", binance: "ADAUSDT" },
-  { value: "DOGE/USDT", label: "DOGE/USDT", binance: "DOGEUSDT" },
-  { value: "AVAX/USDT", label: "AVAX/USDT", binance: "AVAXUSDT" },
+  { value: "BTC/USDT", label: "BTC/USDT" },
+  { value: "ETH/USDT", label: "ETH/USDT" },
+  { value: "SOL/USDT", label: "SOL/USDT" },
+  { value: "BNB/USDT", label: "BNB/USDT" },
+  { value: "XRP/USDT", label: "XRP/USDT" },
+  { value: "ADA/USDT", label: "ADA/USDT" },
+  { value: "DOGE/USDT", label: "DOGE/USDT" },
+  { value: "AVAX/USDT", label: "AVAX/USDT" },
 ] as const;
 
 type SymbolValue = (typeof SYMBOLS)[number]["value"];
@@ -57,16 +57,6 @@ const TIMEFRAMES: { value: TimeframeValue; label: string }[] = [
   { value: "1d", label: "1D" },
   { value: "1w", label: "1W" },
 ];
-
-const TF_SECONDS: Record<TimeframeValue, number> = {
-  "1m": 60,
-  "5m": 300,
-  "15m": 900,
-  "1h": 3600,
-  "4h": 14400,
-  "1d": 86400,
-  "1w": 604800,
-};
 
 type Ticker24h = {
   last: number;
@@ -93,9 +83,7 @@ interface TradingViewChartProps {
 }
 
 const c = (token: string, alpha?: number) =>
-  alpha === undefined
-    ? `hsl(var(--${token}))`
-    : `hsl(var(--${token}) / ${alpha})`;
+  alpha === undefined ? `hsl(var(--${token}))` : `hsl(var(--${token}) / ${alpha})`;
 
 const formatPrice = (price: number) =>
   price.toLocaleString(undefined, {
@@ -160,13 +148,11 @@ const TradingViewChart = ({
     [onTimeframeChange, timeframeControlled]
   );
 
-  const symbolConfig = useMemo(
-    () => SYMBOLS.find((s) => s.value === symbol) ?? SYMBOLS[0],
-    [symbol]
-  );
-
-  const { tickers } = useBinanceTickers([symbolConfig.binance]);
-  const liveTicker = tickers[symbolConfig.binance];
+  const { ticker: ticker24h, isLive: tickerLive } = useExchangeTicker({
+    exchange: "kraken",
+    symbol,
+    pollMs: 10_000,
+  }) as { ticker: Ticker24h; isLive: boolean };
 
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -175,7 +161,6 @@ const TradingViewChart = ({
   const smaRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   const lastBarRef = useRef<CandlestickData<Time> | null>(null);
-  const lastLivePaintTsRef = useRef(0);
   const requestSeqRef = useRef(0);
 
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -184,7 +169,6 @@ const TradingViewChart = ({
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSMA, setShowSMA] = useState(true);
-  const [ticker24h, setTicker24h] = useState<Ticker24h>(null);
 
   // Chart init (once)
   useEffect(() => {
@@ -277,7 +261,7 @@ const TradingViewChart = ({
       smaRef.current = null;
       lastBarRef.current = null;
     };
-  }, []);
+  }, [height]);
 
   // Apply SMA visibility
   useEffect(() => {
@@ -299,7 +283,7 @@ const TradingViewChart = ({
         const { data, error: fnError } = await supabase.functions.invoke("ccxt-trading", {
           body: {
             action: "fetch_ohlcv",
-            exchange: "binance",
+            exchange: "kraken",
             symbol,
             timeframe,
             limit: 240,
@@ -358,86 +342,10 @@ const TradingViewChart = ({
     return () => window.clearInterval(id);
   }, [fetchOHLCV, pollMs]);
 
-  // Fetch 24h ticker stats (high/low/volume)
-  useEffect(() => {
-    let cancelled = false;
-
-    const run = async () => {
-      try {
-        const { data, error: fnError } = await supabase.functions.invoke("ccxt-trading", {
-          body: { action: "fetch_ticker", exchange: "binance", symbol },
-        });
-        if (cancelled) return;
-        if (fnError) throw fnError;
-        if (!data?.success) throw new Error(data?.error || "Failed to fetch ticker");
-
-        const t = data.data;
-        setTicker24h({
-          last: Number(t.last ?? 0),
-          high: Number(t.high ?? 0),
-          low: Number(t.low ?? 0),
-          volume: Number(t.volume ?? 0),
-          quoteVolume: Number(t.quoteVolume ?? 0),
-          changePercent: Number(t.changePercent ?? 0),
-        });
-      } catch {
-        // keep previous ticker24h if any
-      }
-    };
-
-    run();
-    const id = window.setInterval(run, 60_000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [symbol]);
-
-  // Real-time close updates (throttled) without inventing OHLC
-  useEffect(() => {
-    if (!liveTicker || !candleRef.current) return;
-
-    const now = Date.now();
-    if (now - lastLivePaintTsRef.current < 250) return;
-    lastLivePaintTsRef.current = now;
-
-    const tfSec = TF_SECONDS[timeframe] ?? 3600;
-    const barTime = (Math.floor(now / 1000 / tfSec) * tfSec) as Time;
-    const last = lastBarRef.current;
-
-    const price = Number(liveTicker.lastPrice);
-    if (!Number.isFinite(price)) return;
-
-    let next: CandlestickData<Time>;
-
-    if (last && (last.time as number) === (barTime as number)) {
-      next = {
-        time: barTime,
-        open: (last as any).open,
-        high: Math.max((last as any).high, price),
-        low: Math.min((last as any).low, price),
-        close: price,
-      };
-    } else {
-      const open = last ? Number((last as any).close) : price;
-      next = {
-        time: barTime,
-        open,
-        high: Math.max(open, price),
-        low: Math.min(open, price),
-        close: price,
-      };
-    }
-
-    candleRef.current.update(next);
-    lastBarRef.current = next;
-  }, [liveTicker?.lastPrice, symbolConfig.binance, timeframe]);
-
   const toggleFullscreen = () => setIsFullscreen((v) => !v);
 
-  const displayedPrice = liveTicker?.lastPrice ?? ticker24h?.last;
-  const displayedChange = liveTicker?.priceChangePercent ?? ticker24h?.changePercent;
+  const displayedPrice = ticker24h?.last;
+  const displayedChange = ticker24h?.changePercent;
 
   return (
     <Card className={`overflow-hidden ${isFullscreen ? "fixed inset-4 z-50" : ""}`}>
