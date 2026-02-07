@@ -18,7 +18,7 @@ import {
   Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useBinanceTickers } from "@/hooks/useBinanceTickers";
+import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 
 interface CandleData {
   time: number;
@@ -67,10 +67,8 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT" }: AdvancedChartProps) => {
   const [drawingTool, setDrawingTool] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const binanceSymbol = symbolMap[symbol] || 'BTCUSDT';
-  const coinGeckoId = coinGeckoMap[symbol] || 'bitcoin';
-  const { tickers } = useBinanceTickers([binanceSymbol]);
-  const liveTicker = tickers[binanceSymbol];
+  const { tickers } = useKrakenTickers([symbol], 12_000);
+  const liveTicker = tickers[symbol];
 
   const latestCandle = candleData[candleData.length - 1];
   const previousCandle = candleData[candleData.length - 2];
@@ -78,35 +76,36 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT" }: AdvancedChartProps) => {
     ? ((latestCandle.close - previousCandle.close) / previousCandle.close * 100)
     : 0;
 
-  // Fetch real OHLCV data from database
+  // Fetch real OHLCV data from Kraken
   useEffect(() => {
     const fetchOHLCV = async () => {
       setLoading(true);
       try {
-        // Try market_ohlcv table first
-        const { data, error } = await supabase
-          .from('market_ohlcv')
-          .select('*')
-          .eq('coin_id', coinGeckoId)
-          .order('open_time', { ascending: true })
-          .limit(100);
+        const { data, error } = await supabase.functions.invoke("ccxt-trading", {
+          body: {
+            action: "fetch_ohlcv",
+            exchange: "kraken",
+            symbol,
+            timeframe,
+            limit: 100,
+          },
+        });
 
-        if (!error && data && data.length > 0) {
-          const mapped: CandleData[] = data.map(c => ({
-            time: new Date(c.open_time).getTime(),
+        if (!error && data?.success && Array.isArray(data.data)) {
+          const mapped: CandleData[] = data.data.map((c: any) => ({
+            time: Number(c.timestamp),
             open: Number(c.open),
             high: Number(c.high),
             low: Number(c.low),
             close: Number(c.close),
-            volume: 50000 + (Number(c.close) * 100) // Approximate volume
+            volume: Number(c.volume) || 0,
           }));
           setCandleData(mapped);
         } else {
-          // No data available - show empty state
           setCandleData([]);
         }
       } catch (err) {
-        console.error('Error fetching OHLCV:', err);
+        console.error("Error fetching OHLCV:", err);
         setCandleData([]);
       } finally {
         setLoading(false);
@@ -114,7 +113,7 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT" }: AdvancedChartProps) => {
     };
 
     fetchOHLCV();
-  }, [coinGeckoId, timeframe]);
+  }, [symbol, timeframe]);
 
   // Update last candle with live price
   useEffect(() => {

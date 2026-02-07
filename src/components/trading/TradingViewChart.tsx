@@ -457,12 +457,10 @@ const TradingViewChart = ({
       )}
 
       <CardContent className="p-0 relative">
-        {isInitialLoading && !hasLoadedOnce && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/70 z-10">
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">Loading chart…</span>
-            </div>
+        {/* Show a small spinner in corner instead of blocking overlay */}
+        {isRefreshing && (
+          <div className="absolute top-2 right-2 z-10">
+            <Loader2 className="h-5 w-5 animate-spin text-primary/70" />
           </div>
         )}
 
