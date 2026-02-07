@@ -84,7 +84,7 @@ const SuperchartsWidget = () => {
                 </Badge>
               </>
             ) : (
-              <span className="font-mono text-sm text-muted-foreground">Loading…</span>
+              <span className="font-mono text-lg font-bold text-muted-foreground">—</span>
             )}
 
             <Badge

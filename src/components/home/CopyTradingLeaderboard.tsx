@@ -191,11 +191,7 @@ const CopyTradingLeaderboard = () => {
       </div>
 
       {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : error ? (
+      {error ? (
         <div className="flex items-center gap-2 text-destructive py-8 justify-center">
           <AlertCircle className="h-5 w-5" />
           <span>Error loading traders</span>

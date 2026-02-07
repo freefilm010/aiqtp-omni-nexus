@@ -3,29 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity, ChevronDown, Wifi, BarChart2, Crosshair, Minus, TrendingDown, Square, Circle, PenTool, Search, FileCode, FlaskConical, SlidersHorizontal, Eye, Maximize2, Layout, Terminal, Cpu, LineChart, CandlestickChart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useBinanceTickers } from "@/hooks/useBinanceTickers";
+import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 
-// TradingView-style Live Price Ticker (real-time via public exchange websocket)
+// TradingView-style Live Price Ticker (real-time via Kraken polling)
 const LiveTicker = () => {
   const symbols = [
-    "BTCUSDT",
-    "ETHUSDT",
-    "SOLUSDT",
-    "XRPUSDT",
-    "ADAUSDT",
-    "AVAXUSDT",
-    "LINKUSDT",
-    "DOGEUSDT",
+    "BTC/USDT",
+    "ETH/USDT",
+    "SOL/USDT",
+    "XRP/USDT",
+    "ADA/USDT",
+    "AVAX/USDT",
+    "LINK/USDT",
+    "DOGE/USDT",
   ];
 
-  const { tickers } = useBinanceTickers(symbols);
+  const { tickers } = useKrakenTickers(symbols, 15_000);
 
   const prices = symbols.map((s) => {
     const t = tickers[s];
     const change = t?.priceChangePercent ?? 0;
     const positive = change >= 0;
     return {
-      symbol: s.replace("USDT", "USD"),
+      symbol: s.replace("/USDT", "USD"),
       price: t?.lastPrice ?? 0,
       change,
       positive,
