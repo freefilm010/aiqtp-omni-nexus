@@ -4051,6 +4051,13 @@ export type Database = {
             referencedRelation: "quwallet_wallets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "quwallet_addresses_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "quwallet_wallets_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       quwallet_wallets: {
@@ -5411,6 +5418,48 @@ export type Database = {
           total_rentals?: number | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      quwallet_wallets_safe: {
+        Row: {
+          created_at: string | null
+          dilithium_public_key: string | null
+          ecdsa_public_key: string | null
+          id: string | null
+          is_active: boolean | null
+          is_hardware: boolean | null
+          kyber_public_key: string | null
+          user_id: string | null
+          wallet_address: string | null
+          wallet_name: string | null
+          wallet_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dilithium_public_key?: string | null
+          ecdsa_public_key?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_hardware?: boolean | null
+          kyber_public_key?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+          wallet_name?: string | null
+          wallet_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dilithium_public_key?: string | null
+          ecdsa_public_key?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_hardware?: boolean | null
+          kyber_public_key?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+          wallet_name?: string | null
+          wallet_type?: string | null
         }
         Relationships: []
       }
