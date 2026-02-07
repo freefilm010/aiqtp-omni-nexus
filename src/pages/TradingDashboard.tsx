@@ -37,6 +37,21 @@ const TradingDashboard = () => {
 
   const markets = getAllPrices();
 
+  const total24hVolumeUsd = markets.reduce(
+    (sum, m) => sum + (typeof m.volumeNumeric === "number" ? m.volumeNumeric : 0),
+    0
+  );
+
+  const formatCompactUsd = (value: number) => {
+    const abs = Math.abs(value);
+    if (!Number.isFinite(abs) || abs <= 0) return null;
+    if (abs >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+    if (abs >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+    if (abs >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
+    return `$${value.toFixed(2)}`;
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       fetchUserData();
@@ -141,10 +156,13 @@ const TradingDashboard = () => {
           <div className="mb-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h1 className="text-4xl font-bold text-foreground mb-2">
-                  Trading <span className="text-gradient-gold">Dashboard</span>
-                </h1>
-                <p className="text-muted-foreground">Monitor and trade all your assets in one place</p>
+                  <h1 className="text-4xl font-bold text-foreground mb-2">
+                    Trading <span className="text-gradient-gold">Dashboard</span>
+                  </h1>
+                  <p className="text-muted-foreground">Monitor and trade all your assets in one place</p>
+                  {lastSyncError && (
+                    <p className="mt-2 text-xs text-warning font-mono">{lastSyncError}</p>
+                  )}
               </div>
               
               <div className="flex items-center gap-3">
@@ -182,10 +200,12 @@ const TradingDashboard = () => {
                 <CardTitle className="text-sm text-muted-foreground">24h Volume</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-foreground">$8.9B</div>
+                <div className="text-3xl font-bold text-foreground">
+                  {formatCompactUsd(total24hVolumeUsd) ?? "--"}
+                </div>
                 <div className="flex items-center text-accent text-sm mt-2">
                   <BarChart3 className="w-4 h-4 mr-1" />
-                  <span>Across all markets</span>
+                  <span>Across tracked markets</span>
                 </div>
               </CardContent>
             </Card>
