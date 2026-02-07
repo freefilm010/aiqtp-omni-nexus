@@ -9,19 +9,47 @@ const corsHeaders = {
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const COINGECKO_PRO_API = 'https://pro-api.coingecko.com/api/v3';
 
-// Priority coins to always track with full data
-const PRIORITY_COINS = [
-  'bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple', 'cardano', 
-  'dogecoin', 'avalanche-2', 'polkadot', 'chainlink', 'polygon', 
-  'stellar', 'algorand', 'monero', 'zcash', 'dash', 'litecoin',
-  'cosmos', 'near', 'fantom', 'arbitrum', 'optimism', 'starknet',
-  'sui', 'aptos', 'sei-network', 'injective-protocol', 'ravencoin',
-  'tron', 'uniswap', 'aave', 'maker', 'compound-governance-token',
-  'lido-dao', 'rocket-pool', 'frax', 'curve-dao-token', 'convex-finance',
-  'pepe', 'dogwifcoin', 'bonk', 'shiba-inu', 'floki',
-  'render-token', 'fetch-ai', 'ocean-protocol', 'singularitynet',
-  'the-graph', 'filecoin', 'arweave', 'helium', 'akash-network'
-];
+// Cache TTL in seconds - serve cached data if fresh enough
+const CACHE_TTL_SECONDS = 60;
+
+// In-memory rate limit tracker (per edge function instance)
+let lastApiCall = 0;
+const MIN_CALL_INTERVAL_MS = 1500; // 1.5s between calls for free tier
+
+// Fetch with rate limiting and retry logic
+async function fetchWithRateLimit(
+  url: string, 
+  headers: Record<string, string>,
+  maxRetries = 2
+): Promise<Response> {
+  const now = Date.now();
+  const timeSinceLast = now - lastApiCall;
+  
+  // Enforce minimum interval between calls
+  if (timeSinceLast < MIN_CALL_INTERVAL_MS) {
+    await new Promise(r => setTimeout(r, MIN_CALL_INTERVAL_MS - timeSinceLast));
+  }
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    lastApiCall = Date.now();
+    const response = await fetch(url, { headers });
+    
+    if (response.status === 429) {
+      // Rate limited - wait with exponential backoff
+      const waitTime = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+      console.log(`Rate limited, waiting ${waitTime}ms before retry ${attempt + 1}`);
+      
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, waitTime));
+        continue;
+      }
+    }
+    
+    return response;
+  }
+  
+  throw new Error('Rate limit exceeded after retries');
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -45,8 +73,6 @@ serve(async (req) => {
     const headers: Record<string, string> = { 'Accept': 'application/json' };
     if (apiKey) headers['x-cg-pro-api-key'] = apiKey;
 
-    // Allow public read actions so home/marketing pages can show live prices.
-    // Writes (DB sync) remain gated by authentication.
     const publicActions = new Set(['get_price', 'get_global', 'search_coins', 'get_exchanges', 'sync_trending']);
     const isPublicAction = publicActions.has(action);
 
@@ -56,7 +82,6 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization') ?? '';
     let isAuthedUser = false;
 
-    // Only verify auth for write operations. Public actions pass through without auth.
     if (!isPublicAction) {
       if (authHeader && authHeader !== `Bearer ${supabaseAnonKey}`) {
         const authClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -73,7 +98,6 @@ serve(async (req) => {
         );
       }
     } else {
-      // For public actions, attempt auth only if a real user JWT is present
       if (authHeader && authHeader !== `Bearer ${supabaseAnonKey}`) {
         try {
           const authClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -87,8 +111,6 @@ serve(async (req) => {
       }
     }
 
-    // Service role client is used for DB writes after auth is verified.
-    // NOTE: write operations are still gated by isAuthedUser.
     const supabase = createClient(
       supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -96,82 +118,98 @@ serve(async (req) => {
 
     const canWrite = isAuthedUser;
 
-
     console.log(`Market data sync action: ${action}`);
 
-    // Log sync start
-    const logSync = async (syncType: string) => {
-      const { data } = await supabase.from('market_sync_logs').insert({
-        sync_type: syncType,
-        status: 'running'
-      }).select().single();
-      return data?.id;
+    // Helper: Check if cached data is fresh
+    const isCacheFresh = (lastUpdated: string | null): boolean => {
+      if (!lastUpdated) return false;
+      const age = (Date.now() - new Date(lastUpdated).getTime()) / 1000;
+      return age < CACHE_TTL_SECONDS;
     };
 
-    const updateSyncLog = async (logId: string, status: string, records: number, error?: string) => {
-      await supabase.from('market_sync_logs').update({
-        status,
-        records_synced: records,
-        error_message: error,
-        completed_at: new Date().toISOString()
-      }).eq('id', logId);
+    // Helper: Get cached prices from database
+    const getCachedPrices = async (coinIds: string[]) => {
+      const { data } = await supabase
+        .from('market_prices')
+        .select('coin_id, price_usd, price_change_percentage_24h, total_volume, market_cap, last_updated')
+        .in('coin_id', coinIds);
+      
+      if (!data || data.length === 0) return null;
+      
+      // Transform to CoinGecko-like format
+      const prices: Record<string, any> = {};
+      for (const row of data) {
+        prices[row.coin_id] = {
+          usd: row.price_usd,
+          usd_24h_change: row.price_change_percentage_24h,
+          usd_24h_vol: row.total_volume,
+          usd_market_cap: row.market_cap,
+          _cached: true,
+          _age: row.last_updated ? Math.floor((Date.now() - new Date(row.last_updated).getTime()) / 1000) : null
+        };
+      }
+      
+      return Object.keys(prices).length > 0 ? prices : null;
     };
 
     switch (action) {
       case 'sync_coins_list': {
-        // Fetch full coins list from CoinGecko (15,000+ coins)
-        const logId = await logSync('coins_list');
-        try {
-          const response = await fetch(`${baseUrl}/coins/list?include_platform=true`, { headers });
-          if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
-          
-          const coins = await response.json();
-          let synced = 0;
-
-          // Batch insert/update coins (500 at a time)
-          for (let i = 0; i < coins.length; i += 500) {
-            const batch = coins.slice(i, i + 500).map((coin: any) => ({
-              id: coin.id,
-              symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
-              name: coin.name || coin.id,
-              platforms: coin.platforms || {},
-              is_active: true,
-              updated_at: new Date().toISOString()
-            }));
-
-            const { error } = await supabase.from('market_coins').upsert(batch, {
-              onConflict: 'id'
-            });
-            if (!error) synced += batch.length;
-          }
-
-          await updateSyncLog(logId!, 'completed', synced);
+        const { count } = await supabase
+          .from('market_coins')
+          .select('*', { count: 'exact', head: true });
+        
+        // Skip if we already have coins synced
+        if (count && count > 100) {
           return new Response(JSON.stringify({ 
             success: true, 
-            synced,
-            message: `Synced ${synced} coins from CoinGecko` 
+            synced: 0,
+            message: 'Coins list already populated, skipping API call' 
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        } catch (e: any) {
-          await updateSyncLog(logId!, 'failed', 0, e.message);
-          throw e;
         }
+
+        const response = await fetchWithRateLimit(`${baseUrl}/coins/list?include_platform=true`, headers);
+        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
+        
+        const coins = await response.json();
+        let synced = 0;
+
+        for (let i = 0; i < coins.length; i += 500) {
+          const batch = coins.slice(i, i + 500).map((coin: any) => ({
+            id: coin.id,
+            symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
+            name: coin.name || coin.id,
+            platforms: coin.platforms || {},
+            is_active: true,
+            updated_at: new Date().toISOString()
+          }));
+
+          const { error } = await supabase.from('market_coins').upsert(batch, {
+            onConflict: 'id'
+          });
+          if (!error) synced += batch.length;
+        }
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          synced,
+          message: `Synced ${synced} coins from CoinGecko` 
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       case 'sync_market_prices': {
-        // Fetch market data for top coins (max 250 per page, up to 5000)
-        const logId = await logSync('prices');
         const perPage = params?.perPage || 250;
-        const pages = params?.pages || 20; // 5000 coins total
+        const pages = params?.pages || 2; // Reduced default to avoid rate limits
         
-        try {
-          let synced = 0;
+        let synced = 0;
 
-          for (let page = 1; page <= pages; page++) {
-            const url = `${baseUrl}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=false&price_change_percentage=24h,7d,30d`;
-            
-            const response = await fetch(url, { headers });
+        for (let page = 1; page <= pages; page++) {
+          const url = `${baseUrl}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=false&price_change_percentage=24h,7d,30d`;
+          
+          try {
+            const response = await fetchWithRateLimit(url, headers);
             if (!response.ok) {
               console.log(`Page ${page} failed: ${response.status}`);
+              if (response.status === 429) break;
               continue;
             }
             
@@ -204,7 +242,6 @@ serve(async (req) => {
               last_updated: new Date().toISOString()
             }));
 
-            // Ensure coins exist first
             const coinInserts = markets.map((coin: any) => ({
               id: coin.id,
               symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
@@ -222,104 +259,120 @@ serve(async (req) => {
             });
             
             if (!error) synced += priceData.length;
-
-            // Rate limiting - be respectful to API
-            if (!apiKey) await new Promise(r => setTimeout(r, 1200));
+          } catch (e: any) {
+            console.error(`Page ${page} error:`, e.message);
+            if (e.message.includes('Rate limit')) break;
           }
-
-          await updateSyncLog(logId!, 'completed', synced);
-          return new Response(JSON.stringify({ 
-            success: true, 
-            synced,
-            message: `Synced prices for ${synced} coins` 
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        } catch (e: any) {
-          await updateSyncLog(logId!, 'failed', 0, e.message);
-          throw e;
         }
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          synced,
+          message: `Synced prices for ${synced} coins` 
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       case 'get_price': {
-        // Get real-time price for specific coin(s)
         const { coinIds } = params;
-        const ids = Array.isArray(coinIds) ? coinIds.join(',') : coinIds;
+        const ids = Array.isArray(coinIds) ? coinIds : [coinIds];
         
-        const url = `${baseUrl}/simple/price?ids=${ids}&vs_currencies=usd,btc,eth&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`;
-        const response = await fetch(url, { headers });
-        
-        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
-        const prices = await response.json();
-
-        // Update database with fresh prices (only when called by an authenticated user)
-        if (canWrite) {
-          for (const [coinId, data] of Object.entries(prices) as [string, any][]) {
-            await supabase.rpc('update_market_price', {
-              p_coin_id: coinId,
-              p_price_usd: data.usd,
-              p_price_btc: data.btc,
-              p_price_eth: data.eth,
-              p_market_cap: data.usd_market_cap,
-              p_volume: data.usd_24h_vol,
-              p_change_24h: data.usd_24h_change
-            });
-          }
+        // Always try cache first
+        const cached = await getCachedPrices(ids);
+        if (cached && Object.keys(cached).length >= ids.length * 0.5) {
+          console.log('Returning cached prices');
+          return new Response(JSON.stringify({ success: true, prices: cached, cached: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
 
-        return new Response(JSON.stringify({ success: true, prices }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      case 'sync_ohlcv': {
-        // Fetch OHLCV data for charting
-        const { coinId, days = 30 } = params;
-        const logId = await logSync('ohlcv');
-
+        // Fetch fresh data
+        const idsStr = ids.join(',');
+        const url = `${baseUrl}/simple/price?ids=${idsStr}&vs_currencies=usd,btc,eth&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`;
+        
         try {
-          const url = `${baseUrl}/coins/${coinId}/ohlc?vs_currency=usd&days=${days}`;
-          const response = await fetch(url, { headers });
+          const response = await fetchWithRateLimit(url, headers, 1);
           
-          if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
-          const ohlcData = await response.json();
+          if (!response.ok) {
+            // On API error, return cached data if available
+            if (cached) {
+              console.log('API failed, returning stale cache');
+              return new Response(JSON.stringify({ success: true, prices: cached, cached: true, stale: true }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+            throw new Error(`CoinGecko API error: ${response.status}`);
+          }
+          
+          const prices = await response.json();
 
-          // Determine timeframe based on days
-          let timeframe = '1d';
-          if (days <= 1) timeframe = '15m';
-          else if (days <= 7) timeframe = '1h';
-          else if (days <= 30) timeframe = '4h';
+          // Update database with fresh prices
+          if (canWrite) {
+            for (const [coinId, data] of Object.entries(prices) as [string, any][]) {
+              await supabase.from('market_prices').upsert({
+                coin_id: coinId,
+                price_usd: data.usd,
+                market_cap: data.usd_market_cap,
+                total_volume: data.usd_24h_vol,
+                price_change_percentage_24h: data.usd_24h_change,
+                last_updated: new Date().toISOString()
+              }, { onConflict: 'coin_id' });
+            }
+          }
 
-          const ohlcRecords = ohlcData.map((candle: number[]) => ({
-            coin_id: coinId,
-            timeframe,
-            open_time: new Date(candle[0]).toISOString(),
-            open: candle[1],
-            high: candle[2],
-            low: candle[3],
-            close: candle[4]
-          }));
-
-          const { error } = await supabase.from('market_ohlcv').upsert(ohlcRecords, {
-            onConflict: 'coin_id,timeframe,open_time'
+          return new Response(JSON.stringify({ success: true, prices }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
-
-          await updateSyncLog(logId!, error ? 'failed' : 'completed', ohlcRecords.length, error?.message);
-
-          return new Response(JSON.stringify({ 
-            success: !error, 
-            records: ohlcRecords.length,
-            timeframe
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         } catch (e: any) {
-          await updateSyncLog(logId!, 'failed', 0, e.message);
+          // Return cache on any error
+          if (cached) {
+            console.log('Error fetching, returning stale cache:', e.message);
+            return new Response(JSON.stringify({ success: true, prices: cached, cached: true, stale: true }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
           throw e;
         }
       }
 
+      case 'sync_ohlcv': {
+        const { coinId, days = 30 } = params;
+
+        const url = `${baseUrl}/coins/${coinId}/ohlc?vs_currency=usd&days=${days}`;
+        const response = await fetchWithRateLimit(url, headers);
+        
+        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
+        const ohlcData = await response.json();
+
+        let timeframe = '1d';
+        if (days <= 1) timeframe = '15m';
+        else if (days <= 7) timeframe = '1h';
+        else if (days <= 30) timeframe = '4h';
+
+        const ohlcRecords = ohlcData.map((candle: number[]) => ({
+          coin_id: coinId,
+          timeframe,
+          open_time: new Date(candle[0]).toISOString(),
+          open: candle[1],
+          high: candle[2],
+          low: candle[3],
+          close: candle[4]
+        }));
+
+        const { error } = await supabase.from('market_ohlcv').upsert(ohlcRecords, {
+          onConflict: 'coin_id,timeframe,open_time'
+        });
+
+        return new Response(JSON.stringify({ 
+          success: !error, 
+          records: ohlcRecords.length,
+          timeframe
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       case 'search_coins': {
-        // Search CoinGecko for coins
         const { query } = params;
         const url = `${baseUrl}/search?query=${encodeURIComponent(query)}`;
-        const response = await fetch(url, { headers });
+        const response = await fetchWithRateLimit(url, headers);
         
         if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
         const results = await response.json();
@@ -332,9 +385,8 @@ serve(async (req) => {
       }
 
       case 'sync_trending': {
-        // Get trending coins
         const url = `${baseUrl}/search/trending`;
-        const response = await fetch(url, { headers });
+        const response = await fetchWithRateLimit(url, headers);
         
         if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
         const trending = await response.json();
@@ -347,9 +399,8 @@ serve(async (req) => {
       }
 
       case 'get_exchanges': {
-        // Get exchange list with volumes
         const url = `${baseUrl}/exchanges?per_page=100`;
-        const response = await fetch(url, { headers });
+        const response = await fetchWithRateLimit(url, headers);
         
         if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
         const exchanges = await response.json();
@@ -360,9 +411,8 @@ serve(async (req) => {
       }
 
       case 'get_global': {
-        // Get global crypto market data
         const url = `${baseUrl}/global`;
-        const response = await fetch(url, { headers });
+        const response = await fetchWithRateLimit(url, headers);
         
         if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
         const global = await response.json();
