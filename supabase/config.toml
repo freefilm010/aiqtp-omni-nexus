@@ -13,7 +13,16 @@ verify_jwt = false
 [functions.aiqtp-agent]
 verify_jwt = false
 
+[functions.automation-hub]
+verify_jwt = false
+
 [functions.blockchain-research]
+verify_jwt = false
+
+[functions.btcc-trading]
+verify_jwt = false
+
+[functions.ccxt-trading]
 verify_jwt = false
 
 [functions.claude-assistant]
@@ -29,6 +38,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ml-predictions]
+verify_jwt = false
+
+[functions.moonshot-integration]
 verify_jwt = false
 
 [functions.qaqi-agent]
