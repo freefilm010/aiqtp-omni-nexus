@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import GitHubEcosystem from "@/components/github/GitHubEcosystem";
+import { GITHUB_USERNAME } from "@/lib/github/repositories";
 import { 
   Zap, 
   Mail, 
@@ -262,7 +264,7 @@ const Footer = () => {
                 </a>
               </Button>
               <Button variant="glass" size="icon" asChild>
-                <a href="https://discord.gg/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+                <a href="https://discord.gg/6BYH6ssDg" target="_blank" rel="noopener noreferrer" aria-label="Discord">
                   <MessageCircle className="w-4 h-4" />
                 </a>
               </Button>
@@ -277,7 +279,7 @@ const Footer = () => {
                 </a>
               </Button>
               <Button variant="glass" size="icon" asChild>
-                <a href="https://github.com/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                <a href={`https://github.com/${GITHUB_USERNAME}`} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                   <Github className="w-4 h-4" />
                 </a>
               </Button>
@@ -301,6 +303,11 @@ const Footer = () => {
               <li><a href="#" className="hover:text-gold transition-smooth">Terms of Service</a></li>
             </ul>
           </div>
+        </div>
+
+        {/* GitHub Ecosystem Section */}
+        <div className="py-8 border-t border-white/10">
+          <GitHubEcosystem />
         </div>
 
         {/* Legal Disclaimer Section */}
