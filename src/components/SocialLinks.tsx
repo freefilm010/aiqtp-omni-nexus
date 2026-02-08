@@ -6,7 +6,11 @@ import {
   Github,
   Linkedin,
   Send,
-  ExternalLink
+  ExternalLink,
+  Rocket,
+  BookOpen,
+  Wallet,
+  Globe
 } from "lucide-react";
 
 interface SocialLink {
@@ -27,7 +31,7 @@ const SOCIAL_LINKS: SocialLink[] = [
   },
   { 
     name: 'Discord', 
-    url: 'https://discord.gg/aiqtp', 
+    url: 'https://discord.gg/6BYH6ssDg', 
     icon: MessageCircle, 
     color: 'text-foreground',
     hoverColor: 'hover:text-indigo-400'
@@ -59,6 +63,38 @@ const SOCIAL_LINKS: SocialLink[] = [
     icon: Linkedin, 
     color: 'text-foreground',
     hoverColor: 'hover:text-blue-600'
+  },
+];
+
+// Extended ecosystem links for footer/dedicated section
+export const ECOSYSTEM_LINKS: SocialLink[] = [
+  { 
+    name: 'Income Factory', 
+    url: 'https://incomefactory.manus.space', 
+    icon: Wallet, 
+    color: 'text-foreground',
+    hoverColor: 'hover:text-cyan-400'
+  },
+  { 
+    name: 'Research Lab', 
+    url: 'https://notebooklm.google.com/notebook/c03ec2a6-302e-4870-b1c3-19c452941f10', 
+    icon: BookOpen, 
+    color: 'text-foreground',
+    hoverColor: 'hover:text-green-400'
+  },
+  { 
+    name: 'Moonshot', 
+    url: 'https://moonshot.com/8PqsearWtYHMuf1e8ytFPtHdqZGtz4tqKETEYYwAmoon?ref=gDNoh6', 
+    icon: Rocket, 
+    color: 'text-foreground',
+    hoverColor: 'hover:text-orange-400'
+  },
+  { 
+    name: 'FineTune AI', 
+    url: 'https://ftn.ai/0556287174677364736', 
+    icon: Globe, 
+    color: 'text-foreground',
+    hoverColor: 'hover:text-purple-400'
   },
 ];
 
