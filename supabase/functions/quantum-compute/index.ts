@@ -167,4 +167,4 @@ function generateDefaultCircuit(qubits: number): string {
   
   return qasm;
 }
-});
+
