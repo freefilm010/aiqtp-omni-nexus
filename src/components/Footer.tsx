@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import GitHubEcosystem from "@/components/github/GitHubEcosystem";
 import { GITHUB_USERNAME } from "@/lib/github/repositories";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { 
   Zap, 
   Mail, 
@@ -43,6 +44,7 @@ import {
 } from "lucide-react";
 
 const Footer = () => {
+  const { isAdmin } = useAdminAuth();
   // All navigation links matching the app routes
   const tradingLinks = [
     { to: "/trading", label: "Trading Dashboard", icon: Activity },
@@ -305,10 +307,12 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* GitHub Ecosystem Section */}
-        <div className="py-8 border-t border-white/10">
-          <GitHubEcosystem />
-        </div>
+        {/* GitHub Ecosystem Section - Admin Only */}
+        {isAdmin && (
+          <div className="py-8 border-t border-white/10">
+            <GitHubEcosystem />
+          </div>
+        )}
 
         {/* Legal Disclaimer Section */}
         <div className="py-6 border-t border-white/10 space-y-4">
