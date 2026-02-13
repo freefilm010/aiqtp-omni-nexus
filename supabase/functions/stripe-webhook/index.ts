@@ -28,8 +28,16 @@ serve(async (req) => {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
     
-    // For now, parse the event directly (webhook signing can be added later)
-    const event = JSON.parse(body) as Stripe.Event;
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    if (!webhookSecret) {
+      throw new Error("Stripe webhook secret not configured");
+    }
+    if (!signature) {
+      throw new Error("Missing stripe-signature header");
+    }
+
+    // Verify the webhook signature to prevent forged events
+    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     console.log("Webhook event received:", event.type);
 
     // Process different event types
