@@ -176,9 +176,11 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="max-h-96 overflow-y-auto">
                 {tradingLinks.map((link) => (
-                  <DropdownMenuItem key={link.to} onClick={() => navigate(link.to)}>
-                    <link.icon className="mr-2 h-4 w-4" />
-                    {link.label}
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -192,9 +194,11 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {aiQuantumLinks.map((link) => (
-                  <DropdownMenuItem key={link.to} onClick={() => navigate(link.to)}>
-                    <link.icon className="mr-2 h-4 w-4" />
-                    {link.label}
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -208,9 +212,11 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {strategyLinks.map((link) => (
-                  <DropdownMenuItem key={link.to} onClick={() => navigate(link.to)}>
-                    <link.icon className="mr-2 h-4 w-4" />
-                    {link.label}
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -224,9 +230,11 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {assetLinks.map((link) => (
-                  <DropdownMenuItem key={link.to} onClick={() => navigate(link.to)}>
-                    <link.icon className="mr-2 h-4 w-4" />
-                    {link.label}
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -240,9 +248,11 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {infoLinks.map((link) => (
-                  <DropdownMenuItem key={link.to} onClick={() => navigate(link.to)}>
-                    <link.icon className="mr-2 h-4 w-4" />
-                    {link.label}
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -257,9 +267,11 @@ const Header = () => {
               <DropdownMenuContent className="w-64">
                 <DropdownMenuLabel>Pages</DropdownMenuLabel>
                 {moreLinks.map((link) => (
-                  <DropdownMenuItem key={link.to} onClick={() => navigate(link.to)} className="text-sm">
-                    <link.icon className="mr-2 h-3.5 w-3.5" />
-                    {link.label}
+                  <DropdownMenuItem key={link.to} asChild className="text-sm">
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-3.5 w-3.5" />
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
 
