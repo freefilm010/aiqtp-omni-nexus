@@ -1,130 +1,181 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+// Allowed pricing plans with server-side price validation
+const ALLOWED_PLANS: Record<string, { amount: number; mode: "payment" | "subscription"; interval?: string }> = {
+  "starter":        { amount: 49,  mode: "payment" },
+  "qaqi-monthly":   { amount: 12,  mode: "subscription", interval: "month" },
+  "qaqi-annual":    { amount: 100, mode: "subscription", interval: "year" },
+  "pro-monthly":    { amount: 99,  mode: "subscription", interval: "month" },
+  "elite-monthly":  { amount: 299, mode: "subscription", interval: "month" },
+  "institutional":  { amount: 999, mode: "subscription", interval: "month" },
 };
 
 interface CheckoutRequest {
-  priceId?: string;
-  mode: "payment" | "subscription";
+  planId: string;
   successUrl: string;
   cancelUrl: string;
-  // For dynamic pricing
+  // Legacy fields kept for backward compat but server validates price
+  priceId?: string;
   amount?: number;
   productName?: string;
   productDescription?: string;
-  // Customer info
+  mode?: "payment" | "subscription";
   customerEmail?: string;
   metadata?: Record<string, string>;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // 1. Authenticate the user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       console.error("STRIPE_SECRET_KEY not configured");
-      throw new Error("Stripe not configured");
+      throw new Error("Payment system not configured");
     }
 
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2023-10-16",
-    });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
     const body: CheckoutRequest = await req.json();
-    console.log("Checkout request:", JSON.stringify(body));
+    const { planId, successUrl, cancelUrl, priceId, metadata } = body;
 
-    const { 
-      priceId, 
-      mode, 
-      successUrl, 
-      cancelUrl, 
-      amount, 
-      productName, 
-      productDescription,
-      customerEmail,
-      metadata 
-    } = body;
+    // 2. Validate URLs - must be same origin
+    const allowedOrigins = [
+      "https://aiqtp.lovable.app",
+      "https://id-preview--d588a2ef-0d53-4c77-8d2f-41dfd18dd47e.lovable.app",
+    ];
+    const isValidUrl = (url: string) => {
+      try {
+        const parsed = new URL(url);
+        return allowedOrigins.some(o => parsed.origin === o);
+      } catch { return false; }
+    };
+    if (!isValidUrl(successUrl) || !isValidUrl(cancelUrl)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid redirect URL" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Build line items
+    // 3. Build line items with server-side price validation
     let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
+    let mode: "payment" | "subscription";
 
     if (priceId) {
-      // Use existing price
+      // Use existing Stripe price ID (already validated by Stripe)
       lineItems = [{ price: priceId, quantity: 1 }];
-    } else if (amount && productName) {
-      // Create dynamic price
+      mode = body.mode || "payment";
+    } else if (planId && ALLOWED_PLANS[planId]) {
+      // Validate against server-side plan definitions
+      const plan = ALLOWED_PLANS[planId];
+      mode = plan.mode;
       lineItems = [{
         price_data: {
           currency: "usd",
           product_data: {
-            name: productName,
-            description: productDescription || undefined,
+            name: `AIQTP ${planId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`,
           },
-          unit_amount: Math.round(amount * 100), // Convert to cents
-          ...(mode === "subscription" ? { recurring: { interval: "month" } } : {}),
+          unit_amount: Math.round(plan.amount * 100),
+          ...(plan.mode === "subscription" && plan.interval
+            ? { recurring: { interval: plan.interval as "month" | "year" } }
+            : {}),
         },
         quantity: 1,
       }];
     } else {
-      throw new Error("Either priceId or (amount + productName) required");
+      return new Response(
+        JSON.stringify({ error: "Invalid plan selected" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Create checkout session
+    // 4. Sanitize metadata
+    const sanitizedMetadata: Record<string, string> = {
+      user_id: user.id,
+      user_email: user.email || "",
+      plan_id: planId || "custom",
+      source: "aiqtp_platform",
+      created_at: new Date().toISOString(),
+    };
+
+    if (metadata && typeof metadata === "object") {
+      for (const [key, value] of Object.entries(metadata)) {
+        if (
+          typeof key === "string" && typeof value === "string" &&
+          key.length <= 40 && value.length <= 500 &&
+          /^[a-zA-Z0-9_-]+$/.test(key)
+        ) {
+          sanitizedMetadata[key] = value;
+        }
+      }
+    }
+
+    // 5. Create checkout session
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode,
       line_items: lineItems,
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata: {
-        ...metadata,
-        source: "aiqtp_platform",
-        created_at: new Date().toISOString(),
-      },
+      customer_email: user.email || undefined,
+      metadata: sanitizedMetadata,
     };
 
-    if (customerEmail) {
-      sessionParams.customer_email = customerEmail;
-    }
-
-    // For subscriptions, allow customer to manage billing
     if (mode === "subscription") {
       sessionParams.subscription_data = {
-        metadata: {
-          ...metadata,
-          source: "aiqtp_platform",
-        },
+        metadata: sanitizedMetadata,
       };
     }
 
-    console.log("Creating Stripe session...");
+    console.log("Creating Stripe session for user:", user.id, "plan:", planId);
     const session = await stripe.checkout.sessions.create(sessionParams);
     console.log("Session created:", session.id);
 
     return new Response(
-      JSON.stringify({ 
-        url: session.url, 
-        sessionId: session.id 
-      }),
-      { 
+      JSON.stringify({ url: session.url, sessionId: session.id }),
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200 
+        status: 200,
       }
     );
-
   } catch (error) {
     console.error("Stripe checkout error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({ error: "Failed to create checkout session" }),
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400 
+        status: 400,
       }
     );
   }

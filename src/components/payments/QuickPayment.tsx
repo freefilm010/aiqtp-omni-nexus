@@ -97,14 +97,10 @@ export const QuickPayment = () => {
     try {
       const { data, error } = await supabase.functions.invoke("stripe-checkout", {
         body: {
-          amount: plan.price,
-          productName: `AIQTP ${plan.name}`,
-          productDescription: plan.description,
-          mode: plan.mode,
+          planId: plan.id,
           successUrl: `${window.location.origin}/payment-success?plan=${plan.id}`,
           cancelUrl: `${window.location.origin}/pricing`,
           metadata: {
-            plan_id: plan.id,
             plan_name: plan.name,
           },
         },
