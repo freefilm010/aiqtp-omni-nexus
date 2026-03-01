@@ -13,6 +13,7 @@ import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnoun
 import ProtectedRoute from "./components/ProtectedRoute";
 import FloatingWindowsLayer from "./components/floating/FloatingWindowsLayer";
 import { FloatingWindowsProvider } from "./contexts/FloatingWindowsContext";
+import { Analytics } from "@vercel/analytics/react";
 // Lazy load all page components for code-splitting
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -114,6 +115,7 @@ const App = () => (
                   <SkipLinks />
                   <ScreenReaderAnnouncer />
                   <FloatingWindowsLayer />
+                  <Analytics />
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
