@@ -20,6 +20,10 @@ const DEFAULT_SYMBOLS = [
   "DOGE/USDT",
 ] as const;
 
+/**
+ * Live ticker hook — uses BTCC exchange (user's configured API keys)
+ * with Binance as automatic fallback for public market data.
+ */
 export function useKrakenTickers(symbols: string[] = [...DEFAULT_SYMBOLS], pollMs = 12_000) {
   const [tickers, setTickers] = useState<Record<string, KrakenTickerQuote>>({});
   const [connected, setConnected] = useState(false);
@@ -30,31 +34,63 @@ export function useKrakenTickers(symbols: string[] = [...DEFAULT_SYMBOLS], pollM
     mountedRef.current = true;
     let cancelled = false;
 
+    const fetchOne = async (sym: string): Promise<KrakenTickerQuote | null> => {
+      // Try BTCC first (user's configured exchange)
+      try {
+        const btccSymbol = sym.replace("/", "");
+        const { data, error } = await supabase.functions.invoke("btcc-trading", {
+          body: { action: "fetch_ticker", market: "spot", symbol: btccSymbol },
+        });
+
+        if (!error && data?.success && data?.data) {
+          const t = data.data;
+          return {
+            symbol: sym,
+            lastPrice: Number(t.last) || 0,
+            priceChangePercent: Number(t.changePercent) || 0,
+            volume: Number(t.volume) || 0,
+            lastUpdate: new Date(),
+          };
+        }
+      } catch {
+        // BTCC failed, fall through to Binance
+      }
+
+      // Fallback: Binance public API (no key required)
+      try {
+        const { data, error } = await supabase.functions.invoke("ccxt-trading", {
+          body: { action: "fetch_ticker", exchange: "binance", symbol: sym },
+        });
+
+        if (!error && data?.success && data?.data) {
+          const t = data.data;
+          return {
+            symbol: sym,
+            lastPrice: Number(t.last) || 0,
+            priceChangePercent: Number(t.changePercent) || 0,
+            volume: Number(t.volume) || 0,
+            lastUpdate: new Date(),
+          };
+        }
+      } catch {
+        // skip
+      }
+
+      return null;
+    };
+
     const fetchAll = async () => {
       const results: Record<string, KrakenTickerQuote> = {};
 
-      for (const sym of symbols) {
-        try {
-          const { data, error } = await supabase.functions.invoke("ccxt-trading", {
-            body: { action: "fetch_ticker", exchange: "kraken", symbol: sym },
-          });
-
-          if (cancelled || !mountedRef.current) return;
-
-          if (!error && data?.success && data?.data) {
-            const t = data.data;
-            results[sym] = {
-              symbol: sym,
-              lastPrice: Number(t.last) || 0,
-              priceChangePercent: Number(t.changePercent) || 0,
-              volume: Number(t.volume) || 0,
-              lastUpdate: new Date(),
-            };
-          }
-        } catch {
-          // skip
+      // Fetch all symbols in parallel
+      const promises = symbols.map(async (sym) => {
+        const result = await fetchOne(sym);
+        if (result && !cancelled && mountedRef.current) {
+          results[sym] = result;
         }
-      }
+      });
+
+      await Promise.all(promises);
 
       if (cancelled || !mountedRef.current) return;
 
