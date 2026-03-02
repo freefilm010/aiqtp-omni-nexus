@@ -5,7 +5,7 @@ import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity,
 import { useEffect, useState } from "react";
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 
-// TradingView-style Live Price Ticker (real-time via Kraken polling)
+// TradingView-style Live Price Ticker (real-time via BTCC → Binance fallback)
 const LiveTicker = () => {
   const symbols = [
     "BTC/USDT",
