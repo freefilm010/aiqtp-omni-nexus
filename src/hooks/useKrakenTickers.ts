@@ -56,21 +56,31 @@ export function useKrakenTickers(symbols: string[] = [...DEFAULT_SYMBOLS], pollM
         // BTCC failed, fall through to Binance
       }
 
-      // Fallback: Binance public API (no key required)
+      // Fallback: CoinGecko public API (no geo-restrictions, no key required)
       try {
-        const { data, error } = await supabase.functions.invoke("ccxt-trading", {
-          body: { action: "fetch_ticker", exchange: "binance", symbol: sym },
-        });
-
-        if (!error && data?.success && data?.data) {
-          const t = data.data;
-          return {
-            symbol: sym,
-            lastPrice: Number(t.last) || 0,
-            priceChangePercent: Number(t.changePercent) || 0,
-            volume: Number(t.volume) || 0,
-            lastUpdate: new Date(),
-          };
+        const cgId: Record<string, string> = {
+          "BTC/USDT": "bitcoin", "ETH/USDT": "ethereum", "SOL/USDT": "solana",
+          "XRP/USDT": "ripple", "ADA/USDT": "cardano", "AVAX/USDT": "avalanche-2",
+          "LINK/USDT": "chainlink", "DOGE/USDT": "dogecoin",
+        };
+        const id = cgId[sym];
+        if (id) {
+          const res = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`
+          );
+          if (res.ok) {
+            const json = await res.json();
+            const d = json[id];
+            if (d) {
+              return {
+                symbol: sym,
+                lastPrice: Number(d.usd) || 0,
+                priceChangePercent: Number(d.usd_24h_change) || 0,
+                volume: Number(d.usd_24h_vol) || 0,
+                lastUpdate: new Date(),
+              };
+            }
+          }
         }
       } catch {
         // skip
