@@ -330,8 +330,8 @@ serve(async (req) => {
 
   try {
     // Get BTCC credentials from environment (stored via Lovable secrets)
-    const BTCC_API_KEY = Deno.env.get("BTCC_API_KEY");
-    const BTCC_API_SECRET = Deno.env.get("BTCC_API_SECRET");
+    const BTCC_API_KEY = (Deno.env.get("BTCC_API_KEY") || "").trim();
+    const BTCC_API_SECRET = (Deno.env.get("BTCC_API_SECRET") || "").trim();
     
     if (!BTCC_API_KEY || !BTCC_API_SECRET) {
       throw new Error("BTCC API credentials not configured. Please add BTCC_API_KEY and BTCC_API_SECRET.");
