@@ -4120,6 +4120,48 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_extensions: {
+        Row: {
+          amount_charged: number
+          calls_used: number
+          currency: string
+          expires_at: string
+          extra_calls: number
+          function_name: string
+          id: string
+          purchased_at: string
+          status: string
+          surcharge_percent: number
+          user_id: string
+        }
+        Insert: {
+          amount_charged?: number
+          calls_used?: number
+          currency?: string
+          expires_at?: string
+          extra_calls?: number
+          function_name: string
+          id?: string
+          purchased_at?: string
+          status?: string
+          surcharge_percent?: number
+          user_id: string
+        }
+        Update: {
+          amount_charged?: number
+          calls_used?: number
+          currency?: string
+          expires_at?: string
+          extra_calls?: number
+          function_name?: string
+          id?: string
+          purchased_at?: string
+          status?: string
+          surcharge_percent?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       rental_profit_splits: {
         Row: {
           created_at: string | null

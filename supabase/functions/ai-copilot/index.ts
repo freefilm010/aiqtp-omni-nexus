@@ -6,19 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface CopilotRequest {
-  message: string;
-  context?: string;
-}
+const MAX_MESSAGE_LENGTH = 2000;
+const MAX_CONTEXT_LENGTH = 1000;
+const RATE_LIMIT_PER_HOUR = 20;
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Authentication required
+    // Authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -41,14 +39,79 @@ serve(async (req) => {
       );
     }
 
-    const { message, context } = await req.json() as CopilotRequest;
-    console.log(`AI Copilot request: ${message}, context: ${context}`);
+    // Input validation
+    const body = await req.json();
+    let message = body?.message;
+    let context = body?.context;
 
-    // Use Lovable AI endpoint
+    if (!message || typeof message !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Message is required and must be a string.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    message = message.trim();
+    if (message.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Message cannot be empty.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      message = message.substring(0, MAX_MESSAGE_LENGTH);
+    }
+
+    if (context && typeof context === 'string' && context.length > MAX_CONTEXT_LENGTH) {
+      context = context.substring(0, MAX_CONTEXT_LENGTH);
+    }
+
+    // Rate limiting
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count } = await authClient
+      .from('ai_generation_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('function_name', 'ai-copilot')
+      .gte('created_at', oneHourAgo);
+
+    // Check for active extensions
+    const { data: extensions } = await authClient
+      .from('rate_limit_extensions')
+      .select('extra_calls, calls_used')
+      .eq('user_id', user.id)
+      .eq('function_name', 'ai-copilot')
+      .eq('status', 'active')
+      .gte('expires_at', new Date().toISOString());
+
+    let extraCalls = 0;
+    if (extensions) {
+      for (const ext of extensions) extraCalls += (ext.extra_calls - ext.calls_used);
+    }
+
+    const totalLimit = RATE_LIMIT_PER_HOUR + Math.max(0, extraCalls);
+    const used = count || 0;
+
+    if (used >= totalLimit) {
+      return new Response(
+        JSON.stringify({
+          error: `Rate limit exceeded: ${used}/${totalLimit} calls used this hour.`,
+          rate_limit: { used, limit: totalLimit, remaining: 0 },
+          extension_available: {
+            extra_calls: 10,
+            surcharge_percent: 15,
+            message: "Purchase 10 additional calls at a 15% surcharge to continue."
+          }
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`AI Copilot request from ${user.id}: ${message.substring(0, 50)}...`);
+
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     
     if (!lovableApiKey) {
-      // Fallback to intelligent local responses
       const response = generateLocalResponse(message, context);
       return new Response(
         JSON.stringify({ response }),
@@ -56,8 +119,13 @@ serve(async (req) => {
       );
     }
 
-    // Call Lovable AI
-    const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
+    // Log this call for rate limiting
+    await authClient.from('ai_generation_logs').insert({
+      user_id: user.id,
+      function_name: 'ai-copilot'
+    });
+
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
@@ -78,16 +146,29 @@ serve(async (req) => {
 
 Be concise, data-driven, and provide actionable insights. Format responses with markdown for readability.`
           },
-          {
-            role: 'user',
-            content: message
-          }
+          { role: 'user', content: message }
         ],
         max_tokens: 1000,
       }),
     });
 
     if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('AI API error:', aiResponse.status, errorText);
+
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'AI service is temporarily busy. Please wait and try again.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       throw new Error(`AI API error: ${aiResponse.status}`);
     }
 
@@ -95,17 +176,19 @@ Be concise, data-driven, and provide actionable insights. Format responses with 
     const responseText = data.choices?.[0]?.message?.content || generateLocalResponse(message, context);
 
     return new Response(
-      JSON.stringify({ response: responseText }),
+      JSON.stringify({
+        response: responseText,
+        rate_limit: { used: used + 1, limit: totalLimit, remaining: totalLimit - used - 1 }
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('AI Copilot error:', error);
-    
     return new Response(
       JSON.stringify({ 
-        response: "I'm experiencing a temporary issue. Let me provide a helpful response based on my training.",
-        error: error.message 
+        response: "I'm experiencing a temporary issue. Please try again in a moment.",
+        error: "service_unavailable"
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
@@ -116,156 +199,16 @@ function generateLocalResponse(query: string, context?: string): string {
   const lowerQuery = query.toLowerCase();
   
   if (lowerQuery.includes('portfolio') || lowerQuery.includes('allocation')) {
-    return `📊 **Portfolio Analysis**
-
-Your current allocation follows the aggressive strategy:
-
-**Stable Assets (30%)**: $33,450
-- USDC Yield: 15% - Earning 4.2% APY
-- Treasury Bonds ETF: 10% - Low volatility anchor
-- DAI Lending: 5% - DeFi yield generation
-
-**Growth Assets (70%)**: $78,050
-- Bitcoin: 25% (+2.3% today) - Core crypto holding
-- Ethereum: 20% (+1.8% today) - DeFi ecosystem exposure
-- S&P 500 ETF: 15% - Traditional equity exposure
-- AI/Tech Stocks: 10% - High-growth sector
-
-✅ **Status**: Portfolio is well-balanced
-📈 **30-day Performance**: +12.4%
-⚠️ **Action Needed**: Consider rebalancing ETH (currently at 22.1%)`;
+    return `📊 **Portfolio Analysis**\n\nYour current allocation follows the aggressive strategy:\n\n**Stable Assets (30%)**: $33,450\n- USDC Yield: 15% - Earning 4.2% APY\n- Treasury Bonds ETF: 10% - Low volatility anchor\n- DAI Lending: 5% - DeFi yield generation\n\n**Growth Assets (70%)**: $78,050\n- Bitcoin: 25% (+2.3% today)\n- Ethereum: 20% (+1.8% today)\n- S&P 500 ETF: 15%\n- AI/Tech Stocks: 10%\n\n✅ **Status**: Portfolio is well-balanced\n📈 **30-day Performance**: +12.4%`;
   }
   
   if (lowerQuery.includes('revenue') || lowerQuery.includes('income') || lowerQuery.includes('earnings')) {
-    return `💰 **Revenue Analysis**
-
-**This Month's Performance:**
-| Stream | Revenue | Change |
-|--------|---------|--------|
-| Premium Subscriptions | $8,997 | +15% |
-| Trading Commissions | $14,550 | +28% |
-| Spread Fees | $6,234 | +12% |
-| API Access | $4,999 | +5% |
-| Premium Signals | $7,499 | +22% |
-
-**Total: $42,279** (+23.5% MoM)
-
-**Distribution (Auto-Applied):**
-- 60% → Reinvested ($25,367)
-- 25% → Reserve Fund ($10,570)
-- 15% → Available Withdrawal ($6,342)
-
-📈 **Recommendations:**
-1. API pricing tier optimization could increase revenue by 15%
-2. Signal subscription bundling opportunity identified
-3. Consider premium tier for institutional clients`;
+    return `💰 **Revenue Analysis**\n\n**This Month's Performance:**\n| Stream | Revenue | Change |\n|--------|---------|--------|\n| Premium Subscriptions | $8,997 | +15% |\n| Trading Commissions | $14,550 | +28% |\n| Spread Fees | $6,234 | +12% |\n| API Access | $4,999 | +5% |\n| Premium Signals | $7,499 | +22% |\n\n**Total: $42,279** (+23.5% MoM)`;
   }
   
   if (lowerQuery.includes('security') || lowerQuery.includes('audit') || lowerQuery.includes('threat')) {
-    return `🔒 **Security Report**
-
-**Overall Score: 94/100** ✅
-
-**Enabled Protections:**
-✅ Row Level Security (RLS) - All tables protected
-✅ Database encryption at rest
-✅ API authentication required
-✅ Rate limiting active (100 req/min)
-✅ SSL/TLS encryption
-✅ Admin role verification
-
-**Warnings:**
-⚠️ Leaked password protection - Recommend enabling
-⚠️ 2FA for admin accounts - Not yet configured
-
-**Recent Events:**
-- 3 failed login attempts blocked (1 hour ago)
-- API rate limit triggered for 1 key (2 hours ago)
-- Security scan completed successfully (5 min ago)
-
-**Recommended Actions:**
-1. Enable leaked password protection in auth settings
-2. Configure 2FA for all admin accounts
-3. Review API key with rate limit issues`;
+    return `🔒 **Security Report**\n\n**Overall Score: 94/100** ✅\n\n**Enabled Protections:**\n✅ Row Level Security (RLS)\n✅ Database encryption at rest\n✅ API authentication required\n✅ Rate limiting active\n✅ SSL/TLS encryption\n✅ Admin role verification`;
   }
 
-  if (lowerQuery.includes('strategy') || lowerQuery.includes('trading') || lowerQuery.includes('signal')) {
-    return `📈 **Trading Strategy Recommendations**
-
-Based on current market conditions and your portfolio:
-
-**1. Momentum Strategy** (Recommended)
-- Asset: BTC/ETH during breakout patterns
-- Timeframe: 15m and 1h
-- Expected Sharpe: 1.8
-- Win Rate: 68%
-
-**2. Mean Reversion**
-- Best for: Altcoin pairs
-- Entry: 2-sigma deviations from 20-period mean
-- Risk/Reward: 1:2.5
-
-**3. DCA Enhancement**
-- Current: Weekly execution
-- Suggestion: Split into daily micro-buys
-- Benefit: Better average entry price
-
-**Active Signals:**
-🟢 BTC: Bullish breakout forming (confidence: 78%)
-🟡 ETH: Consolidation phase (confidence: 65%)
-🟢 SOL: Strong momentum (confidence: 72%)
-
-💡 **My Pick**: Enable auto-execution for high-confidence signals (>75%)`;
-  }
-
-  if (lowerQuery.includes('automat') || lowerQuery.includes('workflow')) {
-    return `⚡ **Automation Status**
-
-**Active Automations: 6/6**
-
-| Automation | Status | Last Run | Next Run |
-|------------|--------|----------|----------|
-| Revenue Collection | ✅ Active | 2m ago | 58m |
-| Auto-Reinvestment | ✅ Active | 15m ago | On trigger |
-| Portfolio Rebalance | ✅ Active | 2h ago | 22h |
-| Security Scan | ✅ Active | 5m ago | 55m |
-| Price Alerts | ✅ Active | 1d ago | On trigger |
-| DCA Execution | ✅ Active | 2d ago | 5d |
-
-**Performance Metrics:**
-- Total executions today: 48
-- Success rate: 99.8%
-- Failed executions: 0
-
-**Suggestions:**
-1. Add profit-taking automation at 10% gains
-2. Configure stop-loss triggers for growth assets
-3. Enable compound reinvestment for yields`;
-  }
-
-  return `I understand you're asking about "${query}". 
-
-As your AI Copilot, I can help with:
-
-📊 **Portfolio Management**
-- Real-time allocation analysis
-- Rebalancing recommendations
-- Performance tracking
-
-💰 **Revenue Operations**
-- Stream optimization
-- Distribution management
-- Growth forecasting
-
-🔒 **Security**
-- Threat monitoring
-- Compliance audits
-- Access control
-
-📈 **Trading**
-- Signal analysis
-- Strategy backtesting
-- Automation setup
-
-What specific area would you like me to dive deeper into?`;
+  return `I understand you're asking about "${query}". As your AI Copilot, I can help with:\n\n📊 **Portfolio Management**\n💰 **Revenue Operations**\n🔒 **Security**\n📈 **Trading**\n\nWhat specific area would you like me to dive deeper into?`;
 }
