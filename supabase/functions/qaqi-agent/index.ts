@@ -794,11 +794,76 @@ serve(async (req) => {
     }
 
     const request: QAQIRequest = await req.json();
+
+    // Input validation
+    if (request.messages && Array.isArray(request.messages)) {
+      if (request.messages.length > 50) {
+        return new Response(
+          JSON.stringify({ error: 'Too many messages: maximum 50 allowed.', qaqi_status: 'validation_error' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      for (const msg of request.messages) {
+        if (msg.content && typeof msg.content === 'string' && msg.content.length > 10000) {
+          return new Response(
+            JSON.stringify({ error: 'Message too long: maximum 10000 characters.', qaqi_status: 'validation_error' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
+    // Rate limiting (20 calls/hour)
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count: qaqiCount } = await authClient
+      .from('ai_generation_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('function_name', 'qaqi-agent')
+      .gte('created_at', oneHourAgo);
+
+    const { data: qaqiExtensions } = await authClient
+      .from('rate_limit_extensions')
+      .select('extra_calls, calls_used')
+      .eq('user_id', user.id)
+      .eq('function_name', 'qaqi-agent')
+      .eq('status', 'active')
+      .gte('expires_at', new Date().toISOString());
+
+    let qaqiExtra = 0;
+    if (qaqiExtensions) {
+      for (const ext of qaqiExtensions) qaqiExtra += (ext.extra_calls - ext.calls_used);
+    }
+
+    const qaqiLimit = 20 + Math.max(0, qaqiExtra);
+    const qaqiUsed = qaqiCount || 0;
+
+    if (qaqiUsed >= qaqiLimit) {
+      return new Response(
+        JSON.stringify({
+          error: `Rate limit exceeded: ${qaqiUsed}/${qaqiLimit} QAQI calls used this hour.`,
+          qaqi_status: 'throttled',
+          rate_limit: { used: qaqiUsed, limit: qaqiLimit, remaining: 0 },
+          extension_available: {
+            extra_calls: 10,
+            surcharge_percent: 15,
+            message: "Purchase 10 additional QAQI calls at a 15% surcharge."
+          }
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY not configured");
     }
+
+    // Log call
+    await authClient.from('ai_generation_logs').insert({
+      user_id: user.id,
+      function_name: 'qaqi-agent'
+    });
 
     const systemPrompt = buildSystemPrompt(request.context);
     
@@ -907,6 +972,7 @@ serve(async (req) => {
       tool_executions: toolResults,
       model: aiData.model,
       usage: aiData.usage,
+      rate_limit: { used: qaqiUsed + 1, limit: qaqiLimit, remaining: qaqiLimit - qaqiUsed - 1 },
       capabilities: {
         qtc_development: true,
         quwallet_ready: true,
