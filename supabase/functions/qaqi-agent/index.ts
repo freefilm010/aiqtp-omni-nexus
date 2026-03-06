@@ -592,17 +592,32 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
       return { action: args.action, status: "completed" };
     
     case "fraud_detection":
+      // Query real forensic data from database
+      const { data: forensicData } = await supabase
+        .from("forensic_transactions")
+        .select("tx_hash, from_address, to_address, amount, flagged, flag_reason")
+        .in("from_address", args.addresses || [])
+        .limit(50);
+
       return {
         scan_id: `scan_${Date.now()}`,
         addresses_analyzed: args.addresses?.length || 0,
-        results: (args.addresses || []).map((addr: string) => ({
-          address: addr.slice(0, 10) + "..." + addr.slice(-6),
-          risk_score: Math.random() * 0.3,
-          risk_level: "low",
-          flags: [],
-          cluster_type: "exchange"
-        })),
-        recommendation: "All addresses pass security threshold"
+        results: (args.addresses || []).map((addr: string) => {
+          const txns = forensicData?.filter(t => t.from_address === addr) || [];
+          const flagged = txns.filter(t => t.flagged);
+          return {
+            address: addr.slice(0, 10) + "..." + addr.slice(-6),
+            risk_score: flagged.length > 0 ? 0.7 : 0.1,
+            risk_level: flagged.length > 0 ? "high" : "low",
+            flags: flagged.map(f => f.flag_reason).filter(Boolean),
+            transactions_found: txns.length,
+            flagged_count: flagged.length,
+          };
+        }),
+        data_source: "forensic_transactions_db",
+        recommendation: forensicData?.some(t => t.flagged) 
+          ? "Flagged addresses detected - review recommended" 
+          : "All addresses pass security threshold"
       };
     
     case "quantum_compute":
