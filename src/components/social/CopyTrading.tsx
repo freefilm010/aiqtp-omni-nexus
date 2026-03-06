@@ -80,10 +80,6 @@ const CopyTrading = () => {
     };
     fetchLeaders();
   }, []);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [copyAmount, setCopyAmount] = useState(1000);
-  const [maxSlippage, setMaxSlippage] = useState([1]);
-  const [selectedTrader, setSelectedTrader] = useState<TopTrader | null>(null);
 
   const handleFollow = (traderId: string) => {
     setTraders(prev => 
