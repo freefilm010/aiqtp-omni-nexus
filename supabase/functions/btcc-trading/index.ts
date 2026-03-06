@@ -150,8 +150,6 @@ async function btccSpotCreateOrder(
       body: `${params}&signature=${signature}`,
     }
   );
-    }
-  );
   
   const data = await response.json();
   
