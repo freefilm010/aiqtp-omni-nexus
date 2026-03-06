@@ -316,7 +316,7 @@ async function btccCancelOrder(apiKey: string, secret: string, market: "spot" | 
     `${BTCC_API_BASE}/api/v1/${endpoint}/order?${params}&signature=${signature}`,
     {
       method: "DELETE",
-      headers: { "X-API-KEY": apiKey },
+      headers: safeHeaders(apiKey),
     }
   );
   
