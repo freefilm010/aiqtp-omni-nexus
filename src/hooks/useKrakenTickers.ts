@@ -34,11 +34,11 @@ export function useKrakenTickers(
   const mountedRef = useRef(true);
   const lastEdgeFetchRef = useRef(0);
 
-  // ── DB-first: load ALL prices from market_prices ──
+  // ── DB-first: load ALL prices from market_prices + traditional_assets ──
   const loadFromDB = useCallback(async () => {
     try {
-      // Query all prices, ordered by market cap
-      const { data, error } = await supabase
+      // Query crypto prices
+      const { data: cryptoData, error: cryptoErr } = await supabase
         .from("market_prices")
         .select(`
           coin_id,
@@ -50,19 +50,44 @@ export function useKrakenTickers(
         `)
         .order("market_cap", { ascending: false, nullsFirst: false });
 
-      if (error || !data || data.length === 0) return false;
+      // Query traditional assets (stocks, forex, commodities, indices, ETFs, bonds)
+      const { data: tradData, error: tradErr } = await supabase
+        .from("traditional_assets")
+        .select(`
+          symbol,
+          name,
+          asset_class,
+          price_usd,
+          price_change_percentage_24h,
+          volume,
+          market_cap,
+          last_updated
+        `)
+        .eq("is_active", true)
+        .order("market_cap", { ascending: false, nullsFirst: false });
 
-      // Also get the symbol mapping from market_coins
-      const coinIds = data.map(r => r.coin_id);
-      const { data: coins } = await supabase
-        .from("market_coins")
-        .select("id, symbol")
-        .in("id", coinIds);
+      const hasCrypto = !cryptoErr && cryptoData && cryptoData.length > 0;
+      const hasTrad = !tradErr && tradData && tradData.length > 0;
 
-      const symbolMap: Record<string, string> = {};
-      if (coins) {
-        for (const c of coins) {
-          symbolMap[c.id] = c.symbol?.toUpperCase() || c.id.toUpperCase();
+      if (!hasCrypto && !hasTrad) return false;
+
+      // Get symbol mapping for crypto
+      let symbolMap: Record<string, string> = {};
+      if (hasCrypto) {
+        const coinIds = cryptoData.map(r => r.coin_id);
+        // Supabase limits IN to ~300 items, so batch
+        const batchSize = 300;
+        for (let i = 0; i < coinIds.length; i += batchSize) {
+          const batch = coinIds.slice(i, i + batchSize);
+          const { data: coins } = await supabase
+            .from("market_coins")
+            .select("id, symbol")
+            .in("id", batch);
+          if (coins) {
+            for (const c of coins) {
+              symbolMap[c.id] = c.symbol?.toUpperCase() || c.id.toUpperCase();
+            }
+          }
         }
       }
 
@@ -70,23 +95,45 @@ export function useKrakenTickers(
 
       const result: Record<string, KrakenTickerQuote> = {};
 
-      for (const row of data) {
-        const baseSymbol = symbolMap[row.coin_id] || row.coin_id.toUpperCase();
-        const pairSymbol = `${baseSymbol}/USDT`;
+      // Add crypto tickers
+      if (hasCrypto) {
+        for (const row of cryptoData) {
+          const baseSymbol = symbolMap[row.coin_id] || row.coin_id.toUpperCase();
+          const pairSymbol = `${baseSymbol}/USDT`;
 
-        // If filtering, skip non-matching
-        if (filterSymbols && filterSymbols.length > 0) {
-          if (!filterSymbols.includes(pairSymbol)) continue;
+          if (filterSymbols && filterSymbols.length > 0) {
+            if (!filterSymbols.includes(pairSymbol)) continue;
+          }
+
+          result[pairSymbol] = {
+            symbol: pairSymbol,
+            lastPrice: Number(row.price_usd) || 0,
+            priceChangePercent: Number(row.price_change_percentage_24h) || 0,
+            volume: Number(row.total_volume) || 0,
+            marketCap: Number(row.market_cap) || 0,
+            lastUpdate: new Date(row.last_updated || Date.now()),
+          };
         }
+      }
 
-        result[pairSymbol] = {
-          symbol: pairSymbol,
-          lastPrice: Number(row.price_usd) || 0,
-          priceChangePercent: Number(row.price_change_percentage_24h) || 0,
-          volume: Number(row.total_volume) || 0,
-          marketCap: Number(row.market_cap) || 0,
-          lastUpdate: new Date(row.last_updated || Date.now()),
-        };
+      // Add traditional asset tickers
+      if (hasTrad) {
+        for (const row of tradData) {
+          const sym = row.symbol;
+
+          if (filterSymbols && filterSymbols.length > 0) {
+            if (!filterSymbols.includes(sym)) continue;
+          }
+
+          result[sym] = {
+            symbol: sym,
+            lastPrice: Number(row.price_usd) || 0,
+            priceChangePercent: Number(row.price_change_percentage_24h) || 0,
+            volume: Number(row.volume) || 0,
+            marketCap: Number(row.market_cap) || 0,
+            lastUpdate: new Date(row.last_updated || Date.now()),
+          };
+        }
       }
 
       setTickers(prev => ({ ...prev, ...result }));
