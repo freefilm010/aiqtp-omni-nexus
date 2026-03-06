@@ -290,16 +290,15 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token', aiqtp_status: 'unauthorized' }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
     console.log(`Authenticated user ${userId} accessing aiqtp-agent`);
 
     const request: AIQTPRequest = await req.json();
