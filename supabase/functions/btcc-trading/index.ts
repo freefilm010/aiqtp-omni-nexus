@@ -195,7 +195,7 @@ async function btccFuturesFetchPositions(apiKey: string, secret: string) {
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/futures/positions?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
