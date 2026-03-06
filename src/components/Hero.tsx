@@ -290,7 +290,7 @@ const Hero = () => {
       }} />
       
       {/* TradingView-style Interface */}
-      <LiveTicker />
+      <LiveTicker tickers={tickers} />
       <LeftToolbar />
       <BottomToolbar assetCount={assetCount} />
 
