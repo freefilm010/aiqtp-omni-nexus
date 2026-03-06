@@ -680,8 +680,8 @@ Try one of the quick action buttons above or describe what you'd like to accompl
 *QAQI Agent v2.0 - Full Autonomy Mode*`;
 }
 
-// Generate mock tool executions for demo mode
-function generateMockToolExecution(query: string): ToolExecution[] {
+// All tool executions are handled server-side by the qaqi-agent edge function.
+// No mock/fallback tool execution logic is used.
   const lowerQuery = query.toLowerCase();
   
   if (lowerQuery.includes("quwallet") || (lowerQuery.includes("wallet") && lowerQuery.includes("create"))) {
