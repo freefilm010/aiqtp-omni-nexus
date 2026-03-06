@@ -6,10 +6,7 @@ import { useEffect, useState } from "react";
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 
 // TradingView-style Live Price Ticker — ALL symbols from database
-const LiveTicker = () => {
-  // Pull ALL available tickers from the database (no hardcoded limit)
-  const { tickers, totalCoins } = useKrakenTickers(undefined, 45_000);
-
+const LiveTicker = ({ tickers }: { tickers: Record<string, any> }) => {
   // Sort by market cap, show all
   const symbols = Object.keys(tickers).length > 0
     ? Object.entries(tickers)
