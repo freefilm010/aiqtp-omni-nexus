@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
   UserPlus
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TopTrader {
   id: string;
@@ -41,83 +42,44 @@ interface TopTrader {
   isFollowing: boolean;
 }
 
-const mockTraders: TopTrader[] = [
-  {
-    id: "1",
-    name: "CryptoWhale_Alpha",
-    avatar: "",
-    followers: 12450,
-    pnl30d: 47.8,
-    winRate: 78.5,
-    totalTrades: 1243,
-    maxDrawdown: 8.2,
-    sharpeRatio: 2.84,
-    aum: 5420000,
-    copiers: 892,
-    verified: true,
-    strategy: "Momentum + AI Signals",
-    riskLevel: "medium",
-    isFollowing: false
-  },
-  {
-    id: "2",
-    name: "QuantMaster_Pro",
-    avatar: "",
-    followers: 8920,
-    pnl30d: 35.2,
-    winRate: 82.1,
-    totalTrades: 856,
-    maxDrawdown: 5.4,
-    sharpeRatio: 3.12,
-    aum: 3280000,
-    copiers: 654,
-    verified: true,
-    strategy: "Statistical Arbitrage",
-    riskLevel: "low",
-    isFollowing: true
-  },
-  {
-    id: "3",
-    name: "DeFi_Hunter",
-    avatar: "",
-    followers: 6540,
-    pnl30d: 89.4,
-    winRate: 65.3,
-    totalTrades: 2341,
-    maxDrawdown: 18.7,
-    sharpeRatio: 1.95,
-    aum: 1850000,
-    copiers: 421,
-    verified: false,
-    strategy: "DeFi Yield + Gems",
-    riskLevel: "high",
-    isFollowing: false
-  },
-  {
-    id: "4",
-    name: "Institutional_Edge",
-    avatar: "",
-    followers: 15230,
-    pnl30d: 28.6,
-    winRate: 85.2,
-    totalTrades: 542,
-    maxDrawdown: 4.1,
-    sharpeRatio: 3.45,
-    aum: 12500000,
-    copiers: 1245,
-    verified: true,
-    strategy: "Market Making + Delta Neutral",
-    riskLevel: "low",
-    isFollowing: false
-  }
-];
-
 const CopyTrading = () => {
-  const [traders, setTraders] = useState<TopTrader[]>(mockTraders);
+  const [traders, setTraders] = useState<TopTrader[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [copyAmount, setCopyAmount] = useState(1000);
   const [maxSlippage, setMaxSlippage] = useState([1]);
   const [selectedTrader, setSelectedTrader] = useState<TopTrader | null>(null);
+
+  // Fetch real copy trading leaders from database
+  useEffect(() => {
+    const fetchLeaders = async () => {
+      const { data, error } = await supabase
+        .from("copy_trading_leaders")
+        .select("*")
+        .eq("is_active", true)
+        .order("pnl_all_time", { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        setTraders(data.map(d => ({
+          id: d.id,
+          name: d.display_name,
+          avatar: d.avatar || "",
+          followers: d.copiers_count || 0,
+          pnl30d: d.pnl_30d || 0,
+          winRate: d.win_rate || 0,
+          totalTrades: 0,
+          maxDrawdown: d.max_drawdown || 0,
+          sharpeRatio: d.sharpe_ratio || 0,
+          aum: d.aum || 0,
+          copiers: d.copiers_count || 0,
+          verified: d.is_verified || false,
+          strategy: d.strategy_description || d.tier,
+          riskLevel: (d.risk_score || 0) > 7 ? "high" : (d.risk_score || 0) > 4 ? "medium" : "low",
+          isFollowing: false,
+        })));
+      }
+    };
+    fetchLeaders();
+  }, []);
 
   const handleFollow = (traderId: string) => {
     setTraders(prev => 
