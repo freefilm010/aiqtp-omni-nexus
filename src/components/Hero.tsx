@@ -5,20 +5,16 @@ import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity,
 import { useEffect, useState } from "react";
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 
-// TradingView-style Live Price Ticker (real-time via BTCC → Binance fallback)
+// TradingView-style Live Price Ticker — all supported symbols
 const LiveTicker = () => {
-  const symbols = [
-    "BTC/USDT",
-    "ETH/USDT",
-    "SOL/USDT",
-    "XRP/USDT",
-    "ADA/USDT",
-    "AVAX/USDT",
-    "LINK/USDT",
-    "DOGE/USDT",
-  ];
+  // Use the full default symbol list from the hook (200+)
+  const { tickers } = useKrakenTickers(undefined, 30_000);
 
-  const { tickers } = useKrakenTickers(symbols, 15_000);
+  const symbols = Object.keys(tickers).length > 0
+    ? Object.keys(tickers)
+    : ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "ADA/USDT", "AVAX/USDT", "DOT/USDT",
+       "LINK/USDT", "DOGE/USDT", "UNI/USDT", "ATOM/USDT", "LTC/USDT", "NEAR/USDT", "ARB/USDT", "OP/USDT",
+       "PEPE/USDT", "SHIB/USDT", "INJ/USDT", "SUI/USDT", "TON/USDT", "FET/USDT", "RNDR/USDT", "WIF/USDT"];
 
   const prices = symbols.map((s) => {
     const t = tickers[s];
