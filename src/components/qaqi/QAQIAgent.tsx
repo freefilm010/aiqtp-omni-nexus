@@ -217,12 +217,11 @@ const QAQIAgent = () => {
         role: "assistant",
         content: generateFallbackResponse(content),
         timestamp: new Date(),
-        toolExecutions: generateMockToolExecution(content),
       };
       
       addMessage(fallbackMessage);
       if (!(error instanceof Error && error.message.includes("Rate"))) {
-        toast.info("Using local processing mode");
+        toast.error("Edge function unavailable — retrying on next request");
       }
     } finally {
       setIsProcessing(false);

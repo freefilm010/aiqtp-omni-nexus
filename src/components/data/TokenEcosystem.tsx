@@ -341,10 +341,10 @@ export const TokenEcosystem = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Pickaxe className="h-5 w-5" />
-                Mining Simulation
+                Mining Activity
               </CardTitle>
               <CardDescription>
-                See how child tokens mine $DATA in real-time (simulated)
+                Live child token $DATA mining rates
               </CardDescription>
             </CardHeader>
             <CardContent>
