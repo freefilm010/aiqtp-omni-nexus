@@ -148,7 +148,7 @@ Be concise, data-driven, and provide actionable insights. Format responses with 
           },
           { role: 'user', content: message }
         ],
-        max_tokens: 1000,
+        max_completion_tokens: 1000,
       }),
     });
 
