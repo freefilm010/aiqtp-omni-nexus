@@ -42,9 +42,12 @@ async function btccSpotFetchTicker(apiKey: string, secret: string, symbol: strin
   const params = `symbol=${symbol}&timestamp=${timestamp}`;
   const signature = await generateSignature(secret, params);
   
+  const headers = new Headers();
+  headers.set("X-API-KEY", apiKey);
+  
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/spot/ticker?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers }
   );
   
   const data = await response.json();
