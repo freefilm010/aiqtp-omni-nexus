@@ -48,13 +48,30 @@ function safeHeaders(apiKey: string, extra?: Record<string, string>): Headers {
   return h;
 }
 
+// Fetch with timeout to prevent hanging on unresponsive BTCC servers
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    return res;
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error(`BTCC request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // BTCC Spot API Functions
 async function btccSpotFetchTicker(apiKey: string, secret: string, symbol: string) {
   const timestamp = Date.now();
   const params = `symbol=${symbol}&timestamp=${timestamp}`;
   const signature = await generateSignature(secret, params);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${BTCC_API_BASE}/api/v1/spot/ticker?${params}&signature=${signature}`,
     { headers: safeHeaders(apiKey) }
   );
