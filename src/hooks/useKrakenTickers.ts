@@ -250,10 +250,13 @@ export function useKrakenTickers(symbols: string[] = DEFAULT_SYMBOLS, pollMs = 3
 
       if (ids.length === 0) return;
 
-      // Batch into groups of 50 for CoinGecko limits
+      // Deduplicate IDs
+      const uniqueIds = [...new Set(ids)];
+      
+      // Batch into groups of 20 for CoinGecko free-tier limits
       const batches: string[][] = [];
-      for (let i = 0; i < ids.length; i += 50) {
-        batches.push(ids.slice(i, i + 50));
+      for (let i = 0; i < uniqueIds.length; i += 20) {
+        batches.push(uniqueIds.slice(i, i + 20));
       }
 
       try {
@@ -261,7 +264,7 @@ export function useKrakenTickers(symbols: string[] = DEFAULT_SYMBOLS, pollMs = 3
 
         for (let b = 0; b < batches.length; b++) {
           if (cancelled || !mountedRef.current) return;
-          if (b > 0) await new Promise(r => setTimeout(r, 1200)); // rate limit gap
+          if (b > 0) await new Promise(r => setTimeout(r, 2500)); // rate limit gap for free tier
 
           const res = await fetch(
             `https://api.coingecko.com/api/v3/simple/price?ids=${batches[b].join(",")}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`
