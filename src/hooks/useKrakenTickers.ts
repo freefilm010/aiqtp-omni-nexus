@@ -264,7 +264,7 @@ export function useKrakenTickers(symbols: string[] = DEFAULT_SYMBOLS, pollMs = 3
 
         for (let b = 0; b < batches.length; b++) {
           if (cancelled || !mountedRef.current) return;
-          if (b > 0) await new Promise(r => setTimeout(r, 1200)); // rate limit gap
+          if (b > 0) await new Promise(r => setTimeout(r, 2500)); // rate limit gap for free tier
 
           const res = await fetch(
             `https://api.coingecko.com/api/v3/simple/price?ids=${batches[b].join(",")}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`
