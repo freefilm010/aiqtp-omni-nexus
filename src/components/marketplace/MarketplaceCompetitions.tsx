@@ -94,7 +94,8 @@ const getTypeIcon = (type: string) => {
 export const MarketplaceCompetitions = ({ marketType }: MarketplaceCompetitionsProps) => {
   const [activeTab, setActiveTab] = useState("active");
 
-  const filteredCompetitions = mockCompetitions.filter(c => {
+  const competitions = useCompetitions();
+  const filteredCompetitions = competitions.filter(c => {
     if (marketType === "nft") return c.type === "nft" || c.type === "community";
     if (marketType === "strategy") return c.type === "strategy" || c.type === "trading";
     if (marketType === "token") return c.type === "trading" || c.type === "community";
