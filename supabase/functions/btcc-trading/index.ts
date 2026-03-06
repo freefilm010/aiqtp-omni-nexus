@@ -258,7 +258,7 @@ async function btccFuturesCreateOrder(
   
   const signature = await generateSignature(secret, params);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${BTCC_API_BASE}/api/v1/futures/order`,
     {
       method: "POST",
