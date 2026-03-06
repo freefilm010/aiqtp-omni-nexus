@@ -205,18 +205,23 @@ serve(async (req) => {
 
       case 'sync_market_prices': {
         const perPage = params?.perPage || 250;
-        const pages = params?.pages || 2; // Reduced default to avoid rate limits
+        const pages = params?.pages || 40; // 40 pages × 250 = 10,000 coins
+        const startPage = params?.startPage || 1;
         
         let synced = 0;
+        let lastPage = startPage;
 
-        for (let page = 1; page <= pages; page++) {
+        for (let page = startPage; page <= pages; page++) {
           const url = `${baseUrl}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=false&price_change_percentage=24h,7d,30d`;
           
           try {
             const response = await fetchWithRateLimit(url, headers);
             if (!response.ok) {
               console.log(`Page ${page} failed: ${response.status}`);
-              if (response.status === 429) break;
+              if (response.status === 429) {
+                lastPage = page;
+                break;
+              }
               continue;
             }
             
@@ -266,8 +271,15 @@ serve(async (req) => {
             });
             
             if (!error) synced += priceData.length;
+            lastPage = page;
+            
+            // Delay between pages to respect rate limits
+            if (page < pages) {
+              await new Promise(r => setTimeout(r, 2000));
+            }
           } catch (e: any) {
             console.error(`Page ${page} error:`, e.message);
+            lastPage = page;
             if (e.message.includes('Rate limit')) break;
           }
         }
@@ -275,7 +287,9 @@ serve(async (req) => {
         return new Response(JSON.stringify({ 
           success: true, 
           synced,
-          message: `Synced prices for ${synced} coins` 
+          lastPage,
+          totalPages: pages,
+          message: `Synced prices for ${synced} coins (pages ${startPage}-${lastPage} of ${pages})` 
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
