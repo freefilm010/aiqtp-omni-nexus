@@ -226,7 +226,7 @@ const BottomToolbar = ({ assetCount }: { assetCount: number }) => (
         <Wifi className="w-3 h-3 text-[hsl(162,91%,32%)]" />
         <span className="font-mono text-[10px] text-muted-foreground">Connected</span>
       </div>
-      <span className="font-mono text-[10px] text-[hsl(43,96%,56%)] font-medium">{Object.keys(tickers).length || '—'} Assets</span>
+      <span className="font-mono text-[10px] text-[hsl(43,96%,56%)] font-medium">{assetCount || '—'} Assets</span>
       <span className="font-mono text-[10px] text-muted-foreground">UTC {new Date().toISOString().slice(11, 19)}</span>
     </div>
   </div>
