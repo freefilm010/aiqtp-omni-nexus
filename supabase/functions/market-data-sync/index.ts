@@ -352,7 +352,23 @@ serve(async (req) => {
             }));
 
             if (rows.length > 0) {
-              await supabase.from('market_prices').upsert(rows, { onConflict: 'coin_id' });
+              const { error: upsertError } = await supabase.from('market_prices').upsert(rows, { onConflict: 'coin_id' });
+              if (upsertError) {
+                console.error('Price upsert error:', JSON.stringify(upsertError));
+                // Try individual inserts for coins that might not exist in market_coins
+                for (const row of rows) {
+                  // Ensure coin exists in market_coins first
+                  await supabase.from('market_coins').upsert({
+                    id: row.coin_id,
+                    symbol: row.coin_id.toUpperCase().replace(/-/g, ''),
+                    name: row.coin_id.replace(/-/g, ' '),
+                    is_active: true,
+                    updated_at: new Date().toISOString()
+                  }, { onConflict: 'id' });
+                  // Then insert price
+                  await supabase.from('market_prices').upsert(row, { onConflict: 'coin_id' });
+                }
+              }
             }
           }
 

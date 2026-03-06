@@ -5,16 +5,14 @@ import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity,
 import { useEffect, useState } from "react";
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 
-// TradingView-style Live Price Ticker — all supported symbols
-const LiveTicker = () => {
-  // Use the full default symbol list from the hook (200+)
-  const { tickers } = useKrakenTickers(undefined, 30_000);
-
+// TradingView-style Live Price Ticker — ALL symbols from database
+const LiveTicker = ({ tickers }: { tickers: Record<string, any> }) => {
+  // Sort by market cap, show all
   const symbols = Object.keys(tickers).length > 0
-    ? Object.keys(tickers)
-    : ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "ADA/USDT", "AVAX/USDT", "DOT/USDT",
-       "LINK/USDT", "DOGE/USDT", "UNI/USDT", "ATOM/USDT", "LTC/USDT", "NEAR/USDT", "ARB/USDT", "OP/USDT",
-       "PEPE/USDT", "SHIB/USDT", "INJ/USDT", "SUI/USDT", "TON/USDT", "FET/USDT", "RNDR/USDT", "WIF/USDT"];
+    ? Object.entries(tickers)
+        .sort((a, b) => (b[1].marketCap || 0) - (a[1].marketCap || 0))
+        .map(([s]) => s)
+    : [];
 
   const prices = symbols.map((s) => {
     const t = tickers[s];
@@ -189,7 +187,7 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
 };
 
 // TradingView Bottom Toolbar
-const BottomToolbar = () => (
+const BottomToolbar = ({ assetCount }: { assetCount: number }) => (
   <div className="absolute bottom-0 left-0 right-0 h-9 bg-[hsl(223,18%,9%)] border-t border-[hsl(222,14%,17%)] flex items-center px-3 z-20">
     <div className="flex items-center gap-1">
       <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-[hsl(222,14%,15%)] rounded transition-colors">
@@ -225,6 +223,7 @@ const BottomToolbar = () => (
         <Wifi className="w-3 h-3 text-[hsl(162,91%,32%)]" />
         <span className="font-mono text-[10px] text-muted-foreground">Connected</span>
       </div>
+      <span className="font-mono text-[10px] text-[hsl(43,96%,56%)] font-medium">{assetCount || '—'} Assets</span>
       <span className="font-mono text-[10px] text-muted-foreground">UTC {new Date().toISOString().slice(11, 19)}</span>
     </div>
   </div>
@@ -268,6 +267,9 @@ const TerminalGridBackground = () => (
 );
 
 const Hero = () => {
+  const { tickers } = useKrakenTickers(undefined, 45_000);
+  const assetCount = Object.keys(tickers).length;
+
   const miniCharts = [
     { symbol: 'Tesla, Inc.', price: '668.05', change: '-5.57 (-0.82%)', timeframe: '1D · NASDAQ', positive: false },
     { symbol: 'Apple Inc', price: '144.82', change: '+0.53 (+0.36%)', timeframe: '1h · NASDAQ', positive: true },
@@ -288,9 +290,9 @@ const Hero = () => {
       }} />
       
       {/* TradingView-style Interface */}
-      <LiveTicker />
+      <LiveTicker tickers={tickers} />
       <LeftToolbar />
-      <BottomToolbar />
+      <BottomToolbar assetCount={assetCount} />
 
       {/* Main Content - Centered */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 pt-16 pb-12 ml-11">
