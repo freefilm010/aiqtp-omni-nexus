@@ -48,8 +48,7 @@ export function useKrakenTickers(
           market_cap,
           last_updated
         `)
-        .order("market_cap", { ascending: false, nullsFirst: false })
-        .limit(1000);
+        .order("market_cap", { ascending: false, nullsFirst: false });
 
       if (error || !data || data.length === 0) return false;
 

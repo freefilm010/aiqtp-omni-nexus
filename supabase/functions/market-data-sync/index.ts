@@ -154,17 +154,22 @@ serve(async (req) => {
 
     switch (action) {
       case 'sync_coins_list': {
-        const { count } = await supabase
-          .from('market_coins')
-          .select('*', { count: 'exact', head: true });
+        const force = params?.force === true;
         
-        // Skip if we already have coins synced
-        if (count && count > 100) {
-          return new Response(JSON.stringify({ 
-            success: true, 
-            synced: 0,
-            message: 'Coins list already populated, skipping API call' 
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        if (!force) {
+          const { count } = await supabase
+            .from('market_coins')
+            .select('*', { count: 'exact', head: true });
+          
+          // Only skip if we already have 10k+ coins AND not forced
+          if (count && count > 10000) {
+            return new Response(JSON.stringify({ 
+              success: true, 
+              synced: 0,
+              total: count,
+              message: `Coins list already has ${count} entries` 
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
         }
 
         const response = await fetchWithRateLimit(`${baseUrl}/coins/list?include_platform=true`, headers);
@@ -173,8 +178,9 @@ serve(async (req) => {
         const coins = await response.json();
         let synced = 0;
 
-        for (let i = 0; i < coins.length; i += 500) {
-          const batch = coins.slice(i, i + 500).map((coin: any) => ({
+        // Process ALL coins in batches of 1000
+        for (let i = 0; i < coins.length; i += 1000) {
+          const batch = coins.slice(i, i + 1000).map((coin: any) => ({
             id: coin.id,
             symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
             name: coin.name || coin.id,
@@ -192,24 +198,30 @@ serve(async (req) => {
         return new Response(JSON.stringify({ 
           success: true, 
           synced,
-          message: `Synced ${synced} coins from CoinGecko` 
+          total_available: coins.length,
+          message: `Synced ${synced} coins from CoinGecko (${coins.length} available)` 
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       case 'sync_market_prices': {
         const perPage = params?.perPage || 250;
-        const pages = params?.pages || 2; // Reduced default to avoid rate limits
+        const pages = params?.pages || 40; // 40 pages × 250 = 10,000 coins
+        const startPage = params?.startPage || 1;
         
         let synced = 0;
+        let lastPage = startPage;
 
-        for (let page = 1; page <= pages; page++) {
+        for (let page = startPage; page <= pages; page++) {
           const url = `${baseUrl}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=false&price_change_percentage=24h,7d,30d`;
           
           try {
             const response = await fetchWithRateLimit(url, headers);
             if (!response.ok) {
               console.log(`Page ${page} failed: ${response.status}`);
-              if (response.status === 429) break;
+              if (response.status === 429) {
+                lastPage = page;
+                break;
+              }
               continue;
             }
             
@@ -259,8 +271,15 @@ serve(async (req) => {
             });
             
             if (!error) synced += priceData.length;
+            lastPage = page;
+            
+            // Delay between pages to respect rate limits
+            if (page < pages) {
+              await new Promise(r => setTimeout(r, 2000));
+            }
           } catch (e: any) {
             console.error(`Page ${page} error:`, e.message);
+            lastPage = page;
             if (e.message.includes('Rate limit')) break;
           }
         }
@@ -268,7 +287,9 @@ serve(async (req) => {
         return new Response(JSON.stringify({ 
           success: true, 
           synced,
-          message: `Synced prices for ${synced} coins` 
+          lastPage,
+          totalPages: pages,
+          message: `Synced prices for ${synced} coins (pages ${startPage}-${lastPage} of ${pages})` 
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
