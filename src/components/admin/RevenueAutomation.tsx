@@ -58,94 +58,84 @@ const ADMIN_IDENTITY = {
   verified: true
 };
 
-const mockGenerators: RevenueGenerator[] = [
-  {
-    id: "arb-001",
-    name: "Cross-Exchange Arbitrage Bot",
-    type: "arbitrage",
-    status: "active",
-    dailyRevenue: 847.52,
-    totalRevenue: 25426.80,
-    riskLevel: "low",
-    aiModel: "gemini-2.5-flash + claude-sonnet",
-    lastRun: new Date(),
-    approvalRequired: false
-  },
-  {
-    id: "liq-001",
-    name: "DeFi Liquidity Provider",
-    type: "liquidity",
-    status: "active",
-    dailyRevenue: 1250.00,
-    totalRevenue: 37500.00,
-    riskLevel: "medium",
-    aiModel: "gpt-5-mini",
-    lastRun: new Date(Date.now() - 300000),
-    approvalRequired: false
-  },
-  {
-    id: "stake-001",
-    name: "Multi-Chain Staking Optimizer",
-    type: "staking",
-    status: "active",
-    dailyRevenue: 420.15,
-    totalRevenue: 12604.50,
-    riskLevel: "low",
-    aiModel: "gemini-2.5-pro",
-    lastRun: new Date(Date.now() - 600000),
-    approvalRequired: false
-  },
-  {
-    id: "trade-001",
-    name: "ML Momentum Trader",
-    type: "trading",
-    status: "pending_approval",
-    dailyRevenue: 0,
-    totalRevenue: 0,
-    riskLevel: "high",
-    aiModel: "claude-sonnet + quantum-vqc",
-    lastRun: new Date(),
-    approvalRequired: true
-  },
-  {
-    id: "fees-001",
-    name: "Platform Fee Collector",
-    type: "fees",
-    status: "active",
-    dailyRevenue: 523.40,
-    totalRevenue: 15702.00,
-    riskLevel: "low",
-    aiModel: "system",
-    lastRun: new Date(Date.now() - 60000),
-    approvalRequired: false
-  }
-];
-
 const RevenueAutomation = () => {
-  const [generators, setGenerators] = useState<RevenueGenerator[]>(mockGenerators);
+  const [generators, setGenerators] = useState<RevenueGenerator[]>([]);
   const [isAdminVerified, setIsAdminVerified] = useState(true);
   const [selectedGenerator, setSelectedGenerator] = useState<RevenueGenerator | null>(null);
   const [riskTolerance, setRiskTolerance] = useState([50]);
   const [autoReinvest, setAutoReinvest] = useState(true);
-  const [reinvestPercent, setReinvestPercent] = useState([90]); // 90% reinvestment as requested
-  const [topStrategiesCount, setTopStrategiesCount] = useState([3]); // Top 3 strategies
+  const [reinvestPercent, setReinvestPercent] = useState([90]);
+  const [topStrategiesCount, setTopStrategiesCount] = useState([3]);
+
+  // Load generators from admin_settings, seed if empty
+  useEffect(() => {
+    const loadGenerators = async () => {
+      const { data } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('key', 'revenue_generators')
+        .single();
+
+      if (data?.value) {
+        const stored = (data.value as any[]).map((g: any) => ({
+          ...g,
+          lastRun: new Date(g.lastRun || Date.now()),
+        }));
+        setGenerators(stored);
+      } else {
+        // Seed initial generators into DB
+        const initial: RevenueGenerator[] = [
+          { id: "arb-001", name: "Cross-Exchange Arbitrage Bot", type: "arbitrage", status: "active", dailyRevenue: 0, totalRevenue: 0, riskLevel: "low", aiModel: "gemini-2.5-flash", lastRun: new Date(), approvalRequired: false },
+          { id: "liq-001", name: "DeFi Liquidity Provider", type: "liquidity", status: "active", dailyRevenue: 0, totalRevenue: 0, riskLevel: "medium", aiModel: "gpt-5-mini", lastRun: new Date(), approvalRequired: false },
+          { id: "stake-001", name: "Multi-Chain Staking Optimizer", type: "staking", status: "active", dailyRevenue: 0, totalRevenue: 0, riskLevel: "low", aiModel: "gemini-2.5-pro", lastRun: new Date(), approvalRequired: false },
+          { id: "fees-001", name: "Platform Fee Collector", type: "fees", status: "active", dailyRevenue: 0, totalRevenue: 0, riskLevel: "low", aiModel: "system", lastRun: new Date(), approvalRequired: false },
+        ];
+        setGenerators(initial);
+        await supabase.from('admin_settings').upsert({
+          key: 'revenue_generators',
+          category: 'revenue',
+          value: initial as any,
+        }, { onConflict: 'key' });
+      }
+    };
+    loadGenerators();
+  }, []);
+
+  // Load real revenue totals from admin_revenue
+  useEffect(() => {
+    const loadRevenue = async () => {
+      const { data: revenueData } = await supabase
+        .from('admin_revenue')
+        .select('source, amount, created_at')
+        .order('created_at', { ascending: false });
+
+      if (revenueData && revenueData.length > 0) {
+        const revenueBySource: Record<string, { total: number; daily: number }> = {};
+        const today = new Date().toISOString().slice(0, 10);
+
+        for (const r of revenueData) {
+          const src = r.source || 'fees';
+          if (!revenueBySource[src]) revenueBySource[src] = { total: 0, daily: 0 };
+          revenueBySource[src].total += Number(r.amount);
+          if (r.created_at?.startsWith(today)) {
+            revenueBySource[src].daily += Number(r.amount);
+          }
+        }
+
+        setGenerators(prev => prev.map(g => {
+          const match = revenueBySource[g.type] || revenueBySource[g.id];
+          return match ? { ...g, totalRevenue: match.total, dailyRevenue: match.daily } : g;
+        }));
+      }
+    };
+    loadRevenue();
+  }, [generators.length]);
 
   const totalDailyRevenue = generators
     .filter(g => g.status === "active")
     .reduce((sum, g) => sum + g.dailyRevenue, 0);
 
   const totalRevenue = generators.reduce((sum, g) => sum + g.totalRevenue, 0);
-  
-  // Auto-add revenue to admin wallet (simulated - would be real Supabase call)
-  useEffect(() => {
-    if (autoReinvest && totalDailyRevenue > 0) {
-      const adminShare = totalDailyRevenue * ((100 - reinvestPercent[0]) / 100);
-      const reinvestAmount = totalDailyRevenue * (reinvestPercent[0] / 100);
-      
-      // This would be a real Supabase call to update admin_revenue
-      console.log(`Daily distribution: Admin gets $${adminShare.toFixed(2)}, Reinvesting $${reinvestAmount.toFixed(2)} into top ${topStrategiesCount[0]} strategies`);
-    }
-  }, [totalDailyRevenue, autoReinvest, reinvestPercent, topStrategiesCount]);
 
   const handleApprove = (generatorId: string) => {
     if (!isAdminVerified) {
