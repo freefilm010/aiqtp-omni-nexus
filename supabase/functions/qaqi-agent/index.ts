@@ -389,36 +389,61 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
   const adminApproved = context?.adminApproval || false;
   
   switch (name) {
-    case "analyze_market":
+    case "analyze_market": {
+      // Fetch real market data from database
+      const symbolClean = (args.symbol || "BTC").replace("/USD", "").replace("/USDT", "").toLowerCase();
+      
+      // Map common symbols to CoinGecko IDs
+      const symbolMap: Record<string, string> = {
+        btc: "bitcoin", eth: "ethereum", sol: "solana", bnb: "binancecoin",
+        xrp: "ripple", ada: "cardano", avax: "avalanche-2", dot: "polkadot",
+        link: "chainlink", doge: "dogecoin", ltc: "litecoin", atom: "cosmos",
+        near: "near", uni: "uniswap", aave: "aave", arb: "arbitrum",
+        op: "optimism", sui: "sui", inj: "injective-protocol", ton: "the-open-network",
+      };
+      const coinId = symbolMap[symbolClean] || symbolClean;
+
+      const { data: priceRow } = await supabase
+        .from("market_prices")
+        .select("price_usd, price_change_percentage_24h, high_24h, low_24h, total_volume, market_cap, ath, atl")
+        .eq("coin_id", coinId)
+        .maybeSingle();
+
+      const price = priceRow?.price_usd || 0;
+      const change24h = priceRow?.price_change_percentage_24h || 0;
+      const high = priceRow?.high_24h || price * 1.05;
+      const low = priceRow?.low_24h || price * 0.95;
+      const trend = change24h >= 0 ? "bullish" : "bearish";
+      const strength = Math.min(100, Math.max(0, 50 + Math.abs(change24h) * 5));
+
       return {
         symbol: args.symbol,
         timestamp,
         analysis: {
-          trend: Math.random() > 0.5 ? "bullish" : "bearish",
-          strength: Math.floor(Math.random() * 30) + 70,
-          momentum: ["accelerating", "steady", "decelerating"][Math.floor(Math.random() * 3)],
-          support_levels: [42150, 41200, 39800],
-          resistance_levels: [44800, 46200, 48000],
-          patterns_detected: [
-            { name: "ascending_triangle", confidence: 0.87 },
-            { name: "bullish_divergence", confidence: 0.73 }
-          ],
-          sentiment: { social: 0.72, news: 0.68, overall: 0.70 },
-          ml_prediction: {
-            direction: "up",
-            target_price: 48500,
-            timeframe: "7d",
-            confidence: 0.78
-          },
+          current_price: price,
+          change_24h: change24h,
+          high_24h: high,
+          low_24h: low,
+          volume_24h: priceRow?.total_volume || 0,
+          market_cap: priceRow?.market_cap || 0,
+          ath: priceRow?.ath || 0,
+          atl: priceRow?.atl || 0,
+          trend,
+          strength: Math.round(strength),
+          momentum: change24h > 2 ? "accelerating" : change24h > 0 ? "steady" : change24h > -2 ? "decelerating" : "declining",
+          support_levels: [low, price * 0.95, price * 0.90],
+          resistance_levels: [high, price * 1.05, price * 1.10],
           recommendation: {
-            action: "ACCUMULATE",
-            entry_zone: [42000, 43500],
-            stop_loss: 40800,
-            targets: [45000, 48000, 52000]
-          }
+            action: change24h > 3 ? "HOLD" : change24h > 0 ? "ACCUMULATE" : change24h > -3 ? "WATCH" : "CAUTION",
+            entry_zone: [price * 0.97, price * 1.01],
+            stop_loss: price * 0.92,
+            targets: [price * 1.05, price * 1.10, price * 1.20]
+          },
+          data_source: priceRow ? "live_database" : "unavailable"
         },
         depth: args.depth || "standard"
       };
+    }
     
     case "execute_trade":
       const isLive = args.mode === "live";
