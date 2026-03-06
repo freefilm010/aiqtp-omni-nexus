@@ -73,7 +73,7 @@ serve(async (req) => {
     const headers: Record<string, string> = { 'Accept': 'application/json' };
     if (apiKey) headers['x-cg-pro-api-key'] = apiKey;
 
-    const publicActions = new Set(['get_price', 'get_global', 'search_coins', 'get_exchanges', 'sync_trending']);
+    const publicActions = new Set(['get_price', 'get_global', 'search_coins', 'get_exchanges', 'sync_trending', 'sync_market_prices', 'sync_coins_list']);
     const isPublicAction = publicActions.has(action);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
