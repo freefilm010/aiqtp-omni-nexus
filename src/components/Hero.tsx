@@ -190,7 +190,7 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
 };
 
 // TradingView Bottom Toolbar
-const BottomToolbar = () => (
+const BottomToolbar = ({ assetCount }: { assetCount: number }) => (
   <div className="absolute bottom-0 left-0 right-0 h-9 bg-[hsl(223,18%,9%)] border-t border-[hsl(222,14%,17%)] flex items-center px-3 z-20">
     <div className="flex items-center gap-1">
       <button className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-[hsl(222,14%,15%)] rounded transition-colors">
