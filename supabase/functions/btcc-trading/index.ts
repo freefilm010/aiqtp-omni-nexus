@@ -103,7 +103,7 @@ async function btccSpotFetchBalance(apiKey: string, secret: string) {
   const params = `timestamp=${timestamp}`;
   const signature = await generateSignature(secret, params);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${BTCC_API_BASE}/api/v1/spot/account?${params}&signature=${signature}`,
     { headers: safeHeaders(apiKey) }
   );
