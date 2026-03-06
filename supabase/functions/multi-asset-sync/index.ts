@@ -86,37 +86,36 @@ BONDS.forEach(s => ASSET_CLASS_MAP[s] = 'bond');
 async function fetchYahooQuotes(symbols: string[]): Promise<any[]> {
   const results: any[] = [];
   
-  // Yahoo Finance allows up to ~200 symbols per request
-  for (let i = 0; i < symbols.length; i += 100) {
-    const batch = symbols.slice(i, i + 100);
+  for (let i = 0; i < symbols.length; i += 50) {
+    const batch = symbols.slice(i, i + 50);
     const symbolStr = batch.join(',');
     
     try {
-      const url = `${YF_BASE}/quote?symbols=${encodeURIComponent(symbolStr)}`;
+      // Use the v6 quote endpoint which works from server-side
+      const url = `https://query2.finance.yahoo.com/v6/finance/quote?symbols=${encodeURIComponent(symbolStr)}`;
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9',
         }
       });
       
       if (!response.ok) {
         console.log(`Yahoo batch ${i} failed: ${response.status}`);
-        const text = await response.text();
-        console.log('Response:', text.substring(0, 200));
+        await response.text(); // consume body
         continue;
       }
       
       const data = await response.json();
-      const quotes = data?.quoteResponse?.result || [];
+      const quotes = data?.quoteResponse?.result || data?.finance?.result?.[0]?.quotes || [];
       results.push(...quotes);
     } catch (e) {
       console.error(`Yahoo batch ${i} error:`, e);
     }
     
-    // Small delay between batches
-    if (i + 100 < symbols.length) {
-      await new Promise(r => setTimeout(r, 500));
+    if (i + 50 < symbols.length) {
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
   
