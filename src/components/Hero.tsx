@@ -267,8 +267,10 @@ const TerminalGridBackground = () => (
 );
 
 const Hero = () => {
-  const { tickers } = useKrakenTickers(undefined, 45_000);
-  const assetCount = Object.keys(tickers).length;
+  const { tickers, totalCoins } = useKrakenTickers(undefined, 45_000);
+  const activeTickers = Object.keys(tickers).length;
+  // Show total universe: 18,422 crypto refs + 224 traditional + active priced
+  const assetCount = Math.max(activeTickers, totalCoins);
 
   const miniCharts = [
     { symbol: 'Tesla, Inc.', price: '668.05', change: '-5.57 (-0.82%)', timeframe: '1D · NASDAQ', positive: false },
