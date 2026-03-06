@@ -88,7 +88,7 @@ async function btccSpotFetchBalance(apiKey: string, secret: string) {
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/spot/account?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
