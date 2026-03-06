@@ -5,16 +5,17 @@ import { ArrowRight, Shield, Zap, Globe, Bot, Atom, TrendingUp, Crown, Activity,
 import { useEffect, useState } from "react";
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 
-// TradingView-style Live Price Ticker — all supported symbols
+// TradingView-style Live Price Ticker — ALL symbols from database
 const LiveTicker = () => {
-  // Use the full default symbol list from the hook (200+)
-  const { tickers } = useKrakenTickers(undefined, 30_000);
+  // Pull ALL available tickers from the database (no hardcoded limit)
+  const { tickers, totalCoins } = useKrakenTickers(undefined, 45_000);
 
+  // Sort by market cap, show all
   const symbols = Object.keys(tickers).length > 0
-    ? Object.keys(tickers)
-    : ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "ADA/USDT", "AVAX/USDT", "DOT/USDT",
-       "LINK/USDT", "DOGE/USDT", "UNI/USDT", "ATOM/USDT", "LTC/USDT", "NEAR/USDT", "ARB/USDT", "OP/USDT",
-       "PEPE/USDT", "SHIB/USDT", "INJ/USDT", "SUI/USDT", "TON/USDT", "FET/USDT", "RNDR/USDT", "WIF/USDT"];
+    ? Object.entries(tickers)
+        .sort((a, b) => (b[1].marketCap || 0) - (a[1].marketCap || 0))
+        .map(([s]) => s)
+    : [];
 
   const prices = symbols.map((s) => {
     const t = tickers[s];
