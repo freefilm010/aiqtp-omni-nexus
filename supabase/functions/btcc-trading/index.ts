@@ -331,7 +331,7 @@ async function btccCancelOrder(apiKey: string, secret: string, market: "spot" | 
   
   const endpoint = market === "spot" ? "spot" : "futures";
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${BTCC_API_BASE}/api/v1/${endpoint}/order?${params}&signature=${signature}`,
     {
       method: "DELETE",
