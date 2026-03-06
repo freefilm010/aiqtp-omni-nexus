@@ -180,7 +180,7 @@ async function btccFuturesFetchTicker(apiKey: string, secret: string, symbol: st
   const params = `symbol=${symbol}&timestamp=${timestamp}`;
   const signature = await generateSignature(secret, params);
   
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${BTCC_API_BASE}/api/v1/futures/ticker?${params}&signature=${signature}`,
     { headers: safeHeaders(apiKey) }
   );
