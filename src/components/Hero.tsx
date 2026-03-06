@@ -270,6 +270,9 @@ const TerminalGridBackground = () => (
 );
 
 const Hero = () => {
+  const { tickers } = useKrakenTickers(undefined, 45_000);
+  const assetCount = Object.keys(tickers).length;
+
   const miniCharts = [
     { symbol: 'Tesla, Inc.', price: '668.05', change: '-5.57 (-0.82%)', timeframe: '1D · NASDAQ', positive: false },
     { symbol: 'Apple Inc', price: '144.82', change: '+0.53 (+0.36%)', timeframe: '1h · NASDAQ', positive: true },
@@ -292,7 +295,7 @@ const Hero = () => {
       {/* TradingView-style Interface */}
       <LiveTicker />
       <LeftToolbar />
-      <BottomToolbar />
+      <BottomToolbar assetCount={assetCount} />
 
       {/* Main Content - Centered */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 pt-16 pb-12 ml-11">
