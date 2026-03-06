@@ -129,10 +129,7 @@ async function btccSpotCreateOrder(
     `${BTCC_API_BASE}/api/v1/spot/order`,
     {
       method: "POST",
-      headers: {
-        "X-API-KEY": apiKey,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: safeHeaders(apiKey, { "Content-Type": "application/x-www-form-urlencoded" }),
       body: `${params}&signature=${signature}`,
     }
   );
