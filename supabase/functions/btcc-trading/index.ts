@@ -36,18 +36,27 @@ async function generateSignature(secret: string, message: string): Promise<strin
     .join("");
 }
 
+// Build safe headers to avoid ByteString issues with non-ASCII chars
+function safeHeaders(apiKey: string, extra?: Record<string, string>): Headers {
+  const h = new Headers();
+  h.set("X-API-KEY", apiKey.replace(/[^\x20-\x7E]/g, ""));
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) {
+      h.set(k, v);
+    }
+  }
+  return h;
+}
+
 // BTCC Spot API Functions
 async function btccSpotFetchTicker(apiKey: string, secret: string, symbol: string) {
   const timestamp = Date.now();
   const params = `symbol=${symbol}&timestamp=${timestamp}`;
   const signature = await generateSignature(secret, params);
   
-  const headers = new Headers();
-  headers.set("X-API-KEY", apiKey);
-  
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/spot/ticker?${params}&signature=${signature}`,
-    { headers }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
