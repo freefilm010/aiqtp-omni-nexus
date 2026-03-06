@@ -154,17 +154,22 @@ serve(async (req) => {
 
     switch (action) {
       case 'sync_coins_list': {
-        const { count } = await supabase
-          .from('market_coins')
-          .select('*', { count: 'exact', head: true });
+        const force = params?.force === true;
         
-        // Skip if we already have coins synced
-        if (count && count > 100) {
-          return new Response(JSON.stringify({ 
-            success: true, 
-            synced: 0,
-            message: 'Coins list already populated, skipping API call' 
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        if (!force) {
+          const { count } = await supabase
+            .from('market_coins')
+            .select('*', { count: 'exact', head: true });
+          
+          // Only skip if we already have 10k+ coins AND not forced
+          if (count && count > 10000) {
+            return new Response(JSON.stringify({ 
+              success: true, 
+              synced: 0,
+              total: count,
+              message: `Coins list already has ${count} entries` 
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
         }
 
         const response = await fetchWithRateLimit(`${baseUrl}/coins/list?include_platform=true`, headers);
@@ -173,8 +178,9 @@ serve(async (req) => {
         const coins = await response.json();
         let synced = 0;
 
-        for (let i = 0; i < coins.length; i += 500) {
-          const batch = coins.slice(i, i + 500).map((coin: any) => ({
+        // Process ALL coins in batches of 1000
+        for (let i = 0; i < coins.length; i += 1000) {
+          const batch = coins.slice(i, i + 1000).map((coin: any) => ({
             id: coin.id,
             symbol: coin.symbol?.toUpperCase() || 'UNKNOWN',
             name: coin.name || coin.id,
@@ -192,7 +198,8 @@ serve(async (req) => {
         return new Response(JSON.stringify({ 
           success: true, 
           synced,
-          message: `Synced ${synced} coins from CoinGecko` 
+          total_available: coins.length,
+          message: `Synced ${synced} coins from CoinGecko (${coins.length} available)` 
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
