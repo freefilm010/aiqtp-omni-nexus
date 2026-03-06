@@ -38,80 +38,39 @@ interface MarketplaceCompetitionsProps {
   marketType: "nft" | "strategy" | "token" | "general";
 }
 
-const mockCompetitions: Competition[] = [
-  {
-    id: "1",
-    name: "Weekly Trading Challenge",
-    description: "Compete for the highest returns using AI trading bots",
-    type: "trading",
-    prizePool: "$10,000 USDC",
-    participants: 847,
-    maxParticipants: 1000,
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    status: "active",
-    requirements: ["$20 minimum deposit", "Use any graduated bot"],
-    prizes: [
-      { place: "1st", prize: "$5,000 USDC" },
-      { place: "2nd", prize: "$3,000 USDC" },
-      { place: "3rd", prize: "$2,000 USDC" }
-    ]
-  },
-  {
-    id: "2",
-    name: "NFT Creator Showcase",
-    description: "Submit your best NFT artwork for community voting",
-    type: "nft",
-    prizePool: "5 ETH + Promotion",
-    participants: 234,
-    maxParticipants: 500,
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    status: "active",
-    requirements: ["Original artwork only", "Mint on AIQTP platform"],
-    prizes: [
-      { place: "1st", prize: "3 ETH + Featured spot" },
-      { place: "2nd", prize: "1.5 ETH" },
-      { place: "3rd", prize: "0.5 ETH" }
-    ]
-  },
-  {
-    id: "3",
-    name: "Strategy Builder Sprint",
-    description: "Build the best performing strategy in 48 hours",
-    type: "strategy",
-    prizePool: "$25,000 + Lifetime Revenue Share",
-    participants: 0,
-    maxParticipants: 200,
-    startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    status: "upcoming",
-    requirements: ["Pass graduation threshold", "Submit backtests"],
-    prizes: [
-      { place: "1st", prize: "$15,000 + 10% lifetime share" },
-      { place: "2nd", prize: "$7,000 + 5% lifetime share" },
-      { place: "3rd", prize: "$3,000 + 2% lifetime share" }
-    ]
-  },
-  {
-    id: "4",
-    name: "Community Referral Race",
-    description: "Invite friends and earn bonus rewards",
-    type: "community",
-    prizePool: "$5,000 in bonus credits",
-    participants: 1250,
-    maxParticipants: 5000,
-    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    endDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
-    status: "active",
-    requirements: ["Valid referrals only", "Referees must trade $100+"],
-    prizes: [
-      { place: "Top 10", prize: "$500 each" },
-      { place: "Top 50", prize: "$50 each" },
-      { place: "All", prize: "10% of referral fees" }
-    ]
-  }
-];
+// Competitions loaded from database via token_contests table
+const useCompetitions = () => {
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('token_contests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (data && data.length > 0) {
+        setCompetitions(data.map((c: any) => ({
+          id: c.id,
+          name: c.name || 'Untitled Contest',
+          description: c.description || '',
+          type: c.contest_type || 'trading',
+          prizePool: c.prize_pool ? `$${Number(c.prize_pool).toLocaleString()}` : '$0',
+          participants: c.participant_count || 0,
+          maxParticipants: c.max_participants || 1000,
+          startDate: new Date(c.start_date || Date.now()),
+          endDate: new Date(c.end_date || Date.now() + 7 * 86400000),
+          status: c.status || 'active',
+          requirements: c.requirements || [],
+          prizes: c.prizes || [],
+        })));
+      }
+    };
+    load();
+  }, []);
+  
+  return competitions;
+};
 
 const getTimeRemaining = (endDate: Date) => {
   const diff = endDate.getTime() - Date.now();

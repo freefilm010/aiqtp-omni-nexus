@@ -152,12 +152,18 @@ const RevenueAutomation = () => {
     toast.success(`Generator approved by ${ADMIN_IDENTITY.name}`);
   };
 
-  const handleToggleGenerator = (generatorId: string, newStatus: boolean) => {
-    setGenerators(prev => prev.map(g => 
+  const handleToggleGenerator = async (generatorId: string, newStatus: boolean) => {
+    const updated = generators.map(g => 
       g.id === generatorId 
         ? { ...g, status: newStatus ? "active" as const : "paused" as const }
         : g
-    ));
+    );
+    setGenerators(updated);
+    await supabase.from('admin_settings').upsert({
+      key: 'revenue_generators',
+      category: 'revenue',
+      value: updated as any,
+    }, { onConflict: 'key' });
     toast.success(`Generator ${newStatus ? "activated" : "paused"}`);
   };
 
