@@ -282,7 +282,7 @@ async function btccFetchOrders(apiKey: string, secret: string, market: "spot" | 
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/${endpoint}/openOrders?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
