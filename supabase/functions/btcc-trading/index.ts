@@ -36,6 +36,18 @@ async function generateSignature(secret: string, message: string): Promise<strin
     .join("");
 }
 
+// Build safe headers to avoid ByteString issues with non-ASCII chars
+function safeHeaders(apiKey: string, extra?: Record<string, string>): Headers {
+  const h = new Headers();
+  h.set("X-API-KEY", apiKey.replace(/[^\x20-\x7E]/g, ""));
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) {
+      h.set(k, v);
+    }
+  }
+  return h;
+}
+
 // BTCC Spot API Functions
 async function btccSpotFetchTicker(apiKey: string, secret: string, symbol: string) {
   const timestamp = Date.now();
@@ -44,7 +56,7 @@ async function btccSpotFetchTicker(apiKey: string, secret: string, symbol: strin
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/spot/ticker?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
@@ -76,7 +88,7 @@ async function btccSpotFetchBalance(apiKey: string, secret: string) {
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/spot/account?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
@@ -117,10 +129,7 @@ async function btccSpotCreateOrder(
     `${BTCC_API_BASE}/api/v1/spot/order`,
     {
       method: "POST",
-      headers: {
-        "X-API-KEY": apiKey,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: safeHeaders(apiKey, { "Content-Type": "application/x-www-form-urlencoded" }),
       body: `${params}&signature=${signature}`,
     }
   );
@@ -154,7 +163,7 @@ async function btccFuturesFetchTicker(apiKey: string, secret: string, symbol: st
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/futures/ticker?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
@@ -186,7 +195,7 @@ async function btccFuturesFetchPositions(apiKey: string, secret: string) {
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/futures/positions?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
@@ -234,10 +243,7 @@ async function btccFuturesCreateOrder(
     `${BTCC_API_BASE}/api/v1/futures/order`,
     {
       method: "POST",
-      headers: {
-        "X-API-KEY": apiKey,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: safeHeaders(apiKey, { "Content-Type": "application/x-www-form-urlencoded" }),
       body: `${params}&signature=${signature}`,
     }
   );
@@ -276,7 +282,7 @@ async function btccFetchOrders(apiKey: string, secret: string, market: "spot" | 
   
   const response = await fetch(
     `${BTCC_API_BASE}/api/v1/${endpoint}/openOrders?${params}&signature=${signature}`,
-    { headers: { "X-API-KEY": apiKey } }
+    { headers: safeHeaders(apiKey) }
   );
   
   const data = await response.json();
@@ -310,7 +316,7 @@ async function btccCancelOrder(apiKey: string, secret: string, market: "spot" | 
     `${BTCC_API_BASE}/api/v1/${endpoint}/order?${params}&signature=${signature}`,
     {
       method: "DELETE",
-      headers: { "X-API-KEY": apiKey },
+      headers: safeHeaders(apiKey),
     }
   );
   
@@ -330,8 +336,8 @@ serve(async (req) => {
 
   try {
     // Get BTCC credentials from environment (stored via Lovable secrets)
-    const BTCC_API_KEY = (Deno.env.get("BTCC_API_KEY") || "").trim();
-    const BTCC_API_SECRET = (Deno.env.get("BTCC_API_SECRET") || "").trim();
+    const BTCC_API_KEY = (Deno.env.get("BTCC_API_KEY") || "").replace(/[^\x20-\x7E]/g, "").trim();
+    const BTCC_API_SECRET = (Deno.env.get("BTCC_API_SECRET") || "").replace(/[^\x20-\x7E]/g, "").trim();
     
     if (!BTCC_API_KEY || !BTCC_API_SECRET) {
       throw new Error("BTCC API credentials not configured. Please add BTCC_API_KEY and BTCC_API_SECRET.");
