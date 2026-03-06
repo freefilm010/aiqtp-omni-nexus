@@ -5219,6 +5219,93 @@ export type Database = {
         }
         Relationships: []
       }
+      traditional_assets: {
+        Row: {
+          asset_class: string
+          beta: number | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          dividend_yield: number | null
+          eps: number | null
+          exchange: string | null
+          high_24h: number | null
+          industry: string | null
+          is_active: boolean | null
+          last_updated: string | null
+          low_24h: number | null
+          market_cap: number | null
+          name: string
+          open_price: number | null
+          pe_ratio: number | null
+          previous_close: number | null
+          price_change_24h: number | null
+          price_change_percentage_24h: number | null
+          price_usd: number | null
+          sector: string | null
+          symbol: string
+          volume: number | null
+          week_52_high: number | null
+          week_52_low: number | null
+        }
+        Insert: {
+          asset_class?: string
+          beta?: number | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          dividend_yield?: number | null
+          eps?: number | null
+          exchange?: string | null
+          high_24h?: number | null
+          industry?: string | null
+          is_active?: boolean | null
+          last_updated?: string | null
+          low_24h?: number | null
+          market_cap?: number | null
+          name: string
+          open_price?: number | null
+          pe_ratio?: number | null
+          previous_close?: number | null
+          price_change_24h?: number | null
+          price_change_percentage_24h?: number | null
+          price_usd?: number | null
+          sector?: string | null
+          symbol: string
+          volume?: number | null
+          week_52_high?: number | null
+          week_52_low?: number | null
+        }
+        Update: {
+          asset_class?: string
+          beta?: number | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          dividend_yield?: number | null
+          eps?: number | null
+          exchange?: string | null
+          high_24h?: number | null
+          industry?: string | null
+          is_active?: boolean | null
+          last_updated?: string | null
+          low_24h?: number | null
+          market_cap?: number | null
+          name?: string
+          open_price?: number | null
+          pe_ratio?: number | null
+          previous_close?: number | null
+          price_change_24h?: number | null
+          price_change_percentage_24h?: number | null
+          price_usd?: number | null
+          sector?: string | null
+          symbol?: string
+          volume?: number | null
+          week_52_high?: number | null
+          week_52_low?: number | null
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_name: string
