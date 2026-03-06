@@ -217,12 +217,11 @@ const QAQIAgent = () => {
         role: "assistant",
         content: generateFallbackResponse(content),
         timestamp: new Date(),
-        toolExecutions: generateMockToolExecution(content),
       };
       
       addMessage(fallbackMessage);
       if (!(error instanceof Error && error.message.includes("Rate"))) {
-        toast.info("Using local processing mode");
+        toast.error("Edge function unavailable — retrying on next request");
       }
     } finally {
       setIsProcessing(false);
@@ -681,65 +680,7 @@ Try one of the quick action buttons above or describe what you'd like to accompl
 *QAQI Agent v2.0 - Full Autonomy Mode*`;
 }
 
-// Generate mock tool executions for demo mode
-function generateMockToolExecution(query: string): ToolExecution[] {
-  const lowerQuery = query.toLowerCase();
-  
-  if (lowerQuery.includes("quwallet") || (lowerQuery.includes("wallet") && lowerQuery.includes("create"))) {
-    return [{
-      tool: "quwallet_create",
-      arguments: { action: "create", wallet_name: "My QuWallet", encryption_level: "standard" },
-      result: { wallet_id: `qw_${Date.now()}`, encryption: "ML-KEM-768", status: "created" },
-      success: true
-    }];
-  }
-  
-  if (lowerQuery.includes("qtc") || lowerQuery.includes("network")) {
-    return [{
-      tool: "qtc_operations",
-      arguments: { operation: "network_status" },
-      result: { block_height: Math.floor(Date.now() / 8000), validators: 1247, status: "healthy" },
-      success: true
-    }];
-  }
-  
-  if (lowerQuery.includes("mine")) {
-    return [{
-      tool: "qtc_operations",
-      arguments: { operation: "mine", difficulty: 1000 },
-      result: { block_mined: true, reward: 6.25, dtc_proof: { valid: true } },
-      success: true
-    }];
-  }
-  
-  if (lowerQuery.includes("register") || lowerQuery.includes("trademark")) {
-    return [{
-      tool: "register_ip",
-      arguments: { asset_type: "trademark", asset_name: "QAQI Agent", asset_value: "QAQI" },
-      result: { token_id: `QTC-IP-${Date.now().toString(16)}`, status: "registered" },
-      success: true
-    }];
-  }
-  
-  if (lowerQuery.includes("revenue")) {
-    return [{
-      tool: "revenue_automation",
-      arguments: { action: "list" },
-      result: { active_generators: 4, total_daily: 673.80 },
-      success: true
-    }];
-  }
-  
-  if (lowerQuery.includes("market") || lowerQuery.includes("btc")) {
-    return [{
-      tool: "analyze_market",
-      arguments: { symbol: "BTC/USD", depth: "deep" },
-      result: { trend: "bullish", confidence: 0.78, prediction: "+8.5%" },
-      success: true
-    }];
-  }
-  
-  return [];
-}
+// All tool executions are handled server-side by the qaqi-agent edge function.
+// No mock/fallback tool execution logic is used.
 
 export default QAQIAgent;

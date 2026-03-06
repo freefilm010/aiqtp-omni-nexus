@@ -10,20 +10,25 @@ export interface KrakenTickerQuote {
 }
 
 const DEFAULT_SYMBOLS = [
-  "BTC/USDT",
-  "ETH/USDT",
-  "SOL/USDT",
-  "XRP/USDT",
-  "ADA/USDT",
-  "AVAX/USDT",
-  "LINK/USDT",
-  "DOGE/USDT",
+  "BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "ADA/USDT",
+  "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "DOT/USDT", "MATIC/USDT",
+  "UNI/USDT", "ATOM/USDT", "FIL/USDT", "LTC/USDT", "NEAR/USDT",
+  "APT/USDT", "ARB/USDT", "OP/USDT", "AAVE/USDT", "MKR/USDT",
+  "ALGO/USDT", "XLM/USDT", "ICP/USDT", "HBAR/USDT", "VET/USDT",
+  "SAND/USDT", "MANA/USDT", "FTM/USDT", "RUNE/USDT", "INJ/USDT",
 ] as const;
 
 const CG_ID_MAP: Record<string, string> = {
   "BTC/USDT": "bitcoin", "ETH/USDT": "ethereum", "SOL/USDT": "solana",
   "XRP/USDT": "ripple", "ADA/USDT": "cardano", "AVAX/USDT": "avalanche-2",
-  "LINK/USDT": "chainlink", "DOGE/USDT": "dogecoin",
+  "LINK/USDT": "chainlink", "DOGE/USDT": "dogecoin", "DOT/USDT": "polkadot",
+  "MATIC/USDT": "matic-network", "UNI/USDT": "uniswap", "ATOM/USDT": "cosmos",
+  "FIL/USDT": "filecoin", "LTC/USDT": "litecoin", "NEAR/USDT": "near",
+  "APT/USDT": "aptos", "ARB/USDT": "arbitrum", "OP/USDT": "optimism",
+  "AAVE/USDT": "aave", "MKR/USDT": "maker", "ALGO/USDT": "algorand",
+  "XLM/USDT": "stellar", "ICP/USDT": "internet-computer", "HBAR/USDT": "hedera-hashgraph",
+  "VET/USDT": "vechain", "SAND/USDT": "the-sandbox", "MANA/USDT": "decentraland",
+  "FTM/USDT": "fantom", "RUNE/USDT": "thorchain", "INJ/USDT": "injective-protocol",
 };
 
 /**
