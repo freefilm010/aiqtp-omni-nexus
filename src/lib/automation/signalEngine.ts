@@ -634,7 +634,7 @@ export class AutomationEngine {
 // ============= Strategy Scheduler =============
 
 export class StrategyScheduler {
-  private schedules: Map<string, NodeJS.Timeout> = new Map();
+  private schedules: Map<string, ReturnType<typeof setInterval>> = new Map();
   private tasks: Map<string, () => void> = new Map();
 
   schedule(

@@ -26,7 +26,7 @@ const ExplainerTooltip = ({
 }: ExplainerTooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const elementRef = useRef<HTMLSpanElement>(null);
 
   const showTooltip = useCallback((e: React.MouseEvent) => {
