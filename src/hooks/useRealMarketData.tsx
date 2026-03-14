@@ -131,11 +131,29 @@ export function useRealMarketData(options?: {
     fetchMarketData();
   }, [fetchMarketData]);
 
-  // Auto-refresh
+  // Realtime subscription for instant price updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('market-prices-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'market_prices' },
+        () => {
+          fetchMarketData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchMarketData]);
+
+  // Fallback polling (longer interval since realtime handles instant updates)
   useEffect(() => {
     if (!autoRefresh) return;
 
-    const interval = setInterval(fetchMarketData, refreshInterval);
+    const interval = setInterval(fetchMarketData, Math.max(refreshInterval, 60000));
     return () => clearInterval(interval);
   }, [autoRefresh, refreshInterval, fetchMarketData]);
 
