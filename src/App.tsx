@@ -428,6 +428,14 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/auto-invest"
+                        element={
+                          <ProtectedRoute>
+                            <AutoInvestPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

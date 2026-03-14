@@ -66,3 +66,6 @@ verify_jwt = false
 
 [functions.trade-execute]
 verify_jwt = false
+
+[functions.auto-invest]
+verify_jwt = false
