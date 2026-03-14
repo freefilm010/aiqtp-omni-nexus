@@ -73,6 +73,8 @@ serve(async (req) => {
 
     // 2. Validate URLs - must be same origin
     const allowedOrigins = [
+      "https://aiqtp.com",
+      "https://www.aiqtp.com",
       "https://aiqtp.lovable.app",
       "https://id-preview--d588a2ef-0d53-4c77-8d2f-41dfd18dd47e.lovable.app",
     ];
