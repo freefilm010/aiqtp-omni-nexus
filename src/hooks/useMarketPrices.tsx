@@ -256,6 +256,7 @@ const loadMarketPrices = async (): Promise<MarketPricesResult> => {
 
 export const useMarketPrices = (pollIntervalMs: number = 30000) => {
   const [isLive, setIsLive] = useState(true);
+  const queryClient = useQueryClient();
 
   const effectivePollInterval = useMemo(
     () => Math.max(MIN_POLL_MS, pollIntervalMs),
@@ -270,6 +271,24 @@ export const useMarketPrices = (pollIntervalMs: number = 30000) => {
     refetchOnWindowFocus: false,
     retry: false,
   });
+
+  // Realtime subscription for instant price updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('market-prices-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'market_prices' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["marketPrices"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const prices = query.data?.priceMap ?? lastGoodPriceMap;
   const lastSyncError = query.data?.lastSyncError ?? null;
