@@ -62,6 +62,7 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
 const WalletAssets = lazy(() => import("./pages/WalletAssets"));
 const AutoInvestPage = lazy(() => import("./pages/AutoInvestPage"));
+const PerformanceShowcase = lazy(() => import("./pages/PerformanceShowcase"));
 
 const queryClient = new QueryClient();
 
