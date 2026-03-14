@@ -398,6 +398,283 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_invest_ai_logs: {
+        Row: {
+          allocations_proposed: Json | null
+          analysis_type: string
+          confidence_score: number | null
+          created_at: string
+          engine_id: string
+          executed: boolean
+          id: string
+          market_regime: string | null
+          model_used: string | null
+          raw_response: string | null
+          recommendations: Json | null
+          signals_used: Json | null
+        }
+        Insert: {
+          allocations_proposed?: Json | null
+          analysis_type: string
+          confidence_score?: number | null
+          created_at?: string
+          engine_id: string
+          executed?: boolean
+          id?: string
+          market_regime?: string | null
+          model_used?: string | null
+          raw_response?: string | null
+          recommendations?: Json | null
+          signals_used?: Json | null
+        }
+        Update: {
+          allocations_proposed?: Json | null
+          analysis_type?: string
+          confidence_score?: number | null
+          created_at?: string
+          engine_id?: string
+          executed?: boolean
+          id?: string
+          market_regime?: string | null
+          model_used?: string | null
+          raw_response?: string | null
+          recommendations?: Json | null
+          signals_used?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_invest_ai_logs_engine_id_fkey"
+            columns: ["engine_id"]
+            isOneToOne: false
+            referencedRelation: "auto_invest_engine"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auto_invest_allocations: {
+        Row: {
+          ai_reasoning: string | null
+          ai_score: number | null
+          ai_signal: string | null
+          allocation_type: string
+          asset_class: string
+          asset_name: string
+          asset_symbol: string
+          created_at: string
+          current_percent: number
+          current_price: number | null
+          engine_id: string
+          entry_price: number | null
+          id: string
+          is_active: boolean
+          pnl_percent: number
+          pnl_usd: number
+          quantity: number
+          stop_loss_percent: number | null
+          take_profit_percent: number | null
+          target_percent: number
+          updated_at: string
+          value_usd: number
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          ai_score?: number | null
+          ai_signal?: string | null
+          allocation_type?: string
+          asset_class?: string
+          asset_name: string
+          asset_symbol: string
+          created_at?: string
+          current_percent?: number
+          current_price?: number | null
+          engine_id: string
+          entry_price?: number | null
+          id?: string
+          is_active?: boolean
+          pnl_percent?: number
+          pnl_usd?: number
+          quantity?: number
+          stop_loss_percent?: number | null
+          take_profit_percent?: number | null
+          target_percent?: number
+          updated_at?: string
+          value_usd?: number
+        }
+        Update: {
+          ai_reasoning?: string | null
+          ai_score?: number | null
+          ai_signal?: string | null
+          allocation_type?: string
+          asset_class?: string
+          asset_name?: string
+          asset_symbol?: string
+          created_at?: string
+          current_percent?: number
+          current_price?: number | null
+          engine_id?: string
+          entry_price?: number | null
+          id?: string
+          is_active?: boolean
+          pnl_percent?: number
+          pnl_usd?: number
+          quantity?: number
+          stop_loss_percent?: number | null
+          take_profit_percent?: number | null
+          target_percent?: number
+          updated_at?: string
+          value_usd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_invest_allocations_engine_id_fkey"
+            columns: ["engine_id"]
+            isOneToOne: false
+            referencedRelation: "auto_invest_engine"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auto_invest_engine: {
+        Row: {
+          ai_confidence_score: number | null
+          ai_market_regime: string | null
+          created_at: string
+          cycle_count: number
+          engine_name: string
+          growth_target_percent: number
+          id: string
+          last_ai_analysis_at: string | null
+          last_rebalance_at: string | null
+          rebalance_threshold: number
+          reinvest_percent: number
+          stable_target_percent: number
+          status: string
+          strategy: string
+          total_capital: number
+          total_deployed: number
+          total_profit: number
+          total_reinvested: number
+          updated_at: string
+        }
+        Insert: {
+          ai_confidence_score?: number | null
+          ai_market_regime?: string | null
+          created_at?: string
+          cycle_count?: number
+          engine_name?: string
+          growth_target_percent?: number
+          id?: string
+          last_ai_analysis_at?: string | null
+          last_rebalance_at?: string | null
+          rebalance_threshold?: number
+          reinvest_percent?: number
+          stable_target_percent?: number
+          status?: string
+          strategy?: string
+          total_capital?: number
+          total_deployed?: number
+          total_profit?: number
+          total_reinvested?: number
+          updated_at?: string
+        }
+        Update: {
+          ai_confidence_score?: number | null
+          ai_market_regime?: string | null
+          created_at?: string
+          cycle_count?: number
+          engine_name?: string
+          growth_target_percent?: number
+          id?: string
+          last_ai_analysis_at?: string | null
+          last_rebalance_at?: string | null
+          rebalance_threshold?: number
+          reinvest_percent?: number
+          stable_target_percent?: number
+          status?: string
+          strategy?: string
+          total_capital?: number
+          total_deployed?: number
+          total_profit?: number
+          total_reinvested?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      auto_invest_transactions: {
+        Row: {
+          ai_confidence: number | null
+          ai_reason: string | null
+          ai_triggered: boolean
+          allocation_id: string | null
+          amount_usd: number
+          asset_symbol: string | null
+          created_at: string
+          engine_id: string
+          fee_usd: number
+          id: string
+          market_regime: string | null
+          pnl_usd: number | null
+          price: number | null
+          quantity: number | null
+          side: string | null
+          status: string
+          transaction_type: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_reason?: string | null
+          ai_triggered?: boolean
+          allocation_id?: string | null
+          amount_usd?: number
+          asset_symbol?: string | null
+          created_at?: string
+          engine_id: string
+          fee_usd?: number
+          id?: string
+          market_regime?: string | null
+          pnl_usd?: number | null
+          price?: number | null
+          quantity?: number | null
+          side?: string | null
+          status?: string
+          transaction_type: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_reason?: string | null
+          ai_triggered?: boolean
+          allocation_id?: string | null
+          amount_usd?: number
+          asset_symbol?: string | null
+          created_at?: string
+          engine_id?: string
+          fee_usd?: number
+          id?: string
+          market_regime?: string | null
+          pnl_usd?: number | null
+          price?: number | null
+          quantity?: number | null
+          side?: string | null
+          status?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_invest_transactions_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "auto_invest_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_invest_transactions_engine_id_fkey"
+            columns: ["engine_id"]
+            isOneToOne: false
+            referencedRelation: "auto_invest_engine"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_nft_generations: {
         Row: {
           attributes: Json | null
