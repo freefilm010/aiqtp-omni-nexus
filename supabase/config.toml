@@ -69,3 +69,6 @@ verify_jwt = false
 
 [functions.auto-invest]
 verify_jwt = false
+
+[functions.performance-report]
+verify_jwt = false
