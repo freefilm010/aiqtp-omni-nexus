@@ -437,6 +437,7 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      <Route path="/performance" element={<PerformanceShowcase />} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
