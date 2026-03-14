@@ -57,7 +57,7 @@ const PerformanceShowcase = () => {
       const { data: strategies } = await supabase
         .from("ai_strategies")
         .select("id")
-        .eq("status", "active");
+        .eq("status", "live");
 
       const totalCapital = engine?.total_capital || 0;
       const totalProfit = engine?.total_profit || 0;
