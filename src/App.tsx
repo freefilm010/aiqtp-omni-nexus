@@ -448,6 +448,14 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      <Route
+                        path="/hivemind"
+                        element={
+                          <ProtectedRoute>
+                            <HiveMindPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
