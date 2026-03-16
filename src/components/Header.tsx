@@ -91,13 +91,18 @@ const Header = () => {
     { to: "/watchlist", label: "Watchlist", icon: TrendingUp },
   ];
 
-  const aiQuantumLinks = [
+  const agentLinks = [
+    { to: "/hivemind", label: "HiveMind Swarm", icon: Brain },
+    { to: "/quantclaw", label: "QuantClaw", icon: Bot },
     { to: "/qaqi", label: "QAQI™ Agent", icon: Atom },
+    { to: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  ];
+
+  const aiQuantumLinks = [
     { to: "/ai-lab", label: "AI Research Lab", icon: Brain },
     { to: "/ml-predictions", label: "ML Predictions", icon: Cpu },
     { to: "/quantum-lab", label: "Quantum Lab", icon: FlaskConical },
     { to: "/titan-codex", label: "Titan Codex™", icon: Shield },
-    { to: "/ai-assistant", label: "AI Assistant", icon: Bot },
     { to: "/intelligence", label: "Market Intelligence", icon: Brain },
   ];
 
