@@ -3073,6 +3073,99 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_category_fees: {
+        Row: {
+          category: string
+          created_at: string | null
+          display_name: string
+          finder_fee_percent: number
+          id: string
+          is_active: boolean | null
+          min_deal_size: number | null
+          pass_through_fee_percent: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          display_name: string
+          finder_fee_percent?: number
+          id?: string
+          is_active?: boolean | null
+          min_deal_size?: number | null
+          pass_through_fee_percent?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          display_name?: string
+          finder_fee_percent?: number
+          id?: string
+          is_active?: boolean | null
+          min_deal_size?: number | null
+          pass_through_fee_percent?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      marketplace_deals: {
+        Row: {
+          buyer_user_id: string | null
+          category: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          external_url: string | null
+          finder_fee_amount: number | null
+          id: string
+          listing_price: number | null
+          metadata: Json | null
+          pass_through_fee_amount: number | null
+          seller_user_id: string | null
+          status: string | null
+          title: string
+          total_platform_fee: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          buyer_user_id?: string | null
+          category: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          external_url?: string | null
+          finder_fee_amount?: number | null
+          id?: string
+          listing_price?: number | null
+          metadata?: Json | null
+          pass_through_fee_amount?: number | null
+          seller_user_id?: string | null
+          status?: string | null
+          title: string
+          total_platform_fee?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          buyer_user_id?: string | null
+          category?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          external_url?: string | null
+          finder_fee_amount?: number | null
+          id?: string
+          listing_price?: number | null
+          metadata?: Json | null
+          pass_through_fee_amount?: number | null
+          seller_user_id?: string | null
+          status?: string | null
+          title?: string
+          total_platform_fee?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       nft_generation_queue: {
         Row: {
           base_price: number | null
