@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -10,9 +9,9 @@ import {
   TrendingUp,
   Download,
   RefreshCw,
-  Settings,
   CheckCircle,
-  XCircle
+  Wallet,
+  Loader2
 } from "lucide-react";
 import {
   Table,
@@ -22,37 +21,87 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { revenueStreams, RevenueStream } from "@/lib/payments/mockProcessors";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const RevenueManager = () => {
-  const [streams, setStreams] = useState<RevenueStream[]>(revenueStreams);
+  const [loading, setLoading] = useState(true);
   const [distribution, setDistribution] = useState({
     reinvest: 60,
     reserve: 25,
     withdraw: 15
   });
 
-  const toggleStream = (id: string) => {
-    setStreams(prev =>
-      prev.map(s =>
-        s.id === id ? { ...s, isEnabled: !s.isEnabled } : s
-      )
-    );
-    toast.success("Revenue stream updated");
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    pendingRevenue: 0,
+    distributedRevenue: 0,
+    revenueCount: 0,
+  });
+
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [distributionLogs, setDistributionLogs] = useState<any[]>([]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch platform_revenue
+      const { data: revenueData } = await supabase
+        .from("platform_revenue")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      // Fetch profit distribution logs
+      const { data: distLogs } = await supabase
+        .from("profit_distribution_log")
+        .select("*")
+        .order("executed_at", { ascending: false })
+        .limit(50);
+
+      // Fetch distribution rules for current split
+      const { data: rules } = await supabase
+        .from("profit_distribution_rules")
+        .select("*")
+        .eq("is_active", true);
+
+      const rows = revenueData ?? [];
+      const totalRevenue = rows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+      const pendingRevenue = rows
+        .filter((r) => r.status === "pending")
+        .reduce((sum, r) => sum + Number(r.amount || 0), 0);
+      const distributedRevenue = (distLogs ?? [])
+        .filter((d) => d.status === "completed")
+        .reduce((sum, d) => sum + Number(d.amount || 0), 0);
+
+      setStats({
+        totalRevenue,
+        pendingRevenue,
+        distributedRevenue,
+        revenueCount: rows.length,
+      });
+
+      setTransactions(rows);
+      setDistributionLogs(distLogs ?? []);
+    } catch (err) {
+      console.error("Error fetching revenue data:", err);
+      toast.error("Failed to load revenue data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const totalMonthlyRevenue = streams
-    .filter(s => s.isEnabled)
-    .reduce((acc, s) => acc + (s.type === 'subscription' || s.type === 'api' || s.type === 'premium' ? s.rate * 100 : s.rate * 50000), 0);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const recentTransactions = [
-    { id: 1, source: "Premium Subscription", amount: 29.99, status: "completed", date: "2024-01-15" },
-    { id: 2, source: "Trading Commission", amount: 145.50, status: "completed", date: "2024-01-15" },
-    { id: 3, source: "API Access", amount: 99.99, status: "completed", date: "2024-01-14" },
-    { id: 4, source: "Spread Fees", amount: 234.80, status: "completed", date: "2024-01-14" },
-    { id: 5, source: "Premium Signals", amount: 49.99, status: "pending", date: "2024-01-14" },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -63,9 +112,9 @@ const RevenueManager = () => {
             Configure and monitor all revenue streams
           </p>
         </div>
-        <Button>
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
+        <Button variant="outline" size="sm" onClick={fetchData}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
         </Button>
       </div>
 
@@ -74,13 +123,15 @@ const RevenueManager = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Monthly Revenue
+              Total Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalMonthlyRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              ${stats.totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              From {streams.filter(s => s.isEnabled).length} active streams
+              {stats.revenueCount} payments recorded
             </p>
           </CardContent>
         </Card>
@@ -88,15 +139,15 @@ const RevenueManager = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Auto-Reinvested
+              Distributed
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-500">
-              ${(totalMonthlyRevenue * distribution.reinvest / 100).toLocaleString()}
+              ${stats.distributedRevenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {distribution.reinvest}% of revenue
+              Via profit distribution rules
             </p>
           </CardContent>
         </Card>
@@ -104,65 +155,127 @@ const RevenueManager = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Available to Withdraw
+              Pending
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              ${(totalMonthlyRevenue * distribution.withdraw / 100).toLocaleString()}
+              ${stats.pendingRevenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {distribution.withdraw}% of revenue
+              Awaiting distribution
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="streams" className="space-y-4">
+      <Tabs defaultValue="transactions" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="streams">Revenue Streams</TabsTrigger>
-          <TabsTrigger value="distribution">Distribution</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="distribution">Distribution</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="streams">
+        <TabsContent value="transactions">
           <Card>
             <CardHeader>
-              <CardTitle>Configure Revenue Streams</CardTitle>
+              <CardTitle>Revenue Transactions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {streams.map((stream) => (
-                <div
-                  key={stream.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                >
-                  <div className="flex items-center gap-4">
-                    <Switch
-                      checked={stream.isEnabled}
-                      onCheckedChange={() => toggleStream(stream.id)}
-                    />
-                    <div>
-                      <h4 className="font-medium">{stream.name}</h4>
-                      <p className="text-sm text-muted-foreground">{stream.description}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant={stream.isEnabled ? "default" : "secondary"}>
-                      {stream.type}
-                    </Badge>
-                    <p className="text-sm font-medium mt-1">
-                      {stream.type === 'commission' || stream.type === 'spread'
-                        ? `${stream.rate}%`
-                        : `$${stream.rate}/mo`}
-                    </p>
-                  </div>
+            <CardContent>
+              {transactions.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No revenue recorded yet</p>
+                  <p className="text-sm">Revenue will appear here when payments are processed</p>
                 </div>
-              ))}
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Currency</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell className="font-medium">
+                          {tx.source_category || tx.source_type || "—"}
+                        </TableCell>
+                        <TableCell>${Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                        <TableCell>{tx.currency || "USD"}</TableCell>
+                        <TableCell>
+                          <Badge variant={tx.status === "distributed" ? "default" : "secondary"}>
+                            {tx.status === "distributed" ? (
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                            ) : (
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                            )}
+                            {tx.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(tx.created_at).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="distribution">
+          <Card>
+            <CardHeader>
+              <CardTitle>Distribution Log</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {distributionLogs.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No distributions yet</p>
+                  <p className="text-sm">Distributions will appear when revenue is processed through rules</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Currency</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {distributionLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="font-medium">
+                          ${Number(log.amount).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell>{log.currency || "USD"}</TableCell>
+                        <TableCell>
+                          <Badge variant={log.status === "completed" ? "default" : "secondary"}>
+                            {log.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {log.executed_at ? new Date(log.executed_at).toLocaleDateString() : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings">
           <Card>
             <CardHeader>
               <CardTitle>Revenue Distribution Settings</CardTitle>
@@ -207,45 +320,6 @@ const RevenueManager = () => {
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Update Distribution
               </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="transactions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentTransactions.map((tx) => (
-                    <TableRow key={tx.id}>
-                      <TableCell className="font-medium">{tx.source}</TableCell>
-                      <TableCell>${tx.amount.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
-                          {tx.status === 'completed' ? (
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                          ) : (
-                            <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                          )}
-                          {tx.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{tx.date}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             </CardContent>
           </Card>
         </TabsContent>
