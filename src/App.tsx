@@ -64,6 +64,7 @@ const WalletAssets = lazy(() => import("./pages/WalletAssets"));
 const AutoInvestPage = lazy(() => import("./pages/AutoInvestPage"));
 const PerformanceShowcase = lazy(() => import("./pages/PerformanceShowcase"));
 const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
+const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 
 const queryClient = new QueryClient();
 
@@ -444,6 +445,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <QuantClawPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/hivemind"
+                        element={
+                          <ProtectedRoute>
+                            <HiveMindPage />
                           </ProtectedRoute>
                         }
                       />

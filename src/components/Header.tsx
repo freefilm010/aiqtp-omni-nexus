@@ -91,13 +91,18 @@ const Header = () => {
     { to: "/watchlist", label: "Watchlist", icon: TrendingUp },
   ];
 
-  const aiQuantumLinks = [
+  const agentLinks = [
+    { to: "/hivemind", label: "HiveMind Swarm", icon: Brain },
+    { to: "/quantclaw", label: "QuantClaw", icon: Bot },
     { to: "/qaqi", label: "QAQI™ Agent", icon: Atom },
+    { to: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  ];
+
+  const aiQuantumLinks = [
     { to: "/ai-lab", label: "AI Research Lab", icon: Brain },
     { to: "/ml-predictions", label: "ML Predictions", icon: Cpu },
     { to: "/quantum-lab", label: "Quantum Lab", icon: FlaskConical },
     { to: "/titan-codex", label: "Titan Codex™", icon: Shield },
-    { to: "/ai-assistant", label: "AI Assistant", icon: Bot },
     { to: "/intelligence", label: "Market Intelligence", icon: Brain },
   ];
 
@@ -176,6 +181,24 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="max-h-96 overflow-y-auto">
                 {tradingLinks.map((link) => (
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Agents Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
+                <span>Agents</span>
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {agentLinks.map((link) => (
                   <DropdownMenuItem key={link.to} asChild>
                     <Link to={link.to} className="flex items-center w-full">
                       <link.icon className="mr-2 h-4 w-4" />
@@ -394,6 +417,22 @@ const Header = () => {
               <div className="pt-2">
                 <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Trading</div>
                 {tradingLinks.map((link) => (
+                  <Link 
+                    key={link.to}
+                    to={link.to} 
+                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+
+              {/* Agents Section */}
+              <div className="pt-2">
+                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Agents</div>
+                {agentLinks.map((link) => (
                   <Link 
                     key={link.to}
                     to={link.to} 
