@@ -429,6 +429,22 @@ const Header = () => {
                 ))}
               </div>
 
+              {/* Agents Section */}
+              <div className="pt-2">
+                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Agents</div>
+                {agentLinks.map((link) => (
+                  <Link 
+                    key={link.to}
+                    to={link.to} 
+                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+
               {/* AI & Quantum Section */}
               <div className="pt-2">
                 <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">AI & Quantum</div>
