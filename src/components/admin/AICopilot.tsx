@@ -119,7 +119,7 @@ const AICopilot = () => {
     }
     
     if (lowerQuery.includes('revenue') || lowerQuery.includes('income')) {
-      return `💰 **Revenue Summary**\n\n**This Month:**\n- Premium Subscriptions: $8,997 (300 users)\n- Trading Commissions: $14,550\n- Spread Fees: $6,234\n- API Access: $4,999 (50 developers)\n- Premium Signals: $7,499 (150 subscribers)\n\n**Total: $42,279** (+23.5% vs last month)\n\n📈 Recommendations:\n1. Consider tiered pricing for API access\n2. Bundle signals with premium subscription\n3. Optimize spread during high-volume periods`;
+      return `💰 **Revenue Summary**\n\nFallback copilot mode is disabled from inventing revenue numbers.\n\nUse the live admin revenue screens for real figures from the backend. If no revenue has been recorded yet, the correct value is $0 until payments, subscriptions, or fees are actually captured.\n\n📈 Recommended next steps:\n1. Verify live checkout is working\n2. Enable secure webhook recording for completed payments\n3. Track only backend-recorded revenue sources`;
     }
     
     if (lowerQuery.includes('security') || lowerQuery.includes('audit')) {
