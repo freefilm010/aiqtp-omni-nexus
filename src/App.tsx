@@ -63,6 +63,7 @@ const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
 const WalletAssets = lazy(() => import("./pages/WalletAssets"));
 const AutoInvestPage = lazy(() => import("./pages/AutoInvestPage"));
 const PerformanceShowcase = lazy(() => import("./pages/PerformanceShowcase"));
+const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
 
 const queryClient = new QueryClient();
 
@@ -438,6 +439,14 @@ const App = () => (
                         }
                       />
                       <Route path="/performance" element={<PerformanceShowcase />} />
+                      <Route
+                        path="/quantclaw"
+                        element={
+                          <ProtectedRoute>
+                            <QuantClawPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
