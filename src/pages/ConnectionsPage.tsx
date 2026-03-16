@@ -4,6 +4,8 @@ import AccountConnections from "@/components/connections/AccountConnections";
 import AutomationIntegrations from "@/components/integrations/AutomationIntegrations";
 import MoonshotIntegration from "@/components/integrations/MoonshotIntegration";
 import BTCCTrading from "@/components/integrations/BTCCTrading";
+import AlpacaStockTrading from "@/components/trading/AlpacaStockTrading";
+import PaymentHub from "@/components/payments/PaymentHub";
 
 const ConnectionsPage = () => {
   return (
@@ -13,13 +15,19 @@ const ConnectionsPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Connections & Integrations</h1>
           <p className="text-muted-foreground">
-            Connect exchanges, automate workflows, and integrate external platforms
+            Connect exchanges, fund accounts, automate workflows, and integrate external platforms
           </p>
         </div>
         
-        {/* Exchange Connections */}
+        {/* Stock Trading & Exchange Connections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AlpacaStockTrading />
           <BTCCTrading />
+        </div>
+
+        {/* Payment Processing & Account Linking */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <PaymentHub />
           <AccountConnections />
         </div>
         
