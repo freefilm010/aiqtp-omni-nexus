@@ -439,6 +439,14 @@ const App = () => (
                         }
                       />
                       <Route path="/performance" element={<PerformanceShowcase />} />
+                      <Route
+                        path="/quantclaw"
+                        element={
+                          <ProtectedRoute>
+                            <QuantClawPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
