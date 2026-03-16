@@ -5,6 +5,7 @@ import AutomationIntegrations from "@/components/integrations/AutomationIntegrat
 import MoonshotIntegration from "@/components/integrations/MoonshotIntegration";
 import BTCCTrading from "@/components/integrations/BTCCTrading";
 import AlpacaStockTrading from "@/components/trading/AlpacaStockTrading";
+import StockMarketHub from "@/components/trading/StockMarketHub";
 import PaymentHub from "@/components/payments/PaymentHub";
 
 const ConnectionsPage = () => {
@@ -18,6 +19,9 @@ const ConnectionsPage = () => {
             Connect exchanges, fund accounts, automate workflows, and integrate external platforms
           </p>
         </div>
+
+        {/* Stock Market Data (Yahoo Finance + Finnhub + Alpha Vantage) */}
+        <StockMarketHub />
         
         {/* Stock Trading & Exchange Connections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
