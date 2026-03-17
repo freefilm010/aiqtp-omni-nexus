@@ -261,7 +261,7 @@ const WalletAssets = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="streams" className="space-y-6">
+        <Tabs defaultValue="funding" className="space-y-6">
           <TabsList data-tour="tabs-nav" className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="streams" className="gap-2">
               <Activity className="h-4 w-4" />
@@ -356,21 +356,40 @@ const WalletAssets = () => {
           </TabsContent>
 
           <TabsContent value="funding" className="space-y-6">
+            {/* Deposit Hero Banner */}
+            <Card className="border-emerald-500/40 bg-gradient-to-r from-emerald-500/15 via-cyan-500/10 to-purple-500/10">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1">Deposit & Fund Your Account</h2>
+                    <p className="text-muted-foreground text-sm">
+                      Choose how you want to add money — card, bank, crypto, or wire. Funds appear instantly for card payments.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <Badge variant="outline" className="gap-1">
+                        <Shield className="h-3 w-3" />
+                        256-bit Encryption
+                      </Badge>
+                      <Badge variant="outline" className="gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                        Instant Deposits
+                      </Badge>
+                      <Badge variant="outline" className="gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        No Hidden Fees
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="hidden md:block p-3 rounded-xl bg-emerald-500/20">
+                    <CreditCard className="h-10 w-10 text-emerald-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Smart Transfer Router */}
             <div data-tour="smart-router">
               <SmartTransferRouter />
-            </div>
-
-            {/* Payment Methods Header */}
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="outline" className="gap-1">
-                <Shield className="h-3 w-3" />
-                256-bit Encryption
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                Instant Deposits
-              </Badge>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
