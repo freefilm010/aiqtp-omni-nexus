@@ -1343,6 +1343,13 @@ export type Database = {
             referencedRelation: "data_aggregator_bots"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "data_bot_marketplace_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       data_bot_rentals: {
@@ -1382,6 +1389,13 @@ export type Database = {
             columns: ["bot_id"]
             isOneToOne: false
             referencedRelation: "data_aggregator_bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_bot_rentals_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1428,6 +1442,13 @@ export type Database = {
             referencedRelation: "data_aggregator_bots"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "data_collection_jobs_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       data_mining_rewards: {
@@ -1470,6 +1491,13 @@ export type Database = {
             columns: ["bot_id"]
             isOneToOne: false
             referencedRelation: "data_aggregator_bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_mining_rewards_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "data_aggregator_bots_public"
             referencedColumns: ["id"]
           },
           {
@@ -5912,6 +5940,75 @@ export type Database = {
           rental_price_monthly?: number | null
           status?: Database["public"]["Enums"]["strategy_status"] | null
           total_rentals?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      data_aggregator_bots_public: {
+        Row: {
+          admin_approved: boolean | null
+          bot_type: string | null
+          code_protected: boolean | null
+          collection_frequency: string | null
+          created_at: string | null
+          creator_profit_share: number | null
+          data_category: string | null
+          description: string | null
+          graduation_date: string | null
+          id: string | null
+          is_active: boolean | null
+          is_graduated: boolean | null
+          name: string | null
+          output_format: string | null
+          quality_score: number | null
+          reliability_score: number | null
+          total_earnings: number | null
+          total_records_collected: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_approved?: boolean | null
+          bot_type?: string | null
+          code_protected?: boolean | null
+          collection_frequency?: string | null
+          created_at?: string | null
+          creator_profit_share?: number | null
+          data_category?: string | null
+          description?: string | null
+          graduation_date?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_graduated?: boolean | null
+          name?: string | null
+          output_format?: string | null
+          quality_score?: number | null
+          reliability_score?: number | null
+          total_earnings?: number | null
+          total_records_collected?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_approved?: boolean | null
+          bot_type?: string | null
+          code_protected?: boolean | null
+          collection_frequency?: string | null
+          created_at?: string | null
+          creator_profit_share?: number | null
+          data_category?: string | null
+          description?: string | null
+          graduation_date?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_graduated?: boolean | null
+          name?: string | null
+          output_format?: string | null
+          quality_score?: number | null
+          reliability_score?: number | null
+          total_earnings?: number | null
+          total_records_collected?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
