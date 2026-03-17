@@ -405,8 +405,8 @@ const WalletAssets = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-2">
-                    {[50, 100, 500].map((amount) => (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[20, 50, 100, 500].map((amount) => (
                       <Button
                         key={amount}
                         variant="outline"
