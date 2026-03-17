@@ -18,190 +18,74 @@ import {
   Shield,
   Activity,
   Play,
-  Pause,
   RefreshCw,
   Target,
   Rocket,
-  ArrowUpRight,
-  CheckCircle2,
-  Clock,
-  Lock,
-  AlertTriangle,
-  Cpu,
-  Wallet,
-  PiggyBank,
-  TrendingDown,
   Sparkles,
   BarChart3,
-  Coins
+  Coins,
+  PiggyBank,
+  Cpu,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RevenueStream {
-  id: string;
-  name: string;
-  type: "arbitrage" | "liquidity" | "staking" | "trading" | "fees" | "affiliate" | "marketplace" | "premium";
-  status: "active" | "paused" | "initializing" | "error";
-  dailyRevenue: number;
-  monthlyProjected: number;
-  totalGenerated: number;
-  riskLevel: "low" | "medium" | "high";
-  aiModel: string;
-  description: string;
-  progress: number;
+interface LiveRevenueData {
+  totalRevenue: number;
+  pendingRevenue: number;
+  distributedRevenue: number;
+  recentTransactions: any[];
 }
 
-const REVENUE_STREAMS: RevenueStream[] = [
-  {
-    id: "arb-cex",
-    name: "Cross-Exchange Arbitrage",
-    type: "arbitrage",
-    status: "active",
-    dailyRevenue: 847.52,
-    monthlyProjected: 25425.60,
-    totalGenerated: 89456.80,
-    riskLevel: "low",
-    aiModel: "gemini-2.5-flash",
-    description: "Exploits price differences across exchanges",
-    progress: 78
-  },
-  {
-    id: "defi-lp",
-    name: "DeFi Liquidity Provision",
-    type: "liquidity",
-    status: "active",
-    dailyRevenue: 1250.00,
-    monthlyProjected: 37500.00,
-    totalGenerated: 156000.00,
-    riskLevel: "medium",
-    aiModel: "gpt-5-mini",
-    description: "Automated LP management across DEXs",
-    progress: 92
-  },
-  {
-    id: "stake-multi",
-    name: "Multi-Chain Staking",
-    type: "staking",
-    status: "active",
-    dailyRevenue: 420.15,
-    monthlyProjected: 12604.50,
-    totalGenerated: 52415.00,
-    riskLevel: "low",
-    aiModel: "gemini-2.5-pro",
-    description: "Optimized staking across ETH, SOL, ATOM",
-    progress: 85
-  },
-  {
-    id: "ml-trade",
-    name: "ML Momentum Trading",
-    type: "trading",
-    status: "active",
-    dailyRevenue: 2150.00,
-    monthlyProjected: 64500.00,
-    totalGenerated: 234560.00,
-    riskLevel: "high",
-    aiModel: "gpt-5 + quantum-vqc",
-    description: "AI-powered directional trading",
-    progress: 67
-  },
-  {
-    id: "platform-fees",
-    name: "Platform Fee Collector",
-    type: "fees",
-    status: "active",
-    dailyRevenue: 523.40,
-    monthlyProjected: 15702.00,
-    totalGenerated: 67234.00,
-    riskLevel: "low",
-    aiModel: "system",
-    description: "Automated fee collection from all trades",
-    progress: 100
-  },
-  {
-    id: "affiliate-rev",
-    name: "Affiliate Program Revenue",
-    type: "affiliate",
-    status: "active",
-    dailyRevenue: 312.80,
-    monthlyProjected: 9384.00,
-    totalGenerated: 28945.00,
-    riskLevel: "low",
-    aiModel: "system",
-    description: "Commission from referral signups",
-    progress: 45
-  },
-  {
-    id: "strategy-market",
-    name: "Strategy Marketplace",
-    type: "marketplace",
-    status: "active",
-    dailyRevenue: 890.25,
-    monthlyProjected: 26707.50,
-    totalGenerated: 112340.00,
-    riskLevel: "low",
-    aiModel: "system",
-    description: "75% share from strategy rentals",
-    progress: 62
-  },
-  {
-    id: "premium-subs",
-    name: "Premium Subscriptions",
-    type: "premium",
-    status: "initializing",
-    dailyRevenue: 0,
-    monthlyProjected: 50000.00,
-    totalGenerated: 0,
-    riskLevel: "low",
-    aiModel: "system",
-    description: "Trader/Pro/Institutional subscriptions",
-    progress: 15
-  }
-];
-
-const TARGET_REVENUE = 10000000; // $10M target
-
 const RevenueCommandCenter = () => {
-  const [streams, setStreams] = useState<RevenueStream[]>(REVENUE_STREAMS);
+  const [liveData, setLiveData] = useState<LiveRevenueData>({
+    totalRevenue: 0,
+    pendingRevenue: 0,
+    distributedRevenue: 0,
+    recentTransactions: [],
+  });
+  const [loading, setLoading] = useState(true);
   const [isAgentActive, setIsAgentActive] = useState(true);
   const [reinvestPercent, setReinvestPercent] = useState([85]);
   const [riskTolerance, setRiskTolerance] = useState([60]);
   const [agentResponse, setAgentResponse] = useState<string>("");
   const [isCallingAgent, setIsCallingAgent] = useState(false);
 
-  const totalDailyRevenue = streams
-    .filter(s => s.status === "active")
-    .reduce((sum, s) => sum + s.dailyRevenue, 0);
-  
-  const totalMonthlyProjected = streams
-    .filter(s => s.status === "active")
-    .reduce((sum, s) => sum + s.monthlyProjected, 0);
-  
-  const totalGenerated = streams.reduce((sum, s) => sum + s.totalGenerated, 0);
-  
-  const daysToTarget = TARGET_REVENUE / totalDailyRevenue;
-  const progressToTarget = (totalGenerated / TARGET_REVENUE) * 100;
-
-  // Simulate real-time revenue updates
+  // Fetch REAL revenue data from database
   useEffect(() => {
-    if (!isAgentActive) return;
-    
-    const interval = setInterval(() => {
-      setStreams(prev => prev.map(stream => {
-        if (stream.status !== "active") return stream;
-        
-        // Add micro-revenue every few seconds
-        const microRevenue = (Math.random() * 0.5) * (stream.dailyRevenue / 86400);
-        return {
-          ...stream,
-          totalGenerated: stream.totalGenerated + microRevenue,
-          progress: Math.min(100, stream.progress + Math.random() * 0.1)
-        };
-      }));
-    }, 3000);
-    
+    const fetchRevenue = async () => {
+      setLoading(true);
+      try {
+        const [revenueRes, distributedRes] = await Promise.all([
+          supabase.from("platform_revenue").select("amount, status, currency, source_type, source_category, created_at").order("created_at", { ascending: false }).limit(100),
+          supabase.from("profit_distribution_log").select("amount").limit(1000),
+        ]);
+
+        const rows = revenueRes.data || [];
+        const distRows = distributedRes.data || [];
+
+        const totalRevenue = rows.reduce((s, r) => s + Number(r.amount || 0), 0);
+        const pendingRevenue = rows.filter(r => r.status === "pending").reduce((s, r) => s + Number(r.amount || 0), 0);
+        const distributedRevenue = distRows.reduce((s, r) => s + Number(r.amount || 0), 0);
+
+        setLiveData({
+          totalRevenue,
+          pendingRevenue,
+          distributedRevenue,
+          recentTransactions: rows.slice(0, 20),
+        });
+      } catch (err) {
+        console.error("Revenue fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenue();
+    const interval = setInterval(fetchRevenue, 30000);
     return () => clearInterval(interval);
-  }, [isAgentActive]);
+  }, []);
 
   const callAIQTPAgent = async (action: string) => {
     setIsCallingAgent(true);
@@ -210,98 +94,47 @@ const RevenueCommandCenter = () => {
         body: {
           action: "generate_revenue",
           messages: [
-            { role: "user", content: `Execute ${action} strategy to maximize revenue. Current daily: $${totalDailyRevenue.toFixed(2)}. Target: $10M. Report opportunities.` }
+            { role: "user", content: `Execute ${action} strategy. Current total revenue: $${liveData.totalRevenue.toFixed(2)}. Report opportunities.` }
           ],
           context: {
             module: "revenue_command_center",
             mode: "autonomous",
             permissions: ["read", "analyze", "execute_low_risk"],
-            adminApproval: {
-              adminName: "David Richard Rey",
-              timestamp: new Date().toISOString(),
-              signature: "auto-approved"
-            }
           }
         }
       });
 
       if (error) throw error;
-      
       setAgentResponse(data?.response || "Agent executed successfully");
       toast.success("AIQTP Agent executed revenue optimization");
     } catch (error) {
       console.error("Agent error:", error);
-      toast.error("Agent temporarily unavailable - using cached strategies");
-      setAgentResponse("Running on cached optimization parameters. All revenue streams active.");
+      toast.error("Agent temporarily unavailable");
+      setAgentResponse("Agent offline. Revenue streams continue operating on last parameters.");
     } finally {
       setIsCallingAgent(false);
     }
   };
 
-  const toggleStream = (id: string) => {
-    setStreams(prev => prev.map(s => 
-      s.id === id 
-        ? { ...s, status: s.status === "active" ? "paused" as const : "active" as const }
-        : s
-    ));
-  };
-
-  const activateAllStreams = () => {
-    setStreams(prev => prev.map(s => ({
-      ...s,
-      status: s.status === "error" ? "error" as const : "active" as const
-    })));
-    toast.success("All revenue streams activated!");
-    callAIQTPAgent("full-activation");
-  };
-
-  const getTypeIcon = (type: RevenueStream["type"]) => {
-    switch (type) {
-      case "arbitrage": return <RefreshCw className="h-4 w-4" />;
-      case "liquidity": return <Activity className="h-4 w-4" />;
-      case "staking": return <PiggyBank className="h-4 w-4" />;
-      case "trading": return <TrendingUp className="h-4 w-4" />;
-      case "fees": return <DollarSign className="h-4 w-4" />;
-      case "affiliate": return <Coins className="h-4 w-4" />;
-      case "marketplace": return <BarChart3 className="h-4 w-4" />;
-      case "premium": return <Sparkles className="h-4 w-4" />;
-    }
-  };
-
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case "low": return "text-green-500 bg-green-500/10";
-      case "medium": return "text-yellow-500 bg-yellow-500/10";
-      case "high": return "text-red-500 bg-red-500/10";
-      default: return "text-muted-foreground bg-muted";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "bg-green-500";
-      case "paused": return "bg-yellow-500";
-      case "initializing": return "bg-blue-500";
-      case "error": return "bg-red-500";
-      default: return "bg-muted";
-    }
-  };
+  const dailyEstimate = liveData.totalRevenue > 0 ? liveData.totalRevenue / 30 : 0;
+  const monthlyEstimate = liveData.totalRevenue;
+  const annualEstimate = dailyEstimate * 365;
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pt-24">
         {/* Command Center Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-3">
                 <Rocket className="h-8 w-8 text-primary" />
                 Revenue Command Center
               </h1>
               <p className="text-muted-foreground mt-1">
-                AI-powered autonomous revenue generation • Target: $10,000,000
+                Live revenue tracking • All figures from verified transactions
               </p>
             </div>
             
@@ -312,57 +145,25 @@ const RevenueCommandCenter = () => {
                   {isAgentActive ? "Agent Active" : "Agent Paused"}
                 </span>
               </div>
-              <Switch
-                checked={isAgentActive}
-                onCheckedChange={setIsAgentActive}
-              />
-              <Button 
-                onClick={activateAllStreams}
-                className="bg-gradient-to-r from-green-500 to-emerald-600"
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Activate All
-              </Button>
+              <Switch checked={isAgentActive} onCheckedChange={setIsAgentActive} />
             </div>
           </div>
         </div>
 
-        {/* Target Progress */}
-        <Card className="mb-6 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-          <CardContent className="py-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Target className="h-8 w-8 text-primary" />
-                <div>
-                  <h2 className="text-xl font-bold">$10 Million Target</h2>
-                  <p className="text-sm text-muted-foreground">
-                    ~{Math.ceil(daysToTarget)} days at current rate
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-primary">
-                  ${totalGenerated.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {progressToTarget.toFixed(2)}% complete
-                </p>
-              </div>
-            </div>
-            <Progress value={progressToTarget} className="h-4" />
-          </CardContent>
-        </Card>
-
-        {/* Revenue Stats Grid */}
+        {/* Revenue Stats Grid — LIVE DATA */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Daily Revenue</p>
-                  <p className="text-2xl font-bold text-green-500">
-                    ${totalDailyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin mt-1" />
+                  ) : (
+                    <p className="text-2xl font-bold text-green-500">
+                      ${liveData.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  )}
                 </div>
                 <div className="p-3 rounded-full bg-green-500/10">
                   <TrendingUp className="h-6 w-6 text-green-500" />
@@ -375,13 +176,17 @@ const RevenueCommandCenter = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Monthly Projected</p>
-                  <p className="text-2xl font-bold">
-                    ${totalMonthlyProjected.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin mt-1" />
+                  ) : (
+                    <p className="text-2xl font-bold text-amber-500">
+                      ${liveData.pendingRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  )}
                 </div>
-                <div className="p-3 rounded-full bg-primary/10">
-                  <BarChart3 className="h-6 w-6 text-primary" />
+                <div className="p-3 rounded-full bg-amber-500/10">
+                  <BarChart3 className="h-6 w-6 text-amber-500" />
                 </div>
               </div>
             </CardContent>
@@ -391,13 +196,17 @@ const RevenueCommandCenter = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Streams</p>
-                  <p className="text-2xl font-bold">
-                    {streams.filter(s => s.status === "active").length}/{streams.length}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Distributed</p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin mt-1" />
+                  ) : (
+                    <p className="text-2xl font-bold text-primary">
+                      ${liveData.distributedRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  )}
                 </div>
-                <div className="p-3 rounded-full bg-blue-500/10">
-                  <Activity className="h-6 w-6 text-blue-500" />
+                <div className="p-3 rounded-full bg-primary/10">
+                  <Coins className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
@@ -408,9 +217,13 @@ const RevenueCommandCenter = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Annual Run Rate</p>
-                  <p className="text-2xl font-bold text-purple-500">
-                    ${(totalDailyRevenue * 365).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </p>
+                  {loading ? (
+                    <Loader2 className="h-6 w-6 animate-spin mt-1" />
+                  ) : (
+                    <p className="text-2xl font-bold text-purple-500">
+                      ${annualEstimate.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </p>
+                  )}
                 </div>
                 <div className="p-3 rounded-full bg-purple-500/10">
                   <Rocket className="h-6 w-6 text-purple-500" />
@@ -420,75 +233,57 @@ const RevenueCommandCenter = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="streams" className="space-y-4">
+        <Tabs defaultValue="transactions" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="streams">Revenue Streams</TabsTrigger>
+            <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
             <TabsTrigger value="agent">AI Agent Control</TabsTrigger>
             <TabsTrigger value="settings">Automation Settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="streams">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {streams.map((stream) => (
-                <Card key={stream.id} className={`transition-all ${stream.status === "active" ? "border-green-500/30" : ""}`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${getRiskColor(stream.riskLevel)}`}>
-                          {getTypeIcon(stream.type)}
-                        </div>
-                        <div>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            {stream.name}
-                            <div className={`w-2 h-2 rounded-full ${getStatusColor(stream.status)}`} />
-                          </CardTitle>
-                          <CardDescription className="text-xs">
-                            {stream.description}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={stream.status === "active"}
-                        onCheckedChange={() => toggleStream(stream.id)}
-                        disabled={stream.status === "error" || stream.status === "initializing"}
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
+          <TabsContent value="transactions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Verified Revenue Transactions</CardTitle>
+                <CardDescription>All records sourced from backend — zero mock data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : liveData.recentTransactions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <DollarSign className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Revenue Recorded Yet</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      Revenue will appear here automatically when payments are processed through Stripe, 
+                      marketplace fees are collected, or subscriptions are activated.
+                    </p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px]">
                     <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Daily Revenue</span>
-                        <span className="font-bold text-green-500">
-                          +${stream.dailyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Monthly Projected</span>
-                        <span className="font-medium">
-                          ${stream.monthlyProjected.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Total Generated</span>
-                        <span className="font-medium">
-                          ${stream.totalGenerated.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      <Progress value={stream.progress} className="h-2" />
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Cpu className="h-3 w-3" />
-                          {stream.aiModel}
-                        </span>
-                        <Badge variant="outline" className={getRiskColor(stream.riskLevel)}>
-                          {stream.riskLevel} risk
-                        </Badge>
-                      </div>
+                      {liveData.recentTransactions.map((tx, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div>
+                            <p className="font-medium text-sm">{tx.source_category || tx.source_type || "Payment"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(tx.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-green-500">+${Number(tx.amount).toFixed(2)}</p>
+                            <Badge variant={tx.status === "distributed" ? "default" : "secondary"} className="text-xs">
+                              {tx.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="agent">
@@ -499,41 +294,23 @@ const RevenueCommandCenter = () => {
                     <Bot className="h-5 w-5 text-primary" />
                     AIQTP Agent Commands
                   </CardTitle>
-                  <CardDescription>
-                    Direct autonomous agent for revenue optimization
-                  </CardDescription>
+                  <CardDescription>Direct autonomous agent for revenue optimization</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => callAIQTPAgent("arbitrage_scan")}
-                      disabled={isCallingAgent}
-                    >
+                    <Button variant="outline" onClick={() => callAIQTPAgent("arbitrage_scan")} disabled={isCallingAgent}>
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Scan Arbitrage
                     </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => callAIQTPAgent("optimize_staking")}
-                      disabled={isCallingAgent}
-                    >
+                    <Button variant="outline" onClick={() => callAIQTPAgent("optimize_staking")} disabled={isCallingAgent}>
                       <PiggyBank className="h-4 w-4 mr-2" />
                       Optimize Stakes
                     </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => callAIQTPAgent("rebalance_liquidity")}
-                      disabled={isCallingAgent}
-                    >
+                    <Button variant="outline" onClick={() => callAIQTPAgent("rebalance_liquidity")} disabled={isCallingAgent}>
                       <Activity className="h-4 w-4 mr-2" />
                       Rebalance LP
                     </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => callAIQTPAgent("analyze_opportunities")}
-                      disabled={isCallingAgent}
-                    >
+                    <Button variant="outline" onClick={() => callAIQTPAgent("analyze_opportunities")} disabled={isCallingAgent}>
                       <Target className="h-4 w-4 mr-2" />
                       Find Opportunities
                     </Button>
@@ -585,9 +362,7 @@ const RevenueCommandCenter = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Automation Settings</CardTitle>
-                <CardDescription>
-                  Configure global parameters for all revenue generators
-                </CardDescription>
+                <CardDescription>Configure global parameters for all revenue generators</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-3">
@@ -595,13 +370,7 @@ const RevenueCommandCenter = () => {
                     <Label>Reinvestment Rate</Label>
                     <span className="text-sm font-medium text-green-500">{reinvestPercent[0]}%</span>
                   </div>
-                  <Slider
-                    value={reinvestPercent}
-                    onValueChange={setReinvestPercent}
-                    max={95}
-                    min={50}
-                    step={5}
-                  />
+                  <Slider value={reinvestPercent} onValueChange={setReinvestPercent} max={95} min={50} step={5} />
                   <p className="text-xs text-muted-foreground">
                     {reinvestPercent[0]}% reinvested into top strategies • {100 - reinvestPercent[0]}% to treasury
                   </p>
@@ -612,12 +381,7 @@ const RevenueCommandCenter = () => {
                     <Label>Risk Tolerance</Label>
                     <span className="text-sm font-medium">{riskTolerance[0]}%</span>
                   </div>
-                  <Slider
-                    value={riskTolerance}
-                    onValueChange={setRiskTolerance}
-                    max={100}
-                    step={5}
-                  />
+                  <Slider value={riskTolerance} onValueChange={setRiskTolerance} max={100} step={5} />
                   <p className="text-xs text-muted-foreground">
                     Higher tolerance enables more aggressive strategies
                   </p>

@@ -210,12 +210,9 @@ const WalletAssets = () => {
                 </div>
                 <Activity className="h-8 w-8 text-cyan-500/50" />
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-400">
-                  +24.3%
-                </Badge>
-                <span className="text-xs text-muted-foreground">vs last month</span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                From verified transactions
+              </p>
             </CardContent>
           </Card>
 

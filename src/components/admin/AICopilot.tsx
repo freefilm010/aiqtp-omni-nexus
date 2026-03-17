@@ -123,7 +123,7 @@ const AICopilot = () => {
     }
     
     if (lowerQuery.includes('security') || lowerQuery.includes('audit')) {
-      return `🔒 **Security Audit Report**\n\n**Security Score: 94/100**\n\n✅ **Passing:**\n- RLS policies enabled on all tables\n- Admin role verification active\n- Encryption at rest enabled\n- Auto-security updates scheduled\n\n⚠️ **Recommendations:**\n1. Enable leaked password protection in auth settings\n2. Consider adding 2FA for admin accounts\n3. Review API rate limiting thresholds\n\n🛡️ Last full scan: 5 minutes ago\nNext scheduled: In 55 minutes`;
+      return `🔒 **Security Overview**\n\n✅ RLS policies enabled on all tables\n✅ Admin role verification via has_role()\n✅ Webhook signature verification active\n✅ Zero-trust security model in place\n\n⚠️ **Recommendations:**\n1. Consider adding 2FA for admin accounts\n2. Review API rate limiting thresholds\n\nRun a full security scan from the Security Center for detailed results.`;
     }
     
     if (lowerQuery.includes('strategy') || lowerQuery.includes('trading')) {
