@@ -5852,7 +5852,6 @@ export type Database = {
         Row: {
           admin_approved: boolean | null
           backtest_count: number | null
-          code: string | null
           code_protected: boolean | null
           consistency_score: number | null
           created_at: string | null
@@ -5875,7 +5874,6 @@ export type Database = {
         Insert: {
           admin_approved?: boolean | null
           backtest_count?: number | null
-          code?: never
           code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
@@ -5898,7 +5896,6 @@ export type Database = {
         Update: {
           admin_approved?: boolean | null
           backtest_count?: number | null
-          code?: never
           code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
