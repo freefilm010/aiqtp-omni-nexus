@@ -357,7 +357,9 @@ const WalletAssets = () => {
 
           <TabsContent value="funding" className="space-y-6">
             {/* Smart Transfer Router */}
-            <SmartTransferRouter />
+            <div data-tour="smart-router">
+              <SmartTransferRouter />
+            </div>
 
             {/* Payment Methods Header */}
             <div className="flex items-center gap-3 mb-4">
