@@ -115,7 +115,7 @@ const AICopilot = () => {
     const lowerQuery = query.toLowerCase();
     
     if (lowerQuery.includes('portfolio') || lowerQuery.includes('allocation')) {
-      return `📊 **Portfolio Analysis**\n\nYour current allocation is:\n- **Stable Assets (30%)**: $33,450\n  - USDC Yield: 15%\n  - Treasury Bonds: 10%\n  - DAI Lending: 5%\n\n- **Growth Assets (70%)**: $78,050\n  - Bitcoin: 25% (+2.3% today)\n  - Ethereum: 20% (+1.8% today)\n  - S&P 500 ETF: 15%\n  - AI/Tech Stocks: 10%\n\n✅ Your portfolio is well-balanced for the aggressive strategy. Consider rebalancing if any asset drifts more than 5% from target.`;
+      return `📊 **Portfolio Analysis**\n\nFallback mode does not fabricate portfolio values.\n\nPlease check the live Portfolio page or Auto-Invest dashboard for real-time allocation data pulled from your connected accounts and backend records.\n\n📈 Target strategy: 30% stable / 70% growth.\nActual values are calculated from your backend holdings.`;
     }
     
     if (lowerQuery.includes('revenue') || lowerQuery.includes('income')) {
