@@ -191,12 +191,11 @@ const WalletAssets = () => {
                 </div>
                 <TrendingUp className="h-8 w-8 text-emerald-500/50" />
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
-                  +12.5%
-                </Badge>
-                <span className="text-xs text-muted-foreground">vs yesterday</span>
-              </div>
+              {revenueStreams.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {revenueStreams.filter(s => s.status === "active").length} active streams
+                </p>
+              )}
             </CardContent>
           </Card>
 
