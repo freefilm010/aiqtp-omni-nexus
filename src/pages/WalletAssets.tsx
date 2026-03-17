@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SmartTransferRouter from "@/components/payments/SmartTransferRouter";
+import GuidedTour, { TourStep } from "@/components/onboarding/GuidedTour";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -158,28 +159,38 @@ const WalletAssets = () => {
     });
   };
 
+  const fundingTourSteps: TourStep[] = [
+    { target: "[data-tour='tabs-nav']", title: "Navigation Tabs", description: "Switch between Revenue Streams, Funding, Subscription, and Compounding sections to manage all your money flows.", position: "bottom" },
+    { target: "[data-tour='smart-router']", title: "Smart Transfer Router", description: "Automatically finds the cheapest way to move your money. We split the savings 50/50 — you always pay less.", position: "bottom" },
+    { target: "[data-tour='stripe-card']", title: "Card & Bank Payments", description: "Add funds instantly with credit/debit cards or bank transfers via Stripe. Pick a preset amount or enter a custom one.", position: "bottom" },
+    { target: "[data-tour='crypto-onramp']", title: "Crypto On-Ramp", description: "Buy crypto directly with fiat using MoonPay or Onramper — no exchange account needed.", position: "bottom" },
+    { target: "[data-tour='subscription']", title: "Pro Subscription", description: "Unlock premium features, AI signals, and priority execution with a monthly subscription.", position: "bottom" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8 pt-24">
         {/* Hero Stats */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20">
-              <DollarSign className="h-8 w-8 text-emerald-400" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20">
+                <DollarSign className="h-8 w-8 text-emerald-400" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  Wallet & Assets
+                </h1>
+                <p className="text-muted-foreground">
+                  Autonomous revenue generation • 24/7 profit engines
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                Wallet & Assets
-              </h1>
-              <p className="text-muted-foreground">
-                Autonomous revenue generation • 24/7 profit engines
-              </p>
-            </div>
+            <GuidedTour steps={fundingTourSteps} tourKey="wallet-funding" autoStart />
           </div>
         </div>
 
-        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent">
             <CardContent className="p-6">
@@ -251,7 +262,7 @@ const WalletAssets = () => {
         </div>
 
         <Tabs defaultValue="streams" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList data-tour="tabs-nav" className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="streams" className="gap-2">
               <Activity className="h-4 w-4" />
               Revenue Streams
@@ -346,7 +357,9 @@ const WalletAssets = () => {
 
           <TabsContent value="funding" className="space-y-6">
             {/* Smart Transfer Router */}
-            <SmartTransferRouter />
+            <div data-tour="smart-router">
+              <SmartTransferRouter />
+            </div>
 
             {/* Payment Methods Header */}
             <div className="flex items-center gap-3 mb-4">
@@ -362,7 +375,7 @@ const WalletAssets = () => {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Stripe Card Payments */}
-              <Card className="border-emerald-500/30">
+              <Card data-tour="stripe-card" className="border-emerald-500/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-emerald-400" />
@@ -407,7 +420,7 @@ const WalletAssets = () => {
               </Card>
 
               {/* Crypto Onramp - MoonPay/Onramper */}
-              <Card className="border-orange-500/30">
+              <Card data-tour="crypto-onramp" className="border-orange-500/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Wallet className="h-5 w-5 text-orange-400" />
@@ -452,7 +465,7 @@ const WalletAssets = () => {
               </Card>
 
               {/* Pro Subscription */}
-              <Card className="border-purple-500/30 lg:row-span-2">
+              <Card data-tour="subscription" className="border-purple-500/30 lg:row-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-purple-400" />
