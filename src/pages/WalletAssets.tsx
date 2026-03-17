@@ -261,7 +261,7 @@ const WalletAssets = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="streams" className="space-y-6">
+        <Tabs defaultValue="funding" className="space-y-6">
           <TabsList data-tour="tabs-nav" className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="streams" className="gap-2">
               <Activity className="h-4 w-4" />
