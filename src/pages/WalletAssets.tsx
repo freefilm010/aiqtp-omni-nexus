@@ -465,7 +465,7 @@ const WalletAssets = () => {
               </Card>
 
               {/* Pro Subscription */}
-              <Card className="border-purple-500/30 lg:row-span-2">
+              <Card data-tour="subscription" className="border-purple-500/30 lg:row-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-purple-400" />
