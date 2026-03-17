@@ -375,7 +375,7 @@ const WalletAssets = () => {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Stripe Card Payments */}
-              <Card className="border-emerald-500/30">
+              <Card data-tour="stripe-card" className="border-emerald-500/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-emerald-400" />
