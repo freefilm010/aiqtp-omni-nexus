@@ -14,8 +14,8 @@ export const paymentProcessors: PaymentProcessor[] = [
   {
     name: 'Stripe',
     id: 'stripe',
-    isConfigured: false,
-    supportedCurrencies: ['USD', 'EUR', 'GBP', 'CAD', 'AUD'],
+    isConfigured: true,
+    supportedCurrencies: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'HRK', 'BRL', 'MXN', 'SGD', 'HKD', 'NZD', 'THB', 'MYR', 'PHP', 'IDR', 'INR', 'AED', 'SAR', 'ZAR', 'KRW', 'TWD', 'CLP'],
     fees: { percent: 2.9, fixed: 0.30 }
   },
   {
@@ -24,6 +24,13 @@ export const paymentProcessors: PaymentProcessor[] = [
     isConfigured: false,
     supportedCurrencies: ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'],
     fees: { percent: 3.49, fixed: 0.49 }
+  },
+  {
+    name: 'Plaid (Bank/ACH)',
+    id: 'plaid',
+    isConfigured: false,
+    supportedCurrencies: ['USD'],
+    fees: { percent: 0.8, fixed: 0 }
   },
   {
     name: 'Onramper',
