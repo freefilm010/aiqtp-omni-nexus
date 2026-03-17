@@ -189,8 +189,8 @@ const WalletAssets = () => {
             </div>
             <GuidedTour steps={fundingTourSteps} tourKey="wallet-funding" autoStart />
           </div>
+        </div>
 
-        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-transparent">
             <CardContent className="p-6">
