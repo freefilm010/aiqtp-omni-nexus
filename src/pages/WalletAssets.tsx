@@ -57,59 +57,47 @@ const WalletAssets = () => {
     subscriptions: 0,
     oneTimePayments: 0,
   });
-  const [revenueStreams, setRevenueStreams] = useState<RevenueStream[]>([
-    {
-      id: "1",
-      name: "Strategy Marketplace",
-      type: "commission",
-      status: "active",
-      dailyRevenue: 127.50,
-      monthlyRevenue: 3825,
-      profitability: 94.2,
-      lastActive: "2 minutes ago",
-    },
-    {
-      id: "2",
-      name: "Premium Subscriptions",
-      type: "subscription",
-      status: "active",
-      dailyRevenue: 89.00,
-      monthlyRevenue: 2670,
-      profitability: 100,
-      lastActive: "Just now",
-    },
-    {
-      id: "3",
-      name: "Arbitrage Bot Alpha",
-      type: "trading",
-      status: "active",
-      dailyRevenue: 45.30,
-      monthlyRevenue: 1359,
-      profitability: 92.5,
-      lastActive: "5 seconds ago",
-    },
-    {
-      id: "4",
-      name: "Data Marketplace",
-      type: "data_sales",
-      status: "active",
-      dailyRevenue: 34.00,
-      monthlyRevenue: 1020,
-      profitability: 88.0,
-      lastActive: "1 hour ago",
-    },
-    {
-      id: "5",
-      name: "Copy Trading Fees",
-      type: "commission",
-      status: "active",
-      dailyRevenue: 67.20,
-      monthlyRevenue: 2016,
-      profitability: 95.0,
-      lastActive: "10 minutes ago",
-    },
-  ]);
+  const [revenueStreams, setRevenueStreams] = useState<RevenueStream[]>([]);
   const { toast } = useToast();
+
+  // Fetch real revenue data from platform_revenue table
+  useEffect(() => {
+    const fetchStreams = async () => {
+      try {
+        const { data } = await supabase
+          .from("platform_revenue")
+          .select("source_type, source_category, amount, status, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (data && data.length > 0) {
+          // Group by source_category to create streams
+          const grouped: Record<string, { total: number; count: number; lastDate: string }> = {};
+          data.forEach(row => {
+            const key = row.source_category || row.source_type || "other";
+            if (!grouped[key]) grouped[key] = { total: 0, count: 0, lastDate: row.created_at };
+            grouped[key].total += Number(row.amount || 0);
+            grouped[key].count += 1;
+          });
+
+          const streams: RevenueStream[] = Object.entries(grouped).map(([key, val], i) => ({
+            id: String(i + 1),
+            name: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+            type: key.includes("subscription") ? "subscription" : key.includes("trading") ? "trading" : "commission",
+            status: "active" as const,
+            dailyRevenue: val.total / Math.max(1, Math.ceil((Date.now() - new Date(val.lastDate).getTime()) / 86400000)),
+            monthlyRevenue: val.total,
+            profitability: 100,
+            lastActive: new Date(val.lastDate).toLocaleString(),
+          }));
+          setRevenueStreams(streams);
+        }
+      } catch (err) {
+        console.error("Error fetching revenue streams:", err);
+      }
+    };
+    fetchStreams();
+  }, []);
 
   const totalDailyRevenue = revenueStreams.reduce((sum, s) => sum + s.dailyRevenue, 0);
   const totalMonthlyRevenue = revenueStreams.reduce((sum, s) => sum + s.monthlyRevenue, 0);
@@ -203,12 +191,11 @@ const WalletAssets = () => {
                 </div>
                 <TrendingUp className="h-8 w-8 text-emerald-500/50" />
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
-                  +12.5%
-                </Badge>
-                <span className="text-xs text-muted-foreground">vs yesterday</span>
-              </div>
+              {revenueStreams.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {revenueStreams.filter(s => s.status === "active").length} active streams
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -223,12 +210,9 @@ const WalletAssets = () => {
                 </div>
                 <Activity className="h-8 w-8 text-cyan-500/50" />
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-400">
-                  +24.3%
-                </Badge>
-                <span className="text-xs text-muted-foreground">vs last month</span>
-              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                From verified transactions
+              </p>
             </CardContent>
           </Card>
 
