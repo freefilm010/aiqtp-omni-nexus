@@ -28,7 +28,7 @@ import { toast } from "sonner";
 
 const PaymentProcessors = () => {
   const [processors, setProcessors] = useState<(PaymentProcessor & { enabled: boolean })[]>(
-    paymentProcessors.map(p => ({ ...p, enabled: false }))
+    paymentProcessors.map(p => ({ ...p, enabled: p.isConfigured }))
   );
   const [selectedProcessor, setSelectedProcessor] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
