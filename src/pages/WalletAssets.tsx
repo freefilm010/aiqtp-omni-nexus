@@ -178,16 +178,17 @@ const WalletAssets = () => {
               <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20">
                 <DollarSign className="h-8 w-8 text-emerald-400" />
               </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                Wallet & Assets
-              </h1>
-              <p className="text-muted-foreground">
-                Autonomous revenue generation • 24/7 profit engines
-              </p>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                  Wallet & Assets
+                </h1>
+                <p className="text-muted-foreground">
+                  Autonomous revenue generation • 24/7 profit engines
+                </p>
+              </div>
             </div>
+            <GuidedTour steps={fundingTourSteps} tourKey="wallet-funding" autoStart />
           </div>
-        </div>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
