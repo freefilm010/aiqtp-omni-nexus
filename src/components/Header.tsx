@@ -180,6 +180,12 @@ const Header = () => {
               Home
             </Link>
 
+            {/* Assets & Wallets - prominent top-level link */}
+            <Link to="/wallet-assets" className="text-foreground hover:text-gold cursor-pointer transition-smooth flex items-center gap-1 font-medium">
+              <Wallet className="w-4 h-4" />
+              Assets & Wallets
+            </Link>
+
             {/* Trading Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
