@@ -554,7 +554,7 @@ const WalletAssets = () => {
                     </ul>
                     <Button 
                       className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700"
-                      onClick={() => handleStripeCheckout("subscription")}
+                      onClick={() => handleSubscription("pro-monthly")}
                       disabled={loading}
                     >
                       Start Pro Trial
