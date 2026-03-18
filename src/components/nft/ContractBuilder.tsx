@@ -71,7 +71,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Soulbound — non-transferable credentials',
     chain: 'Ethereum',
     features: ['Non-Transferable', 'Identity', 'Credentials'],
-    standardIds: ['erc-5192', 'erc-721'],
+    standardIds: ['erc-5192', 'erc-721', 'oz-erc721', 'oz-security'],
     valueNature: 'like_but_not_similar' as const,
   },
 ];
