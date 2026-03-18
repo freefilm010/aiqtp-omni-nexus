@@ -25,7 +25,8 @@ import {
   Palette,
   Database,
   Globe,
-  Radar
+  Radar,
+  Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
