@@ -16,8 +16,11 @@ import {
   RefreshCw,
   BarChart3,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+
+const CapitolCommunity = lazy(() => import("./CapitolCommunity"));
 
 interface Trade {
   asset_type?: string;
