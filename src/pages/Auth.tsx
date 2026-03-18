@@ -320,17 +320,12 @@ const Auth = () => {
                   variant="outline"
                   className="w-full mb-4"
                   onClick={async () => {
-                    const { error } = await supabase.auth.signInWithOAuth({
-                      provider: "google",
-                      options: { redirectTo: `${window.location.origin}/auth` },
+                    const result = await lovable.auth.signInWithOAuth("google", {
+                      redirect_uri: window.location.origin,
                     });
 
-                    if (error) {
-                      if (error.message.toLowerCase().includes("provider") && error.message.toLowerCase().includes("not enabled")) {
-                        toast.error("Google sign-in isn't enabled yet. Use email/password or enable Google in the backend.");
-                      } else {
-                        toast.error(error.message);
-                      }
+                    if (result?.error) {
+                      toast.error(result.error.message || "Google sign-in failed. Please try again.");
                     }
                   }}
                   disabled={isLoading}
