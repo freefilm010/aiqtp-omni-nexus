@@ -26,7 +26,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Fungible token — like currency, similar in value',
     chain: 'Ethereum',
     features: ['Fungible', 'Transferable', 'Divisible'],
-    standardIds: ['erc-20', 'erc-2612'],
+    standardIds: ['erc-20', 'erc-2612', 'oz-erc20', 'oz-security'],
     valueNature: 'like_and_similar' as const,
   },
   { 
@@ -35,7 +35,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Non-fungible — unique, NOT similar in value',
     chain: 'Ethereum',
     features: ['Single Mint', 'Metadata URI', 'Royalties'],
-    standardIds: ['erc-721', 'eip-2981'],
+    standardIds: ['erc-721', 'eip-2981', 'oz-erc721', 'oz-security'],
     valueNature: 'like_but_not_similar' as const,
   },
   { 
@@ -44,7 +44,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Gas-optimized unique tokens, batch mint',
     chain: 'Ethereum',
     features: ['Batch Mint', 'Gas Savings', 'Royalties'],
-    standardIds: ['erc-721a', 'erc-721', 'eip-2981'],
+    standardIds: ['erc-721a', 'erc-721', 'eip-2981', 'oz-erc721', 'oz-security'],
     valueNature: 'like_but_not_similar' as const,
   },
   { 
@@ -53,7 +53,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Multi-token — editions & mixed assets',
     chain: 'Ethereum',
     features: ['Semi-Fungible', 'Batch Transfer', 'Multi-Token'],
-    standardIds: ['erc-1155', 'eip-2981'],
+    standardIds: ['erc-1155', 'eip-2981', 'oz-erc1155', 'oz-security'],
     valueNature: 'hybrid' as const,
   },
   { 
@@ -62,7 +62,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Security token — regulated, compliance-ready',
     chain: 'Ethereum',
     features: ['KYC/AML', 'Partitions', 'Forced Transfer'],
-    standardIds: ['erc-1400', 'erc-3643'],
+    standardIds: ['erc-1400', 'erc-3643', 'oz-access-control', 'oz-security'],
     valueNature: 'regulatory' as const,
   },
   { 
@@ -71,7 +71,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Soulbound — non-transferable credentials',
     chain: 'Ethereum',
     features: ['Non-Transferable', 'Identity', 'Credentials'],
-    standardIds: ['erc-5192', 'erc-721'],
+    standardIds: ['erc-5192', 'erc-721', 'oz-erc721', 'oz-security'],
     valueNature: 'like_but_not_similar' as const,
   },
 ];

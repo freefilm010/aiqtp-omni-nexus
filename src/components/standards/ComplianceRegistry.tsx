@@ -22,6 +22,8 @@ import {
   EIP_STANDARDS,
   SECURITY_STANDARDS,
   ISO_STANDARDS,
+  OPENZEPPELIN_STANDARDS,
+  PQC_STANDARDS,
   VALUE_NATURE_LABELS,
   type ProtocolStandard,
 } from "@/lib/standards/protocolRegistry";
@@ -128,29 +130,41 @@ const ComplianceRegistry = () => {
   return (
     <div className="space-y-6">
       {/* Header Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-green-400">{EIP_STANDARDS.length}</p>
-            <p className="text-xs text-muted-foreground">EIP/ERC Standards</p>
+            <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">EIP/ERC</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-amber-400">{SECURITY_STANDARDS.length}</p>
-            <p className="text-xs text-muted-foreground">NIST/FIPS Standards</p>
+            <p className="text-2xl font-bold text-primary">{OPENZEPPELIN_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">OpenZeppelin</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-blue-400">{ISO_STANDARDS.length}</p>
-            <p className="text-xs text-muted-foreground">ISO Standards</p>
+            <p className="text-2xl font-bold text-primary">{SECURITY_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">NIST/FIPS</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-red-400">{requiredCount}</p>
-            <p className="text-xs text-muted-foreground">Required for Compliance</p>
+            <p className="text-2xl font-bold text-primary">{PQC_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">PQC/CSRC</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3 text-center">
+            <p className="text-2xl font-bold text-primary">{ISO_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">ISO</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3 text-center">
+            <p className="text-2xl font-bold text-destructive">{requiredCount}</p>
+            <p className="text-[10px] text-muted-foreground">Required</p>
           </CardContent>
         </Card>
       </div>
@@ -191,14 +205,22 @@ const ComplianceRegistry = () => {
 
       {/* Standards Tabs */}
       <Tabs defaultValue="eip" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
           <TabsTrigger value="eip" className="text-xs gap-1">
             <Coins className="h-3.5 w-3.5" />
             EIP/ERC
           </TabsTrigger>
+          <TabsTrigger value="oz" className="text-xs gap-1">
+            <Shield className="h-3.5 w-3.5" />
+            OpenZeppelin
+          </TabsTrigger>
           <TabsTrigger value="security" className="text-xs gap-1">
             <Lock className="h-3.5 w-3.5" />
             NIST/FIPS
+          </TabsTrigger>
+          <TabsTrigger value="pqc" className="text-xs gap-1">
+            <Lock className="h-3.5 w-3.5" />
+            PQC/CSRC
           </TabsTrigger>
           <TabsTrigger value="iso" className="text-xs gap-1">
             <BookOpen className="h-3.5 w-3.5" />
@@ -212,7 +234,9 @@ const ComplianceRegistry = () => {
 
         {[
           { value: 'eip', data: EIP_STANDARDS },
+          { value: 'oz', data: OPENZEPPELIN_STANDARDS },
           { value: 'security', data: SECURITY_STANDARDS },
+          { value: 'pqc', data: PQC_STANDARDS },
           { value: 'iso', data: ISO_STANDARDS },
           { value: 'all', data: ALL_STANDARDS },
         ].map(({ value, data }) => (
