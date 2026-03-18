@@ -341,6 +341,7 @@ const App = () => (
                       <Route path="/connections" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route path="/satellite" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route path="/giveaway" element={<GiveawayPage />} />
+                      <Route path="/stats" element={<StatsArenaPage />} />
                       <Route
                         path="/ai-assistant"
                         element={
