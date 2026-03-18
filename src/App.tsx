@@ -70,6 +70,7 @@ const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
 // SatelliteHub merged into ConnectorsPage
 const GiveawayPage = lazy(() => import("./pages/GiveawayPage"));
+const StatsArenaPage = lazy(() => import("./pages/StatsArenaPage"));
 
 const queryClient = new QueryClient();
 
