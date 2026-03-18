@@ -432,6 +432,16 @@ const Header = () => {
                 Home
               </Link>
 
+              {/* Assets & Wallets - right after Home for visibility */}
+              <Link 
+                to="/wallet-assets" 
+                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Wallet className="h-4 w-4" />
+                Assets & Wallets
+              </Link>
+
               {/* Trading Section */}
               <div className="pt-2">
                 <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Trading</div>
