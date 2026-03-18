@@ -5880,12 +5880,13 @@ export type Database = {
         Row: {
           admin_approved: boolean | null
           backtest_count: number | null
-          code_protected: boolean | null
           consistency_score: number | null
           created_at: string | null
           creator_earnings: number | null
           creator_profit_share: number | null
           description: string | null
+          entry_rules: Json | null
+          exit_rules: Json | null
           factors: string[] | null
           graduation_date: string | null
           id: string | null
@@ -5894,6 +5895,7 @@ export type Database = {
           name: string | null
           profitability_score: number | null
           rental_price_monthly: number | null
+          risk_parameters: Json | null
           status: Database["public"]["Enums"]["strategy_status"] | null
           total_rentals: number | null
           updated_at: string | null
@@ -5902,12 +5904,13 @@ export type Database = {
         Insert: {
           admin_approved?: boolean | null
           backtest_count?: number | null
-          code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
           creator_earnings?: number | null
           creator_profit_share?: number | null
           description?: string | null
+          entry_rules?: Json | null
+          exit_rules?: Json | null
           factors?: string[] | null
           graduation_date?: string | null
           id?: string | null
@@ -5916,6 +5919,7 @@ export type Database = {
           name?: string | null
           profitability_score?: number | null
           rental_price_monthly?: number | null
+          risk_parameters?: Json | null
           status?: Database["public"]["Enums"]["strategy_status"] | null
           total_rentals?: number | null
           updated_at?: string | null
@@ -5924,12 +5928,13 @@ export type Database = {
         Update: {
           admin_approved?: boolean | null
           backtest_count?: number | null
-          code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
           creator_earnings?: number | null
           creator_profit_share?: number | null
           description?: string | null
+          entry_rules?: Json | null
+          exit_rules?: Json | null
           factors?: string[] | null
           graduation_date?: string | null
           id?: string | null
@@ -5938,6 +5943,7 @@ export type Database = {
           name?: string | null
           profitability_score?: number | null
           rental_price_monthly?: number | null
+          risk_parameters?: Json | null
           status?: Database["public"]["Enums"]["strategy_status"] | null
           total_rentals?: number | null
           updated_at?: string | null
@@ -5948,8 +5954,8 @@ export type Database = {
       data_aggregator_bots_public: {
         Row: {
           admin_approved: boolean | null
+          aggregation_rules: Json | null
           bot_type: string | null
-          code_protected: boolean | null
           collection_frequency: string | null
           created_at: string | null
           creator_profit_share: number | null
@@ -5959,10 +5965,13 @@ export type Database = {
           id: string | null
           is_active: boolean | null
           is_graduated: boolean | null
+          last_collection_at: string | null
           name: string | null
           output_format: string | null
           quality_score: number | null
           reliability_score: number | null
+          sources: Json | null
+          total_data_sold: number | null
           total_earnings: number | null
           total_records_collected: number | null
           updated_at: string | null
@@ -5970,8 +5979,8 @@ export type Database = {
         }
         Insert: {
           admin_approved?: boolean | null
+          aggregation_rules?: Json | null
           bot_type?: string | null
-          code_protected?: boolean | null
           collection_frequency?: string | null
           created_at?: string | null
           creator_profit_share?: number | null
@@ -5981,10 +5990,13 @@ export type Database = {
           id?: string | null
           is_active?: boolean | null
           is_graduated?: boolean | null
+          last_collection_at?: string | null
           name?: string | null
           output_format?: string | null
           quality_score?: number | null
           reliability_score?: number | null
+          sources?: Json | null
+          total_data_sold?: number | null
           total_earnings?: number | null
           total_records_collected?: number | null
           updated_at?: string | null
@@ -5992,8 +6004,8 @@ export type Database = {
         }
         Update: {
           admin_approved?: boolean | null
+          aggregation_rules?: Json | null
           bot_type?: string | null
-          code_protected?: boolean | null
           collection_frequency?: string | null
           created_at?: string | null
           creator_profit_share?: number | null
@@ -6003,10 +6015,13 @@ export type Database = {
           id?: string | null
           is_active?: boolean | null
           is_graduated?: boolean | null
+          last_collection_at?: string | null
           name?: string | null
           output_format?: string | null
           quality_score?: number | null
           reliability_score?: number | null
+          sources?: Json | null
+          total_data_sold?: number | null
           total_earnings?: number | null
           total_records_collected?: number | null
           updated_at?: string | null
@@ -6019,49 +6034,31 @@ export type Database = {
           created_at: string | null
           dilithium_public_key: string | null
           ecdsa_public_key: string | null
-          hardware_type: string | null
           id: string | null
-          is_active: boolean | null
-          is_admin_controlled: boolean | null
-          is_hardware: boolean | null
           kyber_public_key: string | null
           updated_at: string | null
           user_id: string | null
           wallet_address: string | null
-          wallet_name: string | null
-          wallet_type: string | null
         }
         Insert: {
           created_at?: string | null
           dilithium_public_key?: string | null
           ecdsa_public_key?: string | null
-          hardware_type?: string | null
           id?: string | null
-          is_active?: boolean | null
-          is_admin_controlled?: boolean | null
-          is_hardware?: boolean | null
           kyber_public_key?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_address?: string | null
-          wallet_name?: string | null
-          wallet_type?: string | null
         }
         Update: {
           created_at?: string | null
           dilithium_public_key?: string | null
           ecdsa_public_key?: string | null
-          hardware_type?: string | null
           id?: string | null
-          is_active?: boolean | null
-          is_admin_controlled?: boolean | null
-          is_hardware?: boolean | null
           kyber_public_key?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_address?: string | null
-          wallet_name?: string | null
-          wallet_type?: string | null
         }
         Relationships: []
       }
