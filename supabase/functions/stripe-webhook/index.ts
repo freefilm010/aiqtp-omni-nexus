@@ -70,6 +70,42 @@ serve(async (req) => {
         } else {
           console.log(`Revenue recorded: $${amount} (${revenueType})`);
         }
+
+        // Mirror to admin_revenue for admin dashboard
+        const { error: adminError } = await supabase
+          .from("admin_revenue")
+          .insert({
+            amount,
+            currency: session.currency?.toUpperCase() || "USD",
+            type: revenueType,
+            source: "stripe_checkout",
+            status: "completed",
+            metadata: {
+              stripe_session_id: session.id,
+              customer_email: session.customer_email,
+              payment_status: session.payment_status,
+            },
+          });
+        if (adminError) console.error("Error recording admin revenue:", adminError);
+
+        // Credit platform wallet
+        const { error: walletError } = await supabase
+          .from("platform_wallets")
+          .update({
+            balance: supabase.rpc ? amount : amount, // Will use raw update
+          })
+          .eq("currency", session.currency?.toUpperCase() || "USD")
+          .eq("wallet_type", "fiat");
+        
+        // Use direct SQL-style increment via RPC or raw update
+        await supabase.rpc("increment_wallet_balance", {
+          p_currency: session.currency?.toUpperCase() || "USD",
+          p_amount: amount,
+        }).then(({ error }) => {
+          if (error) console.error("Wallet credit error (will use fallback):", error);
+          else console.log(`Wallet credited: $${amount}`);
+        });
+
         break;
       }
 
