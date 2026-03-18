@@ -50,9 +50,15 @@ import {
   SODIUM_ION_SPECS
 } from "@/lib/energy/wireFluxGrid";
 
+const QTC_TOKEN_ID = "f8766e19-0ae9-4791-9198-5fd50852ff85";
+const QTC_REWARD_PER_BLOCK = 10;
+
 const TitanCodexDashboard = () => {
+  const { user } = useAuth();
   const [activeProofs, setActiveProofs] = useState<TemporalResonanceProof[]>([]);
   const [isMining, setIsMining] = useState(false);
+  const [qtcBalance, setQtcBalance] = useState(0);
+  const [totalMined, setTotalMined] = useState(0);
   const [heartbeat, setHeartbeat] = useState("");
   const [pqcKeys, setPqcKeys] = useState<PQCKeyPair | null>(null);
   const [fraudResults, setFraudResults] = useState<FraudDetectionResult[]>([]);
