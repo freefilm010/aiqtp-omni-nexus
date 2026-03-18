@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +16,11 @@ import {
   RefreshCw,
   BarChart3,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+
+const CapitolCommunity = lazy(() => import("./CapitolCommunity"));
 
 interface Trade {
   asset_type?: string;
@@ -144,6 +147,18 @@ const CapitolTradesDashboard = () => {
         </Button>
       </div>
 
+      {/* Tabs: Trades / Community */}
+      <Tabs defaultValue="trades" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="trades" className="gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Trades
+          </TabsTrigger>
+          <TabsTrigger value="community" className="gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5" /> Community
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="trades">
       {/* Main grid – matches Capitol Trades 3-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN – Latest Trades */}
@@ -431,6 +446,14 @@ const CapitolTradesDashboard = () => {
           </Card>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="community">
+          <Suspense fallback={<div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+            <CapitolCommunity />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
