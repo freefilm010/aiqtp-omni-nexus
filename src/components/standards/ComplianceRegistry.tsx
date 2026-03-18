@@ -205,14 +205,22 @@ const ComplianceRegistry = () => {
 
       {/* Standards Tabs */}
       <Tabs defaultValue="eip" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
           <TabsTrigger value="eip" className="text-xs gap-1">
             <Coins className="h-3.5 w-3.5" />
             EIP/ERC
           </TabsTrigger>
+          <TabsTrigger value="oz" className="text-xs gap-1">
+            <Shield className="h-3.5 w-3.5" />
+            OpenZeppelin
+          </TabsTrigger>
           <TabsTrigger value="security" className="text-xs gap-1">
             <Lock className="h-3.5 w-3.5" />
             NIST/FIPS
+          </TabsTrigger>
+          <TabsTrigger value="pqc" className="text-xs gap-1">
+            <Lock className="h-3.5 w-3.5" />
+            PQC/CSRC
           </TabsTrigger>
           <TabsTrigger value="iso" className="text-xs gap-1">
             <BookOpen className="h-3.5 w-3.5" />
@@ -226,7 +234,9 @@ const ComplianceRegistry = () => {
 
         {[
           { value: 'eip', data: EIP_STANDARDS },
+          { value: 'oz', data: OPENZEPPELIN_STANDARDS },
           { value: 'security', data: SECURITY_STANDARDS },
+          { value: 'pqc', data: PQC_STANDARDS },
           { value: 'iso', data: ISO_STANDARDS },
           { value: 'all', data: ALL_STANDARDS },
         ].map(({ value, data }) => (
