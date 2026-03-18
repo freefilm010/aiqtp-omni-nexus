@@ -296,16 +296,14 @@ const Footer = () => {
             </div>
 
             <ul className="flex flex-wrap gap-4 text-xs text-white/70 mt-4">
-              {legalLinks.map((link) => (
-                <li key={link.to}>
+              {legalLinks.map((link, idx) => (
+                <li key={`${link.to}-${idx}`}>
                   <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1">
                     {link.label === "Accessibility" && <Accessibility className="w-3 h-3" />}
                     {link.label}
                   </Link>
                 </li>
               ))}
-              <li><a href="#" className="hover:text-gold transition-smooth">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-gold transition-smooth">Terms of Service</a></li>
             </ul>
           </div>
         </div>
