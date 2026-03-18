@@ -132,11 +132,17 @@ const ComplianceRegistry = () => {
   return (
     <div className="space-y-6">
       {/* Header Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
             <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length + EXTENDED_EIP_STANDARDS.length}</p>
             <p className="text-[10px] text-muted-foreground">EIP/ERC</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3 text-center">
+            <p className="text-2xl font-bold text-primary">{RWA_EMERGING_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">RWA/Emerging</p>
           </CardContent>
         </Card>
         <Card>
