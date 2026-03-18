@@ -484,7 +484,7 @@ const TitanCodexDashboard = () => {
             <CardContent className="space-y-4">
               <Button className="w-full" onClick={analyzeFraud}>
                 <Shield className="h-4 w-4 mr-2" />
-                Analyze Transaction (Simulated)
+                Analyze Transactions
               </Button>
 
               <ScrollArea className="h-[300px]">
