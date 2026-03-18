@@ -160,6 +160,12 @@ const CapitolTradesDashboard = () => {
           <TabsTrigger value="community" className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" /> Community
           </TabsTrigger>
+          <TabsTrigger value="polls" className="gap-1.5">
+            <Vote className="h-3.5 w-3.5" /> Polls
+          </TabsTrigger>
+          <TabsTrigger value="predictions" className="gap-1.5">
+            <Crosshair className="h-3.5 w-3.5" /> Predictions
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="trades">
@@ -432,9 +438,7 @@ const CapitolTradesDashboard = () => {
             <CardContent className="pt-5 space-y-3">
               <div className="flex items-center gap-2">
                 <Landmark className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-foreground text-sm">
-                  Why Track Congress Trades?
-                </h3>
+                <h3 className="text-sm font-bold text-foreground">Why Track Congress?</h3>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Members of Congress are required to disclose stock trades within 45 days under the
@@ -455,6 +459,18 @@ const CapitolTradesDashboard = () => {
         <TabsContent value="community">
           <Suspense fallback={<div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
             <CapitolCommunity />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="polls">
+          <Suspense fallback={<div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+            <CommunityPolls />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="predictions">
+          <Suspense fallback={<div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+            <CommunityPredictions />
           </Suspense>
         </TabsContent>
       </Tabs>
