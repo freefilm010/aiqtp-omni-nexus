@@ -24,6 +24,7 @@ import {
   ISO_STANDARDS,
   OPENZEPPELIN_STANDARDS,
   PQC_STANDARDS,
+  EXTENDED_EIP_STANDARDS,
   VALUE_NATURE_LABELS,
   type ProtocolStandard,
 } from "@/lib/standards/protocolRegistry";
