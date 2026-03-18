@@ -147,12 +147,30 @@ const CapitolCommunity = () => {
   const fetchComments = async (postId: string) => {
     const { data } = await supabase
       .from("capitol_community_comments")
-      .select("*, profiles:user_id(full_name, avatar_url)")
+      .select("*")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
-    if (data) {
-      setComments((prev) => ({ ...prev, [postId]: data as Comment[] }));
+
+    if (!data) return;
+
+    const userIds = [...new Set(data.map((c) => c.user_id))];
+    let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+      if (profiles) {
+        for (const p of profiles) {
+          profileMap[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+        }
+      }
     }
+
+    setComments((prev) => ({
+      ...prev,
+      [postId]: data.map((c) => ({ ...c, profiles: profileMap[c.user_id] || null })) as Comment[],
+    }));
   };
 
   const handleToggleComments = (postId: string) => {
