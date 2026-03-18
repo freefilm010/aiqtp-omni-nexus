@@ -1060,9 +1060,9 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       qaqi_status: "operational",
-      qaqi_version: "3.0.0",
+      qaqi_version: "4.0.0",
       action: request.action,
-      response: choice?.message?.content || "Hello! I'm QAQI, your Quantum AI assistant. How can I help you today?",
+      response: finalContent || "Hello! I'm QAQI™, your Quantum AI assistant. How can I help you today?",
       tool_executions: toolResults,
       model: aiData.model,
       usage: aiData.usage,
