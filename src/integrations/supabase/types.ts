@@ -5280,6 +5280,78 @@ export type Database = {
           },
         ]
       }
+      satellite_services: {
+        Row: {
+          affiliate_code: string | null
+          api_url: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_crypto_native: boolean | null
+          is_usa_compatible: boolean | null
+          logo_url: string | null
+          name: string
+          requires_api_key: boolean | null
+          revenue_model: string | null
+          revenue_share_percent: number | null
+          sort_order: number | null
+          subcategory: string | null
+          supported_chains: string[] | null
+          updated_at: string | null
+          website_url: string | null
+          websocket_url: string | null
+        }
+        Insert: {
+          affiliate_code?: string | null
+          api_url?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_crypto_native?: boolean | null
+          is_usa_compatible?: boolean | null
+          logo_url?: string | null
+          name: string
+          requires_api_key?: boolean | null
+          revenue_model?: string | null
+          revenue_share_percent?: number | null
+          sort_order?: number | null
+          subcategory?: string | null
+          supported_chains?: string[] | null
+          updated_at?: string | null
+          website_url?: string | null
+          websocket_url?: string | null
+        }
+        Update: {
+          affiliate_code?: string | null
+          api_url?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_crypto_native?: boolean | null
+          is_usa_compatible?: boolean | null
+          logo_url?: string | null
+          name?: string
+          requires_api_key?: boolean | null
+          revenue_model?: string | null
+          revenue_share_percent?: number | null
+          sort_order?: number | null
+          subcategory?: string | null
+          supported_chains?: string[] | null
+          updated_at?: string | null
+          website_url?: string | null
+          websocket_url?: string | null
+        }
+        Relationships: []
+      }
       screener_results: {
         Row: {
           ai_score: number | null
@@ -6659,6 +6731,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_service_connections: {
+        Row: {
+          api_key_hash: string | null
+          connected_at: string | null
+          connection_status: string | null
+          created_at: string | null
+          external_account_id: string | null
+          id: string
+          last_sync_at: string | null
+          metadata: Json | null
+          service_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key_hash?: string | null
+          connected_at?: string | null
+          connection_status?: string | null
+          created_at?: string | null
+          external_account_id?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          service_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key_hash?: string | null
+          connected_at?: string | null
+          connection_status?: string | null
+          created_at?: string | null
+          external_account_id?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          service_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_service_connections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "satellite_services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       watchlist: {
         Row: {
