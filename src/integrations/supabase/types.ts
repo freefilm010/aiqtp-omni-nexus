@@ -1815,6 +1815,45 @@ export type Database = {
           },
         ]
       }
+      customer_feedback: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          feedback_type: string
+          id: string
+          is_read: boolean | null
+          message: string
+          rating: number | null
+          route_hash: string
+          subject: string | null
+          submission_token: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          rating?: number | null
+          route_hash?: string
+          subject?: string | null
+          submission_token?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          rating?: number | null
+          route_hash?: string
+          subject?: string | null
+          submission_token?: string
+        }
+        Relationships: []
+      }
       data_aggregator_bots: {
         Row: {
           admin_approved: boolean | null

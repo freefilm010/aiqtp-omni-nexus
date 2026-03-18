@@ -25,6 +25,7 @@ import DataMarketplace from "@/components/admin/DataMarketplace";
 import BrandingRegistry from "@/components/admin/BrandingRegistry";
 import MarketCrawlerAnalytics from "@/components/intelligence/MarketCrawlerAnalytics";
 import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
+import FeedbackManager from "@/components/admin/FeedbackManager";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -85,6 +86,7 @@ const AdminDashboard = () => {
             <Route path="branding" element={<BrandingRegistry />} />
             <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
             <Route path="store-listings" element={<StoreListingAutomation />} />
+            <Route path="feedback" element={<FeedbackManager />} />
             <Route path="users" element={<AdminOverview />} />
             <Route path="logs" element={<AdminOverview />} />
             <Route path="settings" element={<AdminOverview />} />

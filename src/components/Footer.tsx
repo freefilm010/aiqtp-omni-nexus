@@ -4,6 +4,7 @@ import GitHubEcosystem from "@/components/github/GitHubEcosystem";
 import { GITHUB_USERNAME } from "@/lib/github/repositories";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { CRISIS_HELPLINES } from "@/lib/fees/platformFees";
+import CustomerFeedbackForm from "@/components/feedback/CustomerFeedbackForm";
 import { 
   Zap, 
   Mail, 
@@ -240,14 +241,10 @@ const Footer = () => {
 
           {/* Contact */}
           <div className="space-y-3 text-white/80 text-sm">
-            <h4 className="font-semibold text-white">Contact</h4>
+            <h4 className="font-semibold text-white">Support</h4>
             <div className="flex items-center space-x-3">
-              <Mail className="w-4 h-4 text-gold" />
-              <span>support@aiqtp.com</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Phone className="w-4 h-4 text-gold" />
-              <span>Contact via support@aiqtp.com</span>
+              <Shield className="w-4 h-4 text-gold" />
+              <span className="text-xs">In-platform AI agents handle most inquiries</span>
             </div>
             <div className="flex items-center space-x-3">
               <Globe className="w-4 h-4 text-gold" />
@@ -256,6 +253,9 @@ const Footer = () => {
             <div className="flex items-center space-x-3">
               <Shield className="w-4 h-4 text-gold" />
               <span>SHA-3 2048-bit Secure</span>
+            </div>
+            <div className="mt-3">
+              <CustomerFeedbackForm />
             </div>
           </div>
 

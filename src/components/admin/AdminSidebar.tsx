@@ -26,7 +26,8 @@ import {
   Database,
   Globe,
   Radar,
-  Store
+  Store,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -58,6 +59,7 @@ const navItems: NavItem[] = [
   { title: "Automation", href: "/admin/automation", icon: Zap },
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Security", href: "/admin/security", icon: Shield },
+  { title: "Customer Feedback", href: "/admin/feedback", icon: MessageSquare },
   { title: "AI Copilot", href: "/admin/copilot", icon: Bot },
   { title: "Documentation", href: "/admin/documentation", icon: BookOpen },
   { title: "Logs", href: "/admin/logs", icon: FileText },
