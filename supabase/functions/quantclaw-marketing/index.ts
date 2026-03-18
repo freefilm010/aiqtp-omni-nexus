@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface MarketingRequest {
-  action: "generate_post" | "generate_campaign" | "generate_content" | "schedule_campaign";
+  action: "generate_post" | "generate_campaign" | "generate_content" | "generate_store_listing" | "schedule_campaign";
   platform?: string; // twitter, linkedin, threads, blog, email
   topic?: string;
   campaignType?: string; // airdrop, referral, influencer, launch, newsletter
@@ -81,6 +81,19 @@ serve(async (req) => {
       case "generate_content":
         systemPrompt = `You are the content writer for AIQTP (www.aiqtp.com). Write high-quality, SEO-optimized content that establishes thought leadership in quantum computing, AI trading, and DeFi.`;
         userPrompt = `Write a ${platform || "blog"} post about: ${topic || "the future of quantum-powered trading"}. Length: 800-1200 words. Include: introduction, 3-4 key sections with headers, conclusion with CTA to sign up at www.aiqtp.com. Tone: ${tone || "educational"}.`;
+        break;
+
+      case "generate_store_listing":
+        systemPrompt = `You are an ASO (App Store Optimization) expert for AIQTP (www.aiqtp.com) — an AI Quantum Trading Platform. Generate optimized store listing content for maximum discoverability and conversion. The platform features: $QTC token, quantum computing via IBM Quantum, autonomous trading agents (QAQI, QuantClaw, HiveMind Swarm), NFT studio, copy trading, strategy marketplace, and DeFi tools.`;
+        userPrompt = `Generate a complete app store / directory listing for AIQTP targeting: ${platform || "all directories"}. Include:
+1) App Title (max 50 chars)
+2) Short Description (max 80 chars)
+3) Full Description (max 4000 chars, with feature bullets)
+4) Keywords (comma-separated, max 100 chars)
+5) Category suggestions
+6) What's New section
+7) Feature highlights (5-8 bullet points)
+Topic context: ${topic || "general platform features"}.`;
         break;
 
       case "schedule_campaign":

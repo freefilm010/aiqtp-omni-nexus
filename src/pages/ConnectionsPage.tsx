@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AccountConnections from "@/components/connections/AccountConnections";
+import CloudStorageConnectors from "@/components/connections/CloudStorageConnectors";
 import AutomationIntegrations from "@/components/integrations/AutomationIntegrations";
 import MoonshotIntegration from "@/components/integrations/MoonshotIntegration";
 import BTCCTrading from "@/components/integrations/BTCCTrading";
@@ -20,6 +21,9 @@ const ConnectionsPage = () => {
             Connect exchanges, fund accounts, automate workflows, and integrate external platforms
           </p>
         </div>
+
+        {/* Cloud Storage & Notes */}
+        <CloudStorageConnectors />
 
         {/* Automation Templates */}
         <AutomationTemplates />
