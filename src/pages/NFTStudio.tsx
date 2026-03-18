@@ -5,6 +5,7 @@ import NFTCreator from "@/components/nft/NFTCreator";
 import NFTWallet from "@/components/nft/NFTWallet";
 import NFTMarketplace from "@/components/nft/NFTMarketplace";
 import ContractBuilder from "@/components/nft/ContractBuilder";
+import ComplianceRegistry from "@/components/standards/ComplianceRegistry";
 import MarketplaceCompetitions from "@/components/marketplace/MarketplaceCompetitions";
 import MarketplaceSuggestions from "@/components/marketplace/MarketplaceSuggestions";
 import { 
@@ -13,7 +14,8 @@ import {
   ShoppingCart, 
   FileCode,
   Trophy,
-  Lightbulb
+  Lightbulb,
+  Shield
 } from "lucide-react";
 
 const NFTStudio = () => {
