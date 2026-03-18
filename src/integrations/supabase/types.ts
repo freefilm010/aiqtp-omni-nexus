@@ -694,6 +694,7 @@ export type Database = {
           royalty_percent: number | null
           sale_price: number | null
           sold_at: string | null
+          user_id: string | null
         }
         Insert: {
           attributes?: Json | null
@@ -713,6 +714,7 @@ export type Database = {
           royalty_percent?: number | null
           sale_price?: number | null
           sold_at?: string | null
+          user_id?: string | null
         }
         Update: {
           attributes?: Json | null
@@ -732,6 +734,70 @@ export type Database = {
           royalty_percent?: number | null
           sale_price?: number | null
           sold_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      automation_templates: {
+        Row: {
+          action_config: Json | null
+          action_type: string
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          last_run_at: string | null
+          name: string
+          run_count: number | null
+          schedule: string | null
+          subcategory: string | null
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string | null
+          user_id: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          action_config?: Json | null
+          action_type: string
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          last_run_at?: string | null
+          name: string
+          run_count?: number | null
+          schedule?: string | null
+          subcategory?: string | null
+          trigger_config?: Json | null
+          trigger_type: string
+          updated_at?: string | null
+          user_id?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          action_config?: Json | null
+          action_type?: string
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          run_count?: number | null
+          schedule?: string | null
+          subcategory?: string | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string | null
+          user_id?: string | null
+          webhook_url?: string | null
         }
         Relationships: []
       }
@@ -5324,6 +5390,56 @@ export type Database = {
           },
         ]
       }
+      token_balances: {
+        Row: {
+          balance: number
+          created_at: string | null
+          id: string
+          last_mined_at: string | null
+          locked_balance: number
+          token_id: string
+          total_mined: number
+          total_received: number
+          total_sent: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          last_mined_at?: string | null
+          locked_balance?: number
+          token_id: string
+          total_mined?: number
+          total_received?: number
+          total_sent?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          last_mined_at?: string | null
+          locked_balance?: number
+          token_id?: string
+          total_mined?: number
+          total_received?: number
+          total_sent?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_balances_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       token_contests: {
         Row: {
           contest_type: string
@@ -5783,6 +5899,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_nfts: {
+        Row: {
+          ai_generated: boolean | null
+          ai_prompt: string | null
+          attributes: Json | null
+          chain: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          list_price: number | null
+          mint_status: string | null
+          name: string
+          royalty_percent: number | null
+          supply: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          ai_prompt?: string | null
+          attributes?: Json | null
+          chain?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          list_price?: number | null
+          mint_status?: string | null
+          name: string
+          royalty_percent?: number | null
+          supply?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          ai_prompt?: string | null
+          attributes?: Json | null
+          chain?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          list_price?: number | null
+          mint_status?: string | null
+          name?: string
+          royalty_percent?: number | null
+          supply?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_notifications: {
         Row: {

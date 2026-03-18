@@ -23,6 +23,8 @@ import {
   Target
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   simulateDTCMining, 
   heartbeatOracle,
@@ -48,28 +50,48 @@ import {
   SODIUM_ION_SPECS
 } from "@/lib/energy/wireFluxGrid";
 
+const QTC_TOKEN_ID = "f8766e19-0ae9-4791-9198-5fd50852ff85";
+const QTC_REWARD_PER_BLOCK = 10;
+
 const TitanCodexDashboard = () => {
+  const { user } = useAuth();
   const [activeProofs, setActiveProofs] = useState<TemporalResonanceProof[]>([]);
   const [isMining, setIsMining] = useState(false);
+  const [qtcBalance, setQtcBalance] = useState(0);
+  const [totalMined, setTotalMined] = useState(0);
   const [heartbeat, setHeartbeat] = useState("");
   const [pqcKeys, setPqcKeys] = useState<PQCKeyPair | null>(null);
   const [fraudResults, setFraudResults] = useState<FraudDetectionResult[]>([]);
   const [gridNodes, setGridNodes] = useState<GridNode[]>([]);
   const [arbitrageOpps, setArbitrageOpps] = useState<ArbitrageOpportunity[]>([]);
 
+  // Fetch QTC balance
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("token_balances")
+        .select("balance, total_mined")
+        .eq("user_id", user.id)
+        .eq("token_id", QTC_TOKEN_ID)
+        .maybeSingle();
+      if (data) {
+        setQtcBalance(Number(data.balance));
+        setTotalMined(Number(data.total_mined));
+      }
+    };
+    fetchBalance();
+  }, [user]);
+
   // Initialize systems
   useEffect(() => {
-    // Generate heartbeat pulse
     const interval = setInterval(() => {
       setHeartbeat(heartbeatOracle.generateHeartbeat().slice(0, 16) + '...');
     }, 1000);
 
-    // Initialize grid nodes
     const nodes = generateBorderCorridorNodes(50);
     nodes.forEach(node => gridFlexAI.registerNode(node));
     setGridNodes(nodes);
-
-    // Find arbitrage opportunities
     setArbitrageOpps(gridFlexAI.findArbitrageOpportunities());
 
     return () => clearInterval(interval);
@@ -97,7 +119,41 @@ const TitanCodexDashboard = () => {
 
       if (result.success && result.proof) {
         setActiveProofs(prev => [result.proof!, ...prev].slice(0, 10));
-        toast.success(`Block crystallized! Resonance: ${(result.proof.resonanceValue * 100).toFixed(1)}%`);
+        
+        // Persist mining reward to database
+        if (user) {
+          const { data: existing } = await supabase
+            .from("token_balances")
+            .select("id, balance, total_mined")
+            .eq("user_id", user.id)
+            .eq("token_id", QTC_TOKEN_ID)
+            .maybeSingle();
+
+          if (existing) {
+            await supabase
+              .from("token_balances")
+              .update({
+                balance: Number(existing.balance) + QTC_REWARD_PER_BLOCK,
+                total_mined: Number(existing.total_mined) + QTC_REWARD_PER_BLOCK,
+                last_mined_at: new Date().toISOString(),
+              })
+              .eq("id", existing.id);
+          } else {
+            await supabase
+              .from("token_balances")
+              .insert({
+                user_id: user.id,
+                token_id: QTC_TOKEN_ID,
+                balance: QTC_REWARD_PER_BLOCK,
+                total_mined: QTC_REWARD_PER_BLOCK,
+                last_mined_at: new Date().toISOString(),
+              });
+          }
+          setQtcBalance(prev => prev + QTC_REWARD_PER_BLOCK);
+          setTotalMined(prev => prev + QTC_REWARD_PER_BLOCK);
+        }
+        
+        toast.success(`Block crystallized! +${QTC_REWARD_PER_BLOCK} QTC • Resonance: ${(result.proof.resonanceValue * 100).toFixed(1)}%`);
       } else {
         toast.error("Mining failed - entropy too high. Retrying...");
       }
@@ -223,11 +279,25 @@ const TitanCodexDashboard = () => {
                 </div>
               </div>
 
+              {/* QTC Balance */}
+              <div className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Your QTC Balance</div>
+                    <div className="text-3xl font-bold">{qtcBalance.toLocaleString()} QTC</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-muted-foreground">Total Mined</div>
+                    <div className="text-lg font-bold text-primary">{totalMined.toLocaleString()} QTC</div>
+                  </div>
+                </div>
+              </div>
+
               <Button 
                 className="w-full" 
                 size="lg" 
                 onClick={mineBlock}
-                disabled={isMining}
+                disabled={isMining || !user}
               >
                 {isMining ? (
                   <>
@@ -237,7 +307,7 @@ const TitanCodexDashboard = () => {
                 ) : (
                   <>
                     <Atom className="h-4 w-4 mr-2" />
-                    Mine QTC Block (Simulate DTC)
+                    Mine QTC Block (+{QTC_REWARD_PER_BLOCK} QTC)
                   </>
                 )}
               </Button>
