@@ -503,6 +503,15 @@ const TreasuryWallets = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Action Dialogs: Deposit, Transfer, Convert, Swap, Stake */}
+      <WalletActionDialogs
+        action={activeAction}
+        wallet={actionWallet}
+        allWallets={wallets}
+        onClose={() => { setActiveAction(null); setActionWallet(null); }}
+        onRefresh={() => { fetchWallets(); fetchDistributionLogs(); }}
+      />
     </div>
   );
 };
