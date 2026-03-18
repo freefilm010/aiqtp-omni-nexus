@@ -483,16 +483,49 @@ const WalletAssets = () => {
                     Purchase crypto with card via MoonPay
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+               <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
                     {["BTC", "ETH", "SOL", "USDT"].map((coin) => (
                       <Button
                         key={coin}
                         variant="outline"
                         className="h-12 gap-2"
-                        onClick={() => {
+                        onClick={async () => {
+                          // Fetch user's wallet address for this currency
+                          let walletParam = "";
+                          const networkMap: Record<string, string> = {
+                            BTC: "bitcoin", ETH: "ethereum", SOL: "solana", USDT: "ethereum"
+                          };
+                          try {
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (user) {
+                              const network = networkMap[coin] || coin.toLowerCase();
+                              const { data: quAddrs } = await supabase
+                                .from("quwallet_addresses")
+                                .select("address, network")
+                                .limit(20) as { data: any[] | null };
+                              
+                              const matched = quAddrs?.find((a: any) => a.network === network);
+                              if (matched?.address) {
+                                walletParam = `&walletAddress=${encodeURIComponent(matched.address)}`;
+                              } else {
+                                const { data: platWallets } = await supabase
+                                  .from("platform_wallets")
+                                  .select("wallet_address, currency, is_active")
+                                  .limit(20) as { data: any[] | null };
+                                
+                                const matchedPlat = platWallets?.find((w: any) => w.currency === coin && w.is_active);
+                                if (matchedPlat?.wallet_address) {
+                                  walletParam = `&walletAddress=${encodeURIComponent(matchedPlat.wallet_address)}`;
+                                }
+                              }
+                            }
+                          } catch (e) {
+                            console.warn("Could not fetch wallet address for MoonPay:", e);
+                          }
+                          
                           window.open(
-                            `https://www.moonpay.com/buy?apiKey=pk_live_demo&currencyCode=${coin.toLowerCase()}&baseCurrencyAmount=100`,
+                            `https://www.moonpay.com/buy?apiKey=pk_live_demo&currencyCode=${coin.toLowerCase()}&baseCurrencyAmount=100${walletParam}`,
                             "_blank"
                           );
                         }}
