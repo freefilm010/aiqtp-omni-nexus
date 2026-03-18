@@ -135,6 +135,27 @@ serve(async (req) => {
         } else {
           console.log(`Subscription revenue recorded: $${amount}`);
         }
+
+        // Mirror to admin_revenue
+        await supabase.from("admin_revenue").insert({
+          amount,
+          currency: invoice.currency?.toUpperCase() || "USD",
+          type: "subscription_renewal",
+          source: "stripe_subscription",
+          status: "completed",
+          metadata: {
+            stripe_invoice_id: invoice.id,
+            subscription_id: invoice.subscription,
+            customer_id: invoice.customer,
+          },
+        });
+
+        // Credit wallet
+        await supabase.rpc("increment_wallet_balance", {
+          p_currency: invoice.currency?.toUpperCase() || "USD",
+          p_amount: amount,
+        });
+
         break;
       }
 
