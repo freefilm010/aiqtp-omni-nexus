@@ -124,6 +124,27 @@ serve(async (req) => {
         },
         quantity: 1,
       }];
+    } else if (planId === "custom-deposit" && body.amount) {
+      // Custom deposit amount - validate server-side
+      const customAmount = Number(body.amount);
+      if (isNaN(customAmount) || customAmount < MIN_DEPOSIT || customAmount > MAX_DEPOSIT) {
+        return new Response(
+          JSON.stringify({ error: `Deposit must be between $${MIN_DEPOSIT} and $${MAX_DEPOSIT}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      mode = "payment";
+      lineItems = [{
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: `AIQTP Platform Deposit`,
+            description: `Add $${customAmount} to your AIQTP account`,
+          },
+          unit_amount: Math.round(customAmount * 100),
+        },
+        quantity: 1,
+      }];
     } else {
       return new Response(
         JSON.stringify({ error: "Invalid plan selected" }),
