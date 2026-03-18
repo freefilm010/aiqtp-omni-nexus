@@ -25,7 +25,7 @@ interface TransferRoute {
 
 const SmartTransferRouter = () => {
   const [amount, setAmount] = useState("100");
-  const [fromMethod, setFromMethod] = useState("bank");
+  const [fromMethod, setFromMethod] = useState("card");
   const [toMethod, setToMethod] = useState("crypto");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [processing, setProcessing] = useState(false);
