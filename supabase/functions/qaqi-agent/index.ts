@@ -940,7 +940,7 @@ serve(async (req) => {
       });
     }
 
-    // Call Lovable AI with tool definitions
+    // Call Lovable AI with tool definitions — use Pro for deep reasoning
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -948,7 +948,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages,
         tools: QAQI_TOOLS.map(tool => ({
           type: "function",
@@ -992,9 +992,13 @@ serve(async (req) => {
     const aiData = await aiResponse.json();
     const choice = aiData.choices?.[0];
     
-    // Handle tool calls
+    // Handle tool calls and feed results back for a synthesized response
     let toolResults: any[] = [];
-    if (choice?.message?.tool_calls) {
+    let finalContent = choice?.message?.content || "";
+    
+    if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+      // Execute all tool calls
+      const toolCallMessages: any[] = [];
       for (const toolCall of choice.message.tool_calls) {
         try {
           const args = JSON.parse(toolCall.function.arguments);
@@ -1005,13 +1009,52 @@ serve(async (req) => {
             result,
             success: true
           });
+          toolCallMessages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(result)
+          });
         } catch (e) {
           toolResults.push({
             tool: toolCall.function.name,
             error: e.message,
             success: false
           });
+          toolCallMessages.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ error: e.message })
+          });
         }
+      }
+      
+      // Feed tool results back to the model for a synthesized, actionable response
+      const followUpMessages = [
+        ...messages,
+        choice.message,
+        ...toolCallMessages
+      ];
+      
+      try {
+        const followUpResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-pro",
+            messages: followUpMessages,
+          }),
+        });
+        
+        if (followUpResponse.ok) {
+          const followUpData = await followUpResponse.json();
+          finalContent = followUpData.choices?.[0]?.message?.content || finalContent;
+        }
+      } catch (e) {
+        console.error("Follow-up call failed:", e);
+        // Keep original content if follow-up fails
       }
     }
 
