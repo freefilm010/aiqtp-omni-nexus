@@ -65,6 +65,7 @@ const AutoInvestPage = lazy(() => import("./pages/AutoInvestPage"));
 const PerformanceShowcase = lazy(() => import("./pages/PerformanceShowcase"));
 const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
 const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
+const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 
 const queryClient = new QueryClient();
 
@@ -456,6 +457,7 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      <Route path="/capitol-trades" element={<CapitolTradesPage />} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

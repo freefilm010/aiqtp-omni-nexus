@@ -1096,6 +1096,146 @@ export type Database = {
           },
         ]
       }
+      congress_featured_issuers: {
+        Row: {
+          created_at: string
+          current_price: number | null
+          id: string
+          issuer_name: string
+          logo_url: string | null
+          price_change_pct: number | null
+          ticker: string
+          total_trades: number | null
+        }
+        Insert: {
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          issuer_name: string
+          logo_url?: string | null
+          price_change_pct?: number | null
+          ticker: string
+          total_trades?: number | null
+        }
+        Update: {
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          issuer_name?: string
+          logo_url?: string | null
+          price_change_pct?: number | null
+          ticker?: string
+          total_trades?: number | null
+        }
+        Relationships: []
+      }
+      congress_politicians: {
+        Row: {
+          avatar_url: string | null
+          chamber: string
+          created_at: string
+          full_name: string
+          id: string
+          is_featured: boolean | null
+          party: string
+          state: string | null
+          total_filings: number | null
+          total_issuers: number | null
+          total_trades: number | null
+          total_volume: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          chamber?: string
+          created_at?: string
+          full_name: string
+          id?: string
+          is_featured?: boolean | null
+          party?: string
+          state?: string | null
+          total_filings?: number | null
+          total_issuers?: number | null
+          total_trades?: number | null
+          total_volume?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          chamber?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_featured?: boolean | null
+          party?: string
+          state?: string | null
+          total_filings?: number | null
+          total_issuers?: number | null
+          total_trades?: number | null
+          total_volume?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      congress_trades: {
+        Row: {
+          amount_range: string | null
+          asset_type: string | null
+          chamber: string | null
+          created_at: string
+          disclosure_date: string | null
+          id: string
+          issuer_name: string
+          party: string | null
+          politician_id: string | null
+          politician_name: string
+          state: string | null
+          ticker: string
+          trade_date: string
+          trade_type: string
+        }
+        Insert: {
+          amount_range?: string | null
+          asset_type?: string | null
+          chamber?: string | null
+          created_at?: string
+          disclosure_date?: string | null
+          id?: string
+          issuer_name: string
+          party?: string | null
+          politician_id?: string | null
+          politician_name: string
+          state?: string | null
+          ticker: string
+          trade_date?: string
+          trade_type?: string
+        }
+        Update: {
+          amount_range?: string | null
+          asset_type?: string | null
+          chamber?: string | null
+          created_at?: string
+          disclosure_date?: string | null
+          id?: string
+          issuer_name?: string
+          party?: string | null
+          politician_id?: string | null
+          politician_name?: string
+          state?: string | null
+          ticker?: string
+          trade_date?: string
+          trade_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "congress_trades_politician_id_fkey"
+            columns: ["politician_id"]
+            isOneToOne: false
+            referencedRelation: "congress_politicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       connected_accounts: {
         Row: {
           account_name: string
