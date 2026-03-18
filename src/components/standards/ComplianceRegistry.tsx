@@ -24,6 +24,7 @@ import {
   ISO_STANDARDS,
   OPENZEPPELIN_STANDARDS,
   PQC_STANDARDS,
+  EXTENDED_EIP_STANDARDS,
   VALUE_NATURE_LABELS,
   type ProtocolStandard,
 } from "@/lib/standards/protocolRegistry";
@@ -133,7 +134,7 @@ const ComplianceRegistry = () => {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length}</p>
+            <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length + EXTENDED_EIP_STANDARDS.length}</p>
             <p className="text-[10px] text-muted-foreground">EIP/ERC</p>
           </CardContent>
         </Card>
@@ -233,7 +234,7 @@ const ComplianceRegistry = () => {
         </TabsList>
 
         {[
-          { value: 'eip', data: EIP_STANDARDS },
+          { value: 'eip', data: [...EIP_STANDARDS, ...EXTENDED_EIP_STANDARDS] },
           { value: 'oz', data: OPENZEPPELIN_STANDARDS },
           { value: 'security', data: SECURITY_STANDARDS },
           { value: 'pqc', data: PQC_STANDARDS },
