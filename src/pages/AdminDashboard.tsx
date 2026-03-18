@@ -25,6 +25,7 @@ import DataMarketplace from "@/components/admin/DataMarketplace";
 import BrandingRegistry from "@/components/admin/BrandingRegistry";
 import MarketCrawlerAnalytics from "@/components/intelligence/MarketCrawlerAnalytics";
 import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
+import FeedbackManager from "@/components/admin/FeedbackManager";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
