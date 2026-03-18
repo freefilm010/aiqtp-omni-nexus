@@ -1,8 +1,10 @@
 import { lazy, Suspense } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
+
+// Lazy-load Footer — it pulls in useAdminAuth + GitHubEcosystem which are heavy
+const Footer = lazy(() => import("@/components/Footer"));
 
 // Lazy-load all below-fold widgets to reduce initial JS payload
 const AimeStyleAIPanel = lazy(() => import("@/components/home/AimeStyleAIPanel"));
@@ -91,7 +93,11 @@ const Index = () => {
           </Suspense>
         </LazySection>
       </main>
-      <Footer />
+      <LazySection minHeight="200px">
+        <Suspense fallback={<SectionLoader />}>
+          <Footer />
+        </Suspense>
+      </LazySection>
     </div>
   );
 };
