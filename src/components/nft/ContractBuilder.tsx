@@ -53,7 +53,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Multi-token — editions & mixed assets',
     chain: 'Ethereum',
     features: ['Semi-Fungible', 'Batch Transfer', 'Multi-Token'],
-    standardIds: ['erc-1155', 'eip-2981'],
+    standardIds: ['erc-1155', 'eip-2981', 'oz-erc1155', 'oz-security'],
     valueNature: 'hybrid' as const,
   },
   { 
