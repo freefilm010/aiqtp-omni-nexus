@@ -25,7 +25,7 @@ interface TransferRoute {
 
 const SmartTransferRouter = () => {
   const [amount, setAmount] = useState("100");
-  const [fromMethod, setFromMethod] = useState("bank");
+  const [fromMethod, setFromMethod] = useState("card");
   const [toMethod, setToMethod] = useState("crypto");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -35,7 +35,7 @@ const SmartTransferRouter = () => {
   // Calculate real routes based on amount and direction
   const routes: TransferRoute[] = useMemo(() => {
     const amt = numAmount;
-    return [
+    const allRoutes: TransferRoute[] = [
       {
         id: "stripe_ach",
         provider: "Stripe ACH",
@@ -43,7 +43,7 @@ const SmartTransferRouter = () => {
         fee: Math.max(amt * 0.008, 0.50),
         feePercent: 0.8,
         estimatedTime: "1-2 business days",
-        available: true,
+        available: fromMethod === "bank",
         icon: "🏦",
       },
       {
@@ -53,7 +53,7 @@ const SmartTransferRouter = () => {
         fee: amt * 0.029 + 0.30,
         feePercent: 2.9,
         estimatedTime: "Instant",
-        available: true,
+        available: fromMethod === "card" || fromMethod === "bank",
         icon: "💳",
       },
       {
@@ -63,7 +63,7 @@ const SmartTransferRouter = () => {
         fee: Math.max(amt * 0.005, 5.00),
         feePercent: 0.5,
         estimatedTime: "Same day",
-        available: amt >= 500,
+        available: (fromMethod === "bank" || fromMethod === "wallet") && amt >= 500,
         icon: "🔌",
       },
       {
@@ -73,7 +73,7 @@ const SmartTransferRouter = () => {
         fee: Math.min(amt * 0.001, 2.50),
         feePercent: 0.1,
         estimatedTime: "2-30 min",
-        available: toMethod === "crypto" || fromMethod === "crypto",
+        available: fromMethod === "crypto" || toMethod === "crypto",
         icon: "⛓️",
       },
       {
@@ -83,10 +83,11 @@ const SmartTransferRouter = () => {
         fee: Math.max(amt * 0.0005, 0.01),
         feePercent: 0.05,
         estimatedTime: "< 1 second",
-        available: toMethod === "crypto" || fromMethod === "crypto",
+        available: fromMethod === "crypto" || toMethod === "crypto",
         icon: "⚡",
       },
-    ].filter(r => r.available);
+    ];
+    return allRoutes.filter(r => r.available);
   }, [numAmount, fromMethod, toMethod]);
 
   // Sort by fee ascending — cheapest first
