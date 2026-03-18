@@ -195,6 +195,9 @@ export function useKrakenTickers(
   }, [loadFromDB]);
 
   useEffect(() => {
+    // If pollMs is 0 or falsy, skip connecting entirely (deferred mode)
+    if (!pollMs) return;
+
     mountedRef.current = true;
 
     const init = async () => {
