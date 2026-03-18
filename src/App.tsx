@@ -70,6 +70,7 @@ const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
 // SatelliteHub merged into ConnectorsPage
 const GiveawayPage = lazy(() => import("./pages/GiveawayPage"));
+const StatsArenaPage = lazy(() => import("./pages/StatsArenaPage"));
 
 const queryClient = new QueryClient();
 
@@ -340,6 +341,7 @@ const App = () => (
                       <Route path="/connections" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route path="/satellite" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route path="/giveaway" element={<GiveawayPage />} />
+                      <Route path="/stats" element={<StatsArenaPage />} />
                       <Route
                         path="/ai-assistant"
                         element={

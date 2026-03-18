@@ -1667,6 +1667,50 @@ export type Database = {
         }
         Relationships: []
       }
+      contest_entries: {
+        Row: {
+          contest_id: string
+          current_score: number
+          id: string
+          is_winner: boolean
+          joined_at: string
+          prize_awarded: boolean
+          rank: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contest_id: string
+          current_score?: number
+          id?: string
+          is_winner?: boolean
+          joined_at?: string
+          prize_awarded?: boolean
+          rank?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contest_id?: string
+          current_score?: number
+          id?: string
+          is_winner?: boolean
+          joined_at?: string
+          prize_awarded?: boolean
+          rank?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_entries_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "stat_contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contest_participants: {
         Row: {
           contest_id: string | null
@@ -3591,6 +3635,51 @@ export type Database = {
           target_percent?: number
           updated_at?: string
           value_usd?: number | null
+        }
+        Relationships: []
+      }
+      leaderboard_entries: {
+        Row: {
+          avatar_url: string | null
+          badge: string | null
+          category: string
+          display_name: string | null
+          highlight_stat: string | null
+          id: string
+          period_start: string
+          period_type: string
+          rank: number
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge?: string | null
+          category: string
+          display_name?: string | null
+          highlight_stat?: string | null
+          id?: string
+          period_start: string
+          period_type: string
+          rank: number
+          score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          badge?: string | null
+          category?: string
+          display_name?: string | null
+          highlight_stat?: string | null
+          id?: string
+          period_start?: string
+          period_type?: string
+          rank?: number
+          score?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -5993,6 +6082,57 @@ export type Database = {
           },
         ]
       }
+      stat_contests: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          ends_at: string
+          id: string
+          max_participants: number | null
+          metric: string
+          name: string
+          participant_count: number
+          prize_description: string | null
+          prize_type: string
+          prize_value_usd: number
+          starts_at: string
+          status: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          max_participants?: number | null
+          metric: string
+          name: string
+          participant_count?: number
+          prize_description?: string | null
+          prize_type?: string
+          prize_value_usd?: number
+          starts_at: string
+          status?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          max_participants?: number | null
+          metric?: string
+          name?: string
+          participant_count?: number
+          prize_description?: string | null
+          prize_type?: string
+          prize_value_usd?: number
+          starts_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       strategy_performance: {
         Row: {
           created_at: string
@@ -6983,6 +7123,126 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_stats: {
+        Row: {
+          achievements_earned: number
+          ai_queries: number
+          avg_sharpe: number
+          avg_trade_size: number
+          backtests_run: number
+          best_trade_pnl: number
+          computed_at: string
+          created_at: string
+          id: string
+          login_streak: number
+          longest_streak: number
+          losing_trades: number
+          overall_rank: number | null
+          period_end: string
+          period_start: string
+          period_type: string
+          polls_voted: number
+          posts_created: number
+          prediction_accuracy: number
+          predictions_made: number
+          qtc_mined: number
+          qtc_staked: number
+          referrals_made: number
+          referrals_verified: number
+          signals_followed: number
+          social_rank: number | null
+          strategies_created: number
+          strategies_graduated: number
+          total_logins: number
+          total_pnl: number
+          total_points: number
+          total_trades: number
+          trading_rank: number | null
+          user_id: string
+          win_rate: number
+          winning_trades: number
+          worst_trade_pnl: number
+        }
+        Insert: {
+          achievements_earned?: number
+          ai_queries?: number
+          avg_sharpe?: number
+          avg_trade_size?: number
+          backtests_run?: number
+          best_trade_pnl?: number
+          computed_at?: string
+          created_at?: string
+          id?: string
+          login_streak?: number
+          longest_streak?: number
+          losing_trades?: number
+          overall_rank?: number | null
+          period_end: string
+          period_start: string
+          period_type: string
+          polls_voted?: number
+          posts_created?: number
+          prediction_accuracy?: number
+          predictions_made?: number
+          qtc_mined?: number
+          qtc_staked?: number
+          referrals_made?: number
+          referrals_verified?: number
+          signals_followed?: number
+          social_rank?: number | null
+          strategies_created?: number
+          strategies_graduated?: number
+          total_logins?: number
+          total_pnl?: number
+          total_points?: number
+          total_trades?: number
+          trading_rank?: number | null
+          user_id: string
+          win_rate?: number
+          winning_trades?: number
+          worst_trade_pnl?: number
+        }
+        Update: {
+          achievements_earned?: number
+          ai_queries?: number
+          avg_sharpe?: number
+          avg_trade_size?: number
+          backtests_run?: number
+          best_trade_pnl?: number
+          computed_at?: string
+          created_at?: string
+          id?: string
+          login_streak?: number
+          longest_streak?: number
+          losing_trades?: number
+          overall_rank?: number | null
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          polls_voted?: number
+          posts_created?: number
+          prediction_accuracy?: number
+          predictions_made?: number
+          qtc_mined?: number
+          qtc_staked?: number
+          referrals_made?: number
+          referrals_verified?: number
+          signals_followed?: number
+          social_rank?: number | null
+          strategies_created?: number
+          strategies_graduated?: number
+          total_logins?: number
+          total_pnl?: number
+          total_points?: number
+          total_trades?: number
+          trading_rank?: number | null
+          user_id?: string
+          win_rate?: number
+          winning_trades?: number
+          worst_trade_pnl?: number
+        }
+        Relationships: []
       }
       watchlist: {
         Row: {
