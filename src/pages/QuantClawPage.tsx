@@ -183,6 +183,85 @@ const QuantClawPage = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="marketing">
+            <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Megaphone className="h-5 w-5 text-primary" />
+                  Social Media & Marketing Engine
+                </CardTitle>
+                <CardDescription>
+                  AI-powered content generation for www.aiqtp.com — posts, campaigns, newsletters
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Action</label>
+                    <Select value={marketingAction} onValueChange={(v) => setMarketingAction(v as any)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="generate_post">Social Media Post</SelectItem>
+                        <SelectItem value="generate_campaign">Full Campaign</SelectItem>
+                        <SelectItem value="generate_content">Blog / Newsletter</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Platform</label>
+                    <Select value={marketingPlatform} onValueChange={setMarketingPlatform}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="twitter">X / Twitter</SelectItem>
+                        <SelectItem value="linkedin">LinkedIn</SelectItem>
+                        <SelectItem value="threads">Threads</SelectItem>
+                        <SelectItem value="blog">Blog Post</SelectItem>
+                        <SelectItem value="email">Email / Newsletter</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Topic</label>
+                    <Input
+                      placeholder="e.g. $QTC token launch, quantum trading..."
+                      value={marketingTopic}
+                      onChange={(e) => setMarketingTopic(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleMarketing}
+                  disabled={marketingLoading}
+                  className="gap-2"
+                >
+                  {marketingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Megaphone className="h-4 w-4" />}
+                  {marketingLoading ? "Generating..." : "Generate Content"}
+                </Button>
+
+                {marketingResult && (
+                  <div className="mt-4 p-4 rounded-lg bg-background/50 border border-border/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-foreground">Generated Content</h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(marketingResult);
+                          toast.success("Copied to clipboard");
+                        }}
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                    <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-96 overflow-y-auto">
+                      {marketingResult}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="rag">
             <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
               <CardHeader>
