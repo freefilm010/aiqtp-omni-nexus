@@ -82,6 +82,7 @@ const AdminDashboard = () => {
             <Route path="nft-generator" element={<AutoNFTGenerator />} />
             <Route path="data-marketplace" element={<DataMarketplace />} />
             <Route path="branding" element={<BrandingRegistry />} />
+            <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
             <Route path="users" element={<AdminOverview />} />
             <Route path="logs" element={<AdminOverview />} />
             <Route path="settings" element={<AdminOverview />} />
