@@ -7,6 +7,7 @@ import BTCCTrading from "@/components/integrations/BTCCTrading";
 import AlpacaStockTrading from "@/components/trading/AlpacaStockTrading";
 import StockMarketHub from "@/components/trading/StockMarketHub";
 import PaymentHub from "@/components/payments/PaymentHub";
+import AutomationTemplates from "@/components/admin/AutomationTemplates";
 
 const ConnectionsPage = () => {
   return (
@@ -20,7 +21,10 @@ const ConnectionsPage = () => {
           </p>
         </div>
 
-        {/* Stock Market Data (Yahoo Finance + Finnhub + Alpha Vantage) */}
+        {/* Automation Templates */}
+        <AutomationTemplates />
+
+        {/* Stock Market Data */}
         <StockMarketHub />
         
         {/* Stock Trading & Exchange Connections */}
