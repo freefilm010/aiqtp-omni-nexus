@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface MarketingRequest {
-  action: "generate_post" | "generate_campaign" | "generate_content" | "schedule_campaign";
+  action: "generate_post" | "generate_campaign" | "generate_content" | "generate_store_listing" | "schedule_campaign";
   platform?: string; // twitter, linkedin, threads, blog, email
   topic?: string;
   campaignType?: string; // airdrop, referral, influencer, launch, newsletter
