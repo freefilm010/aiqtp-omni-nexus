@@ -25,6 +25,7 @@ import {
   OPENZEPPELIN_STANDARDS,
   PQC_STANDARDS,
   EXTENDED_EIP_STANDARDS,
+  RWA_EMERGING_STANDARDS,
   VALUE_NATURE_LABELS,
   type ProtocolStandard,
 } from "@/lib/standards/protocolRegistry";
@@ -131,11 +132,17 @@ const ComplianceRegistry = () => {
   return (
     <div className="space-y-6">
       {/* Header Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
             <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length + EXTENDED_EIP_STANDARDS.length}</p>
             <p className="text-[10px] text-muted-foreground">EIP/ERC</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3 text-center">
+            <p className="text-2xl font-bold text-primary">{RWA_EMERGING_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">RWA/Emerging</p>
           </CardContent>
         </Card>
         <Card>
@@ -206,10 +213,14 @@ const ComplianceRegistry = () => {
 
       {/* Standards Tabs */}
       <Tabs defaultValue="eip" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4 md:grid-cols-7">
           <TabsTrigger value="eip" className="text-xs gap-1">
             <Coins className="h-3.5 w-3.5" />
             EIP/ERC
+          </TabsTrigger>
+          <TabsTrigger value="rwa" className="text-xs gap-1">
+            <FileText className="h-3.5 w-3.5" />
+            RWA
           </TabsTrigger>
           <TabsTrigger value="oz" className="text-xs gap-1">
             <Shield className="h-3.5 w-3.5" />
@@ -235,6 +246,7 @@ const ComplianceRegistry = () => {
 
         {[
           { value: 'eip', data: [...EIP_STANDARDS, ...EXTENDED_EIP_STANDARDS] },
+          { value: 'rwa', data: RWA_EMERGING_STANDARDS },
           { value: 'oz', data: OPENZEPPELIN_STANDARDS },
           { value: 'security', data: SECURITY_STANDARDS },
           { value: 'pqc', data: PQC_STANDARDS },
