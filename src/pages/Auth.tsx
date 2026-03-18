@@ -476,7 +476,7 @@ const Auth = () => {
                 </Tabs>
 
                 <p className="text-xs text-center text-muted-foreground mt-4">
-                  Note: Other social logins (Facebook, Twitter, etc.) are not yet available in Lovable Cloud.
+                  Sign in with Google or Apple for the fastest experience.
                 </p>
               </>
             )}
