@@ -85,6 +85,10 @@ const NFTStudio = () => {
           <TabsContent value="contracts">
             <ContractBuilder />
           </TabsContent>
+
+          <TabsContent value="standards">
+            <ComplianceRegistry />
+          </TabsContent>
         </Tabs>
       </main>
       <Footer />
