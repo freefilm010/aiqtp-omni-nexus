@@ -119,7 +119,41 @@ const TitanCodexDashboard = () => {
 
       if (result.success && result.proof) {
         setActiveProofs(prev => [result.proof!, ...prev].slice(0, 10));
-        toast.success(`Block crystallized! Resonance: ${(result.proof.resonanceValue * 100).toFixed(1)}%`);
+        
+        // Persist mining reward to database
+        if (user) {
+          const { data: existing } = await supabase
+            .from("token_balances")
+            .select("id, balance, total_mined")
+            .eq("user_id", user.id)
+            .eq("token_id", QTC_TOKEN_ID)
+            .maybeSingle();
+
+          if (existing) {
+            await supabase
+              .from("token_balances")
+              .update({
+                balance: Number(existing.balance) + QTC_REWARD_PER_BLOCK,
+                total_mined: Number(existing.total_mined) + QTC_REWARD_PER_BLOCK,
+                last_mined_at: new Date().toISOString(),
+              })
+              .eq("id", existing.id);
+          } else {
+            await supabase
+              .from("token_balances")
+              .insert({
+                user_id: user.id,
+                token_id: QTC_TOKEN_ID,
+                balance: QTC_REWARD_PER_BLOCK,
+                total_mined: QTC_REWARD_PER_BLOCK,
+                last_mined_at: new Date().toISOString(),
+              });
+          }
+          setQtcBalance(prev => prev + QTC_REWARD_PER_BLOCK);
+          setTotalMined(prev => prev + QTC_REWARD_PER_BLOCK);
+        }
+        
+        toast.success(`Block crystallized! +${QTC_REWARD_PER_BLOCK} QTC • Resonance: ${(result.proof.resonanceValue * 100).toFixed(1)}%`);
       } else {
         toast.error("Mining failed - entropy too high. Retrying...");
       }
