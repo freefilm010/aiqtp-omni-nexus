@@ -55,7 +55,8 @@ import {
   Coins,
   Home,
   Plug,
-  Gift
+  Gift,
+  Wallet
 } from "lucide-react";
 
 const Header = () => {
@@ -177,6 +178,12 @@ const Header = () => {
             <Link to="/" className="text-foreground hover:text-gold cursor-pointer transition-smooth flex items-center gap-1">
               <Home className="w-4 h-4" />
               Home
+            </Link>
+
+            {/* Assets & Wallets - prominent top-level link */}
+            <Link to="/wallet-assets" className="text-foreground hover:text-gold cursor-pointer transition-smooth flex items-center gap-1 font-medium">
+              <Wallet className="w-4 h-4" />
+              Assets & Wallets
             </Link>
 
             {/* Trading Dropdown */}
@@ -360,6 +367,10 @@ const Header = () => {
                     <Trophy className="mr-2 h-4 w-4 text-amber-500" />
                     Achievements
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/wallet-assets')}>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Assets & Wallets
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/portfolio')}>
                     <BarChart3 className="mr-2 h-4 w-4" />
                     Portfolio
@@ -419,6 +430,16 @@ const Header = () => {
               >
                 <Home className="h-4 w-4" />
                 Home
+              </Link>
+
+              {/* Assets & Wallets - right after Home for visibility */}
+              <Link 
+                to="/wallet-assets" 
+                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Wallet className="h-4 w-4" />
+                Assets & Wallets
               </Link>
 
               {/* Trading Section */}

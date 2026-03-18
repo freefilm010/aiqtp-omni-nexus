@@ -199,7 +199,7 @@ const WalletAssets = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                  Wallet & Assets
+                  Assets & Wallets
                 </h1>
                 <p className="text-muted-foreground">
                   Autonomous revenue generation • 24/7 profit engines
