@@ -105,35 +105,54 @@ const WalletAssets = () => {
   const totalMonthlyRevenue = revenueStreams.reduce((sum, s) => sum + s.monthlyRevenue, 0);
   const avgProfitability = revenueStreams.reduce((sum, s) => sum + s.profitability, 0) / revenueStreams.length;
 
-  const handleStripeCheckout = async (productType: "credits" | "subscription") => {
+  const [customAmount, setCustomAmount] = useState("");
+
+  const handleStripeDeposit = async (amount: number) => {
     setLoading(true);
     try {
-      const config = productType === "subscription" 
+      const isPreset = [20, 50, 100, 500].includes(amount);
+      const body = isPreset
         ? {
-            mode: "subscription" as const,
-            amount: 49,
-            productName: "AIQTP Pro Subscription",
-            productDescription: "Monthly access to all premium features",
-            successUrl: `${window.location.origin}/payment-success?type=subscription`,
+            planId: `deposit-${amount}`,
+            successUrl: `${window.location.origin}/payment-success?type=deposit&amount=${amount}`,
             cancelUrl: `${window.location.origin}/wallet-assets`,
           }
         : {
-            mode: "payment" as const,
-            amount: 100,
-            productName: "Platform Credits",
-            productDescription: "Add $100 trading credits to your account",
-            successUrl: `${window.location.origin}/payment-success?type=credits`,
+            planId: "custom-deposit",
+            amount,
+            successUrl: `${window.location.origin}/payment-success?type=deposit&amount=${amount}`,
             cancelUrl: `${window.location.origin}/wallet-assets`,
           };
 
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
-        body: config,
-      });
+      const { data, error } = await supabase.functions.invoke("stripe-checkout", { body });
 
       if (error) throw error;
       if (data?.url) {
         window.location.href = data.url;
       }
+    } catch (error: any) {
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to initiate checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubscription = async (planId: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+        body: {
+          planId,
+          successUrl: `${window.location.origin}/payment-success?type=subscription`,
+          cancelUrl: `${window.location.origin}/wallet-assets`,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
     } catch (error: any) {
       toast({
         title: "Payment Error",
