@@ -47,6 +47,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_placements: {
+        Row: {
+          ad_content: Json | null
+          advertiser_name: string | null
+          click_count: number | null
+          cpm_rate: number | null
+          created_at: string | null
+          ends_at: string | null
+          id: string
+          impression_count: number | null
+          is_active: boolean | null
+          slot_name: string
+          starts_at: string | null
+        }
+        Insert: {
+          ad_content?: Json | null
+          advertiser_name?: string | null
+          click_count?: number | null
+          cpm_rate?: number | null
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          impression_count?: number | null
+          is_active?: boolean | null
+          slot_name: string
+          starts_at?: string | null
+        }
+        Update: {
+          ad_content?: Json | null
+          advertiser_name?: string | null
+          click_count?: number | null
+          cpm_rate?: number | null
+          created_at?: string | null
+          ends_at?: string | null
+          id?: string
+          impression_count?: number | null
+          is_active?: boolean | null
+          slot_name?: string
+          starts_at?: string | null
+        }
+        Relationships: []
+      }
       admin_automation_logs: {
         Row: {
           action: string
@@ -1013,6 +1055,54 @@ export type Database = {
           },
         ]
       }
+      broadcast_content: {
+        Row: {
+          audio_url: string | null
+          body: string
+          category: string | null
+          content_type: string
+          created_at: string | null
+          id: string
+          is_published: boolean | null
+          priority: number | null
+          published_at: string | null
+          scheduled_at: string | null
+          source: string | null
+          title: string
+          visual_data: Json | null
+        }
+        Insert: {
+          audio_url?: string | null
+          body: string
+          category?: string | null
+          content_type: string
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          priority?: number | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          source?: string | null
+          title: string
+          visual_data?: Json | null
+        }
+        Update: {
+          audio_url?: string | null
+          body?: string
+          category?: string | null
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          is_published?: boolean | null
+          priority?: number | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          source?: string | null
+          title?: string
+          visual_data?: Json | null
+        }
+        Relationships: []
+      }
       capitol_community_comments: {
         Row: {
           content: string
@@ -1230,6 +1320,170 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      community_poll_options: {
+        Row: {
+          id: string
+          option_text: string
+          poll_id: string
+          sort_order: number | null
+          vote_count: number | null
+        }
+        Insert: {
+          id?: string
+          option_text: string
+          poll_id: string
+          sort_order?: number | null
+          vote_count?: number | null
+        }
+        Update: {
+          id?: string
+          option_text?: string
+          poll_id?: string
+          sort_order?: number | null
+          vote_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "community_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_poll_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "community_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "community_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_polls: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          poll_type: string
+          ticker: string | null
+          title: string
+          total_votes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          poll_type?: string
+          ticker?: string | null
+          title: string
+          total_votes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          poll_type?: string
+          ticker?: string | null
+          title?: string
+          total_votes?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_predictions: {
+        Row: {
+          accuracy_score: number | null
+          confidence: number | null
+          created_at: string | null
+          direction: string
+          id: string
+          outcome: string | null
+          outcome_resolved_at: string | null
+          prediction_type: string
+          reasoning: string | null
+          target_date: string | null
+          target_price: number | null
+          ticker: string
+          upvotes: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          direction?: string
+          id?: string
+          outcome?: string | null
+          outcome_resolved_at?: string | null
+          prediction_type?: string
+          reasoning?: string | null
+          target_date?: string | null
+          target_price?: number | null
+          ticker: string
+          upvotes?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          confidence?: number | null
+          created_at?: string | null
+          direction?: string
+          id?: string
+          outcome?: string | null
+          outcome_resolved_at?: string | null
+          prediction_type?: string
+          reasoning?: string | null
+          target_date?: string | null
+          target_price?: number | null
+          ticker?: string
+          upvotes?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       congress_featured_issuers: {
         Row: {
@@ -1791,6 +2045,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      data_exports: {
+        Row: {
+          buyer_info: Json | null
+          created_at: string | null
+          data_category: string
+          export_type: string
+          file_url: string | null
+          id: string
+          price_usd: number | null
+          record_count: number | null
+          status: string | null
+        }
+        Insert: {
+          buyer_info?: Json | null
+          created_at?: string | null
+          data_category: string
+          export_type: string
+          file_url?: string | null
+          id?: string
+          price_usd?: number | null
+          record_count?: number | null
+          status?: string | null
+        }
+        Update: {
+          buyer_info?: Json | null
+          created_at?: string | null
+          data_category?: string
+          export_type?: string
+          file_url?: string | null
+          id?: string
+          price_usd?: number | null
+          record_count?: number | null
+          status?: string | null
+        }
+        Relationships: []
       }
       data_mining_rewards: {
         Row: {
@@ -6130,6 +6420,39 @@ export type Database = {
           points?: number | null
           tier?: string | null
           unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_icon: string | null
+          badge_name: string
+          badge_type: string
+          description: string | null
+          earned_at: string | null
+          id: string
+          points: number | null
+          user_id: string
+        }
+        Insert: {
+          badge_icon?: string | null
+          badge_name: string
+          badge_type: string
+          description?: string | null
+          earned_at?: string | null
+          id?: string
+          points?: number | null
+          user_id: string
+        }
+        Update: {
+          badge_icon?: string | null
+          badge_name?: string
+          badge_type?: string
+          description?: string | null
+          earned_at?: string | null
+          id?: string
+          points?: number | null
           user_id?: string
         }
         Relationships: []
