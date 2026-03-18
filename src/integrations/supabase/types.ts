@@ -7704,33 +7704,36 @@ export type Database = {
       quwallet_wallets_safe: {
         Row: {
           created_at: string | null
-          dilithium_public_key: string | null
-          ecdsa_public_key: string | null
+          hardware_type: string | null
           id: string | null
-          kyber_public_key: string | null
-          updated_at: string | null
+          is_active: boolean | null
+          is_hardware: boolean | null
           user_id: string | null
           wallet_address: string | null
+          wallet_name: string | null
+          wallet_type: string | null
         }
         Insert: {
           created_at?: string | null
-          dilithium_public_key?: string | null
-          ecdsa_public_key?: string | null
+          hardware_type?: string | null
           id?: string | null
-          kyber_public_key?: string | null
-          updated_at?: string | null
+          is_active?: boolean | null
+          is_hardware?: boolean | null
           user_id?: string | null
           wallet_address?: string | null
+          wallet_name?: string | null
+          wallet_type?: string | null
         }
         Update: {
           created_at?: string | null
-          dilithium_public_key?: string | null
-          ecdsa_public_key?: string | null
+          hardware_type?: string | null
           id?: string | null
-          kyber_public_key?: string | null
-          updated_at?: string | null
+          is_active?: boolean | null
+          is_hardware?: boolean | null
           user_id?: string | null
           wallet_address?: string | null
+          wallet_name?: string | null
+          wallet_type?: string | null
         }
         Relationships: []
       }
