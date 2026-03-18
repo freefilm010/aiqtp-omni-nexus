@@ -5571,6 +5571,167 @@ export type Database = {
           },
         ]
       }
+      reward_redemptions: {
+        Row: {
+          amount_paid: number
+          budget_year: number
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          payment_method: string
+          reward_id: string
+          shipping_address: Json | null
+          status: string
+          tracking_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          budget_year?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method: string
+          reward_id: string
+          shipping_address?: Json | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          budget_year?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          reward_id?: string
+          shipping_address?: Json | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards_budget: {
+        Row: {
+          created_at: string
+          fiscal_year: number
+          id: string
+          is_locked: boolean
+          max_rewards_budget: number | null
+          max_rewards_percent: number
+          remaining_budget: number | null
+          total_allocated: number
+          total_distributed: number
+          total_platform_profit: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fiscal_year: number
+          id?: string
+          is_locked?: boolean
+          max_rewards_budget?: number | null
+          max_rewards_percent?: number
+          remaining_budget?: number | null
+          total_allocated?: number
+          total_distributed?: number
+          total_platform_profit?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fiscal_year?: number
+          id?: string
+          is_locked?: boolean
+          max_rewards_budget?: number | null
+          max_rewards_percent?: number
+          remaining_budget?: number | null
+          total_allocated?: number
+          total_distributed?: number
+          total_platform_profit?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rewards_catalog: {
+        Row: {
+          available_from: string | null
+          available_until: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_seasonal: boolean
+          name: string
+          points_price: number | null
+          qtc_price: number | null
+          redeemed_count: number
+          sort_order: number
+          stock_quantity: number | null
+          subcategory: string | null
+          tier_required: string | null
+          value_usd: number
+        }
+        Insert: {
+          available_from?: string | null
+          available_until?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_seasonal?: boolean
+          name: string
+          points_price?: number | null
+          qtc_price?: number | null
+          redeemed_count?: number
+          sort_order?: number
+          stock_quantity?: number | null
+          subcategory?: string | null
+          tier_required?: string | null
+          value_usd?: number
+        }
+        Update: {
+          available_from?: string | null
+          available_until?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_seasonal?: boolean
+          name?: string
+          points_price?: number | null
+          qtc_price?: number | null
+          redeemed_count?: number
+          sort_order?: number
+          stock_quantity?: number | null
+          subcategory?: string | null
+          tier_required?: string | null
+          value_usd?: number
+        }
+        Relationships: []
+      }
       satellite_services: {
         Row: {
           affiliate_code: string | null

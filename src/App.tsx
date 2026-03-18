@@ -71,6 +71,7 @@ const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
 // SatelliteHub merged into ConnectorsPage
 const GiveawayPage = lazy(() => import("./pages/GiveawayPage"));
 const StatsArenaPage = lazy(() => import("./pages/StatsArenaPage"));
+const RewardsStorePage = lazy(() => import("./pages/RewardsStorePage"));
 
 const queryClient = new QueryClient();
 
@@ -342,6 +343,7 @@ const App = () => (
                       <Route path="/satellite" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route path="/giveaway" element={<GiveawayPage />} />
                       <Route path="/stats" element={<StatsArenaPage />} />
+                      <Route path="/rewards" element={<RewardsStorePage />} />
                       <Route
                         path="/ai-assistant"
                         element={
