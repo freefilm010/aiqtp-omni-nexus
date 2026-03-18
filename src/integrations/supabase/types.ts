@@ -5893,12 +5893,16 @@ export type Database = {
           bank_name: string | null
           card_brand: string | null
           created_at: string
+          exp_month: number | null
+          exp_year: number | null
           id: string
           is_default: boolean | null
           last_four: string | null
           metadata: Json | null
           method_type: string
           nickname: string
+          stripe_customer_id: string | null
+          stripe_payment_method_id: string | null
           updated_at: string
           user_id: string
         }
@@ -5906,12 +5910,16 @@ export type Database = {
           bank_name?: string | null
           card_brand?: string | null
           created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
           id?: string
           is_default?: boolean | null
           last_four?: string | null
           metadata?: Json | null
           method_type?: string
           nickname: string
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -5919,12 +5927,16 @@ export type Database = {
           bank_name?: string | null
           card_brand?: string | null
           created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
           id?: string
           is_default?: boolean | null
           last_four?: string | null
           metadata?: Json | null
           method_type?: string
           nickname?: string
+          stripe_customer_id?: string | null
+          stripe_payment_method_id?: string | null
           updated_at?: string
           user_id?: string
         }
