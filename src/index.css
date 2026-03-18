@@ -14,8 +14,7 @@
    - Data / Tech: Neon Cyan (#06b6d4)
 */
 
-/* Google Fonts - Professional Monospace & Sans */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Google Fonts loaded via HTML <link> to avoid render-blocking @import */
 
 @layer base {
   :root {
