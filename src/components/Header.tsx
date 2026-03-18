@@ -54,7 +54,8 @@ import {
   ExternalLink,
   Coins,
   Home,
-  Plug
+  Plug,
+  Gift
 } from "lucide-react";
 
 const Header = () => {
