@@ -264,9 +264,6 @@ const QuantClawPage = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="store-listings">
-            <StoreListingAutomation />
-          </TabsContent>
 
           <TabsContent value="rag">
             <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">

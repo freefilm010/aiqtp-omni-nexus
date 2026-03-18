@@ -84,6 +84,7 @@ const AdminDashboard = () => {
             <Route path="data-marketplace" element={<DataMarketplace />} />
             <Route path="branding" element={<BrandingRegistry />} />
             <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
+            <Route path="store-listings" element={<StoreListingAutomation />} />
             <Route path="users" element={<AdminOverview />} />
             <Route path="logs" element={<AdminOverview />} />
             <Route path="settings" element={<AdminOverview />} />
