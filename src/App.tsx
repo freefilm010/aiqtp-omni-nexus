@@ -459,6 +459,7 @@ const App = () => (
                         }
                       />
                       <Route path="/capitol-trades" element={<CapitolTradesPage />} />
+                      <Route path="/broadcast" element={<BroadcastStationPage />} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
