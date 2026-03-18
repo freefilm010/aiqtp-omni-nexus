@@ -17,6 +17,8 @@ interface SavedMethod {
   last_four: string | null;
   card_brand: string | null;
   bank_name: string | null;
+  exp_month: number | null;
+  exp_year: number | null;
   is_default: boolean;
   created_at: string;
 }
