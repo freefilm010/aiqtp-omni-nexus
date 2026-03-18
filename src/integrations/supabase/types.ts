@@ -3144,6 +3144,208 @@ export type Database = {
         }
         Relationships: []
       }
+      giveaway_campaigns: {
+        Row: {
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          funded_amount: number
+          funding_status: string
+          id: string
+          name: string
+          rules_url: string | null
+          slug: string
+          starts_at: string | null
+          status: string
+          total_prize_pool: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          funded_amount?: number
+          funding_status?: string
+          id?: string
+          name: string
+          rules_url?: string | null
+          slug: string
+          starts_at?: string | null
+          status?: string
+          total_prize_pool?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          funded_amount?: number
+          funding_status?: string
+          id?: string
+          name?: string
+          rules_url?: string | null
+          slug?: string
+          starts_at?: string | null
+          status?: string
+          total_prize_pool?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      giveaway_entries: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          current_tier: string
+          id: string
+          is_winner: boolean
+          prize_awarded_at: string | null
+          prize_id: string | null
+          referral_code: string
+          updated_at: string
+          user_id: string
+          verified_referral_count: number
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          current_tier?: string
+          id?: string
+          is_winner?: boolean
+          prize_awarded_at?: string | null
+          prize_id?: string | null
+          referral_code: string
+          updated_at?: string
+          user_id: string
+          verified_referral_count?: number
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          current_tier?: string
+          id?: string
+          is_winner?: boolean
+          prize_awarded_at?: string | null
+          prize_id?: string | null
+          referral_code?: string
+          updated_at?: string
+          user_id?: string
+          verified_referral_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "giveaway_entries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "giveaway_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "giveaway_entries_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "giveaway_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      giveaway_prizes: {
+        Row: {
+          awarded_count: number
+          campaign_id: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          min_referrals: number
+          name: string
+          prize_type: string
+          quantity: number
+          sort_order: number
+          tier: string
+          value_usd: number
+        }
+        Insert: {
+          awarded_count?: number
+          campaign_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          min_referrals?: number
+          name: string
+          prize_type?: string
+          quantity?: number
+          sort_order?: number
+          tier: string
+          value_usd?: number
+        }
+        Update: {
+          awarded_count?: number
+          campaign_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          min_referrals?: number
+          name?: string
+          prize_type?: string
+          quantity?: number
+          sort_order?: number
+          tier?: string
+          value_usd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "giveaway_prizes_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "giveaway_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      giveaway_referrals: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          status: string
+          verified_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+          verified_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "giveaway_referrals_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "giveaway_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       graduation_tests: {
         Row: {
           consistency_score: number | null
