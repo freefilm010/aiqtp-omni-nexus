@@ -130,29 +130,41 @@ const ComplianceRegistry = () => {
   return (
     <div className="space-y-6">
       {/* Header Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-green-400">{EIP_STANDARDS.length}</p>
-            <p className="text-xs text-muted-foreground">EIP/ERC Standards</p>
+            <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">EIP/ERC</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-amber-400">{SECURITY_STANDARDS.length}</p>
-            <p className="text-xs text-muted-foreground">NIST/FIPS Standards</p>
+            <p className="text-2xl font-bold text-primary">{OPENZEPPELIN_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">OpenZeppelin</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-blue-400">{ISO_STANDARDS.length}</p>
-            <p className="text-xs text-muted-foreground">ISO Standards</p>
+            <p className="text-2xl font-bold text-primary">{SECURITY_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">NIST/FIPS</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-red-400">{requiredCount}</p>
-            <p className="text-xs text-muted-foreground">Required for Compliance</p>
+            <p className="text-2xl font-bold text-primary">{PQC_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">PQC/CSRC</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3 text-center">
+            <p className="text-2xl font-bold text-primary">{ISO_STANDARDS.length}</p>
+            <p className="text-[10px] text-muted-foreground">ISO</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3 text-center">
+            <p className="text-2xl font-bold text-destructive">{requiredCount}</p>
+            <p className="text-[10px] text-muted-foreground">Required</p>
           </CardContent>
         </Card>
       </div>
