@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SmartTransferRouter from "@/components/payments/SmartTransferRouter";
+import SavedPaymentMethods from "@/components/payments/SavedPaymentMethods";
 import GuidedTour, { TourStep } from "@/components/onboarding/GuidedTour";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -410,6 +411,9 @@ const WalletAssets = () => {
             <div data-tour="smart-router">
               <SmartTransferRouter />
             </div>
+
+            {/* Saved Payment Methods */}
+            <SavedPaymentMethods />
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Stripe Card Payments */}
