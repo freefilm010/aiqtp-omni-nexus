@@ -88,23 +88,13 @@ serve(async (req) => {
           });
         if (adminError) console.error("Error recording admin revenue:", adminError);
 
-        // Credit platform wallet
-        const { error: walletError } = await supabase
-          .from("platform_wallets")
-          .update({
-            balance: supabase.rpc ? amount : amount, // Will use raw update
-          })
-          .eq("currency", session.currency?.toUpperCase() || "USD")
-          .eq("wallet_type", "fiat");
-        
-        // Use direct SQL-style increment via RPC or raw update
-        await supabase.rpc("increment_wallet_balance", {
+        // Credit platform wallet via atomic increment
+        const { error: walletError } = await supabase.rpc("increment_wallet_balance", {
           p_currency: session.currency?.toUpperCase() || "USD",
           p_amount: amount,
-        }).then(({ error }) => {
-          if (error) console.error("Wallet credit error (will use fallback):", error);
-          else console.log(`Wallet credited: $${amount}`);
         });
+        if (walletError) console.error("Wallet credit error:", walletError);
+        else console.log(`Wallet credited: $${amount}`);
 
         break;
       }
