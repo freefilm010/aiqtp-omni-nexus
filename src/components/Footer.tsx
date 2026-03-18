@@ -101,11 +101,13 @@ const Footer = () => {
     { to: "/fees", label: "Platform Fees", icon: Percent },
     { to: "/achievements", label: "Achievements", icon: Trophy },
     { to: "/institutional", label: "Institutional Services", icon: Shield },
-    { to: "/admin", label: "Admin Dashboard", icon: Shield },
+    ...(isAdmin ? [{ to: "/admin", label: "Admin Dashboard", icon: Shield }] : []),
   ];
 
   const legalLinks = [
     { to: "/legal", label: "Risk Disclaimers" },
+    { to: "/legal", label: "Privacy Policy" },
+    { to: "/legal", label: "Terms of Service" },
     { to: "/settings/accessibility", label: "Accessibility" },
   ];
 
