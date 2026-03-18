@@ -81,7 +81,7 @@ const CapitolCommunity = () => {
   const fetchPosts = useCallback(async () => {
     const query = supabase
       .from("capitol_community_posts")
-      .select("*, profiles:user_id(full_name, avatar_url)")
+      .select("*")
       .order(sortBy === "hot" ? "likes_count" : "created_at", { ascending: false })
       .limit(50);
 
@@ -90,7 +90,28 @@ const CapitolCommunity = () => {
       console.error("Failed to fetch posts:", error);
       return;
     }
-    setPosts((data as Post[]) || []);
+
+    // Fetch profile names for post authors
+    const userIds = [...new Set((data || []).map((p) => p.user_id))];
+    let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+      if (profiles) {
+        for (const p of profiles) {
+          profileMap[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+        }
+      }
+    }
+
+    setPosts(
+      (data || []).map((p) => ({
+        ...p,
+        profiles: profileMap[p.user_id] || null,
+      })) as Post[]
+    );
     setLoading(false);
   }, [sortBy]);
 
