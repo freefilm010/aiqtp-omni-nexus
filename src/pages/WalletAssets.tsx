@@ -744,9 +744,9 @@ const WalletAssets = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">Aggressive Strategy</p>
+                        <p className="font-medium">Ultra-Aggressive Strategy</p>
                         <p className="text-sm text-muted-foreground">
-                          70% growth / 30% stable allocation
+                          95% growth / 5% stable allocation
                         </p>
                       </div>
                       <Switch defaultChecked />
