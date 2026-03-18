@@ -62,7 +62,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Security token — regulated, compliance-ready',
     chain: 'Ethereum',
     features: ['KYC/AML', 'Partitions', 'Forced Transfer'],
-    standardIds: ['erc-1400', 'erc-3643'],
+    standardIds: ['erc-1400', 'erc-3643', 'oz-access-control', 'oz-security'],
     valueNature: 'regulatory' as const,
   },
   { 
