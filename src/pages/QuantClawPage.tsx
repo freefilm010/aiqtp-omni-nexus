@@ -191,6 +191,10 @@ const QuantClawPage = () => {
                       ["freqtrade_optimize", "ml-predictions + factor engine"],
                       ["ccxt_sim_order", "ccxt-trading (paper mode)"],
                       ["ccxt_live_order", "ccxt-trading (live, admin-gated)"],
+                      ["social_media_post", "quantclaw-marketing (Lovable AI)"],
+                      ["marketing_campaign", "quantclaw-marketing (campaign engine)"],
+                      ["content_generator", "quantclaw-marketing (content AI)"],
+                      ["campaign_scheduler", "automation_templates + webhooks"],
                       ["factor_generation", "generate-factors edge function"],
                       ["portfolio_optimize", "portfolio/optimization.ts"],
                     ].map(([tool, service]) => (
