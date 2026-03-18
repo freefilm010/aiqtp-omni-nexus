@@ -92,6 +92,8 @@ const TreasuryWallets = () => {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawAddress, setWithdrawAddress] = useState("");
   const [withdrawing, setWithdrawing] = useState(false);
+  const [activeAction, setActiveAction] = useState<"deposit" | "transfer" | "convert" | "swap" | "stake" | null>(null);
+  const [actionWallet, setActionWallet] = useState<PlatformWallet | null>(null);
   const [newWallet, setNewWallet] = useState({
     wallet_type: 'crypto',
     currency: '',
