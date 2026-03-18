@@ -31,7 +31,6 @@ import {
   Plus,
   RefreshCw,
   ArrowUpRight,
-  ArrowDownLeft,
   Send,
   AlertTriangle
 } from "lucide-react";
@@ -46,6 +45,8 @@ import {
 import { useMarketPrices } from "@/hooks/useMarketPrices";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { WalletCard } from "./treasury/WalletCard";
+import { WalletActionDialogs } from "./treasury/WalletActionDialogs";
 
 interface PlatformWallet {
   id: string;
