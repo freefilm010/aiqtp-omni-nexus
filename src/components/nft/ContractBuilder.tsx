@@ -44,7 +44,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Gas-optimized unique tokens, batch mint',
     chain: 'Ethereum',
     features: ['Batch Mint', 'Gas Savings', 'Royalties'],
-    standardIds: ['erc-721a', 'erc-721', 'eip-2981'],
+    standardIds: ['erc-721a', 'erc-721', 'eip-2981', 'oz-erc721', 'oz-security'],
     valueNature: 'like_but_not_similar' as const,
   },
   { 
