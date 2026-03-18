@@ -496,27 +496,25 @@ const WalletAssets = () => {
                           try {
                             const { data: { user } } = await supabase.auth.getUser();
                             if (user) {
-                              // Check quwallet_addresses first, then platform_wallets
-                              const { data: quAddr } = await supabase
+                              // Try quwallet_addresses first
+                              const { data: quAddrs } = await supabase
                                 .from("quwallet_addresses")
-                                .select("address")
-                                .eq("currency", coin)
-                                .limit(1)
-                                .maybeSingle();
+                                .select("address, currency")
+                                .limit(20);
                               
-                              if (quAddr?.address) {
-                                walletParam = `&walletAddress=${encodeURIComponent(quAddr.address)}`;
+                              const matchedQu = quAddrs?.find((a: any) => a.currency === coin);
+                              if (matchedQu?.address) {
+                                walletParam = `&walletAddress=${encodeURIComponent(matchedQu.address)}`;
                               } else {
-                                const { data: platWallet } = await supabase
+                                // Fallback to platform_wallets
+                                const { data: platWallets } = await supabase
                                   .from("platform_wallets")
-                                  .select("wallet_address")
-                                  .eq("currency", coin)
-                                  .eq("is_active", true)
-                                  .limit(1)
-                                  .maybeSingle();
+                                  .select("wallet_address, currency, is_active")
+                                  .limit(20);
                                 
-                                if (platWallet?.wallet_address) {
-                                  walletParam = `&walletAddress=${encodeURIComponent(platWallet.wallet_address)}`;
+                                const matchedPlat = platWallets?.find((w: any) => w.currency === coin && w.is_active);
+                                if (matchedPlat?.wallet_address) {
+                                  walletParam = `&walletAddress=${encodeURIComponent(matchedPlat.wallet_address)}`;
                                 }
                               }
                             }
