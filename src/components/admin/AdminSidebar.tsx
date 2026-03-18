@@ -24,7 +24,8 @@ import {
   ArrowUpDown,
   Palette,
   Database,
-  Globe
+  Globe,
+  Radar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
   { title: "Auto NFT Generator", href: "/admin/nft-generator", icon: Palette, section: "Revenue" },
   { title: "Data Marketplace", href: "/admin/data-marketplace", icon: Database },
   { title: "Branding Registry", href: "/admin/branding", icon: Globe },
+  { title: "Market Intelligence", href: "/admin/market-intel", icon: Radar },
   { title: "Operators", href: "/admin/operators", icon: Building2, section: "Growth" },
   { title: "Token Factory", href: "/admin/tokens", icon: Coins },
   { title: "Contests & Airdrops", href: "/admin/contests", icon: Trophy },

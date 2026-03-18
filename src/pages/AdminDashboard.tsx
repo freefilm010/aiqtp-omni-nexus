@@ -23,6 +23,7 @@ import ExchangeManager from "@/components/admin/ExchangeManager";
 import AutoNFTGenerator from "@/components/admin/AutoNFTGenerator";
 import DataMarketplace from "@/components/admin/DataMarketplace";
 import BrandingRegistry from "@/components/admin/BrandingRegistry";
+import MarketCrawlerAnalytics from "@/components/intelligence/MarketCrawlerAnalytics";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -81,6 +82,7 @@ const AdminDashboard = () => {
             <Route path="nft-generator" element={<AutoNFTGenerator />} />
             <Route path="data-marketplace" element={<DataMarketplace />} />
             <Route path="branding" element={<BrandingRegistry />} />
+            <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
             <Route path="users" element={<AdminOverview />} />
             <Route path="logs" element={<AdminOverview />} />
             <Route path="settings" element={<AdminOverview />} />
