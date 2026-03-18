@@ -457,6 +457,7 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      <Route path="/capitol-trades" element={<CapitolTradesPage />} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
