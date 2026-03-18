@@ -68,7 +68,7 @@ const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
 const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
-const SatelliteHub = lazy(() => import("./pages/SatelliteHub"));
+// SatelliteHub merged into ConnectorsPage
 
 const queryClient = new QueryClient();
 
