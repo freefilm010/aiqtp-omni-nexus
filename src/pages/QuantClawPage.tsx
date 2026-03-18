@@ -39,6 +39,34 @@ const TIER_DATA = [
 
 const QuantClawPage = () => {
   const [activeAgent, setActiveAgent] = useState<"dev" | "prod">("dev");
+  const [marketingLoading, setMarketingLoading] = useState(false);
+  const [marketingResult, setMarketingResult] = useState("");
+  const [marketingTopic, setMarketingTopic] = useState("");
+  const [marketingPlatform, setMarketingPlatform] = useState("twitter");
+  const [marketingAction, setMarketingAction] = useState<"generate_post" | "generate_campaign" | "generate_content">("generate_post");
+
+  const handleMarketing = async () => {
+    setMarketingLoading(true);
+    setMarketingResult("");
+    try {
+      const { data, error } = await supabase.functions.invoke("quantclaw-marketing", {
+        body: {
+          action: marketingAction,
+          platform: marketingPlatform,
+          topic: marketingTopic || "AIQTP quantum trading platform features",
+          tone: "professional",
+          targetAudience: "crypto traders and quant developers",
+        },
+      });
+      if (error) throw error;
+      setMarketingResult(data?.content || "No content generated");
+      toast.success("Content generated successfully");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate content");
+    } finally {
+      setMarketingLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[hsl(225,20%,6%)]">
