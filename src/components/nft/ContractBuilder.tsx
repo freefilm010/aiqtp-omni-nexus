@@ -3,52 +3,76 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import {
   FileCode,
   Rocket,
   Shield,
-  Code2,
   Copy,
   ExternalLink,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  BookOpen
 } from "lucide-react";
+import { ALL_STANDARDS, VALUE_NATURE_LABELS } from "@/lib/standards/protocolRegistry";
 
 const CONTRACT_TEMPLATES = [
   { 
+    id: 'erc20', 
+    name: 'ERC-20', 
+    description: 'Fungible token — like currency, similar in value',
+    chain: 'Ethereum',
+    features: ['Fungible', 'Transferable', 'Divisible'],
+    standardIds: ['erc-20', 'erc-2612'],
+    valueNature: 'like_and_similar' as const,
+  },
+  { 
     id: 'erc721', 
     name: 'ERC-721', 
-    description: 'Standard NFT - One unique token per ID',
+    description: 'Non-fungible — unique, NOT similar in value',
     chain: 'Ethereum',
-    features: ['Single Mint', 'Metadata URI', 'Royalties']
+    features: ['Single Mint', 'Metadata URI', 'Royalties'],
+    standardIds: ['erc-721', 'eip-2981'],
+    valueNature: 'like_but_not_similar' as const,
   },
   { 
     id: 'erc721a', 
     name: 'ERC-721A', 
-    description: 'Gas-optimized for batch minting',
+    description: 'Gas-optimized unique tokens, batch mint',
     chain: 'Ethereum',
-    features: ['Batch Mint', 'Gas Savings', 'Royalties']
+    features: ['Batch Mint', 'Gas Savings', 'Royalties'],
+    standardIds: ['erc-721a', 'erc-721', 'eip-2981'],
+    valueNature: 'like_but_not_similar' as const,
   },
   { 
     id: 'erc1155', 
     name: 'ERC-1155', 
-    description: 'Multi-token standard - Same ID, multiple copies',
+    description: 'Multi-token — editions & mixed assets',
     chain: 'Ethereum',
-    features: ['Semi-Fungible', 'Batch Transfer', 'Multi-Token']
+    features: ['Semi-Fungible', 'Batch Transfer', 'Multi-Token'],
+    standardIds: ['erc-1155', 'eip-2981'],
+    valueNature: 'hybrid' as const,
   },
   { 
-    id: 'spl', 
-    name: 'SPL Token', 
-    description: 'Solana NFT Standard',
-    chain: 'Solana',
-    features: ['Metaplex', 'Candy Machine', 'Low Fees']
+    id: 'erc1400', 
+    name: 'ERC-1400', 
+    description: 'Security token — regulated, compliance-ready',
+    chain: 'Ethereum',
+    features: ['KYC/AML', 'Partitions', 'Forced Transfer'],
+    standardIds: ['erc-1400', 'erc-3643'],
+    valueNature: 'regulatory' as const,
+  },
+  { 
+    id: 'erc5192', 
+    name: 'ERC-5192', 
+    description: 'Soulbound — non-transferable credentials',
+    chain: 'Ethereum',
+    features: ['Non-Transferable', 'Identity', 'Credentials'],
+    standardIds: ['erc-5192', 'erc-721'],
+    valueNature: 'like_but_not_similar' as const,
   },
 ];
 
@@ -286,7 +310,7 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
         </CardContent>
       </Card>
 
-      {/* Deployed Contracts */}
+      {/* Sidebar */}
       <div className="space-y-4">
         <Card>
           <CardHeader>
@@ -303,12 +327,69 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
                   <p className="text-sm text-muted-foreground">{selectedTemplate.description}</p>
                 </div>
                 <div>
+                  <p className="text-xs font-medium mb-1">Value Classification</p>
+                  <Badge variant="outline" className="text-xs">
+                    {VALUE_NATURE_LABELS[selectedTemplate.valueNature]?.label}
+                  </Badge>
+                </div>
+                <div>
                   <p className="text-xs text-muted-foreground mb-2">Features</p>
                   <div className="flex flex-wrap gap-1">
                     {selectedTemplate.features.map((f, i) => (
                       <Badge key={i} variant="secondary" className="text-xs">{f}</Badge>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Applicable Standards Disclosure */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Applicable Standards
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Standards this contract must conform to
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {selectedTemplate && (
+              <div className="space-y-2">
+                {selectedTemplate.standardIds.map((sid) => {
+                  const std = ALL_STANDARDS.find(s => s.id === sid);
+                  if (!std) return null;
+                  return (
+                    <div key={sid} className="p-2 rounded border bg-muted/30 space-y-1">
+                      <div className="flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3 text-primary" />
+                        <span className="text-xs font-semibold">{std.name.split(':')[0]}</span>
+                        {std.requiredForCompliance && (
+                          <Badge variant="destructive" className="text-[9px] h-4">REQ</Badge>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground leading-snug">
+                        {std.description.slice(0, 120)}…
+                      </p>
+                    </div>
+                  );
+                })}
+                {/* Always show security standards */}
+                <div className="pt-2 border-t mt-2">
+                  <p className="text-[10px] text-muted-foreground mb-1 font-medium">Security Layer</p>
+                  {['fips-203', 'fips-204'].map((sid) => {
+                    const std = ALL_STANDARDS.find(s => s.id === sid);
+                    if (!std) return null;
+                    return (
+                      <div key={sid} className="flex items-center gap-1 py-0.5">
+                        <Shield className="h-3 w-3 text-primary" />
+                        <span className="text-[10px]">{std.name.split(':')[0]}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -332,7 +413,7 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium">{contract.name}</span>
                       <Badge variant="outline" className="text-xs">
-                        <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                        <CheckCircle className="h-3 w-3 mr-1" />
                         Deployed
                       </Badge>
                     </div>

@@ -5,6 +5,7 @@ import NFTCreator from "@/components/nft/NFTCreator";
 import NFTWallet from "@/components/nft/NFTWallet";
 import NFTMarketplace from "@/components/nft/NFTMarketplace";
 import ContractBuilder from "@/components/nft/ContractBuilder";
+import ComplianceRegistry from "@/components/standards/ComplianceRegistry";
 import MarketplaceCompetitions from "@/components/marketplace/MarketplaceCompetitions";
 import MarketplaceSuggestions from "@/components/marketplace/MarketplaceSuggestions";
 import { 
@@ -13,7 +14,8 @@ import {
   ShoppingCart, 
   FileCode,
   Trophy,
-  Lightbulb
+  Lightbulb,
+  Shield
 } from "lucide-react";
 
 const NFTStudio = () => {
@@ -24,12 +26,12 @@ const NFTStudio = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">NFT Studio</h1>
           <p className="text-muted-foreground mt-1">
-            Create • Collect • Trade • Compete • Deploy Smart Contracts
+            Create • Collect • Trade • Compete • Deploy • Standards Compliance
           </p>
         </div>
 
         <Tabs defaultValue="create" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="create" className="flex items-center gap-1 text-xs">
               <Palette className="h-4 w-4" />
               Create
@@ -53,6 +55,10 @@ const NFTStudio = () => {
             <TabsTrigger value="contracts" className="flex items-center gap-1 text-xs">
               <FileCode className="h-4 w-4" />
               Contracts
+            </TabsTrigger>
+            <TabsTrigger value="standards" className="flex items-center gap-1 text-xs">
+              <Shield className="h-4 w-4" />
+              Standards
             </TabsTrigger>
           </TabsList>
 
@@ -78,6 +84,10 @@ const NFTStudio = () => {
 
           <TabsContent value="contracts">
             <ContractBuilder />
+          </TabsContent>
+
+          <TabsContent value="standards">
+            <ComplianceRegistry />
           </TabsContent>
         </Tabs>
       </main>
