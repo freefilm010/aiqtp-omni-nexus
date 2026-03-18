@@ -75,7 +75,7 @@ const BroadcastStation = () => {
   const [isLive, setIsLive] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [tickerIndex, setTickerIndex] = useState(0);
-  const tickerRef = useRef<NodeJS.Timeout | null>(null);
+  const tickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchBroadcasts = useCallback(async () => {
     const { data } = await supabase
