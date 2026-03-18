@@ -328,21 +328,16 @@ const App = () => (
                         }
                       />
                       <Route
-                        path="/connections"
+                        path="/connectors"
                         element={
                           <ProtectedRoute>
-                            <ConnectionsPage />
+                            <ConnectorsPage />
                           </ProtectedRoute>
                         }
                       />
-                      <Route
-                        path="/satellite"
-                        element={
-                          <ProtectedRoute>
-                            <SatelliteHub />
-                          </ProtectedRoute>
-                        }
-                      />
+                      {/* Legacy redirects */}
+                      <Route path="/connections" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
+                      <Route path="/satellite" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route
                         path="/ai-assistant"
                         element={

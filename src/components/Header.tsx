@@ -53,7 +53,8 @@ import {
   Percent,
   ExternalLink,
   Coins,
-  Home
+  Home,
+  Plug
 } from "lucide-react";
 
 const Header = () => {
