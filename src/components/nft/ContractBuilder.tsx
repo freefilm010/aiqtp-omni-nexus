@@ -26,7 +26,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Fungible token — like currency, similar in value',
     chain: 'Ethereum',
     features: ['Fungible', 'Transferable', 'Divisible'],
-    standardIds: ['erc-20', 'erc-2612'],
+    standardIds: ['erc-20', 'erc-2612', 'oz-erc20', 'oz-security'],
     valueNature: 'like_and_similar' as const,
   },
   { 
