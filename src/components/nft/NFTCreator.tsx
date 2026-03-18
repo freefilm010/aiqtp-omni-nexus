@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Palette,
   Upload,
@@ -16,10 +18,12 @@ import {
   Layers,
   Plus,
   X,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react";
 
 const NFTCreator = () => {
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [chain, setChain] = useState("ethereum");
@@ -28,6 +32,7 @@ const NFTCreator = () => {
   const [attributes, setAttributes] = useState<{trait: string, value: string}[]>([]);
   const [useAI, setUseAI] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [isMinting, setIsMinting] = useState(false);
 
   const addAttribute = () => {
     setAttributes([...attributes, { trait: "", value: "" }]);
@@ -37,14 +42,53 @@ const NFTCreator = () => {
     setAttributes(attributes.filter((_, i) => i !== index));
   };
 
-  const mint = () => {
-    toast.success("NFT created successfully!", {
-      description: `${name} has been minted on ${chain}`
-    });
+  const mint = async () => {
+    if (!user) {
+      toast.error("Please sign in to create NFTs");
+      return;
+    }
+    if (!name.trim()) {
+      toast.error("Please enter a name for your NFT");
+      return;
+    }
+
+    setIsMinting(true);
+    try {
+      const { error } = await supabase.from("user_nfts").insert({
+        user_id: user.id,
+        name: name.trim(),
+        description: description.trim() || null,
+        chain,
+        royalty_percent: parseFloat(royalties) || 5,
+        supply: parseInt(supply) || 1,
+        attributes: attributes.filter(a => a.trait && a.value),
+        ai_generated: useAI,
+        ai_prompt: useAI ? aiPrompt : null,
+        mint_status: "minted",
+      });
+
+      if (error) throw error;
+
+      toast.success("NFT created successfully!", {
+        description: `${name} has been minted on ${chain}`
+      });
+
+      // Reset form
+      setName("");
+      setDescription("");
+      setAttributes([]);
+      setAiPrompt("");
+      setUseAI(false);
+    } catch (error: any) {
+      console.error("NFT creation error:", error);
+      toast.error("Failed to create NFT", { description: error.message });
+    } finally {
+      setIsMinting(false);
+    }
   };
 
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -91,19 +135,11 @@ const NFTCreator = () => {
           <div className="space-y-4">
             <div>
               <Label>Name</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="My Awesome NFT"
-              />
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My Awesome NFT" />
             </div>
             <div>
               <Label>Description</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe your NFT..."
-              />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your NFT..." />
             </div>
           </div>
 
@@ -112,9 +148,7 @@ const NFTCreator = () => {
             <div>
               <Label>Blockchain</Label>
               <Select value={chain} onValueChange={setChain}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ethereum">Ethereum</SelectItem>
                   <SelectItem value="polygon">Polygon</SelectItem>
@@ -126,22 +160,11 @@ const NFTCreator = () => {
             </div>
             <div>
               <Label>Royalties (%)</Label>
-              <Input
-                type="number"
-                value={royalties}
-                onChange={(e) => setRoyalties(e.target.value)}
-                min="0"
-                max="50"
-              />
+              <Input type="number" value={royalties} onChange={(e) => setRoyalties(e.target.value)} min="0" max="50" />
             </div>
             <div>
               <Label>Supply</Label>
-              <Input
-                type="number"
-                value={supply}
-                onChange={(e) => setSupply(e.target.value)}
-                min="1"
-              />
+              <Input type="number" value={supply} onChange={(e) => setSupply(e.target.value)} min="1" />
             </div>
           </div>
 
@@ -150,8 +173,7 @@ const NFTCreator = () => {
             <div className="flex items-center justify-between">
               <Label>Attributes</Label>
               <Button variant="outline" size="sm" onClick={addAttribute}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Trait
+                <Plus className="h-4 w-4 mr-1" /> Add Trait
               </Button>
             </div>
             {attributes.map((attr, i) => (
@@ -159,20 +181,12 @@ const NFTCreator = () => {
                 <Input
                   placeholder="Trait (e.g. Background)"
                   value={attr.trait}
-                  onChange={(e) => {
-                    const newAttrs = [...attributes];
-                    newAttrs[i].trait = e.target.value;
-                    setAttributes(newAttrs);
-                  }}
+                  onChange={(e) => { const n = [...attributes]; n[i].trait = e.target.value; setAttributes(n); }}
                 />
                 <Input
                   placeholder="Value (e.g. Blue)"
                   value={attr.value}
-                  onChange={(e) => {
-                    const newAttrs = [...attributes];
-                    newAttrs[i].value = e.target.value;
-                    setAttributes(newAttrs);
-                  }}
+                  onChange={(e) => { const n = [...attributes]; n[i].value = e.target.value; setAttributes(n); }}
                 />
                 <Button variant="ghost" size="icon" onClick={() => removeAttribute(i)}>
                   <X className="h-4 w-4" />
@@ -181,9 +195,9 @@ const NFTCreator = () => {
             ))}
           </div>
 
-          <Button className="w-full" size="lg" onClick={mint}>
-            <Zap className="h-4 w-4 mr-2" />
-            Create NFT
+          <Button className="w-full" size="lg" onClick={mint} disabled={isMinting || !name.trim()}>
+            {isMinting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2" />}
+            {isMinting ? "Creating..." : "Create NFT"}
           </Button>
         </CardContent>
       </Card>
@@ -192,8 +206,7 @@ const NFTCreator = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Image className="h-5 w-5" />
-            Preview
+            <Image className="h-5 w-5" /> Preview
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -203,11 +216,9 @@ const NFTCreator = () => {
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-bold">{name || "Untitled"}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {description || "No description"}
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">{description || "No description"}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Badge>{chain}</Badge>
               <Badge variant="outline">{royalties}% royalties</Badge>
               <Badge variant="secondary">{supply} edition{parseInt(supply) > 1 ? 's' : ''}</Badge>
