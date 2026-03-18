@@ -367,6 +367,10 @@ const Header = () => {
                     <Trophy className="mr-2 h-4 w-4 text-amber-500" />
                     Achievements
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/wallet-assets')}>
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Assets & Wallets
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/portfolio')}>
                     <BarChart3 className="mr-2 h-4 w-4" />
                     Portfolio
