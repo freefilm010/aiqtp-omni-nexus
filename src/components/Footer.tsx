@@ -336,6 +336,31 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* Crisis & Responsible Trading Resources */}
+        <div className="py-4 border-t border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] text-white/50">
+            {Object.values(CRISIS_HELPLINES).map((section) => (
+              <div key={section.title}>
+                <h5 className="font-semibold text-white/70 mb-1.5">{section.title}</h5>
+                <ul className="space-y-1">
+                  {section.resources.map((r) => (
+                    <li key={r.name}>
+                      <a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-smooth">
+                        {r.name}
+                        {r.phone ? ` — ${r.phone}` : ""}
+                      </a>
+                      <span className="block text-white/30">{r.available}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-white/40 mt-3">
+            If you or someone you know is struggling with gambling, financial stress, or a mental health crisis, please reach out. Help is available 24/7.
+          </p>
+        </div>
+
         {/* Sitemap */}
         <div className="py-4 border-t border-white/10">
           <h4 className="text-xs font-semibold text-white/50 mb-3">SITEMAP</h4>
