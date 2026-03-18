@@ -69,6 +69,7 @@ const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
 // SatelliteHub merged into ConnectorsPage
+const GiveawayPage = lazy(() => import("./pages/GiveawayPage"));
 
 const queryClient = new QueryClient();
 
