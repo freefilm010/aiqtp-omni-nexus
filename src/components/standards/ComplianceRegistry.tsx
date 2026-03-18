@@ -234,7 +234,7 @@ const ComplianceRegistry = () => {
         </TabsList>
 
         {[
-          { value: 'eip', data: EIP_STANDARDS },
+          { value: 'eip', data: [...EIP_STANDARDS, ...EXTENDED_EIP_STANDARDS] },
           { value: 'oz', data: OPENZEPPELIN_STANDARDS },
           { value: 'security', data: SECURITY_STANDARDS },
           { value: 'pqc', data: PQC_STANDARDS },
