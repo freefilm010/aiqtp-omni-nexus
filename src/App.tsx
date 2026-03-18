@@ -336,6 +336,14 @@ const App = () => (
                         }
                       />
                       <Route
+                        path="/satellite"
+                        element={
+                          <ProtectedRoute>
+                            <SatelliteHub />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
                         path="/ai-assistant"
                         element={
                           <ProtectedRoute>
