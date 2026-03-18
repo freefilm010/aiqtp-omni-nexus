@@ -105,35 +105,54 @@ const WalletAssets = () => {
   const totalMonthlyRevenue = revenueStreams.reduce((sum, s) => sum + s.monthlyRevenue, 0);
   const avgProfitability = revenueStreams.reduce((sum, s) => sum + s.profitability, 0) / revenueStreams.length;
 
-  const handleStripeCheckout = async (productType: "credits" | "subscription") => {
+  const [customAmount, setCustomAmount] = useState("");
+
+  const handleStripeDeposit = async (amount: number) => {
     setLoading(true);
     try {
-      const config = productType === "subscription" 
+      const isPreset = [20, 50, 100, 500].includes(amount);
+      const body = isPreset
         ? {
-            mode: "subscription" as const,
-            amount: 49,
-            productName: "AIQTP Pro Subscription",
-            productDescription: "Monthly access to all premium features",
-            successUrl: `${window.location.origin}/payment-success?type=subscription`,
+            planId: `deposit-${amount}`,
+            successUrl: `${window.location.origin}/payment-success?type=deposit&amount=${amount}`,
             cancelUrl: `${window.location.origin}/wallet-assets`,
           }
         : {
-            mode: "payment" as const,
-            amount: 100,
-            productName: "Platform Credits",
-            productDescription: "Add $100 trading credits to your account",
-            successUrl: `${window.location.origin}/payment-success?type=credits`,
+            planId: "custom-deposit",
+            amount,
+            successUrl: `${window.location.origin}/payment-success?type=deposit&amount=${amount}`,
             cancelUrl: `${window.location.origin}/wallet-assets`,
           };
 
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
-        body: config,
-      });
+      const { data, error } = await supabase.functions.invoke("stripe-checkout", { body });
 
       if (error) throw error;
       if (data?.url) {
         window.location.href = data.url;
       }
+    } catch (error: any) {
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to initiate checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubscription = async (planId: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+        body: {
+          planId,
+          successUrl: `${window.location.origin}/payment-success?type=subscription`,
+          cancelUrl: `${window.location.origin}/wallet-assets`,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
     } catch (error: any) {
       toast({
         title: "Payment Error",
@@ -411,7 +430,7 @@ const WalletAssets = () => {
                         key={amount}
                         variant="outline"
                         className="h-14 text-lg font-semibold"
-                        onClick={() => handleStripeCheckout("credits")}
+                        onClick={() => handleStripeDeposit(amount)}
                         disabled={loading}
                       >
                         ${amount}
@@ -419,11 +438,26 @@ const WalletAssets = () => {
                     ))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input placeholder="Custom $" type="number" className="flex-1" />
+                    <Input 
+                      placeholder="Custom $" 
+                      type="number" 
+                      min={5}
+                      max={10000}
+                      className="flex-1" 
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                    />
                     <Button 
                       className="bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => handleStripeCheckout("credits")}
-                      disabled={loading}
+                      onClick={() => {
+                        const amt = Number(customAmount);
+                        if (amt >= 5 && amt <= 10000) {
+                          handleStripeDeposit(amt);
+                        } else {
+                          toast({ title: "Invalid amount", description: "Enter between $5 and $10,000", variant: "destructive" });
+                        }
+                      }}
+                      disabled={loading || !customAmount}
                     >
                       <DollarSign className="h-4 w-4 mr-1" />
                       Pay
@@ -520,7 +554,7 @@ const WalletAssets = () => {
                     </ul>
                     <Button 
                       className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700"
-                      onClick={() => handleStripeCheckout("subscription")}
+                      onClick={() => handleSubscription("pro-monthly")}
                       disabled={loading}
                     >
                       Start Pro Trial

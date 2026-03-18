@@ -4,10 +4,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2 } from "lucide-react";
 import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AGENT_TOOLS_DEV = [
   { name: "search_trading_code", desc: "RAG search across Tier 1+2 trading repos", icon: Search },
@@ -16,6 +21,10 @@ const AGENT_TOOLS_DEV = [
   { name: "freqtrade_backtest", desc: "Run strategy backtests", icon: FlaskConical },
   { name: "freqtrade_optimize", desc: "Hyperparameter optimization", icon: Zap },
   { name: "ccxt_sim_order", desc: "Paper trading simulation", icon: BarChart3 },
+  { name: "social_media_post", desc: "Create & schedule posts for X/Twitter, LinkedIn, Threads", icon: Share2 },
+  { name: "marketing_campaign", desc: "Generate campaigns: email, airdrop, referral, influencer", icon: Megaphone },
+  { name: "content_generator", desc: "Blog posts, press releases, newsletters for aiqtp.com", icon: Mail },
+  { name: "campaign_scheduler", desc: "Schedule multi-channel campaigns with analytics", icon: Calendar },
 ];
 
 const AGENT_TOOLS_PROD = [
@@ -30,6 +39,34 @@ const TIER_DATA = [
 
 const QuantClawPage = () => {
   const [activeAgent, setActiveAgent] = useState<"dev" | "prod">("dev");
+  const [marketingLoading, setMarketingLoading] = useState(false);
+  const [marketingResult, setMarketingResult] = useState("");
+  const [marketingTopic, setMarketingTopic] = useState("");
+  const [marketingPlatform, setMarketingPlatform] = useState("twitter");
+  const [marketingAction, setMarketingAction] = useState<"generate_post" | "generate_campaign" | "generate_content">("generate_post");
+
+  const handleMarketing = async () => {
+    setMarketingLoading(true);
+    setMarketingResult("");
+    try {
+      const { data, error } = await supabase.functions.invoke("quantclaw-marketing", {
+        body: {
+          action: marketingAction,
+          platform: marketingPlatform,
+          topic: marketingTopic || "AIQTP quantum trading platform features",
+          tone: "professional",
+          targetAudience: "crypto traders and quant developers",
+        },
+      });
+      if (error) throw error;
+      setMarketingResult(data?.content || "No content generated");
+      toast.success("Content generated successfully");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate content");
+    } finally {
+      setMarketingLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[hsl(225,20%,6%)]">
@@ -72,6 +109,7 @@ const QuantClawPage = () => {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-[hsl(223,18%,9%)] border border-[hsl(222,14%,17%)]">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="marketing">Marketing</TabsTrigger>
             <TabsTrigger value="rag">RAG Corpus</TabsTrigger>
             <TabsTrigger value="tools">Agent Tools</TabsTrigger>
             <TabsTrigger value="backtest">Backtest</TabsTrigger>
@@ -145,6 +183,85 @@ const QuantClawPage = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="marketing">
+            <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Megaphone className="h-5 w-5 text-primary" />
+                  Social Media & Marketing Engine
+                </CardTitle>
+                <CardDescription>
+                  AI-powered content generation for www.aiqtp.com — posts, campaigns, newsletters
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Action</label>
+                    <Select value={marketingAction} onValueChange={(v) => setMarketingAction(v as any)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="generate_post">Social Media Post</SelectItem>
+                        <SelectItem value="generate_campaign">Full Campaign</SelectItem>
+                        <SelectItem value="generate_content">Blog / Newsletter</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Platform</label>
+                    <Select value={marketingPlatform} onValueChange={setMarketingPlatform}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="twitter">X / Twitter</SelectItem>
+                        <SelectItem value="linkedin">LinkedIn</SelectItem>
+                        <SelectItem value="threads">Threads</SelectItem>
+                        <SelectItem value="blog">Blog Post</SelectItem>
+                        <SelectItem value="email">Email / Newsletter</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Topic</label>
+                    <Input
+                      placeholder="e.g. $QTC token launch, quantum trading..."
+                      value={marketingTopic}
+                      onChange={(e) => setMarketingTopic(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleMarketing}
+                  disabled={marketingLoading}
+                  className="gap-2"
+                >
+                  {marketingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Megaphone className="h-4 w-4" />}
+                  {marketingLoading ? "Generating..." : "Generate Content"}
+                </Button>
+
+                {marketingResult && (
+                  <div className="mt-4 p-4 rounded-lg bg-background/50 border border-border/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-foreground">Generated Content</h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(marketingResult);
+                          toast.success("Copied to clipboard");
+                        }}
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                    <div className="text-sm text-muted-foreground whitespace-pre-wrap max-h-96 overflow-y-auto">
+                      {marketingResult}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="rag">
             <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
               <CardHeader>
@@ -187,6 +304,10 @@ const QuantClawPage = () => {
                       ["freqtrade_optimize", "ml-predictions + factor engine"],
                       ["ccxt_sim_order", "ccxt-trading (paper mode)"],
                       ["ccxt_live_order", "ccxt-trading (live, admin-gated)"],
+                      ["social_media_post", "quantclaw-marketing (Lovable AI)"],
+                      ["marketing_campaign", "quantclaw-marketing (campaign engine)"],
+                      ["content_generator", "quantclaw-marketing (content AI)"],
+                      ["campaign_scheduler", "automation_templates + webhooks"],
                       ["factor_generation", "generate-factors edge function"],
                       ["portfolio_optimize", "portfolio/optimization.ts"],
                     ].map(([tool, service]) => (
