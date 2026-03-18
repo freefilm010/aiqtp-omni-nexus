@@ -16,6 +16,10 @@ const AGENT_TOOLS_DEV = [
   { name: "freqtrade_backtest", desc: "Run strategy backtests", icon: FlaskConical },
   { name: "freqtrade_optimize", desc: "Hyperparameter optimization", icon: Zap },
   { name: "ccxt_sim_order", desc: "Paper trading simulation", icon: BarChart3 },
+  { name: "social_media_post", desc: "Create & schedule posts for X/Twitter, LinkedIn, Threads", icon: Share2 },
+  { name: "marketing_campaign", desc: "Generate campaigns: email, airdrop, referral, influencer", icon: Megaphone },
+  { name: "content_generator", desc: "Blog posts, press releases, newsletters for aiqtp.com", icon: Mail },
+  { name: "campaign_scheduler", desc: "Schedule multi-channel campaigns with analytics", icon: Calendar },
 ];
 
 const AGENT_TOOLS_PROD = [
