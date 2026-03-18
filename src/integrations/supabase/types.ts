@@ -3146,6 +3146,90 @@ export type Database = {
           },
         ]
       }
+      fee_discount_tiers: {
+        Row: {
+          created_at: string | null
+          extra_perks: Json | null
+          fee_discount_percent: number
+          futures_voucher_monthly: number | null
+          id: string
+          is_active: boolean | null
+          min_holding: number
+          tier_name: string
+          token_symbol: string
+        }
+        Insert: {
+          created_at?: string | null
+          extra_perks?: Json | null
+          fee_discount_percent: number
+          futures_voucher_monthly?: number | null
+          id?: string
+          is_active?: boolean | null
+          min_holding: number
+          tier_name: string
+          token_symbol?: string
+        }
+        Update: {
+          created_at?: string | null
+          extra_perks?: Json | null
+          fee_discount_percent?: number
+          futures_voucher_monthly?: number | null
+          id?: string
+          is_active?: boolean | null
+          min_holding?: number
+          tier_name?: string
+          token_symbol?: string
+        }
+        Relationships: []
+      }
+      fee_vouchers: {
+        Row: {
+          created_at: string | null
+          discount_percent: number | null
+          expires_at: string
+          id: string
+          is_used: boolean | null
+          source: string | null
+          token_paid: string | null
+          used_at: string | null
+          used_on_transaction_id: string | null
+          user_id: string
+          valid_from: string | null
+          value_usd: number
+          voucher_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percent?: number | null
+          expires_at: string
+          id?: string
+          is_used?: boolean | null
+          source?: string | null
+          token_paid?: string | null
+          used_at?: string | null
+          used_on_transaction_id?: string | null
+          user_id: string
+          valid_from?: string | null
+          value_usd?: number
+          voucher_type?: string
+        }
+        Update: {
+          created_at?: string | null
+          discount_percent?: number | null
+          expires_at?: string
+          id?: string
+          is_used?: boolean | null
+          source?: string | null
+          token_paid?: string | null
+          used_at?: string | null
+          used_on_transaction_id?: string | null
+          user_id?: string
+          valid_from?: string | null
+          value_usd?: number
+          voucher_type?: string
+        }
+        Relationships: []
+      }
       forensic_transactions: {
         Row: {
           amount: number
@@ -6618,6 +6702,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      token_burns: {
+        Row: {
+          amount_burned: number
+          burn_reason: string
+          created_at: string | null
+          fee_discount_applied: number | null
+          id: string
+          token_symbol: string
+          usd_value_at_burn: number | null
+          user_id: string
+        }
+        Insert: {
+          amount_burned: number
+          burn_reason?: string
+          created_at?: string | null
+          fee_discount_applied?: number | null
+          id?: string
+          token_symbol: string
+          usd_value_at_burn?: number | null
+          user_id: string
+        }
+        Update: {
+          amount_burned?: number
+          burn_reason?: string
+          created_at?: string | null
+          fee_discount_applied?: number | null
+          id?: string
+          token_symbol?: string
+          usd_value_at_burn?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       token_contests: {
         Row: {
