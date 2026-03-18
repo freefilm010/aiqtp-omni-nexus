@@ -25,7 +25,8 @@ import {
   Palette,
   Database,
   Globe,
-  Radar
+  Radar,
+  Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
   { title: "Data Marketplace", href: "/admin/data-marketplace", icon: Database },
   { title: "Branding Registry", href: "/admin/branding", icon: Globe },
   { title: "Market Intelligence", href: "/admin/market-intel", icon: Radar },
+  { title: "Store Listings", href: "/admin/store-listings", icon: Store },
   { title: "Operators", href: "/admin/operators", icon: Building2, section: "Growth" },
   { title: "Token Factory", href: "/admin/tokens", icon: Coins },
   { title: "Contests & Airdrops", href: "/admin/contests", icon: Trophy },

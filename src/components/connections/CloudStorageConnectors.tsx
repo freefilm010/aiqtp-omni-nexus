@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   Cloud,
-  FileText,
   HardDrive,
   Upload,
   Download,
@@ -16,6 +15,7 @@ import {
   Loader2,
   BookOpen,
   Smartphone,
+  Wrench,
 } from "lucide-react";
 
 interface CloudProvider {
@@ -27,6 +27,7 @@ interface CloudProvider {
   fileCount?: number;
   syncStatus?: "synced" | "syncing" | "error";
   color: string;
+  category: "cloud" | "tool";
 }
 
 const CloudStorageConnectors = () => {
@@ -38,22 +39,7 @@ const CloudStorageConnectors = () => {
       description: "Link Google Docs, Sheets, and files directly to your workspace",
       connected: false,
       color: "text-blue-400",
-    },
-    {
-      id: "notebooklm",
-      name: "Google NotebookLM",
-      icon: <BookOpen className="h-6 w-6" />,
-      description: "Import AI-generated research summaries and audio overviews",
-      connected: false,
-      color: "text-purple-400",
-    },
-    {
-      id: "samsung-notes",
-      name: "Samsung Notes",
-      icon: <Smartphone className="h-6 w-6" />,
-      description: "Sync Samsung Notes via Samsung Cloud or exported files",
-      connected: false,
-      color: "text-indigo-400",
+      category: "cloud",
     },
     {
       id: "microsoft-onedrive",
@@ -62,6 +48,7 @@ const CloudStorageConnectors = () => {
       description: "Share Office 365 docs, Excel spreadsheets, and PowerBI reports",
       connected: false,
       color: "text-cyan-400",
+      category: "cloud",
     },
     {
       id: "google-cloud",
@@ -70,6 +57,25 @@ const CloudStorageConnectors = () => {
       description: "Access raw data, ML model files, and large datasets",
       connected: false,
       color: "text-emerald-400",
+      category: "cloud",
+    },
+    {
+      id: "notebooklm",
+      name: "Google NotebookLM",
+      icon: <BookOpen className="h-6 w-6" />,
+      description: "Import/export AI-generated research summaries and audio overviews",
+      connected: false,
+      color: "text-purple-400",
+      category: "tool",
+    },
+    {
+      id: "samsung-notes",
+      name: "Samsung Notes",
+      icon: <Smartphone className="h-6 w-6" />,
+      description: "View, create, and sync notes — import/export via Samsung Cloud",
+      connected: false,
+      color: "text-indigo-400",
+      category: "tool",
     },
   ]);
 
@@ -78,10 +84,7 @@ const CloudStorageConnectors = () => {
 
   const handleConnect = async (providerId: string) => {
     setConnecting(providerId);
-
-    // Simulate OAuth / connection flow
     await new Promise((r) => setTimeout(r, 1500));
-
     setProviders((prev) =>
       prev.map((p) =>
         p.id === providerId
@@ -90,9 +93,7 @@ const CloudStorageConnectors = () => {
       )
     );
     setConnecting(null);
-    toast.success(
-      `Connected to ${providers.find((p) => p.id === providerId)?.name}!`
-    );
+    toast.success(`Connected to ${providers.find((p) => p.id === providerId)?.name}!`);
   };
 
   const handleDisconnect = (providerId: string) => {
@@ -115,7 +116,64 @@ const CloudStorageConnectors = () => {
     setImportUrl("");
   };
 
+  const cloudProviders = providers.filter((p) => p.category === "cloud");
+  const toolProviders = providers.filter((p) => p.category === "tool");
   const connectedCount = providers.filter((p) => p.connected).length;
+
+  const renderProviderCard = (provider: CloudProvider) => (
+    <Card
+      key={provider.id}
+      className={`transition-all ${
+        provider.connected ? "border-green-500/30 bg-green-500/5" : "hover:border-primary/30"
+      }`}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-3">
+          <div className={provider.color}>{provider.icon}</div>
+          <div>
+            <CardTitle className="text-base">{provider.name}</CardTitle>
+            {provider.connected && (
+              <Badge variant="outline" className="mt-1 border-green-500 text-green-500 text-[10px]">
+                <Check className="h-3 w-3 mr-1" /> Connected
+              </Badge>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-3">
+        <p className="text-xs text-muted-foreground">{provider.description}</p>
+        {provider.connected ? (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="flex-1 text-xs">
+              <FolderOpen className="h-3 w-3 mr-1" />
+              {provider.category === "tool" ? "Open" : "Browse Files"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-destructive"
+              onClick={() => handleDisconnect(provider.id)}
+            >
+              Unlink
+            </Button>
+          </div>
+        ) : (
+          <Button
+            className="w-full"
+            size="sm"
+            onClick={() => handleConnect(provider.id)}
+            disabled={connecting === provider.id}
+          >
+            {connecting === provider.id ? (
+              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Connecting…</>
+            ) : (
+              <><Link2 className="h-4 w-4 mr-1" /> Connect</>
+            )}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
@@ -123,10 +181,10 @@ const CloudStorageConnectors = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Cloud className="h-6 w-6 text-primary" />
-            Cloud Storage &amp; Notes
+            Cloud Storage &amp; Tools
           </h2>
           <p className="text-muted-foreground">
-            Link cloud drives and note apps to share data across your workspace
+            Link cloud drives and productivity tools to share data across your workspace
           </p>
         </div>
         <Badge variant="secondary" className="text-lg px-4 py-2">
@@ -153,78 +211,26 @@ const CloudStorageConnectors = () => {
         </CardContent>
       </Card>
 
-      {/* Provider Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {providers.map((provider) => (
-          <Card
-            key={provider.id}
-            className={`transition-all ${
-              provider.connected
-                ? "border-green-500/30 bg-green-500/5"
-                : "hover:border-primary/30"
-            }`}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={provider.color}>{provider.icon}</div>
-                  <div>
-                    <CardTitle className="text-base">{provider.name}</CardTitle>
-                    {provider.connected && (
-                      <Badge
-                        variant="outline"
-                        className="mt-1 border-green-500 text-green-500 text-[10px]"
-                      >
-                        <Check className="h-3 w-3 mr-1" /> Connected
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-3">
-              <p className="text-xs text-muted-foreground">
-                {provider.description}
-              </p>
+      {/* Cloud Storage */}
+      <div>
+        <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+          <Cloud className="h-5 w-5 text-primary" />
+          Cloud Storage
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cloudProviders.map(renderProviderCard)}
+        </div>
+      </div>
 
-              {provider.connected ? (
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs">
-                    <FolderOpen className="h-3 w-3 mr-1" />
-                    Browse Files
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs text-destructive"
-                    onClick={() => handleDisconnect(provider.id)}
-                  >
-                    Unlink
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  className="w-full"
-                  size="sm"
-                  onClick={() => handleConnect(provider.id)}
-                  disabled={connecting === provider.id}
-                >
-                  {connecting === provider.id ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      Connecting…
-                    </>
-                  ) : (
-                    <>
-                      <Link2 className="h-4 w-4 mr-1" />
-                      Connect
-                    </>
-                  )}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+      {/* Tools & Resources */}
+      <div>
+        <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+          <Wrench className="h-5 w-5 text-primary" />
+          Tools &amp; Resources
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {toolProviders.map(renderProviderCard)}
+        </div>
       </div>
     </div>
   );

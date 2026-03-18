@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
+
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,7 +111,7 @@ const QuantClawPage = () => {
           <TabsList className="bg-[hsl(223,18%,9%)] border border-[hsl(222,14%,17%)] flex-wrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="marketing">Marketing</TabsTrigger>
-            <TabsTrigger value="store-listings">Store Listings</TabsTrigger>
+            
             <TabsTrigger value="rag">RAG Corpus</TabsTrigger>
             <TabsTrigger value="tools">Agent Tools</TabsTrigger>
             <TabsTrigger value="backtest">Backtest</TabsTrigger>
@@ -264,9 +264,6 @@ const QuantClawPage = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="store-listings">
-            <StoreListingAutomation />
-          </TabsContent>
 
           <TabsContent value="rag">
             <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
