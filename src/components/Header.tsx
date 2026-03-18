@@ -136,7 +136,6 @@ const Header = () => {
     { to: "/fees", label: "Platform Fees", icon: Percent },
     { to: "/achievements", label: "Achievements", icon: Trophy },
     { to: "/institutional", label: "Institutional Services", icon: Shield },
-    { to: "/admin", label: "Admin Dashboard", icon: Shield },
     { to: "/settings/accessibility", label: "Accessibility", icon: Settings },
     { to: "/legal", label: "Legal & Disclaimers", icon: Shield },
   ];

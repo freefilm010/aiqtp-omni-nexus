@@ -247,7 +247,7 @@ const Footer = () => {
             </div>
             <div className="flex items-center space-x-3">
               <Phone className="w-4 h-4 text-gold" />
-              <span>+1 (555) 123-4567</span>
+              <span>Contact via support@aiqtp.com</span>
             </div>
             <div className="flex items-center space-x-3">
               <Globe className="w-4 h-4 text-gold" />

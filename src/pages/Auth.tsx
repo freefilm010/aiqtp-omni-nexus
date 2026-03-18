@@ -468,6 +468,34 @@ const Auth = () => {
                         />
                         <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
                       </div>
+
+                      {/* Required Acknowledgments */}
+                      <div className="space-y-2 border border-border/50 rounded-lg p-3 bg-muted/20">
+                        <p className="text-xs font-medium text-foreground">Required Acknowledgments</p>
+                        <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer">
+                          <input
+                            type="checkbox"
+                            required
+                            className="mt-0.5 accent-primary"
+                            disabled={isLoading}
+                          />
+                          <span>I understand trading involves substantial risk of loss. I am trading with funds I can afford to lose. AI predictions are experimental.</span>
+                        </label>
+                        <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer">
+                          <input
+                            type="checkbox"
+                            required
+                            className="mt-0.5 accent-primary"
+                            disabled={isLoading}
+                          />
+                          <span>
+                            I agree to the{" "}
+                            <a href="/legal" target="_blank" className="text-primary underline">Terms of Service, Privacy Policy & Risk Disclosures</a>.
+                            AIQTP does not provide financial advice.
+                          </span>
+                        </label>
+                      </div>
+
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? "Creating account…" : "Create Account"}
                       </Button>
