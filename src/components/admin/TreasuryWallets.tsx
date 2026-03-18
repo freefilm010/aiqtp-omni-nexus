@@ -382,46 +382,11 @@ const TreasuryWallets = () => {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {typeWallets.map((wallet) => (
-                        <div
+                        <WalletCard
                           key={wallet.id}
-                          className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-bold text-lg">{wallet.currency}</span>
-                            <Badge variant={wallet.is_active ? 'default' : 'secondary'}>
-                              {wallet.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Balance:</span>
-                              <span className="font-medium">{Number(wallet.balance).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Available:</span>
-                              <span className="text-green-500">{Number(wallet.available_balance).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Locked:</span>
-                              <span className="text-yellow-500">{Number(wallet.locked_balance).toLocaleString()}</span>
-                            </div>
-                          </div>
-                          {wallet.wallet_address && (
-                            <p className="text-xs text-muted-foreground mt-2 truncate">
-                              {wallet.wallet_address}
-                            </p>
-                          )}
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full mt-3"
-                            onClick={() => openWithdraw(wallet)}
-                            disabled={Number(wallet.available_balance) <= 0}
-                          >
-                            <Send className="h-3 w-3 mr-2" />
-                            Withdraw
-                          </Button>
-                        </div>
+                          wallet={wallet}
+                          onAction={handleWalletAction}
+                        />
                       ))}
                     </div>
                   </CardContent>
