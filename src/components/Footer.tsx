@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import GitHubEcosystem from "@/components/github/GitHubEcosystem";
 import { GITHUB_USERNAME } from "@/lib/github/repositories";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { CRISIS_HELPLINES } from "@/lib/fees/platformFees";
 import { 
   Zap, 
   Mail, 
