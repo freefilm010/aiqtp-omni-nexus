@@ -147,6 +147,18 @@ const CapitolTradesDashboard = () => {
         </Button>
       </div>
 
+      {/* Tabs: Trades / Community */}
+      <Tabs defaultValue="trades" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="trades" className="gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Trades
+          </TabsTrigger>
+          <TabsTrigger value="community" className="gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5" /> Community
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="trades">
       {/* Main grid – matches Capitol Trades 3-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN – Latest Trades */}
