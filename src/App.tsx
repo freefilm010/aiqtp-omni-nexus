@@ -66,6 +66,7 @@ const PerformanceShowcase = lazy(() => import("./pages/PerformanceShowcase"));
 const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
 const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
+const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
 
 const queryClient = new QueryClient();
 
