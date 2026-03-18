@@ -59,6 +59,7 @@ import {
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
