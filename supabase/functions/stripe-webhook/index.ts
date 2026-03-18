@@ -70,6 +70,32 @@ serve(async (req) => {
         } else {
           console.log(`Revenue recorded: $${amount} (${revenueType})`);
         }
+
+        // Mirror to admin_revenue for admin dashboard
+        const { error: adminError } = await supabase
+          .from("admin_revenue")
+          .insert({
+            amount,
+            currency: session.currency?.toUpperCase() || "USD",
+            type: revenueType,
+            source: "stripe_checkout",
+            status: "completed",
+            metadata: {
+              stripe_session_id: session.id,
+              customer_email: session.customer_email,
+              payment_status: session.payment_status,
+            },
+          });
+        if (adminError) console.error("Error recording admin revenue:", adminError);
+
+        // Credit platform wallet via atomic increment
+        const { error: walletError } = await supabase.rpc("increment_wallet_balance", {
+          p_currency: session.currency?.toUpperCase() || "USD",
+          p_amount: amount,
+        });
+        if (walletError) console.error("Wallet credit error:", walletError);
+        else console.log(`Wallet credited: $${amount}`);
+
         break;
       }
 
@@ -99,6 +125,27 @@ serve(async (req) => {
         } else {
           console.log(`Subscription revenue recorded: $${amount}`);
         }
+
+        // Mirror to admin_revenue
+        await supabase.from("admin_revenue").insert({
+          amount,
+          currency: invoice.currency?.toUpperCase() || "USD",
+          type: "subscription_renewal",
+          source: "stripe_subscription",
+          status: "completed",
+          metadata: {
+            stripe_invoice_id: invoice.id,
+            subscription_id: invoice.subscription,
+            customer_id: invoice.customer,
+          },
+        });
+
+        // Credit wallet
+        await supabase.rpc("increment_wallet_balance", {
+          p_currency: invoice.currency?.toUpperCase() || "USD",
+          p_amount: amount,
+        });
+
         break;
       }
 

@@ -6271,6 +6271,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_wallet_balance: {
+        Args: { p_amount: number; p_currency: string }
+        Returns: undefined
+      }
       log_security_event: {
         Args: { p_details?: Json; p_event_type: string; p_severity?: string }
         Returns: string
