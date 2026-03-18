@@ -174,6 +174,15 @@ const TreasuryWallets = () => {
     setWithdrawOpen(true);
   };
 
+  const handleWalletAction = (wallet: PlatformWallet, action: string) => {
+    if (action === "withdraw") {
+      openWithdraw(wallet);
+    } else {
+      setActionWallet(wallet);
+      setActiveAction(action as any);
+    }
+  };
+
   const executeWithdrawal = async () => {
     if (!selectedWallet || !withdrawAmount || !withdrawAddress) {
       toast.error('Please fill all fields');
