@@ -412,6 +412,9 @@ const WalletAssets = () => {
               <SmartTransferRouter />
             </div>
 
+            {/* Saved Payment Methods */}
+            <SavedPaymentMethods />
+
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Stripe Card Payments */}
               <Card data-tour="stripe-card" className="border-emerald-500/30">
