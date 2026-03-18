@@ -109,6 +109,7 @@ const QuantClawPage = () => {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-[hsl(223,18%,9%)] border border-[hsl(222,14%,17%)]">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="marketing">Marketing</TabsTrigger>
             <TabsTrigger value="rag">RAG Corpus</TabsTrigger>
             <TabsTrigger value="tools">Agent Tools</TabsTrigger>
             <TabsTrigger value="backtest">Backtest</TabsTrigger>
