@@ -1013,6 +1013,141 @@ export type Database = {
           },
         ]
       }
+      capitol_community_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          likes_count: number | null
+          parent_comment_id: string | null
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          likes_count?: number | null
+          parent_comment_id?: string | null
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          likes_count?: number | null
+          parent_comment_id?: string | null
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capitol_community_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "capitol_community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capitol_community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "capitol_community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capitol_community_likes: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capitol_community_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "capitol_community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capitol_community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "capitol_community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capitol_community_posts: {
+        Row: {
+          chart_url: string | null
+          comments_count: number | null
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_pinned: boolean | null
+          likes_count: number | null
+          post_type: string
+          tags: string[] | null
+          ticker: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chart_url?: string | null
+          comments_count?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          post_type?: string
+          tags?: string[] | null
+          ticker?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chart_url?: string | null
+          comments_count?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          post_type?: string
+          tags?: string[] | null
+          ticker?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           agent_type: string
