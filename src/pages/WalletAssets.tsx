@@ -493,24 +493,26 @@ const WalletAssets = () => {
                         onClick={async () => {
                           // Fetch user's wallet address for this currency
                           let walletParam = "";
+                          const networkMap: Record<string, string> = {
+                            BTC: "bitcoin", ETH: "ethereum", SOL: "solana", USDT: "ethereum"
+                          };
                           try {
                             const { data: { user } } = await supabase.auth.getUser();
                             if (user) {
-                              // Try quwallet_addresses first
+                              const network = networkMap[coin] || coin.toLowerCase();
                               const { data: quAddrs } = await supabase
                                 .from("quwallet_addresses")
-                                .select("address, currency")
-                                .limit(20);
+                                .select("address, network")
+                                .limit(20) as { data: any[] | null };
                               
-                              const matchedQu = quAddrs?.find((a: any) => a.currency === coin);
-                              if (matchedQu?.address) {
-                                walletParam = `&walletAddress=${encodeURIComponent(matchedQu.address)}`;
+                              const matched = quAddrs?.find((a: any) => a.network === network);
+                              if (matched?.address) {
+                                walletParam = `&walletAddress=${encodeURIComponent(matched.address)}`;
                               } else {
-                                // Fallback to platform_wallets
                                 const { data: platWallets } = await supabase
                                   .from("platform_wallets")
                                   .select("wallet_address, currency, is_active")
-                                  .limit(20);
+                                  .limit(20) as { data: any[] | null };
                                 
                                 const matchedPlat = platWallets?.find((w: any) => w.currency === coin && w.is_active);
                                 if (matchedPlat?.wallet_address) {
