@@ -21,32 +21,58 @@ import { ALL_STANDARDS, VALUE_NATURE_LABELS } from "@/lib/standards/protocolRegi
 
 const CONTRACT_TEMPLATES = [
   { 
+    id: 'erc20', 
+    name: 'ERC-20', 
+    description: 'Fungible token — like currency, similar in value',
+    chain: 'Ethereum',
+    features: ['Fungible', 'Transferable', 'Divisible'],
+    standardIds: ['erc-20', 'erc-2612'],
+    valueNature: 'like_and_similar' as const,
+  },
+  { 
     id: 'erc721', 
     name: 'ERC-721', 
-    description: 'Standard NFT - One unique token per ID',
+    description: 'Non-fungible — unique, NOT similar in value',
     chain: 'Ethereum',
-    features: ['Single Mint', 'Metadata URI', 'Royalties']
+    features: ['Single Mint', 'Metadata URI', 'Royalties'],
+    standardIds: ['erc-721', 'eip-2981'],
+    valueNature: 'like_but_not_similar' as const,
   },
   { 
     id: 'erc721a', 
     name: 'ERC-721A', 
-    description: 'Gas-optimized for batch minting',
+    description: 'Gas-optimized unique tokens, batch mint',
     chain: 'Ethereum',
-    features: ['Batch Mint', 'Gas Savings', 'Royalties']
+    features: ['Batch Mint', 'Gas Savings', 'Royalties'],
+    standardIds: ['erc-721a', 'erc-721', 'eip-2981'],
+    valueNature: 'like_but_not_similar' as const,
   },
   { 
     id: 'erc1155', 
     name: 'ERC-1155', 
-    description: 'Multi-token standard - Same ID, multiple copies',
+    description: 'Multi-token — editions & mixed assets',
     chain: 'Ethereum',
-    features: ['Semi-Fungible', 'Batch Transfer', 'Multi-Token']
+    features: ['Semi-Fungible', 'Batch Transfer', 'Multi-Token'],
+    standardIds: ['erc-1155', 'eip-2981'],
+    valueNature: 'hybrid' as const,
   },
   { 
-    id: 'spl', 
-    name: 'SPL Token', 
-    description: 'Solana NFT Standard',
-    chain: 'Solana',
-    features: ['Metaplex', 'Candy Machine', 'Low Fees']
+    id: 'erc1400', 
+    name: 'ERC-1400', 
+    description: 'Security token — regulated, compliance-ready',
+    chain: 'Ethereum',
+    features: ['KYC/AML', 'Partitions', 'Forced Transfer'],
+    standardIds: ['erc-1400', 'erc-3643'],
+    valueNature: 'regulatory' as const,
+  },
+  { 
+    id: 'erc5192', 
+    name: 'ERC-5192', 
+    description: 'Soulbound — non-transferable credentials',
+    chain: 'Ethereum',
+    features: ['Non-Transferable', 'Identity', 'Credentials'],
+    standardIds: ['erc-5192', 'erc-721'],
+    valueNature: 'like_but_not_similar' as const,
   },
 ];
 
