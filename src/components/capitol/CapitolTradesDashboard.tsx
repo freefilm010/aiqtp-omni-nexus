@@ -20,6 +20,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 
 interface Trade {
+  asset_type?: string;
   id: string;
   politician_name: string;
   party: string;
