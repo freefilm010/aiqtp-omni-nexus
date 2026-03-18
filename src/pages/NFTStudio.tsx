@@ -26,7 +26,7 @@ const NFTStudio = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">NFT Studio</h1>
           <p className="text-muted-foreground mt-1">
-            Create • Collect • Trade • Compete • Deploy Smart Contracts
+            Create • Collect • Trade • Compete • Deploy • Standards Compliance
           </p>
         </div>
 
