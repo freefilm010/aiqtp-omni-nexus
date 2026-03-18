@@ -4,10 +4,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2 } from "lucide-react";
 import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AGENT_TOOLS_DEV = [
   { name: "search_trading_code", desc: "RAG search across Tier 1+2 trading repos", icon: Search },
