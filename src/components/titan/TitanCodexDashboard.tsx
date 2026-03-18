@@ -279,11 +279,25 @@ const TitanCodexDashboard = () => {
                 </div>
               </div>
 
+              {/* QTC Balance */}
+              <div className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Your QTC Balance</div>
+                    <div className="text-3xl font-bold">{qtcBalance.toLocaleString()} QTC</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-muted-foreground">Total Mined</div>
+                    <div className="text-lg font-bold text-primary">{totalMined.toLocaleString()} QTC</div>
+                  </div>
+                </div>
+              </div>
+
               <Button 
                 className="w-full" 
                 size="lg" 
                 onClick={mineBlock}
-                disabled={isMining}
+                disabled={isMining || !user}
               >
                 {isMining ? (
                   <>
@@ -293,7 +307,7 @@ const TitanCodexDashboard = () => {
                 ) : (
                   <>
                     <Atom className="h-4 w-4 mr-2" />
-                    Mine QTC Block (Simulate DTC)
+                    Mine QTC Block (+{QTC_REWARD_PER_BLOCK} QTC)
                   </>
                 )}
               </Button>
