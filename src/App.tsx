@@ -13,8 +13,9 @@ import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnoun
 import ProtectedRoute from "./components/ProtectedRoute";
 import FloatingWindowsLayer from "./components/floating/FloatingWindowsLayer";
 import { FloatingWindowsProvider } from "./contexts/FloatingWindowsContext";
-// Lazy load all page components for code-splitting
-const Index = lazy(() => import("./pages/Index"));
+import Index from "./pages/Index";
+
+// Lazy load non-home routes for code-splitting
 const Auth = lazy(() => import("./pages/Auth"));
 const TradingDashboard = lazy(() => import("./pages/TradingDashboard"));
 const LightningVault = lazy(() => import("./pages/LightningVault"));
