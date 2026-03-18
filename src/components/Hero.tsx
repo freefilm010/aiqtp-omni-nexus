@@ -267,9 +267,15 @@ const TerminalGridBackground = () => (
 );
 
 const Hero = () => {
-  const { tickers, totalCoins } = useKrakenTickers(undefined, 45_000);
+  // Defer ticker connection until after initial paint (2s delay)
+  const [tickerReady, setTickerReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setTickerReady(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const { tickers, totalCoins } = useKrakenTickers(undefined, tickerReady ? 45_000 : 0);
   const activeTickers = Object.keys(tickers).length;
-  // Show total universe: 18,422 crypto refs + 224 traditional + active priced
   const assetCount = Math.max(activeTickers, totalCoins);
 
   const miniCharts = [
