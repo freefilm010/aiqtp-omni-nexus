@@ -47,8 +47,9 @@ serve(async (req) => {
         console.log("Checkout completed:", session.id);
         
         // Record revenue
-        const amount = (session.amount_total || 0) / 100; // Convert from cents
+        const amount = (session.amount_total || 0) / 100;
         const revenueType = session.mode === "subscription" ? "subscription" : "one_time";
+        const userId = session.metadata?.user_id;
         
         const { error: revenueError } = await supabase
           .from("platform_revenue")
@@ -95,6 +96,59 @@ serve(async (req) => {
         });
         if (walletError) console.error("Wallet credit error:", walletError);
         else console.log(`Wallet credited: $${amount}`);
+
+        // Auto-save payment method details for the user
+        if (userId && session.payment_intent) {
+          try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(
+              session.payment_intent as string,
+              { expand: ["payment_method"] }
+            );
+            const pm = paymentIntent.payment_method as Stripe.PaymentMethod | null;
+            
+            if (pm && pm.card) {
+              const card = pm.card;
+              const brand = card.brand || "card";
+              const last4 = card.last4 || "";
+              const nickname = `${brand.charAt(0).toUpperCase() + brand.slice(1)} ••••${last4}`;
+
+              // Check if this card is already saved (by last4 + brand + user)
+              const { data: existing } = await supabase
+                .from("saved_payment_methods")
+                .select("id")
+                .eq("user_id", userId)
+                .eq("last_four", last4)
+                .eq("card_brand", brand)
+                .limit(1);
+
+              if (!existing || existing.length === 0) {
+                const { error: saveError } = await supabase
+                  .from("saved_payment_methods")
+                  .insert({
+                    user_id: userId,
+                    nickname,
+                    method_type: "card",
+                    last_four: last4,
+                    card_brand: brand,
+                    exp_month: card.exp_month,
+                    exp_year: card.exp_year,
+                    stripe_payment_method_id: pm.id,
+                    stripe_customer_id: typeof paymentIntent.customer === "string" ? paymentIntent.customer : null,
+                  });
+                if (saveError) console.error("Error auto-saving payment method:", saveError);
+                else console.log(`Auto-saved card ${brand} ••••${last4} for user ${userId}`);
+              } else {
+                // Update expiration in case card was renewed
+                await supabase
+                  .from("saved_payment_methods")
+                  .update({ exp_month: card.exp_month, exp_year: card.exp_year, stripe_payment_method_id: pm.id })
+                  .eq("id", existing[0].id);
+              }
+            }
+          } catch (pmError) {
+            console.error("Error retrieving payment method details:", pmError);
+          }
+        }
 
         break;
       }
