@@ -65,19 +65,33 @@ const TitanCodexDashboard = () => {
   const [gridNodes, setGridNodes] = useState<GridNode[]>([]);
   const [arbitrageOpps, setArbitrageOpps] = useState<ArbitrageOpportunity[]>([]);
 
+  // Fetch QTC balance
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("token_balances")
+        .select("balance, total_mined")
+        .eq("user_id", user.id)
+        .eq("token_id", QTC_TOKEN_ID)
+        .maybeSingle();
+      if (data) {
+        setQtcBalance(Number(data.balance));
+        setTotalMined(Number(data.total_mined));
+      }
+    };
+    fetchBalance();
+  }, [user]);
+
   // Initialize systems
   useEffect(() => {
-    // Generate heartbeat pulse
     const interval = setInterval(() => {
       setHeartbeat(heartbeatOracle.generateHeartbeat().slice(0, 16) + '...');
     }, 1000);
 
-    // Initialize grid nodes
     const nodes = generateBorderCorridorNodes(50);
     nodes.forEach(node => gridFlexAI.registerNode(node));
     setGridNodes(nodes);
-
-    // Find arbitrage opportunities
     setArbitrageOpps(gridFlexAI.findArbitrageOpportunities());
 
     return () => clearInterval(interval);
