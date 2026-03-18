@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
+
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
