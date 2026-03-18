@@ -10,12 +10,20 @@ const corsHeaders = {
 // Allowed pricing plans with server-side price validation
 const ALLOWED_PLANS: Record<string, { amount: number; mode: "payment" | "subscription"; interval?: string }> = {
   "starter":        { amount: 49,  mode: "payment" },
+  "deposit-20":     { amount: 20,  mode: "payment" },
+  "deposit-50":     { amount: 50,  mode: "payment" },
+  "deposit-100":    { amount: 100, mode: "payment" },
+  "deposit-500":    { amount: 500, mode: "payment" },
   "qaqi-monthly":   { amount: 12,  mode: "subscription", interval: "month" },
   "qaqi-annual":    { amount: 100, mode: "subscription", interval: "year" },
   "pro-monthly":    { amount: 99,  mode: "subscription", interval: "month" },
   "elite-monthly":  { amount: 299, mode: "subscription", interval: "month" },
   "institutional":  { amount: 999, mode: "subscription", interval: "month" },
 };
+
+// Also allow custom deposit amounts (validated server-side)
+const MIN_DEPOSIT = 5;
+const MAX_DEPOSIT = 10000;
 
 interface CheckoutRequest {
   planId: string;
