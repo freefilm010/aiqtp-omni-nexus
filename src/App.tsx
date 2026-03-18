@@ -44,7 +44,7 @@ const QuantumLabPage = lazy(() => import("./pages/QuantumLabPage"));
 const StrategyLab = lazy(() => import("./pages/StrategyLab"));
 const TitanCodexPage = lazy(() => import("./pages/TitanCodexPage"));
 const QAQIPage = lazy(() => import("./pages/QAQIPage"));
-const ConnectionsPage = lazy(() => import("./pages/ConnectionsPage"));
+const ConnectorsPage = lazy(() => import("./pages/ConnectorsPage"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
 const AccessibilitySettingsPage = lazy(() => import("./pages/AccessibilitySettingsPage"));
 const AlertsFeedPage = lazy(() => import("./pages/AlertsFeedPage"));
@@ -68,7 +68,7 @@ const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
 const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
-const SatelliteHub = lazy(() => import("./pages/SatelliteHub"));
+// SatelliteHub merged into ConnectorsPage
 
 const queryClient = new QueryClient();
 
@@ -328,21 +328,16 @@ const App = () => (
                         }
                       />
                       <Route
-                        path="/connections"
+                        path="/connectors"
                         element={
                           <ProtectedRoute>
-                            <ConnectionsPage />
+                            <ConnectorsPage />
                           </ProtectedRoute>
                         }
                       />
-                      <Route
-                        path="/satellite"
-                        element={
-                          <ProtectedRoute>
-                            <SatelliteHub />
-                          </ProtectedRoute>
-                        }
-                      />
+                      {/* Legacy redirects */}
+                      <Route path="/connections" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
+                      <Route path="/satellite" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route
                         path="/ai-assistant"
                         element={
