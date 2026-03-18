@@ -32,7 +32,7 @@ const PlatformDocumentation = () => {
     setTimeout(() => setCopiedItem(null), 2000);
   };
 
-  const WEBHOOK_URL = "https://msgzfkcqnkzdnlvuhnmn.supabase.co/functions/v1/stripe-webhook";
+  const WEBHOOK_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'rueaxiyvseaxkysnoock'}.supabase.co/functions/v1/stripe-webhook`;
 
   return (
     <div className="space-y-6">
