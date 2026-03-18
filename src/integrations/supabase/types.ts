@@ -5888,6 +5888,48 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_payment_methods: {
+        Row: {
+          bank_name: string | null
+          card_brand: string | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          last_four: string | null
+          metadata: Json | null
+          method_type: string
+          nickname: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_name?: string | null
+          card_brand?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          last_four?: string | null
+          metadata?: Json | null
+          method_type?: string
+          nickname: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_name?: string | null
+          card_brand?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          last_four?: string | null
+          metadata?: Json | null
+          method_type?: string
+          nickname?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       screener_results: {
         Row: {
           ai_score: number | null
