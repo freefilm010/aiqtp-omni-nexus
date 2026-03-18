@@ -31,7 +31,7 @@ const NFTStudio = () => {
         </div>
 
         <Tabs defaultValue="create" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="create" className="flex items-center gap-1 text-xs">
               <Palette className="h-4 w-4" />
               Create
@@ -55,6 +55,10 @@ const NFTStudio = () => {
             <TabsTrigger value="contracts" className="flex items-center gap-1 text-xs">
               <FileCode className="h-4 w-4" />
               Contracts
+            </TabsTrigger>
+            <TabsTrigger value="standards" className="flex items-center gap-1 text-xs">
+              <Shield className="h-4 w-4" />
+              Standards
             </TabsTrigger>
           </TabsList>
 
