@@ -134,7 +134,7 @@ const ComplianceRegistry = () => {
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card>
           <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length}</p>
+            <p className="text-2xl font-bold text-primary">{EIP_STANDARDS.length + EXTENDED_EIP_STANDARDS.length}</p>
             <p className="text-[10px] text-muted-foreground">EIP/ERC</p>
           </CardContent>
         </Card>
