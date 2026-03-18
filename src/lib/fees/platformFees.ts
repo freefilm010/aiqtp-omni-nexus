@@ -298,4 +298,34 @@ export const REQUIRED_ACKNOWLEDGMENTS = [
   "I accept that all fees are subject to actual network costs",
   "I confirm I am trading with funds I can afford to lose",
   "I understand AI predictions are experimental and not guaranteed",
+  "I agree to the Terms of Service, Privacy Policy, and Risk Disclosures",
 ] as const;
+
+// Crisis & Responsible Trading Resources
+export const CRISIS_HELPLINES = {
+  gambling: {
+    title: "Responsible Trading & Gambling Support",
+    resources: [
+      { name: "National Problem Gambling Helpline", phone: "1-800-522-4700", url: "https://www.ncpgambling.org", available: "24/7, Free & Confidential" },
+      { name: "SAMHSA National Helpline", phone: "1-800-662-4357", url: "https://www.samhsa.gov/find-help/national-helpline", available: "24/7, Free & Confidential" },
+      { name: "GambleAware (UK)", phone: "0808-8020-133", url: "https://www.begambleaware.org", available: "24/7" },
+      { name: "Gamblers Anonymous", phone: "", url: "https://www.gamblersanonymous.org", available: "Online meetings available" },
+    ],
+  },
+  crisis: {
+    title: "Crisis & Mental Health Support",
+    resources: [
+      { name: "988 Suicide & Crisis Lifeline", phone: "988", url: "https://988lifeline.org", available: "24/7 — Call or Text 988" },
+      { name: "Crisis Text Line", phone: "Text HOME to 741741", url: "https://www.crisistextline.org", available: "24/7" },
+      { name: "NAMI Helpline", phone: "1-800-950-6264", url: "https://www.nami.org/help", available: "Mon-Fri, 10am-10pm ET" },
+      { name: "International Association for Suicide Prevention", phone: "", url: "https://www.iasp.info/resources/Crisis_Centres/", available: "Directory of crisis centers worldwide" },
+    ],
+  },
+  financialStress: {
+    title: "Financial Stress Support",
+    resources: [
+      { name: "National Foundation for Credit Counseling", phone: "1-800-388-2227", url: "https://www.nfcc.org", available: "Free financial counseling" },
+      { name: "Financial Therapy Association", phone: "", url: "https://www.financialtherapyassociation.org", available: "Find a financial therapist" },
+    ],
+  },
+} as const;

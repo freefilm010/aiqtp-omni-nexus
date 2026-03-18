@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import GitHubEcosystem from "@/components/github/GitHubEcosystem";
 import { GITHUB_USERNAME } from "@/lib/github/repositories";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { CRISIS_HELPLINES } from "@/lib/fees/platformFees";
 import { 
   Zap, 
   Mail, 
@@ -100,11 +101,13 @@ const Footer = () => {
     { to: "/fees", label: "Platform Fees", icon: Percent },
     { to: "/achievements", label: "Achievements", icon: Trophy },
     { to: "/institutional", label: "Institutional Services", icon: Shield },
-    { to: "/admin", label: "Admin Dashboard", icon: Shield },
+    ...(isAdmin ? [{ to: "/admin", label: "Admin Dashboard", icon: Shield }] : []),
   ];
 
   const legalLinks = [
     { to: "/legal", label: "Risk Disclaimers" },
+    { to: "/legal", label: "Privacy Policy" },
+    { to: "/legal", label: "Terms of Service" },
     { to: "/settings/accessibility", label: "Accessibility" },
   ];
 
@@ -244,7 +247,7 @@ const Footer = () => {
             </div>
             <div className="flex items-center space-x-3">
               <Phone className="w-4 h-4 text-gold" />
-              <span>+1 (555) 123-4567</span>
+              <span>Contact via support@aiqtp.com</span>
             </div>
             <div className="flex items-center space-x-3">
               <Globe className="w-4 h-4 text-gold" />
@@ -293,16 +296,14 @@ const Footer = () => {
             </div>
 
             <ul className="flex flex-wrap gap-4 text-xs text-white/70 mt-4">
-              {legalLinks.map((link) => (
-                <li key={link.to}>
+              {legalLinks.map((link, idx) => (
+                <li key={`${link.to}-${idx}`}>
                   <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1">
                     {link.label === "Accessibility" && <Accessibility className="w-3 h-3" />}
                     {link.label}
                   </Link>
                 </li>
               ))}
-              <li><a href="#" className="hover:text-gold transition-smooth">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-gold transition-smooth">Terms of Service</a></li>
             </ul>
           </div>
         </div>
@@ -333,6 +334,31 @@ const Footer = () => {
               <strong>🤖 AI DISCLAIMER:</strong> AI predictions are experimental technologies and may produce inaccurate results. Do not use as sole basis for trading decisions.
             </p>
           </div>
+        </div>
+
+        {/* Crisis & Responsible Trading Resources */}
+        <div className="py-4 border-t border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] text-white/50">
+            {Object.values(CRISIS_HELPLINES).map((section) => (
+              <div key={section.title}>
+                <h5 className="font-semibold text-white/70 mb-1.5">{section.title}</h5>
+                <ul className="space-y-1">
+                  {section.resources.map((r) => (
+                    <li key={r.name}>
+                      <a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-smooth">
+                        {r.name}
+                        {r.phone ? ` — ${r.phone}` : ""}
+                      </a>
+                      <span className="block text-white/30">{r.available}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-white/40 mt-3">
+            If you or someone you know is struggling with gambling, financial stress, or a mental health crisis, please reach out. Help is available 24/7.
+          </p>
         </div>
 
         {/* Sitemap */}

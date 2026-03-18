@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useTheme, ThemeType } from "@/contexts/ThemeContext";
 import {
   DropdownMenu,
@@ -58,6 +59,7 @@ import {
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -136,7 +138,6 @@ const Header = () => {
     { to: "/fees", label: "Platform Fees", icon: Percent },
     { to: "/achievements", label: "Achievements", icon: Trophy },
     { to: "/institutional", label: "Institutional Services", icon: Shield },
-    { to: "/admin", label: "Admin Dashboard", icon: Shield },
     { to: "/settings/accessibility", label: "Accessibility", icon: Settings },
     { to: "/legal", label: "Legal & Disclaimers", icon: Shield },
   ];
@@ -362,10 +363,12 @@ const Header = () => {
                     <Activity className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/admin')}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Admin
-                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate('/admin')}>
+                      <Shield className="mr-2 h-4 w-4" />
+                      Admin
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut}>
                     <LogOut className="mr-2 h-4 w-4" />
