@@ -375,8 +375,12 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="py-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-white/70 text-sm mb-4 md:mb-0">
-            © {new Date().getFullYear()} AIQTP™ AI Quantum Trading Portal. All rights reserved.
+          <div className="text-white/70 text-sm mb-4 md:mb-0 space-y-1">
+            <div>© {new Date().getFullYear()} AIQTP™ AI Quantum Trading Portal. All rights reserved.</div>
+            <div className="text-[10px] text-white/40">
+              Owned by TRUST AIQTP HOLDINGS (TAH) • Wyoming, USA &nbsp;|&nbsp; 
+              Platform operated under license by AIQTP TRUST ENTERPRISE (ATE) • New Jersey, USA
+            </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-6 text-sm text-white/70">

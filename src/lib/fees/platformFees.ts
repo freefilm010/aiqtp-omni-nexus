@@ -275,7 +275,7 @@ DATA ACCURACY: While we strive to provide accurate and timely information, we do
 
   // Full legal footer
   fullDisclaimer: `
-© ${new Date().getFullYear()} AIQTP. All rights reserved. By using this platform, you acknowledge that you have read, understood, and agree to be bound by our Terms of Service, Privacy Policy, and all applicable disclaimers. This platform is provided "as is" without warranties of any kind, either express or implied. AIQTP, its officers, directors, employees, agents, and affiliates shall not be liable for any damages arising from the use of this platform or reliance on any information provided herein. Trading involves substantial risk. Only risk capital should be used for trading. Past performance is not indicative of future results.
+© ${new Date().getFullYear()} AIQTP™ AI Quantum Trading Portal. All rights reserved. AIQTP™ is a registered trademark of TRUST AIQTP HOLDINGS (TAH), a Wyoming trust entity. Platform technology and intellectual property are operated under exclusive license by AIQTP TRUST ENTERPRISE (ATE), New Jersey. By using this platform, you acknowledge that you have read, understood, and agree to be bound by our Terms of Service, Privacy Policy, and all applicable disclaimers. This platform is provided "as is" without warranties of any kind, either express or implied. AIQTP, its officers, directors, employees, agents, and affiliates shall not be liable for any damages arising from the use of this platform or reliance on any information provided herein. Trading involves substantial risk. Only risk capital should be used for trading. Past performance is not indicative of future results.
   `.trim(),
 } as const;
 
