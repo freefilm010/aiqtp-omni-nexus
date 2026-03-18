@@ -256,6 +256,7 @@ const SavedPaymentMethods = () => {
                     <p className="text-xs text-muted-foreground">
                       {m.card_brand && `${m.card_brand.charAt(0).toUpperCase() + m.card_brand.slice(1)} `}
                       {m.last_four && `••••${m.last_four}`}
+                      {m.exp_month && m.exp_year && ` · Exp ${String(m.exp_month).padStart(2, '0')}/${String(m.exp_year).slice(-2)}`}
                       {m.bank_name && m.bank_name}
                       {!m.last_four && !m.bank_name && m.method_type}
                     </p>
