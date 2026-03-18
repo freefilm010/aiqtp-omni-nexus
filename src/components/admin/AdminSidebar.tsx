@@ -24,7 +24,8 @@ import {
   ArrowUpDown,
   Palette,
   Database,
-  Globe
+  Globe,
+  Radar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
