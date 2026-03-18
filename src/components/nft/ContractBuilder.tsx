@@ -35,7 +35,7 @@ const CONTRACT_TEMPLATES = [
     description: 'Non-fungible — unique, NOT similar in value',
     chain: 'Ethereum',
     features: ['Single Mint', 'Metadata URI', 'Royalties'],
-    standardIds: ['erc-721', 'eip-2981'],
+    standardIds: ['erc-721', 'eip-2981', 'oz-erc721', 'oz-security'],
     valueNature: 'like_but_not_similar' as const,
   },
   { 
