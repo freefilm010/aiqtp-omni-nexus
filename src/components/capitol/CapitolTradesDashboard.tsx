@@ -446,6 +446,14 @@ const CapitolTradesDashboard = () => {
           </Card>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="community">
+          <Suspense fallback={<div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+            <CapitolCommunity />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
