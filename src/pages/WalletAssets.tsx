@@ -430,7 +430,7 @@ const WalletAssets = () => {
                         key={amount}
                         variant="outline"
                         className="h-14 text-lg font-semibold"
-                        onClick={() => handleStripeCheckout("credits")}
+                        onClick={() => handleStripeDeposit(amount)}
                         disabled={loading}
                       >
                         ${amount}
@@ -438,11 +438,26 @@ const WalletAssets = () => {
                     ))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input placeholder="Custom $" type="number" className="flex-1" />
+                    <Input 
+                      placeholder="Custom $" 
+                      type="number" 
+                      min={5}
+                      max={10000}
+                      className="flex-1" 
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                    />
                     <Button 
                       className="bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => handleStripeCheckout("credits")}
-                      disabled={loading}
+                      onClick={() => {
+                        const amt = Number(customAmount);
+                        if (amt >= 5 && amt <= 10000) {
+                          handleStripeDeposit(amt);
+                        } else {
+                          toast({ title: "Invalid amount", description: "Enter between $5 and $10,000", variant: "destructive" });
+                        }
+                      }}
+                      disabled={loading || !customAmount}
                     >
                       <DollarSign className="h-4 w-4 mr-1" />
                       Pay
