@@ -55,7 +55,8 @@ import {
   Coins,
   Home,
   Plug,
-  Gift
+  Gift,
+  Wallet
 } from "lucide-react";
 
 const Header = () => {
