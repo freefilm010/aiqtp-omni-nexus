@@ -135,6 +135,7 @@ const Header = () => {
 
   const moreLinks = [
     { to: "/stats", label: "⚔️ Stats Arena", icon: Trophy },
+    { to: "/rewards", label: "🏆 Rewards Store", icon: Gift },
     { to: "/giveaway", label: "🎁 $2M Giveaway", icon: Gift },
     { to: "/media", label: "Media Hub", icon: Music },
     { to: "/revenue", label: "Revenue Center", icon: Coins },
