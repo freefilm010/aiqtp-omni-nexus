@@ -44,7 +44,7 @@ const QuantumLabPage = lazy(() => import("./pages/QuantumLabPage"));
 const StrategyLab = lazy(() => import("./pages/StrategyLab"));
 const TitanCodexPage = lazy(() => import("./pages/TitanCodexPage"));
 const QAQIPage = lazy(() => import("./pages/QAQIPage"));
-const ConnectionsPage = lazy(() => import("./pages/ConnectionsPage"));
+const ConnectorsPage = lazy(() => import("./pages/ConnectorsPage"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
 const AccessibilitySettingsPage = lazy(() => import("./pages/AccessibilitySettingsPage"));
 const AlertsFeedPage = lazy(() => import("./pages/AlertsFeedPage"));

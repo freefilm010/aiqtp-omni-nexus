@@ -119,8 +119,7 @@ const Header = () => {
     { to: "/nft-studio", label: "NFT Studio", icon: Layers },
     { to: "/token-launchpad", label: "Token Launchpad", icon: Zap },
     { to: "/faucet", label: "Crypto Faucet", icon: Crosshair },
-    { to: "/connections", label: "Connections", icon: Globe },
-    { to: "/satellite", label: "Satellite Hub", icon: Coins },
+    { to: "/connectors", label: "Connectors", icon: Plug },
     { to: "/data-ecosystem", label: "Data Ecosystem", icon: Layers },
   ];
 
