@@ -17,10 +17,14 @@ import {
   BarChart3,
   FileText,
   MessageSquare,
+  Vote,
+  Crosshair,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const CapitolCommunity = lazy(() => import("./CapitolCommunity"));
+const CommunityPolls = lazy(() => import("./CommunityPolls"));
+const CommunityPredictions = lazy(() => import("./CommunityPredictions"));
 
 interface Trade {
   asset_type?: string;
