@@ -54,7 +54,8 @@ import {
   ExternalLink,
   Coins,
   Home,
-  Plug
+  Plug,
+  Gift
 } from "lucide-react";
 
 const Header = () => {
@@ -133,6 +134,7 @@ const Header = () => {
   ];
 
   const moreLinks = [
+    { to: "/giveaway", label: "🎁 $2M Giveaway", icon: Gift },
     { to: "/media", label: "Media Hub", icon: Music },
     { to: "/revenue", label: "Revenue Center", icon: Coins },
     { to: "/pricing", label: "Pricing", icon: DollarSign },

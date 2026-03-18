@@ -69,6 +69,7 @@ const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
 // SatelliteHub merged into ConnectorsPage
+const GiveawayPage = lazy(() => import("./pages/GiveawayPage"));
 
 const queryClient = new QueryClient();
 
@@ -338,6 +339,7 @@ const App = () => (
                       {/* Legacy redirects */}
                       <Route path="/connections" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
                       <Route path="/satellite" element={<ProtectedRoute><ConnectorsPage /></ProtectedRoute>} />
+                      <Route path="/giveaway" element={<GiveawayPage />} />
                       <Route
                         path="/ai-assistant"
                         element={
