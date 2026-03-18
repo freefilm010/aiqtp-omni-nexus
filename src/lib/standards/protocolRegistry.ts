@@ -372,6 +372,9 @@ export const ISO_STANDARDS: ProtocolStandard[] = [
   },
 ];
 
+import { OPENZEPPELIN_STANDARDS } from './openzeppelinStandards';
+import { PQC_STANDARDS } from './pqcStandards';
+
 // ═══════════════════════════════════════
 //  COMBINED REGISTRY
 // ═══════════════════════════════════════
@@ -380,7 +383,11 @@ export const ALL_STANDARDS: ProtocolStandard[] = [
   ...EIP_STANDARDS,
   ...SECURITY_STANDARDS,
   ...ISO_STANDARDS,
+  ...OPENZEPPELIN_STANDARDS,
+  ...PQC_STANDARDS,
 ];
+
+export { OPENZEPPELIN_STANDARDS, PQC_STANDARDS };
 
 // Value classification helpers
 export const VALUE_NATURE_LABELS: Record<string, { label: string; description: string; color: string }> = {
