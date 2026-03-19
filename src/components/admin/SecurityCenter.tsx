@@ -104,13 +104,11 @@ const SecurityCenter = () => {
     setIsScanning(true);
     toast.info("Running security scan...");
     
-    // Simulate scan
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await fetchSecurityEvents();
     
     setLastScan(new Date());
-    setSecurityScore(prev => Math.min(100, prev + Math.floor(Math.random() * 3)));
     setIsScanning(false);
-    toast.success("Security scan completed");
+    toast.success("Security scan completed — showing live data");
   };
 
   return (

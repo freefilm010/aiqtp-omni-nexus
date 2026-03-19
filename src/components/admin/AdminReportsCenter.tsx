@@ -108,8 +108,9 @@ const AdminReportsCenter = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         {[
+          { label: "Users", value: stats.totalUsers, icon: Users, color: "text-primary" },
           { label: "Conversations", value: stats.totalConversations, icon: MessageSquare, color: "text-blue-500" },
           { label: "Messages", value: stats.totalMessages, icon: MessageSquare, color: "text-purple-500" },
           { label: "Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-500" },
