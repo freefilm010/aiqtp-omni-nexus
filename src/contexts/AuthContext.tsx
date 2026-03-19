@@ -5,7 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  /** True only while the initial session check is in-flight. */
   loading: boolean;
+  /** True once the initial session check has completed (success or failure). */
+  ready: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -14,24 +17,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-
-  // IMPORTANT: keep "loading" true until the initial getSession() completes.
-  // Otherwise ProtectedRoute can briefly see user=null and bounce back to /auth (flicker).
   const [loading, setLoading] = useState(true);
   const initializedRef = useRef(false);
 
   useEffect(() => {
     let active = true;
 
-    // Safety net: never block the UI longer than 5 seconds even if auth hangs
+    const markReady = () => {
+      if (!active || initializedRef.current) return;
+      initializedRef.current = true;
+      setLoading(false);
+    };
+
+    // CRITICAL: Never block the UI longer than 3 seconds.
+    // If Supabase is unreachable (DNS, network, outage), the site still renders.
     const timeout = setTimeout(() => {
-      if (!active) return;
       if (!initializedRef.current) {
-        console.warn("Auth session check timed out – rendering without auth");
-        initializedRef.current = true;
-        setLoading(false);
+        console.warn("[Auth] Session check timed out after 3s – rendering without auth");
+        markReady();
       }
-    }, 5000);
+    }, 3000);
 
     const {
       data: { subscription },
@@ -39,23 +44,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!active) return;
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
-
-      // Don't end loading based on INITIAL_SESSION; wait for getSession() to resolve.
       if (initializedRef.current) setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      initializedRef.current = true;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    }).catch((err) => {
-      console.error("Auth getSession failed:", err);
-      if (!active) return;
-      initializedRef.current = true;
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!active) return;
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        markReady();
+      })
+      .catch((err) => {
+        console.error("[Auth] getSession failed:", err);
+        markReady();
+      });
 
     return () => {
       active = false;
@@ -69,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user,
       session,
       loading,
+      ready: !loading,
       signOut: async () => {
         await supabase.auth.signOut();
       },
@@ -76,6 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user, session, loading]
   );
 
+  // IMPORTANT: Always render children immediately.
+  // Auth loading state is consumed only by ProtectedRoute, never blocks public pages.
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
