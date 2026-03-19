@@ -65,6 +65,7 @@ interface Conversation {
 
 const ChatManagement = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [viewingConversation, setViewingConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
