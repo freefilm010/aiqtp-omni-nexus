@@ -59,6 +59,12 @@ serve(async (req) => {
       });
     }
 
+    // Rate limiting (admin still has limits to prevent runaway costs)
+    const rateLimitResult = await checkRateLimit(serviceClient, user.id, 'quantclaw-marketing', 20);
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse('quantclaw-marketing', rateLimitResult);
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
