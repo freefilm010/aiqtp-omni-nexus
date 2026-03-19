@@ -41,8 +41,7 @@ serve(async (req) => {
       return rateLimitResponse('broadcast-generate', rateLimitResult);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    // serviceClient already created above for rate limiting
 
     const body = await req.json().catch(() => ({}));
     const contentType = body.type || "market_update";
