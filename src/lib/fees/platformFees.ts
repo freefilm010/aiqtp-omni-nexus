@@ -277,6 +277,35 @@ DATA ACCURACY: While we strive to provide accurate and timely information, we do
   fullDisclaimer: `
 © ${new Date().getFullYear()} AIQTP™ AI Quantum Trading Portal. All rights reserved. AIQTP™ is a registered trademark of TRUST AIQTP HOLDINGS (TAH), a Wyoming trust entity. Platform technology and intellectual property are operated under exclusive license by AIQTP TRUST ENTERPRISE (ATE), New Jersey. By using this platform, you acknowledge that you have read, understood, and agree to be bound by our Terms of Service, Privacy Policy, and all applicable disclaimers. This platform is provided "as is" without warranties of any kind, either express or implied. AIQTP, its officers, directors, employees, agents, and affiliates shall not be liable for any damages arising from the use of this platform or reliance on any information provided herein. Trading involves substantial risk. Only risk capital should be used for trading. Past performance is not indicative of future results.
   `.trim(),
+  // Force Majeure / Acts of God
+  forceMajeure: `
+FORCE MAJEURE & ACTS OF GOD: AIQTP shall not be liable for any failure or delay in performance resulting from events beyond our reasonable control, including but not limited to: natural disasters, earthquakes, floods, hurricanes, tornadoes, tsunamis; solar flares, geomagnetic storms, or electromagnetic pulse (EMP) events; acts of war, terrorism, civil unrest, insurrection, or government sanctions; epidemics, pandemics, or public health emergencies; power outages, blackouts, or utility failures; internet service disruptions, DNS failures, or telecommunications outages; cyberattacks, ransomware, distributed denial-of-service (DDoS) attacks, or zero-day exploits; regulatory actions, exchange halts, market circuit breakers, or government-mandated trading suspensions; data center failures, cloud provider outages, or hardware malfunctions; strikes, labor disputes, or supply chain disruptions; any other event that could not have been reasonably foreseen or prevented. In such events, affected obligations shall be suspended for the duration of the force majeure event. Users acknowledge and accept these risks as inherent to digital financial services.
+  `.trim(),
+
+  // Limitation of Liability
+  limitationOfLiability: `
+LIMITATION OF LIABILITY: TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, AIQTP, ITS PARENT ENTITIES (TRUST AIQTP HOLDINGS), SUBSIDIARIES, AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, LICENSORS, AND SERVICE PROVIDERS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF PROFITS, GOODWILL, DATA, OR OTHER INTANGIBLE LOSSES, RESULTING FROM: (a) YOUR USE OF OR INABILITY TO USE THE PLATFORM; (b) ANY UNAUTHORIZED ACCESS TO OR ALTERATION OF YOUR DATA; (c) ANY THIRD-PARTY CONDUCT ON THE PLATFORM; (d) TRADING LOSSES, MISSED TRADES, OR ERRONEOUS EXECUTIONS; (e) SYSTEM OUTAGES, MAINTENANCE PERIODS, OR TECHNICAL FAILURES; (f) ERRORS IN AI PREDICTIONS, ALGORITHMIC STRATEGIES, OR AUTOMATED TRADING SYSTEMS; (g) EXCHANGE DELISTINGS, SMART CONTRACT FAILURES, OR BLOCKCHAIN NETWORK ISSUES. IN NO EVENT SHALL OUR TOTAL LIABILITY EXCEED THE FEES ACTUALLY PAID BY YOU TO AIQTP IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
+  `.trim(),
+
+  // Assumption of Risk & Waiver
+  assumptionOfRisk: `
+ASSUMPTION OF RISK & WAIVER: BY USING THIS PLATFORM, YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT: (1) Trading digital assets, cryptocurrencies, derivatives, and financial instruments carries inherent and substantial risks including total loss of capital; (2) You are solely responsible for all trading decisions and outcomes; (3) Historical exchange failures (including but not limited to Mt. Gox, FTX, Knight Capital, Robinhood outages, CME disruptions, NYSE glitches) demonstrate systemic risks inherent to financial platforms; (4) No platform, technology, or security measure can guarantee 100% uptime, protection against all cyber threats, or prevention of all losses; (5) You voluntarily assume all risks associated with your use of this platform; (6) You waive, release, and discharge AIQTP from any and all claims, demands, and causes of action arising from unforeseeable events, system failures, or market conditions beyond our control; (7) This waiver applies to known and unknown risks, foreseen and unforeseen events.
+  `.trim(),
+
+  // Insurance & Asset Protection Notice
+  insuranceNotice: `
+INSURANCE & ASSET PROTECTION: AIQTP maintains commercially reasonable cyber liability insurance, errors & omissions (E&O) coverage, and operational risk policies to protect platform operations. However, these policies do not directly cover individual user trading losses, market-related losses, or losses resulting from user error. Users are strongly encouraged to: (a) Maintain their own investment insurance and asset protection coverage; (b) Diversify holdings across multiple platforms and custodians; (c) Use hardware wallets for long-term storage; (d) Set appropriate stop-loss parameters; (e) Never invest funds needed for essential expenses. AIQTP may offer optional asset protection plans and insurance products through third-party providers — these are separate products with their own terms and coverage limits. AIQTP does not guarantee or underwrite any third-party insurance products.
+  `.trim(),
+
+  // Data Breach Notification
+  dataBreachNotice: `
+DATA BREACH PROTOCOL: In the event of a confirmed data breach affecting user information, AIQTP will: (1) Notify affected users within 72 hours of discovery as required by applicable regulations (GDPR, CCPA, state breach notification laws); (2) Provide details of the nature and scope of the breach; (3) Outline steps taken to contain and remediate the breach; (4) Offer guidance on protective measures users should take; (5) Cooperate with relevant regulatory authorities and law enforcement. Users are responsible for maintaining strong, unique passwords and enabling two-factor authentication.
+  `.trim(),
+
+  // System Availability SLA
+  systemAvailability: `
+SYSTEM AVAILABILITY: AIQTP targets 99.9% uptime for core services but does not guarantee uninterrupted access. Scheduled maintenance windows will be announced in advance when possible. During periods of extreme market volatility, certain features may be temporarily restricted to protect system integrity and user interests. Historical events such as the Robinhood March 2020 outage ($9.9M settlement), CME November 2025 data center failure, and NYSE January 2023 glitch ($9M SEC fine) demonstrate that even the largest exchanges experience downtime. Users should maintain alternative access to markets and should not rely solely on any single platform.
+  `.trim(),
 } as const;
 
 // Compact disclaimers for UI badges/banners
