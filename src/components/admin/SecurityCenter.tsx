@@ -40,12 +40,55 @@ const SecurityCenter = () => {
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [lastScan, setLastScan] = useState(new Date());
   const [isScanning, setIsScanning] = useState(false);
-  
-  const [securityEvents] = useState<SecurityEvent[]>([
-    { id: "1", type: "Login Attempt", severity: "low", description: "Multiple failed login attempts from IP 192.168.1.100", timestamp: new Date(Date.now() - 3600000), resolved: true },
-    { id: "2", type: "API Rate Limit", severity: "medium", description: "Rate limit exceeded for API key ak_xxx...xxx", timestamp: new Date(Date.now() - 7200000), resolved: true },
-    { id: "3", type: "New Admin", severity: "low", description: "New admin role assigned to user@example.com", timestamp: new Date(Date.now() - 86400000), resolved: true },
-  ]);
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
+
+  useEffect(() => {
+    fetchSecurityEvents();
+  }, []);
+
+  const fetchSecurityEvents = async () => {
+    try {
+      const [{ data: auditData }, { data: logsData }] = await Promise.all([
+        supabase
+          .from("security_audit_log")
+          .select("id, event_type, severity, details, created_at, user_id")
+          .order("created_at", { ascending: false })
+          .limit(50),
+        supabase
+          .from("security_logs")
+          .select("id, event_type, severity, description, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ]);
+
+      const events: SecurityEvent[] = [
+        ...(auditData || []).map((e: any) => ({
+          id: e.id,
+          type: e.event_type,
+          severity: (e.severity === "critical" || e.severity === "high" ? "high" : e.severity === "warning" || e.severity === "medium" ? "medium" : "low") as "low" | "medium" | "high",
+          description: typeof e.details === "object" ? JSON.stringify(e.details) : String(e.details || ""),
+          timestamp: new Date(e.created_at),
+          resolved: true,
+        })),
+        ...(logsData || []).map((e: any) => ({
+          id: e.id,
+          type: e.event_type,
+          severity: (e.severity === "critical" || e.severity === "high" ? "high" : e.severity === "warning" || e.severity === "medium" ? "medium" : "low") as "low" | "medium" | "high",
+          description: e.description,
+          timestamp: new Date(e.created_at),
+          resolved: true,
+        })),
+      ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).slice(0, 50);
+
+      setSecurityEvents(events);
+
+      // Compute score based on high severity count
+      const highCount = events.filter((e) => e.severity === "high").length;
+      setSecurityScore(Math.max(60, 100 - highCount * 3));
+    } catch (err) {
+      console.error("Failed to fetch security events:", err);
+    }
+  };
 
   const securityChecks = [
     { name: "Row Level Security", status: "enabled", icon: Lock },
