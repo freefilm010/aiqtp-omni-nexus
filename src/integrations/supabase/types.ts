@@ -7606,9 +7606,10 @@ export type Database = {
         Row: {
           admin_approved: boolean | null
           backtest_count: number | null
+          code: string | null
+          code_protected: boolean | null
           consistency_score: number | null
           created_at: string | null
-          creator_earnings: number | null
           creator_profit_share: number | null
           description: string | null
           entry_rules: Json | null
@@ -7630,9 +7631,10 @@ export type Database = {
         Insert: {
           admin_approved?: boolean | null
           backtest_count?: number | null
+          code?: never
+          code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
-          creator_earnings?: number | null
           creator_profit_share?: number | null
           description?: string | null
           entry_rules?: Json | null
@@ -7654,9 +7656,10 @@ export type Database = {
         Update: {
           admin_approved?: boolean | null
           backtest_count?: number | null
+          code?: never
+          code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
-          creator_earnings?: number | null
           creator_profit_share?: number | null
           description?: string | null
           entry_rules?: Json | null
@@ -7679,75 +7682,48 @@ export type Database = {
       }
       data_aggregator_bots_public: {
         Row: {
-          admin_approved: boolean | null
-          aggregation_rules: Json | null
           bot_type: string | null
-          collection_frequency: string | null
           created_at: string | null
-          creator_profit_share: number | null
           data_category: string | null
           description: string | null
-          graduation_date: string | null
           id: string | null
           is_active: boolean | null
-          is_graduated: boolean | null
-          last_collection_at: string | null
           name: string | null
-          output_format: string | null
           quality_score: number | null
           reliability_score: number | null
           sources: Json | null
-          total_data_sold: number | null
           total_earnings: number | null
           total_records_collected: number | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          admin_approved?: boolean | null
-          aggregation_rules?: Json | null
           bot_type?: string | null
-          collection_frequency?: string | null
           created_at?: string | null
-          creator_profit_share?: number | null
           data_category?: string | null
           description?: string | null
-          graduation_date?: string | null
           id?: string | null
           is_active?: boolean | null
-          is_graduated?: boolean | null
-          last_collection_at?: string | null
           name?: string | null
-          output_format?: string | null
           quality_score?: number | null
           reliability_score?: number | null
           sources?: Json | null
-          total_data_sold?: number | null
           total_earnings?: number | null
           total_records_collected?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          admin_approved?: boolean | null
-          aggregation_rules?: Json | null
           bot_type?: string | null
-          collection_frequency?: string | null
           created_at?: string | null
-          creator_profit_share?: number | null
           data_category?: string | null
           description?: string | null
-          graduation_date?: string | null
           id?: string | null
           is_active?: boolean | null
-          is_graduated?: boolean | null
-          last_collection_at?: string | null
           name?: string | null
-          output_format?: string | null
           quality_score?: number | null
           reliability_score?: number | null
           sources?: Json | null
-          total_data_sold?: number | null
           total_earnings?: number | null
           total_records_collected?: number | null
           updated_at?: string | null
