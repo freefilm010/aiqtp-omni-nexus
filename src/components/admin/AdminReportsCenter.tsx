@@ -42,6 +42,7 @@ const AdminReportsCenter = () => {
         { data: signals },
         { data: secLogs },
         { data: autoLogs },
+        { data: profiles },
       ] = await Promise.all([
         supabase.from("chat_conversations").select("id, message_count"),
         supabase.from("platform_revenue").select("amount"),
@@ -49,12 +50,13 @@ const AdminReportsCenter = () => {
         supabase.from("ai_signals").select("id").eq("is_active", true),
         supabase.from("security_audit_log").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("admin_automation_logs").select("*").order("created_at", { ascending: false }).limit(50),
+        supabase.from("profiles").select("id"),
       ]);
 
       setAuditLogs(secLogs || []);
       setAutomationLogs(autoLogs || []);
       setStats({
-        totalUsers: 0,
+        totalUsers: profiles?.length || 0,
         totalConversations: convs?.length || 0,
         totalMessages: (convs || []).reduce((s, c) => s + (c.message_count || 0), 0),
         totalRevenue: (revenue || []).reduce((s, r) => s + Number(r.amount), 0),
@@ -106,8 +108,9 @@ const AdminReportsCenter = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         {[
+          { label: "Users", value: stats.totalUsers, icon: Users, color: "text-primary" },
           { label: "Conversations", value: stats.totalConversations, icon: MessageSquare, color: "text-blue-500" },
           { label: "Messages", value: stats.totalMessages, icon: MessageSquare, color: "text-purple-500" },
           { label: "Revenue", value: `$${stats.totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-500" },

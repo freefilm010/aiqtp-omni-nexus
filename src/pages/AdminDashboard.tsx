@@ -28,6 +28,8 @@ import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
 import FeedbackManager from "@/components/admin/FeedbackManager";
 import AdminKnowledgeBase from "@/components/admin/AdminKnowledgeBase";
 import AdminReportsCenter from "@/components/admin/AdminReportsCenter";
+import AdminUsersManagement from "@/components/admin/AdminUsersManagement";
+import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -91,9 +93,9 @@ const AdminDashboard = () => {
             <Route path="feedback" element={<FeedbackManager />} />
             <Route path="knowledge" element={<AdminKnowledgeBase />} />
             <Route path="reports" element={<AdminReportsCenter />} />
-            <Route path="users" element={<AdminOverview />} />
+            <Route path="users" element={<AdminUsersManagement />} />
             <Route path="logs" element={<AdminReportsCenter />} />
-            <Route path="settings" element={<AdminOverview />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </div>
