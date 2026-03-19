@@ -235,6 +235,16 @@ const ChatManagement = () => {
     }
   };
 
+  if (viewingConversation) {
+    return (
+      <AdminChatViewer
+        conversationId={viewingConversation.id}
+        conversationTitle={viewingConversation.title || "Untitled"}
+        onBack={() => setViewingConversation(null)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
