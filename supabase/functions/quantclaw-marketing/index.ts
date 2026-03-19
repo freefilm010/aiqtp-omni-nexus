@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, logGeneration, rateLimitResponse } from "../_shared/rateLimiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +57,12 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Admin access required" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Rate limiting (admin still has limits to prevent runaway costs)
+    const rateLimitResult = await checkRateLimit(serviceClient, user.id, 'quantclaw-marketing', 20);
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse('quantclaw-marketing', rateLimitResult);
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");

@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, logGeneration, rateLimitResponse } from "../_shared/rateLimiter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +21,34 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limiting (expensive IBM Quantum API calls)
+    const serviceClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const rateLimitResult = await checkRateLimit(serviceClient, user.id, 'quantum-compute', 10);
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse('quantum-compute', rateLimitResult);
+    }
+
     const { backend, qubits, shots, circuit, jobName } = await req.json() as QuantumJobRequest;
     const IBM_QUANTUM_API_KEY = Deno.env.get("IBM_QUANTUM_API_KEY");
     const IBM_QUANTUM_CRN = Deno.env.get("IBM_QUANTUM_CRN");
