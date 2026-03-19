@@ -327,6 +327,9 @@ export const REQUIRED_ACKNOWLEDGMENTS = [
   "I accept that all fees are subject to actual network costs",
   "I confirm I am trading with funds I can afford to lose",
   "I understand AI predictions are experimental and not guaranteed",
+  "I acknowledge force majeure events (natural disasters, cyberattacks, solar flares, government actions) may disrupt services and AIQTP is not liable for losses during such events",
+  "I waive the right to hold AIQTP liable for unforeseeable conditions, acts of god, or system failures beyond reasonable control",
+  "I understand that no platform can guarantee 100% uptime or absolute security",
   "I agree to the Terms of Service, Privacy Policy, and Risk Disclosures",
 ] as const;
 
