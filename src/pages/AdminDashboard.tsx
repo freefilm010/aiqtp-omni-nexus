@@ -28,6 +28,8 @@ import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
 import FeedbackManager from "@/components/admin/FeedbackManager";
 import AdminKnowledgeBase from "@/components/admin/AdminKnowledgeBase";
 import AdminReportsCenter from "@/components/admin/AdminReportsCenter";
+import AdminUsersManagement from "@/components/admin/AdminUsersManagement";
+import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
