@@ -27,7 +27,9 @@ import {
   Globe,
   Radar,
   Store,
-  MessageSquare
+  MessageSquare,
+  BarChart3,
+  Library
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -60,6 +62,8 @@ const navItems: NavItem[] = [
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Security", href: "/admin/security", icon: Shield },
   { title: "Customer Feedback", href: "/admin/feedback", icon: MessageSquare },
+  { title: "Knowledge Base", href: "/admin/knowledge", icon: Library },
+  { title: "Reports & Metrics", href: "/admin/reports", icon: BarChart3 },
   { title: "AI Copilot", href: "/admin/copilot", icon: Bot },
   { title: "Documentation", href: "/admin/documentation", icon: BookOpen },
   { title: "Logs", href: "/admin/logs", icon: FileText },

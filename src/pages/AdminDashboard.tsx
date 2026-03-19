@@ -26,6 +26,8 @@ import BrandingRegistry from "@/components/admin/BrandingRegistry";
 import MarketCrawlerAnalytics from "@/components/intelligence/MarketCrawlerAnalytics";
 import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
 import FeedbackManager from "@/components/admin/FeedbackManager";
+import AdminKnowledgeBase from "@/components/admin/AdminKnowledgeBase";
+import AdminReportsCenter from "@/components/admin/AdminReportsCenter";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -87,8 +89,10 @@ const AdminDashboard = () => {
             <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
             <Route path="store-listings" element={<StoreListingAutomation />} />
             <Route path="feedback" element={<FeedbackManager />} />
+            <Route path="knowledge" element={<AdminKnowledgeBase />} />
+            <Route path="reports" element={<AdminReportsCenter />} />
             <Route path="users" element={<AdminOverview />} />
-            <Route path="logs" element={<AdminOverview />} />
+            <Route path="logs" element={<AdminReportsCenter />} />
             <Route path="settings" element={<AdminOverview />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>

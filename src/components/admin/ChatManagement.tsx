@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import AdminChatViewer from "./AdminChatViewer";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -64,6 +65,7 @@ interface Conversation {
 
 const ChatManagement = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [viewingConversation, setViewingConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -232,6 +234,16 @@ const ChatManagement = () => {
       default: return '💬';
     }
   };
+
+  if (viewingConversation) {
+    return (
+      <AdminChatViewer
+        conversationId={viewingConversation.id}
+        conversationTitle={viewingConversation.title || "Untitled"}
+        onBack={() => setViewingConversation(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -441,7 +453,10 @@ const ChatManagement = () => {
                           <span className="font-medium uppercase text-xs">{conv.agent_type}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
+                      <TableCell
+                        className="max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setViewingConversation(conv); }}
+                      >
                         {conv.title || 'Untitled Conversation'}
                       </TableCell>
                       <TableCell>
