@@ -453,7 +453,10 @@ const ChatManagement = () => {
                           <span className="font-medium uppercase text-xs">{conv.agent_type}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
+                      <TableCell
+                        className="max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setViewingConversation(conv); }}
+                      >
                         {conv.title || 'Untitled Conversation'}
                       </TableCell>
                       <TableCell>
