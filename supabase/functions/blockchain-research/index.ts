@@ -40,6 +40,12 @@ serve(async (req) => {
     const userId = claimsData.claims.sub;
     console.log(`Authenticated user ${userId} accessing blockchain-research`);
 
+    // Rate limiting
+    const rateLimitResult = await checkRateLimit(supabaseClient, userId, 'blockchain-research', 15);
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse('blockchain-research', rateLimitResult);
+    }
+
     const { researchType, context } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
