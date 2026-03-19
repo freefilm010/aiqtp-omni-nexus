@@ -27,7 +27,9 @@ import {
   Globe,
   Radar,
   Store,
-  MessageSquare
+  MessageSquare,
+  BarChart3,
+  Library
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
