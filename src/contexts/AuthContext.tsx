@@ -23,6 +23,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let active = true;
 
+    // Safety net: never block the UI longer than 5 seconds even if auth hangs
+    const timeout = setTimeout(() => {
+      if (!active) return;
+      if (!initializedRef.current) {
+        console.warn("Auth session check timed out – rendering without auth");
+        initializedRef.current = true;
+        setLoading(false);
+      }
+    }, 5000);
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
@@ -40,10 +50,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setLoading(false);
+    }).catch((err) => {
+      console.error("Auth getSession failed:", err);
+      if (!active) return;
+      initializedRef.current = true;
+      setLoading(false);
     });
 
     return () => {
       active = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
