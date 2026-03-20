@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      injectRegister: "script-defer",
+      injectRegister: "inline",
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "placeholder.svg"],
       workbox: {
