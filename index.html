@@ -84,6 +84,45 @@
       .initial-loader .spinner{width:3rem;height:3rem;border:4px solid hsl(217.2 91.2% 59.8%);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
       .initial-loader p{color:hsl(215 20.2% 65.1%)}
     </style>
+
+    <script>
+      (() => {
+        const bootStateKey = "aiqtp-boot-recovery-v1";
+        window.__AIQTP_APP_BOOTED__ = false;
+
+        const clearStaleAppCaches = async () => {
+          if ("serviceWorker" in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((registration) => registration.unregister()));
+          }
+
+          if ("caches" in window) {
+            const cacheKeys = await caches.keys();
+            await Promise.all(
+              cacheKeys
+                .filter((key) => /workbox|precache|pwa|vite/i.test(key))
+                .map((key) => caches.delete(key))
+            );
+          }
+        };
+
+        window.addEventListener("load", () => {
+          window.setTimeout(async () => {
+            if (window.__AIQTP_APP_BOOTED__) return;
+
+            try {
+              if (sessionStorage.getItem(bootStateKey) === "1") return;
+              sessionStorage.setItem(bootStateKey, "1");
+              await clearStaleAppCaches();
+            } catch {}
+
+            const recoveryUrl = new URL(window.location.href);
+            recoveryUrl.searchParams.set("boot-retry", String(Date.now()));
+            window.location.replace(recoveryUrl.toString());
+          }, 7000);
+        });
+      })();
+    </script>
   </head>
 
   <body>
