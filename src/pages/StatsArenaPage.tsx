@@ -41,7 +41,7 @@ interface UserStat {
 }
 
 interface LeaderboardEntry {
-  user_id: string;
+  id: string;
   rank: number;
   score: number;
   display_name: string | null;
@@ -126,7 +126,7 @@ const StatsArenaPage = () => {
     setLoading(true);
     const { data } = await supabase
       .from("leaderboard_entries")
-      .select("*")
+      .select("id, period_type, category, rank, score, display_name, avatar_url, highlight_stat, badge, period_start, updated_at")
       .eq("period_type", period)
       .eq("category", leaderCategory)
       .order("rank")
@@ -365,12 +365,10 @@ const StatsArenaPage = () => {
                       <div className="col-span-3 text-right">Highlight</div>
                     </div>
                     {leaderboard.map((entry, idx) => {
-                      const isMe = user?.id === entry.user_id;
                       return (
                         <div
-                          key={entry.user_id}
+                          key={entry.id}
                           className={`grid grid-cols-12 gap-2 px-3 py-2.5 rounded-lg transition-colors ${
-                            isMe ? "bg-primary/10 border border-primary/20" :
                             idx < 3 ? "bg-muted/30" : "hover:bg-muted/20"
                           }`}
                         >
@@ -379,9 +377,8 @@ const StatsArenaPage = () => {
                           </div>
                           <div className="col-span-5 flex items-center gap-2 min-w-0">
                             <span className="text-sm font-medium truncate">
-                              {entry.display_name || `Player ${entry.user_id.slice(0, 6)}`}
+                              {entry.display_name || `Player #${entry.rank}`}
                             </span>
-                            {isMe && <Badge className="text-[9px] h-4">YOU</Badge>}
                           </div>
                           <div className="col-span-3 text-right font-mono font-bold text-sm">
                             {entry.score.toLocaleString()}

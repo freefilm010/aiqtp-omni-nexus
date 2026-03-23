@@ -7613,7 +7613,6 @@ export type Database = {
         Row: {
           admin_approved: boolean | null
           backtest_count: number | null
-          code: string | null
           code_protected: boolean | null
           consistency_score: number | null
           created_at: string | null
@@ -7633,12 +7632,10 @@ export type Database = {
           status: Database["public"]["Enums"]["strategy_status"] | null
           total_rentals: number | null
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           admin_approved?: boolean | null
           backtest_count?: number | null
-          code?: never
           code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
@@ -7658,12 +7655,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["strategy_status"] | null
           total_rentals?: number | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           admin_approved?: boolean | null
           backtest_count?: number | null
-          code?: never
           code_protected?: boolean | null
           consistency_score?: number | null
           created_at?: string | null
@@ -7683,7 +7678,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["strategy_status"] | null
           total_rentals?: number | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
@@ -7698,11 +7692,8 @@ export type Database = {
           name: string | null
           quality_score: number | null
           reliability_score: number | null
-          sources: Json | null
-          total_earnings: number | null
           total_records_collected: number | null
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           bot_type?: string | null
@@ -7714,11 +7705,8 @@ export type Database = {
           name?: string | null
           quality_score?: number | null
           reliability_score?: number | null
-          sources?: Json | null
-          total_earnings?: number | null
           total_records_collected?: number | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           bot_type?: string | null
@@ -7730,11 +7718,8 @@ export type Database = {
           name?: string | null
           quality_score?: number | null
           reliability_score?: number | null
-          sources?: Json | null
-          total_earnings?: number | null
           total_records_collected?: number | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
