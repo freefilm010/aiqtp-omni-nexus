@@ -5024,6 +5024,13 @@ export type Database = {
             referencedRelation: "connected_accounts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "portfolio_holdings_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "connected_accounts_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       portfolio_performance: {
@@ -7681,6 +7688,45 @@ export type Database = {
         }
         Relationships: []
       }
+      connected_accounts_safe: {
+        Row: {
+          account_name: string | null
+          account_type: string | null
+          balance: number | null
+          change_24h: number | null
+          created_at: string | null
+          id: string | null
+          last_sync_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_type?: string | null
+          balance?: number | null
+          change_24h?: number | null
+          created_at?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_type?: string | null
+          balance?: number | null
+          change_24h?: number | null
+          created_at?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       data_aggregator_bots_public: {
         Row: {
           bot_type: string | null
@@ -7722,6 +7768,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      faucet_claims_safe: {
+        Row: {
+          amount: number | null
+          chain: string | null
+          created_at: string | null
+          id: string | null
+          status: string | null
+          token_id: string | null
+          tx_hash: string | null
+          user_id: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          amount?: number | null
+          chain?: string | null
+          created_at?: string | null
+          id?: string | null
+          status?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          amount?: number | null
+          chain?: string | null
+          created_at?: string | null
+          id?: string | null
+          status?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faucet_claims_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quwallet_wallets_safe: {
         Row: {
