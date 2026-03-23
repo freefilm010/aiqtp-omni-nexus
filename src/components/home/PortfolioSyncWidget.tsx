@@ -78,7 +78,7 @@ const PortfolioSyncWidget = () => {
 
       if (accountsError) throw accountsError;
 
-      const mappedAccounts: ConnectedAccount[] = (accountsData || []).map(a => ({
+      const mappedAccounts: ConnectedAccount[] = ((accountsData as any[]) || []).map((a: any) => ({
         id: a.id,
         name: a.account_name,
         type: a.account_type as ConnectedAccount['type'],
