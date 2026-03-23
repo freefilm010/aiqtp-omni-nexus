@@ -5024,6 +5024,13 @@ export type Database = {
             referencedRelation: "connected_accounts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "portfolio_holdings_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "connected_accounts_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       portfolio_performance: {
@@ -7681,6 +7688,45 @@ export type Database = {
         }
         Relationships: []
       }
+      connected_accounts_safe: {
+        Row: {
+          account_name: string | null
+          account_type: string | null
+          balance: number | null
+          change_24h: number | null
+          created_at: string | null
+          id: string | null
+          last_sync_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_type?: string | null
+          balance?: number | null
+          change_24h?: number | null
+          created_at?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_type?: string | null
+          balance?: number | null
+          change_24h?: number | null
+          created_at?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       data_aggregator_bots_public: {
         Row: {
           bot_type: string | null
@@ -7719,6 +7765,92 @@ export type Database = {
           quality_score?: number | null
           reliability_score?: number | null
           total_records_collected?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      faucet_claims_safe: {
+        Row: {
+          amount: number | null
+          chain: string | null
+          created_at: string | null
+          id: string | null
+          status: string | null
+          token_id: string | null
+          tx_hash: string | null
+          user_id: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          amount?: number | null
+          chain?: string | null
+          created_at?: string | null
+          id?: string | null
+          status?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          amount?: number | null
+          chain?: string | null
+          created_at?: string | null
+          id?: string | null
+          status?: string | null
+          token_id?: string | null
+          tx_hash?: string | null
+          user_id?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faucet_claims_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leaderboard_entries_public: {
+        Row: {
+          avatar_url: string | null
+          badge: string | null
+          category: string | null
+          display_name: string | null
+          highlight_stat: string | null
+          id: string | null
+          period_start: string | null
+          period_type: string | null
+          rank: number | null
+          score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge?: string | null
+          category?: string | null
+          display_name?: string | null
+          highlight_stat?: string | null
+          id?: string | null
+          period_start?: string | null
+          period_type?: string | null
+          rank?: number | null
+          score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badge?: string | null
+          category?: string | null
+          display_name?: string | null
+          highlight_stat?: string | null
+          id?: string | null
+          period_start?: string | null
+          period_type?: string | null
+          rank?: number | null
+          score?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -7777,6 +7909,107 @@ export type Database = {
         }
         Relationships: []
       }
+      reward_redemptions_safe: {
+        Row: {
+          amount_paid: number | null
+          budget_year: number | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          notes: string | null
+          payment_method: string | null
+          reward_id: string | null
+          status: string | null
+          tracking_number: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          budget_year?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          reward_id?: string | null
+          status?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          budget_year?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          reward_id?: string | null
+          status?: string | null
+          tracking_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_payment_methods_safe: {
+        Row: {
+          bank_name: string | null
+          card_brand: string | null
+          created_at: string | null
+          exp_month: number | null
+          exp_year: number | null
+          id: string | null
+          is_default: boolean | null
+          last_four: string | null
+          metadata: Json | null
+          method_type: string | null
+          nickname: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bank_name?: string | null
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string | null
+          is_default?: boolean | null
+          last_four?: string | null
+          metadata?: Json | null
+          method_type?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bank_name?: string | null
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string | null
+          is_default?: boolean | null
+          last_four?: string | null
+          metadata?: Json | null
+          method_type?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       solana_wallets_safe: {
         Row: {
           balance_sol: number | null
@@ -7826,6 +8059,53 @@ export type Database = {
             columns: ["operator_id"]
             isOneToOne: false
             referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_service_connections_safe: {
+        Row: {
+          connected_at: string | null
+          connection_status: string | null
+          created_at: string | null
+          external_account_id: string | null
+          id: string | null
+          last_sync_at: string | null
+          metadata: Json | null
+          service_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          connected_at?: string | null
+          connection_status?: string | null
+          created_at?: string | null
+          external_account_id?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          service_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          connected_at?: string | null
+          connection_status?: string | null
+          created_at?: string | null
+          external_account_id?: string | null
+          id?: string | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          service_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_service_connections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "satellite_services"
             referencedColumns: ["id"]
           },
         ]
