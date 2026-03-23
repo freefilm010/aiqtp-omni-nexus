@@ -71,7 +71,7 @@ const PortfolioSyncWidget = () => {
     try {
       // Fetch connected accounts
       const { data: accountsData, error: accountsError } = await supabase
-        .from('connected_accounts')
+        .from('connected_accounts_safe' as any)
         .select('id, user_id, account_name, account_type, status, balance, change_24h, last_sync_at, created_at, updated_at')
         .eq('user_id', user.id)
         .order('balance', { ascending: false });
