@@ -95,7 +95,13 @@
     <script>
       (() => {
         const bootStateKey = "aiqtp-boot-recovery-v1";
+        const isLovablePreview =
+          window.location.hostname.includes("lovableproject.com") ||
+          window.location.hostname.includes("id-preview--");
+        const initialBootTimeoutMs = isLovablePreview ? 20000 : 7000;
+        const postBootstrapTimeoutMs = isLovablePreview ? 15000 : 5000;
         window.__AIQTP_APP_BOOTED__ = false;
+        window.__AIQTP_BOOTSTRAP_STARTED__ = false;
 
         const clearStaleAppCaches = async () => {
           if ("serviceWorker" in navigator) {
@@ -113,20 +119,33 @@
           }
         };
 
+        const triggerRecovery = async () => {
+          if (window.__AIQTP_APP_BOOTED__) return;
+
+          try {
+            if (sessionStorage.getItem(bootStateKey) === "1") return;
+            sessionStorage.setItem(bootStateKey, "1");
+            await clearStaleAppCaches();
+          } catch {}
+
+          const recoveryUrl = new URL(window.location.href);
+          recoveryUrl.searchParams.set("boot-retry", String(Date.now()));
+          window.location.replace(recoveryUrl.toString());
+        };
+
         window.addEventListener("load", () => {
-          window.setTimeout(async () => {
+          window.setTimeout(() => {
             if (window.__AIQTP_APP_BOOTED__) return;
 
-            try {
-              if (sessionStorage.getItem(bootStateKey) === "1") return;
-              sessionStorage.setItem(bootStateKey, "1");
-              await clearStaleAppCaches();
-            } catch {}
+            if (window.__AIQTP_BOOTSTRAP_STARTED__) {
+              window.setTimeout(() => {
+                void triggerRecovery();
+              }, postBootstrapTimeoutMs);
+              return;
+            }
 
-            const recoveryUrl = new URL(window.location.href);
-            recoveryUrl.searchParams.set("boot-retry", String(Date.now()));
-            window.location.replace(recoveryUrl.toString());
-          }, 7000);
+            void triggerRecovery();
+          }, initialBootTimeoutMs);
         });
       })();
     </script>
