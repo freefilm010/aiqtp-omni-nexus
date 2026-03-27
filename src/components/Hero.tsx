@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Zap, Globe, Bot, TrendingUp, ChevronDown, Wifi, BarChart2, Crosshair, Minus, Square, Circle, PenTool, Search, FileCode, FlaskConical, Terminal, Cpu, LineChart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -75,12 +75,23 @@ const LeftToolbar = () => (
 );
 
 const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured = false }: { symbol: string; price: string; change: string; timeframe: string; positive: boolean; featured?: boolean }) => {
-  const candles = Array.from({ length: 12 }, () => ({
-    o: 40 + Math.random() * 30,
-    c: 40 + Math.random() * 30,
-    h: 60 + Math.random() * 20,
-    l: 30 + Math.random() * 15,
-  }));
+  const chartVisuals = useMemo(() => {
+    const candles = Array.from({ length: 12 }, () => ({
+      o: 40 + Math.random() * 30,
+      c: 40 + Math.random() * 30,
+      h: 60 + Math.random() * 20,
+      l: 30 + Math.random() * 15,
+    }));
+
+    return {
+      candles,
+      open: (Math.random() * 100 + 50).toFixed(2),
+      high: (Math.random() * 100 + 60).toFixed(2),
+      low: (Math.random() * 50 + 40).toFixed(2),
+      path: `M 0 ${30 + Math.random() * 10} Q ${25 + Math.random() * 10} ${25 + Math.random() * 15} 50 ${20 + Math.random() * 10} T 100 ${15 + Math.random() * 10}`,
+      volumeHeights: Array.from({ length: 12 }, () => `${20 + Math.random() * 80}%`),
+    };
+  }, []);
 
   return (
     <div className={`relative overflow-hidden group transition-all duration-500 ease-out ${featured ? 'bento-item-featured' : 'bento-item'}`}>
@@ -99,9 +110,9 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
       </div>
 
       <div className="flex items-center gap-3 overflow-hidden border-b border-[hsl(222,14%,12%,0.5)] bg-[hsl(223,18%,6%,0.4)] px-3 py-1.5">
-        <span className="font-mono text-[9px] text-muted-foreground">O <span className="text-foreground/80">{(Math.random() * 100 + 50).toFixed(2)}</span></span>
-        <span className="font-mono text-[9px] text-muted-foreground">H <span className="text-[hsl(162,91%,32%)]">{(Math.random() * 100 + 60).toFixed(2)}</span></span>
-        <span className="font-mono text-[9px] text-muted-foreground">L <span className="text-[hsl(355,88%,58%)]">{(Math.random() * 50 + 40).toFixed(2)}</span></span>
+        <span className="font-mono text-[9px] text-muted-foreground">O <span className="text-foreground/80">{chartVisuals.open}</span></span>
+        <span className="font-mono text-[9px] text-muted-foreground">H <span className="text-[hsl(162,91%,32%)]">{chartVisuals.high}</span></span>
+        <span className="font-mono text-[9px] text-muted-foreground">L <span className="text-[hsl(355,88%,58%)]">{chartVisuals.low}</span></span>
         <span className="font-mono text-[9px] text-muted-foreground">C <span className="text-foreground/80">{price}</span></span>
       </div>
 
@@ -116,7 +127,7 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
         </svg>
 
         <div className="absolute inset-3 flex items-end justify-around gap-0.5">
-          {candles.map((candle, i) => {
+          {chartVisuals.candles.map((candle, i) => {
             const isBull = candle.c > candle.o;
             const bodyHeight = Math.abs(candle.c - candle.o) * 1.2;
             return (
@@ -144,7 +155,7 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
             </filter>
           </defs>
           <path
-            d={`M 0 ${30 + Math.random() * 10} Q ${25 + Math.random() * 10} ${25 + Math.random() * 15} 50 ${20 + Math.random() * 10} T 100 ${15 + Math.random() * 10}`}
+            d={chartVisuals.path}
             stroke="hsl(43,96%,56%)"
             strokeWidth="1.5"
             fill="none"
@@ -158,11 +169,11 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 flex h-7 items-end gap-0.5 px-2 opacity-40">
-        {Array.from({ length: 12 }, (_, i) => (
+        {chartVisuals.volumeHeights.map((height, i) => (
           <div
             key={i}
             className={`flex-1 rounded-t-sm transition-all duration-300 ${i % 2 === 0 ? 'bg-gradient-to-t from-[hsl(162,91%,32%,0.6)] to-[hsl(162,91%,32%,0.2)]' : 'bg-gradient-to-t from-[hsl(355,88%,58%,0.6)] to-[hsl(355,88%,58%,0.2)]'}`}
-            style={{ height: `${20 + Math.random() * 80}%` }}
+            style={{ height }}
           />
         ))}
       </div>
@@ -267,6 +278,8 @@ const Hero = () => {
     { symbol: 'SPY ETF', price: '478.23', change: '+3.21 (+0.67%)', timeframe: '1D · NYSE', positive: true },
   ];
 
+  const visibleMiniCharts = isMobile ? miniCharts.slice(0, 2) : miniCharts;
+
   return (
     <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-[hsl(225,20%,6%)] md:min-h-screen">
       <TerminalGridBackground />
@@ -323,7 +336,7 @@ const Hero = () => {
         </div>
 
         <div className="bento-grid mb-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 animate-scale-in stagger-4">
-          {miniCharts.map((chart, i) => (
+          {visibleMiniCharts.map((chart, i) => (
             <MiniChartPanel key={i} {...chart} featured={i === 0 || i === 3} />
           ))}
         </div>
