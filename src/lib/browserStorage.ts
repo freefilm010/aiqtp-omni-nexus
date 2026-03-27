@@ -2,6 +2,24 @@ type StorageKey = "localStorage" | "sessionStorage";
 
 const memoryStorageFallbacks: Partial<Record<StorageKey, Storage>> = {};
 
+const installGlobalStorageFallback = (storageKey: StorageKey, storage: Storage) => {
+  if (typeof window === "undefined") return;
+
+  const descriptor: PropertyDescriptor = {
+    configurable: true,
+    enumerable: true,
+    get: () => storage,
+  };
+
+  for (const target of [window, globalThis] as object[]) {
+    try {
+      Object.defineProperty(target, storageKey, descriptor);
+    } catch {
+      // Ignore environments where the storage property is non-configurable.
+    }
+  }
+};
+
 const createMemoryStorage = (): Storage => {
   const store = new Map<string, string>();
 
@@ -45,6 +63,7 @@ export const ensureBrowserStorage = (storageKey: StorageKey): Storage => {
   } catch {
     const memoryStorage = createMemoryStorage();
     memoryStorageFallbacks[storageKey] = memoryStorage;
+    installGlobalStorageFallback(storageKey, memoryStorage);
     return memoryStorage;
   }
 };
