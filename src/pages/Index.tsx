@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import LazySection from "@/components/LazySection";
+import { useAuth } from "@/hooks/useAuth";
 
 // Lazy-load Footer — it pulls in useAdminAuth + GitHubEcosystem which are heavy
 const Footer = lazy(() => import("@/components/Footer"));
@@ -26,11 +27,15 @@ const SectionLoader = () => (
 );
 
 const Index = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen">
-      <Suspense fallback={null}>
-        <DynamicIslandNotifications />
-      </Suspense>
+      {user ? (
+        <Suspense fallback={null}>
+          <DynamicIslandNotifications />
+        </Suspense>
+      ) : null}
 
       <Header />
       <main>

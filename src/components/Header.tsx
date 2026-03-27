@@ -59,10 +59,22 @@ import {
   Wallet
 } from "lucide-react";
 
+const AdminAccountItem = ({ onNavigate }: { onNavigate: () => void }) => {
+  const { isAdmin } = useAdminAuth();
+
+  if (!isAdmin) return null;
+
+  return (
+    <DropdownMenuItem onClick={onNavigate}>
+      <Shield className="mr-2 h-4 w-4" />
+      Admin
+    </DropdownMenuItem>
+  );
+};
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const { isAdmin } = useAdminAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
@@ -379,12 +391,7 @@ const Header = () => {
                     <Activity className="mr-2 h-4 w-4" />
                     Dashboard
                   </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      Admin
-                    </DropdownMenuItem>
-                  )}
+                  <AdminAccountItem onNavigate={() => navigate('/admin')} />
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut}>
                     <LogOut className="mr-2 h-4 w-4" />

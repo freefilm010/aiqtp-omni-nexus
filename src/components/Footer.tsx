@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import GitHubEcosystem from "@/components/github/GitHubEcosystem";
 import { GITHUB_USERNAME } from "@/lib/github/repositories";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { CRISIS_HELPLINES } from "@/lib/fees/platformFees";
 import CustomerFeedbackForm from "@/components/feedback/CustomerFeedbackForm";
 import { 
@@ -45,8 +46,35 @@ import {
   Trophy
 } from "lucide-react";
 
-const Footer = () => {
+const AdminFooterLink = () => {
   const { isAdmin } = useAdminAuth();
+
+  if (!isAdmin) return null;
+
+  return (
+    <li>
+      <Link to="/admin" className="hover:text-gold transition-smooth flex items-center gap-1.5">
+        <Shield className="h-3 w-3" />
+        Admin Dashboard
+      </Link>
+    </li>
+  );
+};
+
+const AdminGitHubSection = () => {
+  const { isAdmin } = useAdminAuth();
+
+  if (!isAdmin) return null;
+
+  return (
+    <div className="py-8 border-t border-white/10">
+      <GitHubEcosystem />
+    </div>
+  );
+};
+
+const Footer = () => {
+  const { user } = useAuth();
   // All navigation links matching the app routes
   const tradingLinks = [
     { to: "/trading", label: "Trading Dashboard", icon: Activity },
@@ -102,7 +130,6 @@ const Footer = () => {
     { to: "/fees", label: "Platform Fees", icon: Percent },
     { to: "/achievements", label: "Achievements", icon: Trophy },
     { to: "/institutional", label: "Institutional Services", icon: Shield },
-    ...(isAdmin ? [{ to: "/admin", label: "Admin Dashboard", icon: Shield }] : []),
   ];
 
   const legalLinks = [
@@ -215,6 +242,7 @@ const Footer = () => {
                   </Link>
                 </li>
               ))}
+              {user ? <AdminFooterLink /> : null}
             </ul>
           </div>
         </div>
@@ -309,11 +337,7 @@ const Footer = () => {
         </div>
 
         {/* GitHub Ecosystem Section - Admin Only */}
-        {isAdmin && (
-          <div className="py-8 border-t border-white/10">
-            <GitHubEcosystem />
-          </div>
-        )}
+        {user ? <AdminGitHubSection /> : null}
 
         {/* Legal Disclaimer Section */}
         <div className="py-6 border-t border-white/10 space-y-4">
