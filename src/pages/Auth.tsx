@@ -68,22 +68,7 @@ const Auth = () => {
     const fromPath = (location.state as any)?.from?.pathname;
     const safeFrom = typeof fromPath === "string" && fromPath !== "/auth" ? fromPath : null;
 
-    const doRedirect = async () => {
-      try {
-        const { data, error } = await supabase.rpc("has_role", {
-          _user_id: session.user.id,
-          _role: "admin",
-        });
-
-        // Always redirect to home page after sign-in
-        navigate("/", { replace: true });
-      } catch {
-        navigate(safeFrom ?? "/trading", { replace: true });
-      }
-    };
-
-    // Defer any backend calls/navigation out of render cycle
-    setTimeout(() => void doRedirect(), 0);
+    navigate(safeFrom ?? "/", { replace: true });
   }, [authLoading, recoveryMode, session?.user?.id, navigate, location.state]);
 
   const handleSignUp = async (e: React.FormEvent) => {
