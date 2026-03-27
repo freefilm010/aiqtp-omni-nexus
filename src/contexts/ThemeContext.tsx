@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { readStorage, writeStorage } from "@/lib/browserStorage";
 
 export type ThemeType = 
   | "default" 
@@ -38,7 +39,7 @@ const themeClasses: Record<ThemeType, string> = {
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeType>(() => {
-    const saved = localStorage.getItem("trading-theme");
+    const saved = readStorage("localStorage", "trading-theme");
     return (saved as ThemeType) || "default";
   });
 
@@ -54,7 +55,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       document.documentElement.classList.add(themeClass);
     }
     
-    localStorage.setItem("trading-theme", theme);
+    writeStorage("localStorage", "trading-theme", theme);
   }, [theme]);
 
   const setTheme = (newTheme: ThemeType) => {

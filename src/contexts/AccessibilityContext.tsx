@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { readJsonStorage, writeJsonStorage } from '@/lib/browserStorage';
 
 interface AccessibilitySettings {
   // Toolbar settings
@@ -85,8 +86,7 @@ interface AccessibilityProviderProps {
 
 export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ children }) => {
   const [settings, setSettings] = useState<AccessibilitySettings>(() => {
-    const saved = localStorage.getItem('accessibility-settings');
-    return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+    return readJsonStorage('localStorage', 'accessibility-settings', defaultSettings);
   });
   
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -148,7 +148,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
 
   // Save settings to localStorage
   useEffect(() => {
-    localStorage.setItem('accessibility-settings', JSON.stringify(settings));
+    writeJsonStorage('localStorage', 'accessibility-settings', settings);
   }, [settings]);
 
   // Apply visual settings
