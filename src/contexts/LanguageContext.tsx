@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SUPPORTED_LANGUAGES, Language, t, getBrowserLanguage } from '@/lib/i18n/translations';
+import { readStorage, writeStorage } from '@/lib/browserStorage';
 
 interface LanguageContextType {
   language: string;
@@ -16,7 +17,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Try to get saved language or detect from browser
-    const saved = localStorage.getItem('preferred-language');
+    const saved = readStorage('localStorage', 'preferred-language');
     const detected = saved || getBrowserLanguage();
     setLanguageState(detected);
     
@@ -31,7 +32,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (code: string) => {
     setLanguageState(code);
-    localStorage.setItem('preferred-language', code);
+    writeStorage('localStorage', 'preferred-language', code);
     
     const langConfig = SUPPORTED_LANGUAGES.find(l => l.code === code);
     if (langConfig?.rtl) {
