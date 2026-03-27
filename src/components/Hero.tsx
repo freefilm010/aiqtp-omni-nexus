@@ -308,8 +308,8 @@ const Hero = () => {
 
           <div className="mb-6 flex justify-center animate-slide-up stagger-2">
             <p className="max-w-xl rounded-xl px-4 py-3 text-sm text-muted-foreground glass-morphism-subtle sm:px-6 md:text-base">
-              Experience quantum-powered trading, AI pattern recognition and institutional analytics,
-              all with the professional UX you know and love.
+              Quantum-powered trading, AI pattern recognition and institutional analytics —
+              built from the ground up for serious traders.
             </p>
           </div>
 
@@ -348,7 +348,7 @@ const Hero = () => {
           </Badge>
           <Badge variant="outline" className="px-4 py-1.5 font-mono text-[10px] text-muted-foreground glass-morphism-subtle micro-hover border-[hsl(224,100%,58%,0.2)]">
             <Globe className="w-3 h-3 mr-1.5 text-[hsl(224,100%,58%)]" />
-            200+ Countries
+            Global Access
           </Badge>
           <Badge variant="outline" className="px-4 py-1.5 font-mono text-[10px] text-muted-foreground glass-morphism-subtle micro-hover border-[hsl(43,96%,56%,0.2)]">
             <Zap className="w-3 h-3 mr-1.5 text-[hsl(43,96%,56%)]" />
@@ -362,20 +362,20 @@ const Hero = () => {
 
         <div className="grid grid-cols-2 gap-3 text-center animate-slide-up stagger-6 lg:grid-cols-4 lg:gap-4">
           <div className="rounded-xl px-4 py-3 glass-morphism-subtle micro-hover md:px-6">
-            <div className="font-mono text-lg font-bold text-[hsl(43,96%,56%)] md:text-xl">$2.4B+</div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">24h Volume</div>
+            <div className="font-mono text-lg font-bold text-[hsl(43,96%,56%)] md:text-xl">Multi-Asset</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Crypto · Stocks · More</div>
           </div>
           <div className="rounded-xl px-4 py-3 glass-morphism-subtle micro-hover md:px-6">
-            <div className="font-mono text-lg font-bold text-[hsl(162,91%,32%)] md:text-xl">50K+</div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Traders</div>
+            <div className="font-mono text-lg font-bold text-[hsl(162,91%,32%)] md:text-xl">Zero Fees</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">No Subscriptions</div>
           </div>
           <div className="rounded-xl px-4 py-3 glass-morphism-subtle micro-hover md:px-6">
-            <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)] md:text-xl">99.9%</div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Uptime</div>
+            <div className="font-mono text-lg font-bold text-[hsl(270,91%,65%)] md:text-xl">AI-Powered</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">ML Signals & Bots</div>
           </div>
           <div className="rounded-xl px-4 py-3 glass-morphism-subtle micro-hover md:px-6">
-            <div className="font-mono text-lg font-bold text-[hsl(224,100%,58%)] md:text-xl">85%+</div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">AI Win Rate</div>
+            <div className="font-mono text-lg font-bold text-[hsl(224,100%,58%)] md:text-xl">Quantum-Safe</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Post-Quantum Crypto</div>
           </div>
         </div>
       </div>

@@ -56,7 +56,7 @@ const Index = () => {
                     AI-Powered <span className="text-[hsl(270,91%,65%)]">Command Center</span>
                   </h2>
                   <p className="text-muted-foreground max-w-2xl mx-auto">
-                    The best features from AInvest, Bloomberg, TradingView, Robinhood, and eToro — unified in one award-winning platform.
+                    Professional-grade tools for crypto, stocks, and beyond — unified in one powerful platform.
                   </p>
                 </div>
 
