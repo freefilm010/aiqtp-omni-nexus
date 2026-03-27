@@ -1,5 +1,7 @@
 type StorageKey = "localStorage" | "sessionStorage";
 
+const memoryStorageFallbacks: Partial<Record<StorageKey, Storage>> = {};
+
 const createMemoryStorage = (): Storage => {
   const store = new Map<string, string>();
 
@@ -30,6 +32,10 @@ export const ensureBrowserStorage = (storageKey: StorageKey): Storage => {
     return createMemoryStorage();
   }
 
+  if (memoryStorageFallbacks[storageKey]) {
+    return memoryStorageFallbacks[storageKey]!;
+  }
+
   try {
     const storage = window[storageKey];
     const probe = "__aiqtp_storage_probe__";
@@ -38,10 +44,7 @@ export const ensureBrowserStorage = (storageKey: StorageKey): Storage => {
     return storage;
   } catch {
     const memoryStorage = createMemoryStorage();
-    Object.defineProperty(window, storageKey, {
-      configurable: true,
-      value: memoryStorage,
-    });
+    memoryStorageFallbacks[storageKey] = memoryStorage;
     return memoryStorage;
   }
 };
