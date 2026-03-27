@@ -2,45 +2,84 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
+const adminRoleCache = new Map<string, boolean>();
+const pendingAdminRoleChecks = new Map<string, Promise<boolean>>();
+
+const resolveAdminRole = async (userId: string) => {
+  const cached = adminRoleCache.get(userId);
+  if (cached !== undefined) return cached;
+
+  const pending = pendingAdminRoleChecks.get(userId);
+  if (pending) return pending;
+
+  const request = supabase
+    .rpc("has_role", {
+      _user_id: userId,
+      _role: "admin",
+    })
+    .then(({ data, error }) => {
+      if (error) throw error;
+
+      const isAdmin = Boolean(data);
+      adminRoleCache.set(userId, isAdmin);
+      return isAdmin;
+    })
+    .catch((error) => {
+      console.error("Error checking admin role:", error);
+      return false;
+    })
+    .finally(() => {
+      pendingAdminRoleChecks.delete(userId);
+    });
+
+  pendingAdminRoleChecks.set(userId, request);
+  return request;
+};
+
 export const useAdminAuth = () => {
   const { user, loading: authLoading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
+    let active = true;
 
-      try {
-        // Use a backend role-check to avoid client-side role logic and RLS recursion issues.
-        const { data, error } = await supabase.rpc("has_role", {
-          _user_id: user.id,
-          _role: "admin",
-        });
-
-        if (error) {
-          console.error("Error checking admin role:", error);
-          setIsAdmin(false);
-          return;
-        }
-
-        setIsAdmin(Boolean(data));
-      } catch (err) {
-        console.error("Error in admin check:", err);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (!authLoading) {
-      checkAdminRole();
+    if (authLoading) {
+      setLoading(true);
+      return () => {
+        active = false;
+      };
     }
-  }, [user, authLoading]);
+
+    if (!user) {
+      setIsAdmin(false);
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    const cached = adminRoleCache.get(user.id);
+    if (cached !== undefined) {
+      setIsAdmin(cached);
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    setLoading(true);
+
+    resolveAdminRole(user.id).then((value) => {
+      if (!active) return;
+      setIsAdmin(value);
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, authLoading]);
 
   return { isAdmin, loading: loading || authLoading, user };
 };

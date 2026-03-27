@@ -253,7 +253,8 @@ const Hero = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const { tickers, totalCoins } = useKrakenTickers(undefined, tickerReady ? 45_000 : 0);
+  const shouldLoadLiveTicker = !isMobile && tickerReady;
+  const { tickers, totalCoins } = useKrakenTickers(undefined, shouldLoadLiveTicker ? 45_000 : 0);
   const activeTickers = Object.keys(tickers).length;
   const assetCount = Math.max(activeTickers, totalCoins);
 
