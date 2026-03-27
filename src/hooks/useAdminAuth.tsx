@@ -12,25 +12,25 @@ const resolveAdminRole = async (userId: string) => {
   const pending = pendingAdminRoleChecks.get(userId);
   if (pending) return pending;
 
-  const request = supabase
-    .rpc("has_role", {
-      _user_id: userId,
-      _role: "admin",
-    })
-    .then(({ data, error }) => {
+  const request = (async () => {
+    try {
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+
       if (error) throw error;
 
       const isAdmin = Boolean(data);
       adminRoleCache.set(userId, isAdmin);
       return isAdmin;
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error("Error checking admin role:", error);
       return false;
-    })
-    .finally(() => {
+    } finally {
       pendingAdminRoleChecks.delete(userId);
-    });
+    }
+  })();
 
   pendingAdminRoleChecks.set(userId, request);
   return request;
