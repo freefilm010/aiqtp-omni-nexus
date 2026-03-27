@@ -358,7 +358,7 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-4">
             <Badge variant="outline" className="text-xs">
               <Globe className="w-3 h-3 mr-1" />
-              200+ Countries
+              Global Access
             </Badge>
             {user ? (
               <DropdownMenu>
