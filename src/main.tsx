@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { ensureBrowserStorage, removeStorage } from "./lib/browserStorage";
+import { ensureBrowserStorage, removeStorage, sanitizeSupabaseAuthStorage } from "./lib/browserStorage";
 
 ensureBrowserStorage("localStorage");
 ensureBrowserStorage("sessionStorage");
@@ -10,6 +10,7 @@ bootWindow.__AIQTP_APP_BOOTED__ = false;
 
 try {
   removeStorage("sessionStorage", "aiqtp-boot-recovery-v1");
+  sanitizeSupabaseAuthStorage();
 } catch {
   // Ignore restricted-storage environments.
 }

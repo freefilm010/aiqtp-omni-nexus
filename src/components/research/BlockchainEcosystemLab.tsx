@@ -77,72 +77,39 @@ export const BlockchainEcosystemLab = () => {
     setResearchOutput('');
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error('Missing session token');
+      const { data, error } = await supabase.functions.invoke('blockchain-research', {
+        body: {
+          researchType: selectedResearch,
+          context: context || undefined,
+        },
+      });
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/blockchain-research`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            researchType: selectedResearch,
-            context: context || undefined,
-          }),
-        }
-      );
+      if (error) {
+        const status = typeof error === 'object' && error && 'context' in error
+          ? Number((error as { context?: { status?: number } }).context?.status)
+          : undefined;
 
-      if (!response.ok) {
-        if (response.status === 429) {
+        if (status === 429) {
           toast.error('Rate limit exceeded. Please wait a moment and try again.');
           return;
         }
-        if (response.status === 402) {
+        if (status === 402) {
           toast.error('Credits required. Please add funds to continue.');
           return;
         }
-        throw new Error('Research request failed');
+        throw error;
       }
 
-      if (!response.body) throw new Error('No response body');
+      const output = typeof data === 'string'
+        ? data
+        : typeof data?.content === 'string'
+          ? data.content
+          : typeof data?.result === 'string'
+            ? data.result
+            : JSON.stringify(data, null, 2);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
-
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              setResearchOutput(prev => prev + content);
-            }
-          } catch {
-            buffer = line + '\n' + buffer;
-            break;
-          }
-        }
+      if (output) {
+        setResearchOutput(output);
       }
 
       toast.success('Research complete!');

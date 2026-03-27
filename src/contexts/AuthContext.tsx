@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeSupabaseAuthStorage } from "@/lib/browserStorage";
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,11 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const isSessionValid = (candidate: Session | null) => {
+  if (!candidate) return true;
+  return Boolean(candidate.user?.id && candidate.access_token);
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -34,6 +40,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
+
+      if (!isSessionValid(nextSession)) {
+        sanitizeSupabaseAuthStorage();
+        setSession(null);
+        setUser(null);
+        if (initializedRef.current) setLoading(false);
+        void supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        return;
+      }
+
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       // If initial check already completed, any state change immediately reflects
@@ -45,6 +61,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .getSession()
       .then(({ data }) => {
         if (!active) return;
+        if (!isSessionValid(data.session)) {
+          sanitizeSupabaseAuthStorage();
+          void supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+          markReady(null);
+          return;
+        }
         markReady(data.session);
       })
       .catch((err) => {
