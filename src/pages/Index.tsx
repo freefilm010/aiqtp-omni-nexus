@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import LazySection from "@/components/LazySection";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Lazy-load Footer — it pulls in useAdminAuth + GitHubEcosystem which are heavy
 const Footer = lazy(() => import("@/components/Footer"));
@@ -28,6 +29,10 @@ const SectionLoader = () => (
 
 const Index = () => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const heroSectionRootMargin = isMobile ? "80px" : "400px";
+  const standardSectionRootMargin = isMobile ? "40px" : "200px";
+  const footerRootMargin = isMobile ? "0px" : "200px";
 
   return (
     <div className="min-h-screen">
@@ -42,7 +47,7 @@ const Index = () => {
         <Hero />
 
         {/* ===== AI COMMAND CENTER ===== */}
-        <LazySection minHeight="600px" rootMargin="400px">
+        <LazySection minHeight="600px" rootMargin={heroSectionRootMargin}>
           <Suspense fallback={<SectionLoader />}>
             <section className="py-16 bg-[hsl(225,20%,6%)]">
               <div className="max-w-7xl mx-auto px-4">
@@ -80,25 +85,25 @@ const Index = () => {
           </Suspense>
         </LazySection>
 
-        <LazySection minHeight="400px">
+        <LazySection minHeight="400px" rootMargin={standardSectionRootMargin}>
           <Suspense fallback={<SectionLoader />}>
             <MarketplaceCategories />
           </Suspense>
         </LazySection>
 
-        <LazySection minHeight="400px">
+        <LazySection minHeight="400px" rootMargin={standardSectionRootMargin}>
           <Suspense fallback={<SectionLoader />}>
             <Features />
           </Suspense>
         </LazySection>
 
-        <LazySection minHeight="400px">
+        <LazySection minHeight="400px" rootMargin={standardSectionRootMargin}>
           <Suspense fallback={<SectionLoader />}>
             <Security />
           </Suspense>
         </LazySection>
       </main>
-      <LazySection minHeight="200px">
+      <LazySection minHeight="200px" rootMargin={footerRootMargin}>
         <Suspense fallback={<SectionLoader />}>
           <Footer />
         </Suspense>
