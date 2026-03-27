@@ -97,9 +97,12 @@
         const bootStateKey = "aiqtp-boot-recovery-v1";
         const isLovablePreview =
           window.location.hostname.includes("lovableproject.com") ||
-          window.location.hostname.includes("id-preview--");
-        const initialBootTimeoutMs = isLovablePreview ? 20000 : 7000;
-        const postBootstrapTimeoutMs = isLovablePreview ? 15000 : 5000;
+          window.location.hostname.includes("id-preview--") ||
+          window.location.hostname.includes("lovable.app");
+        // Disable recovery entirely in preview — the sandbox is slow but will eventually load
+        if (isLovablePreview) return;
+        const initialBootTimeoutMs = 7000;
+        const postBootstrapTimeoutMs = 5000;
         window.__AIQTP_APP_BOOTED__ = false;
         window.__AIQTP_BOOTSTRAP_STARTED__ = false;
 
