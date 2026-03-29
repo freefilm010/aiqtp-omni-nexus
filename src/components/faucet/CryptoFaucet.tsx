@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Droplets, Clock, Coins, Gift, Timer, Wallet,
   TrendingUp, Shield, Zap, Star, CheckCircle, RefreshCw,
-  ArrowDownToLine, Flame, Gem, CircleDollarSign
+  ArrowDownToLine, Flame, Gem, CircleDollarSign, Bot
 } from "lucide-react";
 
 interface FaucetToken {
