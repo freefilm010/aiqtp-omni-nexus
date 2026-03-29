@@ -7968,6 +7968,7 @@ export type Database = {
       }
       saved_payment_methods_safe: {
         Row: {
+          bank_name: string | null
           card_brand: string | null
           created_at: string | null
           exp_month: number | null
@@ -7975,11 +7976,14 @@ export type Database = {
           id: string | null
           is_default: boolean | null
           last_four: string | null
+          metadata: Json | null
+          method_type: string | null
           nickname: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          bank_name?: string | null
           card_brand?: string | null
           created_at?: string | null
           exp_month?: number | null
@@ -7987,11 +7991,14 @@ export type Database = {
           id?: string | null
           is_default?: boolean | null
           last_four?: string | null
+          metadata?: Json | null
+          method_type?: string | null
           nickname?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          bank_name?: string | null
           card_brand?: string | null
           created_at?: string | null
           exp_month?: number | null
@@ -7999,6 +8006,8 @@ export type Database = {
           id?: string | null
           is_default?: boolean | null
           last_four?: string | null
+          metadata?: Json | null
+          method_type?: string | null
           nickname?: string | null
           updated_at?: string | null
           user_id?: string | null
