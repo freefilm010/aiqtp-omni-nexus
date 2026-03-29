@@ -319,7 +319,10 @@ const CryptoFaucet = () => {
           wallet_address: '',
           status: 'completed',
         } as any);
-        if (!error) claimedCount++;
+        if (!error) {
+          claimedCount++;
+          await routeToCompound(token.symbol, token.claimAmount);
+        }
       }
     }
     
