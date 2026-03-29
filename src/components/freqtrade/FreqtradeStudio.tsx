@@ -8,22 +8,12 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  Bot, 
-  Play, 
-  Pause, 
-  Settings,
-  TrendingUp,
-  AlertTriangle,
-  Activity,
-  Code,
-  BarChart3,
-  Zap,
-  RefreshCw,
-  CheckCircle2,
-  XCircle
+  Bot, Play, Pause, Settings, TrendingUp, Activity, Code,
+  BarChart3, Zap, RefreshCw
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FreqtradeBot {
   id: string;
@@ -47,117 +37,79 @@ interface StrategyTemplate {
 }
 
 const strategyTemplates: StrategyTemplate[] = [
-  {
-    name: 'RSI Momentum',
-    description: 'Buy when RSI < 30, sell when RSI > 70',
-    indicators: ['RSI(14)'],
-    entryLogic: 'RSI < 30',
-    exitLogic: 'RSI > 70'
-  },
-  {
-    name: 'MACD Crossover',
-    description: 'Buy on bullish MACD cross, sell on bearish',
-    indicators: ['MACD(12,26,9)'],
-    entryLogic: 'MACD crosses above signal',
-    exitLogic: 'MACD crosses below signal'
-  },
-  {
-    name: 'Bollinger Bounce',
-    description: 'Buy at lower band, sell at upper band',
-    indicators: ['BB(20,2)'],
-    entryLogic: 'Price touches lower band',
-    exitLogic: 'Price touches upper band'
-  },
-  {
-    name: 'Multi-Timeframe RSI',
-    description: 'RSI confirmation across multiple timeframes',
-    indicators: ['RSI(14)', 'RSI(14) 1d'],
-    entryLogic: 'RSI(5m) < 30 AND RSI(1d) < 30',
-    exitLogic: 'RSI(5m) > 70'
-  },
-  {
-    name: 'Golden Cross',
-    description: 'MA50 crosses above MA200',
-    indicators: ['SMA(50)', 'SMA(200)'],
-    entryLogic: 'SMA50 crosses above SMA200',
-    exitLogic: 'SMA50 crosses below SMA200'
-  }
-];
-
-const mockBots: FreqtradeBot[] = [
-  {
-    id: 'bot-1',
-    name: 'BTC Scalper',
-    strategy: 'RSI Momentum',
-    status: 'running',
-    pair: 'BTC/USDT',
-    timeframe: '5m',
-    profit: 12.4,
-    trades: 156,
-    winRate: 68.2,
-    lastTrade: '2 min ago'
-  },
-  {
-    id: 'bot-2',
-    name: 'ETH Swing',
-    strategy: 'MACD Crossover',
-    status: 'running',
-    pair: 'ETH/USDT',
-    timeframe: '1h',
-    profit: 8.7,
-    trades: 42,
-    winRate: 71.4,
-    lastTrade: '15 min ago'
-  },
-  {
-    id: 'bot-3',
-    name: 'SOL Trend',
-    strategy: 'Golden Cross',
-    status: 'stopped',
-    pair: 'SOL/USDT',
-    timeframe: '4h',
-    profit: -2.1,
-    trades: 18,
-    winRate: 44.4,
-    lastTrade: '3 hours ago'
-  }
+  { name: 'RSI Momentum', description: 'Buy when RSI < 30, sell when RSI > 70', indicators: ['RSI(14)'], entryLogic: 'RSI < 30', exitLogic: 'RSI > 70' },
+  { name: 'MACD Crossover', description: 'Buy on bullish MACD cross, sell on bearish', indicators: ['MACD(12,26,9)'], entryLogic: 'MACD crosses above signal', exitLogic: 'MACD crosses below signal' },
+  { name: 'Bollinger Bounce', description: 'Buy at lower band, sell at upper band', indicators: ['BB(20,2)'], entryLogic: 'Price touches lower band', exitLogic: 'Price touches upper band' },
+  { name: 'Multi-Timeframe RSI', description: 'RSI confirmation across multiple timeframes', indicators: ['RSI(14)', 'RSI(14) 1d'], entryLogic: 'RSI(5m) < 30 AND RSI(1d) < 30', exitLogic: 'RSI(5m) > 70' },
+  { name: 'Golden Cross', description: 'MA50 crosses above MA200', indicators: ['SMA(50)', 'SMA(200)'], entryLogic: 'SMA50 crosses above SMA200', exitLogic: 'SMA50 crosses below SMA200' },
 ];
 
 const FreqtradeStudio = () => {
-  const [bots, setBots] = useState<FreqtradeBot[]>(mockBots);
+  const [bots, setBots] = useState<FreqtradeBot[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedStrategy, setSelectedStrategy] = useState('RSI Momentum');
   const [selectedPair, setSelectedPair] = useState('BTC/USDT');
   const [selectedTimeframe, setSelectedTimeframe] = useState('15m');
   const [dryRun, setDryRun] = useState(true);
   const [botName, setBotName] = useState('New Bot');
 
-  const toggleBot = (botId: string) => {
-    setBots(prev => prev.map(bot => {
-      if (bot.id === botId) {
-        const newStatus = bot.status === 'running' ? 'stopped' : 'running';
-        toast.success(`Bot ${bot.name} ${newStatus}`);
-        return { ...bot, status: newStatus as 'running' | 'stopped' };
-      }
-      return bot;
-    }));
+  const loadBots = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    const { data } = await supabase
+      .from("trading_bots" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }) as any;
+
+    if (data) {
+      setBots(data.map((b: any) => ({
+        id: b.id,
+        name: b.name,
+        strategy: b.strategy,
+        status: b.status as FreqtradeBot['status'],
+        pair: b.pair,
+        timeframe: b.timeframe,
+        profit: Number(b.profit) || 0,
+        trades: b.trades || 0,
+        winRate: Number(b.win_rate) || 0,
+        lastTrade: b.last_trade_at ? new Date(b.last_trade_at).toLocaleString() : 'Never',
+      })));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadBots(); }, [loadBots]);
+
+  const toggleBot = async (botId: string) => {
+    const bot = bots.find(b => b.id === botId);
+    if (!bot) return;
+    const newStatus = bot.status === 'running' ? 'stopped' : 'running';
+
+    await supabase.from("trading_bots" as any).update({ status: newStatus } as any).eq("id", botId);
+    setBots(prev => prev.map(b => b.id === botId ? { ...b, status: newStatus as any } : b));
+    toast.success(`Bot ${bot.name} ${newStatus}`);
   };
 
-  const createBot = () => {
-    const newBot: FreqtradeBot = {
-      id: `bot-${Date.now()}`,
+  const createBot = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Sign in first"); return; }
+
+    const { error } = await supabase.from("trading_bots" as any).insert({
+      user_id: user.id,
       name: botName,
       strategy: selectedStrategy,
       status: dryRun ? 'stopped' : 'running',
       pair: selectedPair,
       timeframe: selectedTimeframe,
-      profit: 0,
-      trades: 0,
-      winRate: 0,
-      lastTrade: 'Never'
-    };
-    setBots(prev => [newBot, ...prev]);
+      is_dry_run: dryRun,
+    } as any);
+
+    if (error) { toast.error("Failed to create bot"); return; }
     toast.success(`Bot "${botName}" created with ${selectedStrategy} strategy`);
     setBotName('New Bot');
+    loadBots();
   };
 
   const generateStrategyCode = (template: StrategyTemplate) => {
@@ -194,27 +146,19 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
   return (
     <Tabs defaultValue="bots" className="space-y-6">
       <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="bots" className="flex items-center gap-2">
-          <Bot className="h-4 w-4" />
-          Active Bots
-        </TabsTrigger>
-        <TabsTrigger value="create" className="flex items-center gap-2">
-          <Zap className="h-4 w-4" />
-          Create Bot
-        </TabsTrigger>
-        <TabsTrigger value="strategies" className="flex items-center gap-2">
-          <Code className="h-4 w-4" />
-          Strategies
-        </TabsTrigger>
-        <TabsTrigger value="performance" className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4" />
-          Performance
-        </TabsTrigger>
+        <TabsTrigger value="bots" className="flex items-center gap-2"><Bot className="h-4 w-4" />Active Bots</TabsTrigger>
+        <TabsTrigger value="create" className="flex items-center gap-2"><Zap className="h-4 w-4" />Create Bot</TabsTrigger>
+        <TabsTrigger value="strategies" className="flex items-center gap-2"><Code className="h-4 w-4" />Strategies</TabsTrigger>
+        <TabsTrigger value="performance" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Performance</TabsTrigger>
       </TabsList>
 
       <TabsContent value="bots">
         <div className="grid grid-cols-1 gap-4">
-          {bots.map(bot => (
+          {loading ? (
+            <Card><CardContent className="p-6 text-center text-muted-foreground">Loading bots...</CardContent></Card>
+          ) : bots.length === 0 ? (
+            <Card><CardContent className="p-6 text-center text-muted-foreground">No bots yet — create your first trading bot</CardContent></Card>
+          ) : bots.map(bot => (
             <Card key={bot.id}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -226,11 +170,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                     <div>
                       <h3 className="font-semibold text-lg">{bot.name}</h3>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{bot.pair}</span>
-                        <span>•</span>
-                        <span>{bot.timeframe}</span>
-                        <span>•</span>
-                        <span>{bot.strategy}</span>
+                        <span>{bot.pair}</span><span>•</span><span>{bot.timeframe}</span><span>•</span><span>{bot.strategy}</span>
                       </div>
                     </div>
                   </div>
@@ -254,21 +194,13 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                       <div className="text-sm font-medium">{bot.lastTrade}</div>
                       <div className="text-xs text-muted-foreground">Last Trade</div>
                     </div>
-
                     <div className="flex items-center gap-2">
                       <Button 
                         size="sm" 
                         variant={bot.status === 'running' ? 'destructive' : 'default'}
                         onClick={() => toggleBot(bot.id)}
                       >
-                        {bot.status === 'running' ? (
-                          <><Pause className="h-4 w-4 mr-1" /> Stop</>
-                        ) : (
-                          <><Play className="h-4 w-4 mr-1" /> Start</>
-                        )}
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Settings className="h-4 w-4" />
+                        {bot.status === 'running' ? <><Pause className="h-4 w-4 mr-1" /> Stop</> : <><Play className="h-4 w-4 mr-1" /> Start</>}
                       </Button>
                     </div>
                   </div>
@@ -283,28 +215,18 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
         <div className="grid grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-primary" />
-                Create New Trading Bot
-              </CardTitle>
+              <CardTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" />Create New Trading Bot</CardTitle>
               <CardDescription>Configure a Freqtrade-style automated trading bot</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label>Bot Name</Label>
-                <Input 
-                  value={botName} 
-                  onChange={(e) => setBotName(e.target.value)}
-                  placeholder="Enter bot name"
-                />
+                <Input value={botName} onChange={(e) => setBotName(e.target.value)} placeholder="Enter bot name" />
               </div>
-
               <div className="space-y-2">
                 <Label>Strategy</Label>
                 <Select value={selectedStrategy} onValueChange={setSelectedStrategy}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {strategyTemplates.map(s => (
                       <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
@@ -312,14 +234,11 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Trading Pair</Label>
                   <Select value={selectedPair} onValueChange={setSelectedPair}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="BTC/USDT">BTC/USDT</SelectItem>
                       <SelectItem value="ETH/USDT">ETH/USDT</SelectItem>
@@ -331,9 +250,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                 <div className="space-y-2">
                   <Label>Timeframe</Label>
                   <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="1m">1 minute</SelectItem>
                       <SelectItem value="5m">5 minutes</SelectItem>
@@ -345,7 +262,6 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                   </Select>
                 </div>
               </div>
-
               <div className="flex items-center justify-between p-4 rounded-lg border">
                 <div>
                   <Label className="text-base">Dry Run Mode</Label>
@@ -353,29 +269,20 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                 </div>
                 <Switch checked={dryRun} onCheckedChange={setDryRun} />
               </div>
-
               <Button className="w-full" size="lg" onClick={createBot}>
-                <Zap className="h-4 w-4 mr-2" />
-                Create Bot
+                <Zap className="h-4 w-4 mr-2" />Create Bot
               </Button>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Strategy Preview</CardTitle>
-              <CardDescription>
-                {strategyTemplates.find(s => s.name === selectedStrategy)?.description}
-              </CardDescription>
+              <CardDescription>{strategyTemplates.find(s => s.name === selectedStrategy)?.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto">
-                  <code>
-                    {generateStrategyCode(
-                      strategyTemplates.find(s => s.name === selectedStrategy) || strategyTemplates[0]
-                    )}
-                  </code>
+                  <code>{generateStrategyCode(strategyTemplates.find(s => s.name === selectedStrategy) || strategyTemplates[0])}</code>
                 </pre>
               </ScrollArea>
             </CardContent>
@@ -395,9 +302,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                 <div>
                   <Label className="text-xs text-muted-foreground">Indicators</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {strategy.indicators.map(ind => (
-                      <Badge key={ind} variant="secondary">{ind}</Badge>
-                    ))}
+                    {strategy.indicators.map(ind => (<Badge key={ind} variant="secondary">{ind}</Badge>))}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -410,14 +315,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
                     <div className="text-red-500 font-mono text-xs">{strategy.exitLogic}</div>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedStrategy(strategy.name);
-                    toast.info(`Selected ${strategy.name} strategy`);
-                  }}
-                >
+                <Button variant="outline" className="w-full" onClick={() => { setSelectedStrategy(strategy.name); toast.info(`Selected ${strategy.name} strategy`); }}>
                   Use This Strategy
                 </Button>
               </CardContent>
@@ -430,59 +328,60 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
         <div className="grid grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-green-500">+19.0%</div>
+              <div className={`text-3xl font-bold ${bots.reduce((s,b) => s + b.profit, 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {bots.reduce((s,b) => s + b.profit, 0) >= 0 ? '+' : ''}{bots.reduce((s,b) => s + b.profit, 0).toFixed(1)}%
+              </div>
               <div className="text-sm text-muted-foreground">Total Profit</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold">216</div>
+              <div className="text-3xl font-bold">{bots.reduce((s,b) => s + b.trades, 0)}</div>
               <div className="text-sm text-muted-foreground">Total Trades</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold">64.8%</div>
+              <div className="text-3xl font-bold">
+                {bots.length > 0 ? (bots.reduce((s,b) => s + b.winRate, 0) / bots.length).toFixed(1) : '0'}%
+              </div>
               <div className="text-sm text-muted-foreground">Avg Win Rate</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold">2</div>
+              <div className="text-3xl font-bold">{bots.filter(b => b.status === 'running').length}</div>
               <div className="text-sm text-muted-foreground">Active Bots</div>
             </CardContent>
           </Card>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Bot Performance Comparison</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Bot Performance Comparison</CardTitle></CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {bots.map(bot => (
-                <div key={bot.id} className="flex items-center gap-4 p-4 rounded-lg border">
-                  <div className="flex-1">
-                    <div className="font-medium">{bot.name}</div>
-                    <div className="text-sm text-muted-foreground">{bot.strategy}</div>
-                  </div>
-                  <div className="flex items-center gap-8">
-                    <div className="w-32 text-center">
-                      <div className={`font-bold ${bot.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {bot.profit >= 0 ? '+' : ''}{bot.profit}%
-                      </div>
+            {bots.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Create bots to see performance data</p>
+            ) : (
+              <div className="space-y-4">
+                {bots.map(bot => (
+                  <div key={bot.id} className="flex items-center gap-4 p-4 rounded-lg border">
+                    <div className="flex-1">
+                      <div className="font-medium">{bot.name}</div>
+                      <div className="text-sm text-muted-foreground">{bot.strategy}</div>
                     </div>
-                    <div className="w-20 text-center">{bot.trades} trades</div>
-                    <div className="w-20 text-center">{bot.winRate}%</div>
-                    {bot.profit >= 0 ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    )}
+                    <div className="flex items-center gap-8">
+                      <div className="w-32 text-center">
+                        <div className={`font-bold ${bot.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {bot.profit >= 0 ? '+' : ''}{bot.profit}%
+                        </div>
+                      </div>
+                      <div className="w-20 text-center">{bot.trades} trades</div>
+                      <div className="w-20 text-center">{bot.winRate}%</div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

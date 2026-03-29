@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -5,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Wallet, Clock, CheckCircle, Coins, Flame, Trophy, Users, Share2, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import type { FaucetToken, ClaimRecord } from "./faucetTypes";
 import { useAssetValuation, formatUsdValue, formatQuantity } from "@/hooks/useAssetValuation";
 
@@ -17,18 +19,29 @@ interface FaucetSidebarProps {
   userId: string | null;
 }
 
-const MOCK_LEADERBOARD = [
-  { name: "QuantKing", claims: 2847, streak: 42 },
-  { name: "CryptoNinja", claims: 2103, streak: 38 },
-  { name: "AlphaBot", claims: 1956, streak: 35 },
-  { name: "DeFiWhale", claims: 1744, streak: 31 },
-  { name: "MoonTrader", claims: 1520, streak: 28 },
-];
+interface LeaderboardEntry {
+  user_id: string;
+  display_name: string;
+  total_claims: number;
+  active_days: number;
+}
 
 const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
   const totalTokenTypes = Object.keys(balances).length;
   const { getPortfolioValuation } = useAssetValuation();
   const { items: valuedItems, totalUsd, totalUsdt } = getPortfolioValuation(balances);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  useEffect(() => {
+    const loadLeaderboard = async () => {
+      const { data } = await supabase
+        .from("faucet_leaderboard" as any)
+        .select("user_id, display_name, total_claims, active_days")
+        .limit(10) as any;
+      if (data) setLeaderboard(data);
+    };
+    loadLeaderboard();
+  }, [claims.length]);
 
   const handleReferral = () => {
     if (!userId) { toast.error("Sign in first"); return; }
@@ -82,7 +95,6 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
             <ScrollArea className="h-[200px]">
               {valuedItems.length > 0 ? (
                 <div className="space-y-1.5">
-                  {/* Header row */}
                   <div className="flex items-center justify-between text-[9px] text-muted-foreground px-2 pb-1 border-b border-border/30">
                     <span className="w-16">Asset</span>
                     <span className="text-right w-16">Qty</span>
@@ -122,7 +134,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
         </Card>
       </motion.div>
 
-      {/* Leaderboard */}
+      {/* Leaderboard — from DB */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
         <Card>
           <CardHeader className="pb-2 px-3 pt-3">
@@ -133,21 +145,23 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="space-y-1.5">
-              {MOCK_LEADERBOARD.map((entry, i) => (
-                <div key={entry.name} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 text-xs">
+              {leaderboard.length > 0 ? leaderboard.map((entry, i) => (
+                <div key={entry.user_id} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 text-xs">
                   <div className="flex items-center gap-2">
                     <span className={`font-bold w-4 text-center ${i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-orange-600" : "text-muted-foreground"}`}>
                       {i + 1}
                     </span>
                     <Users className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-medium">{entry.name}</span>
+                    <span className="font-medium">{entry.display_name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">{entry.claims}</span>
-                    <span className="text-orange-500 text-[10px]">🔥{entry.streak}</span>
+                    <span className="text-muted-foreground">{entry.total_claims}</span>
+                    <span className="text-orange-500 text-[10px]">📅{entry.active_days}d</span>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <p className="text-muted-foreground text-center py-4 text-xs">No claims yet</p>
+              )}
             </div>
           </CardContent>
         </Card>

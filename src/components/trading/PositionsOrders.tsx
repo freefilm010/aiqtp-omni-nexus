@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,36 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  TrendingUp,
-  TrendingDown,
-  X,
-  Edit,
-  Clock,
-  CheckCircle,
-  XCircle,
-  RefreshCw
+  TrendingUp, TrendingDown, X, Edit, Clock, CheckCircle, XCircle, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface Order {
-  id: string;
-  symbol: string;
-  side: 'buy' | 'sell';
-  type: string;
-  price: number;
-  amount: number;
-  filled: number;
-  status: 'open' | 'partial' | 'filled' | 'cancelled';
-  createdAt: Date;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 interface Position {
   id: string;
@@ -52,28 +29,97 @@ interface Position {
   roe: number;
 }
 
-const mockOrders: Order[] = [
-  { id: '1', symbol: 'BTC/USDT', side: 'buy', type: 'limit', price: 65000, amount: 0.5, filled: 0, status: 'open', createdAt: new Date() },
-  { id: '2', symbol: 'ETH/USDT', side: 'sell', type: 'stop-limit', price: 3200, amount: 5, filled: 2.5, status: 'partial', createdAt: new Date(Date.now() - 3600000) },
-  { id: '3', symbol: 'SOL/USDT', side: 'buy', type: 'limit', price: 140, amount: 50, filled: 50, status: 'filled', createdAt: new Date(Date.now() - 7200000) },
-];
-
-const mockPositions: Position[] = [
-  { id: '1', symbol: 'BTC/USDT', side: 'long', size: 0.5, entryPrice: 65000, markPrice: 67500, liquidationPrice: 52000, margin: 3250, leverage: 10, pnl: 1250, pnlPercent: 3.85, roe: 38.5 },
-  { id: '2', symbol: 'ETH/USDT', side: 'short', size: 5, entryPrice: 3500, markPrice: 3450, liquidationPrice: 4200, margin: 1750, leverage: 10, pnl: 250, pnlPercent: 1.43, roe: 14.3 },
-];
+interface Order {
+  id: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  type: string;
+  price: number;
+  amount: number;
+  filled: number;
+  status: 'open' | 'partial' | 'filled' | 'cancelled';
+  createdAt: Date;
+}
 
 const PositionsOrders = () => {
-  const [orders, setOrders] = useState(mockOrders);
-  const [positions, setPositions] = useState(mockPositions);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [showAllSymbols, setShowAllSymbols] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    // Load positions from paper_portfolio
+    const { data: portfolio } = await supabase
+      .from("paper_portfolio")
+      .select("*")
+      .eq("user_id", user.id) as any;
+
+    if (portfolio) {
+      setPositions(portfolio.map((p: any) => ({
+        id: p.id,
+        symbol: p.symbol + '/USDT',
+        side: 'long' as const,
+        size: Number(p.quantity),
+        entryPrice: Number(p.avg_price),
+        markPrice: Number(p.avg_price), // Will be updated by market data
+        liquidationPrice: 0,
+        margin: Number(p.quantity) * Number(p.avg_price),
+        leverage: 1,
+        pnl: 0,
+        pnlPercent: 0,
+        roe: 0,
+      })));
+    }
+
+    // Load orders from trade_logs
+    const { data: trades } = await supabase
+      .from("trade_logs")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50) as any;
+
+    if (trades) {
+      setOrders(trades.map((t: any) => ({
+        id: t.id,
+        symbol: t.symbol || 'BTC/USDT',
+        side: t.side || 'buy',
+        type: t.order_type || 'market',
+        price: Number(t.price) || 0,
+        amount: Number(t.quantity) || 0,
+        filled: Number(t.quantity) || 0,
+        status: (t.status === 'executed' ? 'filled' : t.status || 'filled') as Order['status'],
+        createdAt: new Date(t.created_at),
+      })));
+    }
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const cancelOrder = (id: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'cancelled' as const } : o));
     toast.success("Order cancelled");
   };
 
-  const closePosition = (id: string) => {
+  const closePosition = async (id: string) => {
+    const pos = positions.find(p => p.id === id);
+    if (!pos) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const symbol = pos.symbol.replace('/USDT', '');
+    await supabase.rpc('update_paper_portfolio', {
+      p_user_id: user.id,
+      p_symbol: symbol,
+      p_amount_change: -pos.size,
+      p_price: pos.markPrice,
+    });
+
     setPositions(prev => prev.filter(p => p.id !== id));
     toast.success("Position closed");
   };
@@ -81,12 +127,25 @@ const PositionsOrders = () => {
   const totalPnl = positions.reduce((acc, p) => acc + p.pnl, 0);
   const totalMargin = positions.reduce((acc, p) => acc + p.margin, 0);
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-muted-foreground">
+          Loading positions & orders...
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Positions & Orders</CardTitle>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={loadData}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
             <Switch checked={showAllSymbols} onCheckedChange={setShowAllSymbols} />
             <span className="text-sm text-muted-foreground">All Symbols</span>
           </div>
@@ -107,7 +166,6 @@ const PositionsOrders = () => {
           </TabsList>
 
           <TabsContent value="positions" className="m-0">
-            {/* Summary */}
             <div className="grid grid-cols-3 gap-4 p-4 border-b bg-muted/30">
               <div>
                 <p className="text-xs text-muted-foreground">Total PnL</p>
@@ -126,164 +184,146 @@ const PositionsOrders = () => {
             </div>
 
             <ScrollArea className="h-[250px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>Size</TableHead>
-                    <TableHead>Entry</TableHead>
-                    <TableHead>Mark</TableHead>
-                    <TableHead>PnL (ROE)</TableHead>
-                    <TableHead>Liq. Price</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {positions.map((position) => (
-                    <TableRow key={position.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={position.side === 'long' ? 'default' : 'destructive'} className="text-xs">
-                            {position.side === 'long' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                            {position.leverage}x
-                          </Badge>
-                          <span className="font-medium">{position.symbol}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{position.size}</TableCell>
-                      <TableCell>${position.entryPrice.toLocaleString()}</TableCell>
-                      <TableCell>${position.markPrice.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <div className={position.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          <div className="font-medium">
-                            {position.pnl >= 0 ? '+' : ''}${position.pnl.toLocaleString()}
+              {positions.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Symbol</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead>Entry</TableHead>
+                      <TableHead>Mark</TableHead>
+                      <TableHead>PnL (ROE)</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {positions.map((position) => (
+                      <TableRow key={position.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={position.side === 'long' ? 'default' : 'destructive'} className="text-xs">
+                              {position.side === 'long' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                              {position.leverage}x
+                            </Badge>
+                            <span className="font-medium">{position.symbol}</span>
                           </div>
-                          <div className="text-xs">
-                            ({position.roe >= 0 ? '+' : ''}{position.roe.toFixed(2)}%)
+                        </TableCell>
+                        <TableCell>{position.size}</TableCell>
+                        <TableCell>${position.entryPrice.toLocaleString()}</TableCell>
+                        <TableCell>${position.markPrice.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <div className={position.pnl >= 0 ? 'text-green-500' : 'text-red-500'}>
+                            <div className="font-medium">
+                              {position.pnl >= 0 ? '+' : ''}${position.pnl.toLocaleString()}
+                            </div>
+                            <div className="text-xs">
+                              ({position.roe >= 0 ? '+' : ''}{position.roe.toFixed(2)}%)
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-amber-500">
-                        ${position.liquidationPrice.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
+                        </TableCell>
+                        <TableCell>
                           <Button variant="outline" size="sm" onClick={() => closePosition(position.id)}>
                             Close
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-center text-muted-foreground py-8 text-sm">No open positions</p>
+              )}
             </ScrollArea>
           </TabsContent>
 
           <TabsContent value="open" className="m-0">
-            <div className="flex items-center justify-between p-4 border-b">
-              <span className="text-sm text-muted-foreground">
-                {orders.filter(o => o.status === 'open' || o.status === 'partial').length} open orders
-              </span>
-              <Button variant="outline" size="sm" onClick={() => {
-                setOrders(prev => prev.map(o => ({ ...o, status: 'cancelled' as const })));
-                toast.success("All orders cancelled");
-              }}>
-                Cancel All
-              </Button>
-            </div>
-
             <ScrollArea className="h-[250px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Side</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Filled</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.filter(o => o.status !== 'filled' && o.status !== 'cancelled').map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.symbol}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{order.type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className={order.side === 'buy' ? 'text-green-500' : 'text-red-500'}>
-                          {order.side.toUpperCase()}
-                        </span>
-                      </TableCell>
-                      <TableCell>${order.price.toLocaleString()}</TableCell>
-                      <TableCell>{order.amount}</TableCell>
-                      <TableCell>{order.filled}/{order.amount}</TableCell>
-                      <TableCell>
-                        <Badge variant={order.status === 'partial' ? 'secondary' : 'outline'}>
-                          {order.status === 'partial' && <RefreshCw className="h-3 w-3 mr-1 animate-spin" />}
-                          {order.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => cancelOrder(order.id)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
+              {orders.filter(o => o.status === 'open' || o.status === 'partial').length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Symbol</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Side</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.filter(o => o.status === 'open' || o.status === 'partial').map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium">{order.symbol}</TableCell>
+                        <TableCell><Badge variant="outline">{order.type}</Badge></TableCell>
+                        <TableCell>
+                          <span className={order.side === 'buy' ? 'text-green-500' : 'text-red-500'}>
+                            {order.side.toUpperCase()}
+                          </span>
+                        </TableCell>
+                        <TableCell>${order.price.toLocaleString()}</TableCell>
+                        <TableCell>{order.amount}</TableCell>
+                        <TableCell>
+                          <Badge variant={order.status === 'partial' ? 'secondary' : 'outline'}>
+                            {order.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => cancelOrder(order.id)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-center text-muted-foreground py-8 text-sm">No open orders</p>
+              )}
             </ScrollArea>
           </TabsContent>
 
           <TabsContent value="history" className="m-0">
             <ScrollArea className="h-[300px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Side</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.filter(o => o.status === 'filled' || o.status === 'cancelled').map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="text-muted-foreground">
-                        {order.createdAt.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="font-medium">{order.symbol}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{order.type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className={order.side === 'buy' ? 'text-green-500' : 'text-red-500'}>
-                          {order.side.toUpperCase()}
-                        </span>
-                      </TableCell>
-                      <TableCell>${order.price.toLocaleString()}</TableCell>
-                      <TableCell>{order.amount}</TableCell>
-                      <TableCell>
-                        <Badge variant={order.status === 'filled' ? 'default' : 'destructive'}>
-                          {order.status === 'filled' ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                          {order.status}
-                        </Badge>
-                      </TableCell>
+              {orders.filter(o => o.status === 'filled' || o.status === 'cancelled').length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Symbol</TableHead>
+                      <TableHead>Side</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.filter(o => o.status === 'filled' || o.status === 'cancelled').map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell className="text-muted-foreground">
+                          {order.createdAt.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="font-medium">{order.symbol}</TableCell>
+                        <TableCell>
+                          <span className={order.side === 'buy' ? 'text-green-500' : 'text-red-500'}>
+                            {order.side.toUpperCase()}
+                          </span>
+                        </TableCell>
+                        <TableCell>${order.price.toLocaleString()}</TableCell>
+                        <TableCell>{order.amount}</TableCell>
+                        <TableCell>
+                          <Badge variant={order.status === 'filled' ? 'default' : 'destructive'}>
+                            {order.status === 'filled' ? <CheckCircle className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                            {order.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-center text-muted-foreground py-8 text-sm">No trade history</p>
+              )}
             </ScrollArea>
           </TabsContent>
         </Tabs>
