@@ -4271,6 +4271,7 @@ export type Database = {
           style: string | null
           theme: string | null
           total_count: number | null
+          user_id: string | null
         }
         Insert: {
           base_price?: number | null
@@ -4285,6 +4286,7 @@ export type Database = {
           style?: string | null
           theme?: string | null
           total_count?: number | null
+          user_id?: string | null
         }
         Update: {
           base_price?: number | null
@@ -4299,6 +4301,7 @@ export type Database = {
           style?: string | null
           theme?: string | null
           total_count?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -7900,6 +7903,45 @@ export type Database = {
           wallet_address?: string | null
           wallet_name?: string | null
           wallet_type?: string | null
+        }
+        Relationships: []
+      }
+      saved_payment_methods_safe: {
+        Row: {
+          card_brand: string | null
+          created_at: string | null
+          exp_month: number | null
+          exp_year: number | null
+          id: string | null
+          is_default: boolean | null
+          last_four: string | null
+          nickname: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string | null
+          is_default?: boolean | null
+          last_four?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string | null
+          is_default?: boolean | null
+          last_four?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
