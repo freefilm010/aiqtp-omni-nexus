@@ -468,6 +468,8 @@ const CryptoFaucet = () => {
         </CardContent>
 
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Faucet List */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
