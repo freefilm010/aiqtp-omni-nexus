@@ -56,8 +56,6 @@ const AutomationTemplates = () => {
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
 
-  if (!isAdmin) return null;
-
   const fetchTemplates = async () => {
     setLoading(true);
     try {
@@ -74,7 +72,9 @@ const AutomationTemplates = () => {
     }
   };
 
-  useEffect(() => { fetchTemplates(); }, []);
+  useEffect(() => { if (isAdmin) fetchTemplates(); }, [isAdmin]);
+
+  if (!isAdmin) return null;
 
   const toggleTemplate = async (id: string, currentState: boolean) => {
     setActivating(id);
