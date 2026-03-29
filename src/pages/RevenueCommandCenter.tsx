@@ -30,6 +30,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 interface LiveRevenueData {
   totalRevenue: number;
@@ -39,6 +42,16 @@ interface LiveRevenueData {
 }
 
 const RevenueCommandCenter = () => {
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!adminLoading && !isAdmin) {
+      toast.error("Admin access required");
+      navigate("/");
+    }
+  }, [isAdmin, adminLoading, navigate]);
+
   const [liveData, setLiveData] = useState<LiveRevenueData>({
     totalRevenue: 0,
     pendingRevenue: 0,
