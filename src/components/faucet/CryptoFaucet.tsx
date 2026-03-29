@@ -107,6 +107,7 @@ const CryptoFaucet = () => {
     
     setBalances(bal);
     setLastClaimTimes(lastTimes);
+    lastClaimTimesRef.current = lastTimes;
 
     // Calculate streak (consecutive days with at least one claim)
     const claimDays = new Set(records.map(c => new Date(c.created_at).toDateString()));
