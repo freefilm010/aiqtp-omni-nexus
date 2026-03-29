@@ -6218,6 +6218,13 @@ export type Database = {
             foreignKeyName: "solana_token_balances_wallet_id_fkey"
             columns: ["wallet_id"]
             isOneToOne: false
+            referencedRelation: "solana_wallets_admin_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solana_token_balances_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
             referencedRelation: "solana_wallets_safe"
             referencedColumns: ["id"]
           },
@@ -7866,6 +7873,59 @@ export type Database = {
           wallet_type?: string | null
         }
         Relationships: []
+      }
+      solana_wallets_admin_safe: {
+        Row: {
+          balance_sol: number | null
+          chain: string | null
+          created_at: string | null
+          id: string | null
+          is_active: boolean | null
+          label: string | null
+          last_activity: string | null
+          operator_id: string | null
+          owner_user_id: string | null
+          updated_at: string | null
+          wallet_address: string | null
+          wallet_type: string | null
+        }
+        Insert: {
+          balance_sol?: number | null
+          chain?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          label?: string | null
+          last_activity?: string | null
+          operator_id?: string | null
+          owner_user_id?: string | null
+          updated_at?: string | null
+          wallet_address?: string | null
+          wallet_type?: string | null
+        }
+        Update: {
+          balance_sol?: number | null
+          chain?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          label?: string | null
+          last_activity?: string | null
+          operator_id?: string | null
+          owner_user_id?: string | null
+          updated_at?: string | null
+          wallet_address?: string | null
+          wallet_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solana_wallets_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       solana_wallets_safe: {
         Row: {
