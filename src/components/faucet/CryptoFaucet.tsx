@@ -243,8 +243,13 @@ const CryptoFaucet = () => {
       return;
     }
 
+    // Route to compound strategies
+    await routeToCompound(token.symbol, token.claimAmount);
+
     toast.success(`Claimed ${token.claimAmount} ${token.symbol}!`, {
-      description: streakCount > 0 ? `🔥 ${streakCount + 1}-day streak!` : undefined,
+      description: autoCompound
+        ? `${reinvestPercent}% routed to top 3 strategies`
+        : streakCount > 0 ? `🔥 ${streakCount + 1}-day streak!` : undefined,
     });
 
     await loadClaims();
