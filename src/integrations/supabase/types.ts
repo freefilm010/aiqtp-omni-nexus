@@ -8071,6 +8071,15 @@ export type Database = {
         }
         Returns: string
       }
+      credit_faucet_claim: {
+        Args: {
+          p_amount: number
+          p_chain: string
+          p_symbol: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       get_factor_code: {
         Args: { p_factor_id: string }
         Returns: {
