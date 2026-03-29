@@ -404,6 +404,69 @@ const CryptoFaucet = () => {
         </CardContent>
       </Card>
 
+      {/* Auto-Compound Strategies Card */}
+      <Card className="border-green-500/20 bg-gradient-to-r from-green-500/5 to-transparent">
+        <CardContent className="py-3 px-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-5 w-5 text-green-500 shrink-0" />
+                <div>
+                  <p className="font-medium text-sm">Auto-Compound to Top 3 Strategies</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground">
+                    {autoCompound
+                      ? `Routing ${reinvestPercent}% of claims → AI Momentum Alpha (50%) · Quantum Mean Reversion (30%) · DeFi Yield Optimizer (20%)`
+                      : "Route claimed tokens into the 3 highest-profit strategies automatically"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Label htmlFor="auto-compound" className="text-xs cursor-pointer">
+                  {autoCompound ? "ON" : "OFF"}
+                </Label>
+                <Switch
+                  id="auto-compound"
+                  checked={autoCompound}
+                  onCheckedChange={setAutoCompound}
+                />
+              </div>
+            </div>
+
+            {autoCompound && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                <div className="p-2 rounded-md bg-muted/30 text-center">
+                  <p className="text-[10px] text-muted-foreground">Reinvest %</p>
+                  <div className="flex items-center justify-center gap-1">
+                    {[85, 90, 95, 100].map(pct => (
+                      <Button
+                        key={pct}
+                        size="sm"
+                        variant={reinvestPercent === pct ? "default" : "ghost"}
+                        className="h-6 px-1.5 text-[10px]"
+                        onClick={() => setReinvestPercent(pct)}
+                      >
+                        {pct}%
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-2 rounded-md bg-muted/30 text-center">
+                  <p className="text-[10px] text-muted-foreground">Deployed</p>
+                  <p className="font-bold text-sm text-green-500">${compoundStats.deployed.toFixed(2)}</p>
+                </div>
+                <div className="p-2 rounded-md bg-muted/30 text-center">
+                  <p className="text-[10px] text-muted-foreground">Txns</p>
+                  <p className="font-bold text-sm">{compoundStats.transactions}</p>
+                </div>
+                <div className="p-2 rounded-md bg-muted/30 text-center">
+                  <p className="text-[10px] text-muted-foreground">Profit</p>
+                  <p className="font-bold text-sm text-green-500">${(compoundEngine?.total_profit || 0).toFixed(2)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Faucet List */}
         <Card className="lg:col-span-2">
