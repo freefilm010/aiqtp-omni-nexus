@@ -8,7 +8,8 @@ import LiveStrategies from "@/components/strategy/LiveStrategies";
 import BacktestPanel from "@/components/research/BacktestPanel";
 import GraduationPipeline from "@/components/strategy/GraduationPipeline";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
-import { Code2, BookOpen, FlaskConical, Play, History, Award, Trophy } from "lucide-react";
+import StrategyComparison from "@/components/strategy/StrategyComparison";
+import { Code2, BookOpen, FlaskConical, Play, History, Award, Trophy, ArrowUpDown } from "lucide-react";
 
 const FreqtradeStudio = () => {
   return (
@@ -23,10 +24,14 @@ const FreqtradeStudio = () => {
         </div>
 
         <Tabs defaultValue="leaderboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 bg-[hsl(223,18%,9%)] border border-[hsl(222,14%,17%)]">
+          <TabsList className="grid w-full grid-cols-8 bg-[hsl(223,18%,9%)] border border-[hsl(222,14%,17%)]">
             <TabsTrigger value="leaderboard" className="flex items-center gap-2 data-[state=active]:bg-[hsl(224,100%,58%,0.15)] data-[state=active]:text-[hsl(224,100%,58%)]">
               <Trophy className="h-4 w-4" />
               Leaderboard
+            </TabsTrigger>
+            <TabsTrigger value="compare" className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4" />
+              Compare
             </TabsTrigger>
             <TabsTrigger value="builder" className="flex items-center gap-2">
               <Code2 className="h-4 w-4" />
@@ -56,6 +61,10 @@ const FreqtradeStudio = () => {
 
           <TabsContent value="leaderboard">
             <AIAgentLeaderboard />
+          </TabsContent>
+
+          <TabsContent value="compare">
+            <StrategyComparison />
           </TabsContent>
 
           <TabsContent value="builder">

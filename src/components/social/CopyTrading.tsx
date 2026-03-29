@@ -348,6 +348,28 @@ const CopyTrading = () => {
                 />
               </div>
 
+              <div>
+                <label className="text-sm text-muted-foreground">
+                  Max Profit Limit (USD) — auto-close when reached
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 5000 (leave blank for unlimited)"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground">
+                  Max Loss Limit (USD) — stop copying when hit
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 500 (leave blank for unlimited)"
+                  className="mt-1"
+                />
+              </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Copy stop-loss settings</span>
                 <Switch defaultChecked />
@@ -355,6 +377,11 @@ const CopyTrading = () => {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Copy take-profit settings</span>
+                <Switch defaultChecked />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Auto-pause on max loss</span>
                 <Switch defaultChecked />
               </div>
 
