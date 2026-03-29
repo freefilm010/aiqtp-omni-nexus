@@ -72,6 +72,58 @@ const AdminAccountItem = ({ onNavigate }: { onNavigate: () => void }) => {
   );
 };
 
+const AdminWalletMenuItems = () => {
+  const { isAdmin } = useAdminAuth();
+
+  if (!isAdmin) return null;
+
+  return (
+    <>
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel className="text-xs text-muted-foreground">Admin Only</DropdownMenuLabel>
+      <DropdownMenuItem asChild>
+        <Link to="/admin" className="flex items-center w-full">
+          <Shield className="mr-2 h-4 w-4" />
+          Admin Dashboard
+        </Link>
+      </DropdownMenuItem>
+      <DropdownMenuItem asChild>
+        <Link to="/admin/apex" className="flex items-center w-full">
+          <Target className="mr-2 h-4 w-4" />
+          Apex Prop Trading
+        </Link>
+      </DropdownMenuItem>
+    </>
+  );
+};
+
+const AdminMobileMenuItems = ({ onClose }: { onClose: () => void }) => {
+  const { isAdmin } = useAdminAuth();
+
+  if (!isAdmin) return null;
+
+  return (
+    <>
+      <Link
+        to="/admin"
+        className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
+        onClick={onClose}
+      >
+        <Shield className="h-4 w-4" />
+        Admin Dashboard
+      </Link>
+      <Link
+        to="/admin/apex"
+        className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
+        onClick={onClose}
+      >
+        <Target className="h-4 w-4" />
+        Apex Prop Trading
+      </Link>
+    </>
+  );
+};
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
@@ -192,11 +244,23 @@ const Header = () => {
               Home
             </Link>
 
-            {/* Assets & Wallets - prominent top-level link */}
-            <Link to="/wallet-assets" className="text-foreground hover:text-gold cursor-pointer transition-smooth flex items-center gap-1 font-medium">
-              <Wallet className="w-4 h-4" />
-              Assets & Wallets
-            </Link>
+            {/* Assets & Wallets Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth font-medium">
+                <Wallet className="w-4 h-4" />
+                <span>Assets & Wallets</span>
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link to="/wallet-assets" className="flex items-center w-full">
+                    <Wallet className="mr-2 h-4 w-4" />
+                    Wallet & Funding
+                  </Link>
+                </DropdownMenuItem>
+                <AdminWalletMenuItems />
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Trading Dropdown */}
             <DropdownMenu>
@@ -439,7 +503,7 @@ const Header = () => {
                 Home
               </Link>
 
-              {/* Assets & Wallets - right after Home for visibility */}
+              {/* Assets & Wallets */}
               <Link 
                 to="/wallet-assets" 
                 className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground font-medium"
@@ -448,6 +512,7 @@ const Header = () => {
                 <Wallet className="h-4 w-4" />
                 Assets & Wallets
               </Link>
+              <AdminMobileMenuItems onClose={() => setIsMenuOpen(false)} />
 
               {/* Trading Section */}
               <div className="pt-2">
