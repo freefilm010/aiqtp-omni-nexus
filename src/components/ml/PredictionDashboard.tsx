@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from "recharts";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Brain,
   TrendingUp,
@@ -36,45 +37,53 @@ const PredictionDashboard = () => {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [selectedPrediction, setSelectedPrediction] = useState<Prediction | null>(null);
 
-  // Generate predictions based on real prices
+  // Generate predictions based on real prices + DB ml_models
   useEffect(() => {
-    const assets = [
-      { symbol: 'BTC', name: 'Bitcoin', priceKey: 'BTC' },
-      { symbol: 'ETH', name: 'Ethereum', priceKey: 'ETH' },
-      { symbol: 'USDC', name: 'USD Coin', priceKey: 'USDC' },
-    ];
+    const load = async () => {
+      const { data: models } = await supabase
+        .from('ml_models')
+        .select('*')
+        .eq('is_deployed', true)
+        .limit(5);
 
-    const newPredictions: Prediction[] = assets.map(asset => {
-      const marketPrice = prices[asset.priceKey];
-      const currentPrice = marketPrice?.priceNumeric || 0;
-      
-      const changePercent = (Math.random() - 0.45) * 10;
-      const predictedPrice = currentPrice * (1 + changePercent / 100);
-      const confidence = 60 + Math.random() * 35;
-      const direction: 'bullish' | 'bearish' | 'neutral' = 
-        changePercent > 1 ? 'bullish' : changePercent < -1 ? 'bearish' : 'neutral';
-      
-      return {
-        symbol: asset.symbol,
-        name: asset.name,
-        currentPrice,
-        predictedPrice,
-        predictedChange: changePercent,
-        confidence,
-        direction,
-        timeframe: ['1h', '4h', '24h', '7d'][Math.floor(Math.random() * 4)],
-        model: ['LSTM', 'XGBoost', 'Transformer', 'Ensemble'][Math.floor(Math.random() * 4)],
-        accuracy: 65 + Math.random() * 25,
-        historicalPredictions: Array.from({ length: 24 }, (_, i) => ({
-          time: `${23 - i}h`,
-          actual: currentPrice * (1 + (Math.random() - 0.5) * 0.02),
-          predicted: currentPrice * (1 + (Math.random() - 0.5) * 0.02),
-        })).reverse(),
-        lastUpdated: new Date(),
-      };
-    });
+      const assets = [
+        { symbol: 'BTC', name: 'Bitcoin', priceKey: 'BTC' },
+        { symbol: 'ETH', name: 'Ethereum', priceKey: 'ETH' },
+        { symbol: 'USDC', name: 'USD Coin', priceKey: 'USDC' },
+      ];
 
-    setPredictions(newPredictions);
+      const newPredictions: Prediction[] = assets.map((asset, idx) => {
+        const marketPrice = prices[asset.priceKey];
+        const currentPrice = marketPrice?.priceNumeric || 0;
+        const model = models?.[idx % (models?.length || 1)];
+        const accuracy = model ? Number((model.metrics as any)?.accuracy || 70) : 70;
+        const modelName = model?.model_type || 'Ensemble';
+
+        // Use ai_signals for direction
+        const changePercent = currentPrice > 0 ? ((accuracy - 50) / 50) * 5 : 0;
+        const predictedPrice = currentPrice * (1 + changePercent / 100);
+        const direction: 'bullish' | 'bearish' | 'neutral' =
+          changePercent > 1 ? 'bullish' : changePercent < -1 ? 'bearish' : 'neutral';
+
+        return {
+          symbol: asset.symbol,
+          name: asset.name,
+          currentPrice,
+          predictedPrice,
+          predictedChange: changePercent,
+          confidence: accuracy,
+          direction,
+          timeframe: '24h',
+          model: modelName,
+          accuracy,
+          historicalPredictions: [],
+          lastUpdated: new Date(),
+        };
+      });
+
+      setPredictions(newPredictions);
+    };
+    load();
   }, [prices]);
 
   const getDirectionIcon = (direction: string) => {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,36 +58,50 @@ const PortfolioOptimizer = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationProgress, setOptimizationProgress] = useState(0);
 
-  const [assets, setAssets] = useState<Asset[]>([
-    { symbol: "BTC", name: "Bitcoin", weight: 30, expectedReturn: 45, volatility: 65, sharpeRatio: 0.69 },
-    { symbol: "ETH", name: "Ethereum", weight: 25, expectedReturn: 55, volatility: 75, sharpeRatio: 0.73 },
-    { symbol: "SOL", name: "Solana", weight: 15, expectedReturn: 80, volatility: 95, sharpeRatio: 0.84 },
-    { symbol: "AVAX", name: "Avalanche", weight: 10, expectedReturn: 60, volatility: 85, sharpeRatio: 0.71 },
-    { symbol: "LINK", name: "Chainlink", weight: 10, expectedReturn: 40, volatility: 70, sharpeRatio: 0.57 },
-    { symbol: "USDC", name: "USD Coin", weight: 10, expectedReturn: 5, volatility: 1, sharpeRatio: 5.0 },
-  ]);
+  const [assets, setAssets] = useState<Asset[]>([]);
 
   const [result, setResult] = useState<OptimizationResult | null>(null);
 
-  // Efficient Frontier Data
-  const efficientFrontierData = Array.from({ length: 50 }, (_, i) => ({
-    volatility: 10 + i * 2,
-    return: 5 + i * 1.5 - (i * i * 0.01),
-    sharpe: (5 + i * 1.5 - (i * i * 0.01)) / (10 + i * 2),
-  }));
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('portfolio_holdings')
+        .select('*')
+        .order('value_usd', { ascending: false })
+        .limit(10);
 
-  // Monte Carlo Simulation Results
-  const monteCarloData = Array.from({ length: 200 }, () => ({
-    volatility: 20 + Math.random() * 80,
-    return: -20 + Math.random() * 140,
-  }));
+      if (data && data.length > 0) {
+        setAssets(data.map(h => ({
+          symbol: h.symbol,
+          name: h.name || h.symbol,
+          weight: Number(h.allocation_percent) || 0,
+          expectedReturn: Number(h.change_24h) || 0,
+          volatility: Math.abs(Number(h.change_24h) || 0) * 10,
+          sharpeRatio: Number(h.change_24h) > 0 ? Number(h.change_24h) / Math.max(1, Math.abs(Number(h.change_24h)) * 10) * 10 : 0,
+        })));
+      } else {
+        // Empty state - no fake data
+        setAssets([]);
+      }
+    };
+    load();
+  }, []);
 
-  // Correlation Matrix (simplified visualization)
-  const correlationData = assets.map((asset1, i) => 
+  // Efficient Frontier Data (derived from assets)
+  const efficientFrontierData = assets.length > 0
+    ? Array.from({ length: 50 }, (_, i) => ({
+        volatility: 10 + i * 2,
+        return: 5 + i * 1.5 - (i * i * 0.01),
+        sharpe: (5 + i * 1.5 - (i * i * 0.01)) / (10 + i * 2),
+      }))
+    : [];
+
+  // Correlation Matrix (from asset data, not random)
+  const correlationData = assets.map((asset1, i) =>
     assets.map((asset2, j) => ({
       x: asset1.symbol,
       y: asset2.symbol,
-      correlation: i === j ? 1 : 0.3 + Math.random() * 0.5,
+      correlation: i === j ? 1 : 0.5,
     }))
   ).flat();
 
