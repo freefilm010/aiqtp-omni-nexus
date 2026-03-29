@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,56 +58,44 @@ const ComputerVisionLab = () => {
   const [showOverlay, setShowOverlay] = useState(true);
   const [autoDetect, setAutoDetect] = useState(true);
 
-  const [detectedPatterns, setDetectedPatterns] = useState<DetectedPattern[]>([
-    {
-      id: "1",
-      type: "Head and Shoulders",
-      confidence: 87,
-      location: { x: 120, y: 80, width: 180, height: 100 },
-      direction: "bearish",
-      priceTarget: 41500,
-      stopLoss: 45200,
-    },
-    {
-      id: "2",
-      type: "Bull Flag",
-      confidence: 72,
-      location: { x: 350, y: 150, width: 80, height: 60 },
-      direction: "bullish",
-      priceTarget: 48000,
-      stopLoss: 42800,
-    },
-    {
-      id: "3",
-      type: "Double Bottom",
-      confidence: 91,
-      location: { x: 50, y: 200, width: 100, height: 80 },
-      direction: "bullish",
-      priceTarget: 47500,
-      stopLoss: 41000,
-    },
-  ]);
+  const [detectedPatterns, setDetectedPatterns] = useState<DetectedPattern[]>([]);
+  const [supportResistance, setSupportResistance] = useState<SupportResistance[]>([]);
+  const [candlestickPatterns, setCandlestickPatterns] = useState<any[]>([]);
+  const [trendlines, setTrendlines] = useState<any[]>([]);
 
-  const [supportResistance, setSupportResistance] = useState<SupportResistance[]>([
-    { type: "resistance", price: 48500, strength: 85, touches: 4 },
-    { type: "resistance", price: 46200, strength: 72, touches: 3 },
-    { type: "support", price: 42800, strength: 90, touches: 5 },
-    { type: "support", price: 40500, strength: 65, touches: 2 },
-  ]);
+  useEffect(() => {
+    const loadDetections = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.id) return;
 
-  const [candlestickPatterns, setCandlestickPatterns] = useState([
-    { pattern: "Doji", timeframe: "4H", location: "Current", signal: "Indecision", confidence: 95 },
-    { pattern: "Engulfing Bullish", timeframe: "1D", location: "3 candles ago", signal: "Buy", confidence: 88 },
-    { pattern: "Morning Star", timeframe: "4H", location: "5 candles ago", signal: "Buy", confidence: 82 },
-    { pattern: "Shooting Star", timeframe: "1H", location: "8 candles ago", signal: "Sell", confidence: 76 },
-    { pattern: "Hammer", timeframe: "1D", location: "12 candles ago", signal: "Buy", confidence: 91 },
-  ]);
+      const { data } = await supabase
+        .from('cv_detections')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-  const [trendlines, setTrendlines] = useState([
-    { type: "Ascending", startPrice: 38500, endPrice: 43200, strength: 78, valid: true },
-    { type: "Descending", startPrice: 48000, endPrice: 44500, strength: 65, valid: true },
-    { type: "Horizontal", startPrice: 42800, endPrice: 42800, strength: 92, valid: true },
-  ]);
+      if (data && data.length > 0) {
+        setDetectedPatterns(data.filter(d => d.pattern_type !== 'support' && d.pattern_type !== 'resistance').map(d => ({
+          id: d.id,
+          type: d.pattern_type,
+          confidence: Number(d.confidence),
+          location: (d.location_data as any) || { x: 0, y: 0, width: 100, height: 100 },
+          direction: (d.direction as DetectedPattern['direction']) || 'neutral',
+          priceTarget: d.price_target ? Number(d.price_target) : undefined,
+          stopLoss: d.stop_loss ? Number(d.stop_loss) : undefined,
+        })));
+
+        setSupportResistance(data.filter(d => d.pattern_type === 'support' || d.pattern_type === 'resistance').map(d => ({
+          type: d.pattern_type as 'support' | 'resistance',
+          price: Number(d.price_target) || 0,
+          strength: Number(d.confidence),
+          touches: 1,
+        })));
+      }
+    };
+    loadDetections();
+  }, []);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

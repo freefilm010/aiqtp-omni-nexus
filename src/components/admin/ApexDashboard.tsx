@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Activity,
   Shield,
@@ -46,30 +47,41 @@ interface ApexAccount {
   tradeCount: number;
 }
 
-const generateAccounts = (): ApexAccount[] =>
-  Array.from({ length: 20 }, (_, i) => ({
-    id: `apex-${i + 1}`,
-    label: `PA-${String(i + 1).padStart(2, "0")} (50K)`,
-    status: i < 16 ? "active" : i < 18 ? "paused" : "payout_pending",
-    balance: 50000 + Math.random() * 8000 - 2000,
-    dailyPnL: Math.random() * 600 - 150,
-    totalProfit: Math.random() * 4000 + 500,
-    drawdown: Math.random() * 3.5,
-    maxDrawdown: 2500,
-    contractsUsed: Math.floor(Math.random() * 4) + 1,
-    maxContracts: 4,
-    consistencyScore: 35 + Math.random() * 60,
-    payoutCycle: Math.floor(Math.random() * 6) + 1,
-    maxPayoutCycles: 6,
-    lastTrade: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-    tradeCount: Math.floor(Math.random() * 25) + 3,
-  }));
-
 const ApexDashboard = () => {
-  const [accounts] = useState<ApexAccount[]>(generateAccounts);
+  const [accounts, setAccounts] = useState<ApexAccount[]>([]);
   const [mirrorEnabled, setMirrorEnabled] = useState(true);
   const [dllLock, setDllLock] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('apex_accounts')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (data) {
+        setAccounts(data.map(d => ({
+          id: d.id,
+          label: d.label,
+          status: d.status as ApexAccount['status'],
+          balance: Number(d.balance),
+          dailyPnL: Number(d.daily_pnl),
+          totalProfit: Number(d.total_profit),
+          drawdown: Number(d.drawdown),
+          maxDrawdown: Number(d.max_drawdown),
+          contractsUsed: d.contracts_used || 0,
+          maxContracts: d.max_contracts || 4,
+          consistencyScore: Number(d.consistency_score),
+          payoutCycle: d.payout_cycle || 1,
+          maxPayoutCycles: d.max_payout_cycles || 6,
+          lastTrade: d.last_trade || new Date().toISOString(),
+          tradeCount: d.trade_count || 0,
+        })));
+      }
+    };
+    load();
+  }, []);
 
   const totalProfit = accounts.reduce((s, a) => s + a.totalProfit, 0);
   const totalDailyPnL = accounts.reduce((s, a) => s + a.dailyPnL, 0);

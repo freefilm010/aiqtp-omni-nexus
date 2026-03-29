@@ -461,6 +461,120 @@ export type Database = {
         }
         Relationships: []
       }
+      apex_accounts: {
+        Row: {
+          balance: number | null
+          consistency_score: number | null
+          contracts_used: number | null
+          created_at: string | null
+          daily_pnl: number | null
+          drawdown: number | null
+          id: string
+          label: string
+          last_trade: string | null
+          max_contracts: number | null
+          max_drawdown: number | null
+          max_payout_cycles: number | null
+          payout_cycle: number | null
+          status: string | null
+          total_profit: number | null
+          trade_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          consistency_score?: number | null
+          contracts_used?: number | null
+          created_at?: string | null
+          daily_pnl?: number | null
+          drawdown?: number | null
+          id?: string
+          label: string
+          last_trade?: string | null
+          max_contracts?: number | null
+          max_drawdown?: number | null
+          max_payout_cycles?: number | null
+          payout_cycle?: number | null
+          status?: string | null
+          total_profit?: number | null
+          trade_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          consistency_score?: number | null
+          contracts_used?: number | null
+          created_at?: string | null
+          daily_pnl?: number | null
+          drawdown?: number | null
+          id?: string
+          label?: string
+          last_trade?: string | null
+          max_contracts?: number | null
+          max_drawdown?: number | null
+          max_payout_cycles?: number | null
+          payout_cycle?: number | null
+          status?: string | null
+          total_profit?: number | null
+          trade_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      arbitrage_opportunities: {
+        Row: {
+          arb_type: string | null
+          buy_exchange: string
+          buy_price: number
+          created_at: string | null
+          estimated_profit: number | null
+          expires_at: string | null
+          id: string
+          pair: string
+          risk: string | null
+          sell_exchange: string
+          sell_price: number
+          spread: number
+          spread_percent: number
+          volume: number | null
+        }
+        Insert: {
+          arb_type?: string | null
+          buy_exchange: string
+          buy_price: number
+          created_at?: string | null
+          estimated_profit?: number | null
+          expires_at?: string | null
+          id?: string
+          pair: string
+          risk?: string | null
+          sell_exchange: string
+          sell_price: number
+          spread: number
+          spread_percent: number
+          volume?: number | null
+        }
+        Update: {
+          arb_type?: string | null
+          buy_exchange?: string
+          buy_price?: number
+          created_at?: string | null
+          estimated_profit?: number | null
+          expires_at?: string | null
+          id?: string
+          pair?: string
+          risk?: string | null
+          sell_exchange?: string
+          sell_price?: number
+          spread?: number
+          spread_percent?: number
+          volume?: number | null
+        }
+        Relationships: []
+      }
       auto_invest_ai_logs: {
         Row: {
           allocations_proposed: Json | null
@@ -1946,6 +2060,48 @@ export type Database = {
           route_hash?: string
           subject?: string | null
           submission_token?: string
+        }
+        Relationships: []
+      }
+      cv_detections: {
+        Row: {
+          confidence: number
+          created_at: string | null
+          direction: string | null
+          id: string
+          location_data: Json | null
+          pattern_type: string
+          price_target: number | null
+          stop_loss: number | null
+          symbol: string | null
+          timeframe: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string | null
+          direction?: string | null
+          id?: string
+          location_data?: Json | null
+          pattern_type: string
+          price_target?: number | null
+          stop_loss?: number | null
+          symbol?: string | null
+          timeframe?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string | null
+          direction?: string | null
+          id?: string
+          location_data?: Json | null
+          pattern_type?: string
+          price_target?: number | null
+          stop_loss?: number | null
+          symbol?: string | null
+          timeframe?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -7681,6 +7837,57 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           win_rate?: number | null
+        }
+        Relationships: []
+      }
+      trading_signals: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          expires_at: string | null
+          factors: string[] | null
+          id: string
+          price: number | null
+          signal_type: string
+          source: string | null
+          status: string | null
+          stop_loss: number | null
+          strength: number | null
+          symbol: string
+          target_price: number | null
+          user_id: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          factors?: string[] | null
+          id?: string
+          price?: number | null
+          signal_type: string
+          source?: string | null
+          status?: string | null
+          stop_loss?: number | null
+          strength?: number | null
+          symbol: string
+          target_price?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          factors?: string[] | null
+          id?: string
+          price?: number | null
+          signal_type?: string
+          source?: string | null
+          status?: string | null
+          stop_loss?: number | null
+          strength?: number | null
+          symbol?: string
+          target_price?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
