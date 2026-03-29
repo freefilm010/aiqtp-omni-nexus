@@ -177,8 +177,82 @@ const CryptoFaucet = () => {
     setClaiming(null);
   };
 
+  // Keep ref in sync
+  useEffect(() => { autoClaimRef.current = autoClaim; }, [autoClaim]);
+
+  // Auto-claim: claim all available tokens every 30s when enabled
+  useEffect(() => {
+    if (!autoClaim || !userId) return;
+
+    const runAutoClaim = async () => {
+      if (!autoClaimRef.current) return;
+      setAutoClaimRunning(true);
+      
+      let claimedCount = 0;
+      for (const token of FAUCET_TOKENS) {
+        if (!autoClaimRef.current) break;
+        
+        const last = lastClaimTimesRef.current[token.id];
+        const cooldownMs = token.claimInterval * 60 * 60 * 1000;
+        const onCooldown = last && (Date.now() - last.getTime()) < cooldownMs;
+        
+        if (!onCooldown && token.available) {
+          const { error } = await supabase.from("faucet_claims").insert({
+            user_id: userId,
+            amount: token.claimAmount,
+            chain: token.id,
+            wallet_address: '',
+            status: 'completed',
+          } as any);
+          
+          if (!error) claimedCount++;
+        }
+      }
+      
+      if (claimedCount > 0) {
+        toast.success(`Auto-claimed ${claimedCount} token${claimedCount > 1 ? 's' : ''}!`, {
+          icon: <Bot className="h-4 w-4" />,
+        });
+        await loadClaims();
+      }
+      setAutoClaimRunning(false);
+    };
+
+    runAutoClaim();
+    const interval = setInterval(runAutoClaim, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, [autoClaim, userId, loadClaims]);
+
+  const handleClaimAll = async () => {
+    if (!userId) { toast.error("Please sign in"); return; }
+    setClaiming('all');
+    let claimedCount = 0;
+    
+    for (const token of FAUCET_TOKENS) {
+      if (!isOnCooldown(token) && token.available) {
+        const { error } = await supabase.from("faucet_claims").insert({
+          user_id: userId,
+          amount: token.claimAmount,
+          chain: token.id,
+          wallet_address: '',
+          status: 'completed',
+        } as any);
+        if (!error) claimedCount++;
+      }
+    }
+    
+    if (claimedCount > 0) {
+      toast.success(`Claimed ${claimedCount} tokens at once!`);
+      await loadClaims();
+    } else {
+      toast.info("All tokens are on cooldown");
+    }
+    setClaiming(null);
+  };
+
   const totalTokenTypes = Object.keys(balances).length;
   const totalClaims = claims.length;
+  const availableCount = FAUCET_TOKENS.filter(t => !isOnCooldown(t) && t.available).length;
 
   return (
     <div className="space-y-4 md:space-y-6">
