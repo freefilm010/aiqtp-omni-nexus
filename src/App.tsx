@@ -74,7 +74,16 @@ const StatsArenaPage = lazy(() => import("./pages/StatsArenaPage"));
 const RewardsStorePage = lazy(() => import("./pages/RewardsStorePage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Loading fallback component
 const PageLoader = () => (
@@ -120,7 +129,7 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <FloatingWindowsProvider>
                   <AuthDeepLinkHandler />
                   <SkipLinks />
