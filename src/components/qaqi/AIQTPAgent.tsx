@@ -157,7 +157,6 @@ const AIQTPAgent = () => {
         role: "assistant",
         content: generateFallbackResponse(content),
         timestamp: new Date(),
-        toolExecutions: generateMockToolExecution(content),
       };
       
       addMessage(fallbackMessage);
@@ -521,34 +520,6 @@ Your request has been processed. I've analyzed the available data and here are m
 *For quantum-enhanced analysis, use the QAQI Agent with IBM Quantum integration.*`;
 }
 
-function generateMockToolExecution(query: string): ToolExecution[] {
-  const lowerQuery = query.toLowerCase();
-  
-  if (lowerQuery.includes("bitcoin") || lowerQuery.includes("btc")) {
-    return [{
-      tool: "analyze_market",
-      arguments: { symbol: "BTC/USD", timeframe: "4H" },
-      result: { trend: "bullish", confidence: 0.78, prediction: "+8.5%" }
-    }];
-  }
-  
-  if (lowerQuery.includes("fraud")) {
-    return [{
-      tool: "fraud_detection",
-      arguments: { scan_type: "recent", depth: 3 },
-      result: { risk_level: "low", suspicious_count: 0 }
-    }];
-  }
-  
-  if (lowerQuery.includes("strategy")) {
-    return [{
-      tool: "generate_strategy",
-      arguments: { risk_tolerance: "moderate" },
-      result: { expected_return: "18.5%", sharpe_ratio: 1.85 }
-    }];
-  }
-  
-  return [];
-}
+// Mock tool execution removed - all tool execution is now handled server-side
 
 export default AIQTPAgent;
