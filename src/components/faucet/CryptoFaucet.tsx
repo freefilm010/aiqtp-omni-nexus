@@ -10,6 +10,7 @@ import FaucetStats from "./FaucetStats";
 import FaucetAutomation from "./FaucetAutomation";
 import FaucetTokenList from "./FaucetTokenList";
 import FaucetSidebar from "./FaucetSidebar";
+import { useAssetValuation } from "@/hooks/useAssetValuation";
 
 const FAUCET_TOKENS: FaucetToken[] = [
   { id: 'usdc-test', symbol: 'USDC', name: 'USD Coin (Test)', icon: <CircleDollarSign className="h-5 w-5 text-blue-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Testnet USDC', chain: 'ethereum' },
@@ -250,8 +251,9 @@ const CryptoFaucet = () => {
     return () => clearInterval(interval);
   }, [autoClaim, userId, loadClaims, routeToCompound]);
 
+  const { getPortfolioValuation } = useAssetValuation();
   const availableCount = FAUCET_TOKENS.filter(t => !isOnCooldown(t) && t.available).length;
-  const totalValue = Object.entries(balances).reduce((sum, [, amt]) => sum + amt, 0);
+  const { totalUsd } = getPortfolioValuation(balances);
 
   return (
     <div className="space-y-4">
@@ -260,7 +262,7 @@ const CryptoFaucet = () => {
         ownedTokens={Object.keys(balances).length}
         totalClaims={claims.length}
         streakCount={streakCount}
-        totalValue={totalValue}
+        totalValue={totalUsd}
       />
 
       <FaucetAutomation
