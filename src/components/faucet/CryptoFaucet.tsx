@@ -1,64 +1,32 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Droplets, Clock, Coins, Gift, Timer, Wallet,
-  TrendingUp, Shield, Zap, Star, CheckCircle, RefreshCw,
-  ArrowDownToLine, Flame, Gem, CircleDollarSign, Bot
+  Gem, Zap, Star, Flame, Shield, TrendingUp, RefreshCw,
+  CircleDollarSign, Coins, Bot
 } from "lucide-react";
-
-interface FaucetToken {
-  id: string;
-  symbol: string;
-  name: string;
-  icon: React.ReactNode;
-  claimAmount: number;
-  claimInterval: number; // hours
-  available: boolean;
-  category: 'stablecoin' | 'platform' | 'testnet' | 'defi';
-  description: string;
-  chain: string;
-  bonus?: string;
-}
-
-interface ClaimRecord {
-  id: string;
-  amount: number;
-  chain: string;
-  status: string;
-  created_at: string;
-}
+import type { FaucetToken, ClaimRecord } from "./faucetTypes";
+import FaucetStats from "./FaucetStats";
+import FaucetAutomation from "./FaucetAutomation";
+import FaucetTokenList from "./FaucetTokenList";
+import FaucetSidebar from "./FaucetSidebar";
 
 const FAUCET_TOKENS: FaucetToken[] = [
-  // Stablecoins
-  { id: 'usdc-test', symbol: 'USDC', name: 'USD Coin (Test)', icon: <CircleDollarSign className="h-6 w-6 text-blue-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Testnet USDC for practicing trades and DeFi', chain: 'ethereum' },
-  { id: 'usdt-test', symbol: 'USDT', name: 'Tether (Test)', icon: <CircleDollarSign className="h-6 w-6 text-green-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Testnet USDT for stablecoin pair trading', chain: 'ethereum' },
-  { id: 'dai-test', symbol: 'DAI', name: 'DAI (Test)', icon: <CircleDollarSign className="h-6 w-6 text-amber-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Decentralized stablecoin for DeFi testing', chain: 'ethereum' },
-  { id: 'busd-test', symbol: 'BUSD', name: 'Binance USD (Test)', icon: <CircleDollarSign className="h-6 w-6 text-yellow-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'BSC ecosystem stablecoin', chain: 'bsc' },
-
-  // Platform tokens
-  { id: 'qtc', symbol: 'QTC', name: 'Quantum Time Crystal', icon: <Gem className="h-6 w-6 text-purple-500" />, claimAmount: 5, claimInterval: 8, available: true, category: 'platform', description: 'Native platform token — staking, governance, fee discounts', chain: 'platform', bonus: '2x weekends' },
-  { id: 'aiq', symbol: 'AIQ', name: 'AI Quant Token', icon: <Zap className="h-6 w-6 text-cyan-500" />, claimAmount: 25, claimInterval: 6, available: true, category: 'platform', description: 'Governance & AI strategy access token', chain: 'platform', bonus: 'Streak bonus' },
-  { id: 'nxs', symbol: 'NXS', name: 'Nexus Points', icon: <Star className="h-6 w-6 text-amber-400" />, claimAmount: 50, claimInterval: 4, available: true, category: 'platform', description: 'Loyalty points — redeem for premium features & NFTs', chain: 'platform' },
-
-  // Testnet
-  { id: 'eth-test', symbol: 'ETH', name: 'Ethereum (Sepolia)', icon: <Flame className="h-6 w-6 text-indigo-400" />, claimAmount: 0.5, claimInterval: 24, available: true, category: 'testnet', description: 'Sepolia testnet ETH for gas & contract deployment', chain: 'ethereum-sepolia' },
-  { id: 'btc-test', symbol: 'BTC', name: 'Bitcoin (Testnet)', icon: <Coins className="h-6 w-6 text-orange-500" />, claimAmount: 0.01, claimInterval: 48, available: true, category: 'testnet', description: 'Bitcoin testnet for Lightning & on-chain practice', chain: 'bitcoin-testnet' },
-  { id: 'sol-test', symbol: 'SOL', name: 'Solana (Devnet)', icon: <Zap className="h-6 w-6 text-emerald-400" />, claimAmount: 5, claimInterval: 12, available: true, category: 'testnet', description: 'Solana devnet for SPL tokens & DeFi', chain: 'solana-devnet' },
-  { id: 'matic-test', symbol: 'MATIC', name: 'Polygon (Mumbai)', icon: <Shield className="h-6 w-6 text-violet-500" />, claimAmount: 10, claimInterval: 12, available: true, category: 'testnet', description: 'Polygon testnet for low-cost L2 practice', chain: 'polygon-mumbai' },
-  { id: 'avax-test', symbol: 'AVAX', name: 'Avalanche (Fuji)', icon: <TrendingUp className="h-6 w-6 text-red-500" />, claimAmount: 2, claimInterval: 24, available: true, category: 'testnet', description: 'Avalanche C-Chain testnet tokens', chain: 'avalanche-fuji' },
-
-  // DeFi
-  { id: 'uni-test', symbol: 'UNI', name: 'Uniswap (Test)', icon: <RefreshCw className="h-6 w-6 text-pink-500" />, claimAmount: 10, claimInterval: 24, available: true, category: 'defi', description: 'Test UNI for governance & LP simulations', chain: 'ethereum' },
-  { id: 'aave-test', symbol: 'AAVE', name: 'Aave (Test)', icon: <Shield className="h-6 w-6 text-sky-400" />, claimAmount: 2, claimInterval: 24, available: true, category: 'defi', description: 'Test AAVE for lending/borrowing practice', chain: 'ethereum' },
-  { id: 'link-test', symbol: 'LINK', name: 'Chainlink (Test)', icon: <Zap className="h-6 w-6 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'defi', description: 'Test LINK for oracle integration practice', chain: 'ethereum' },
+  { id: 'usdc-test', symbol: 'USDC', name: 'USD Coin (Test)', icon: <CircleDollarSign className="h-5 w-5 text-blue-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Testnet USDC', chain: 'ethereum' },
+  { id: 'usdt-test', symbol: 'USDT', name: 'Tether (Test)', icon: <CircleDollarSign className="h-5 w-5 text-green-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Testnet USDT', chain: 'ethereum' },
+  { id: 'dai-test', symbol: 'DAI', name: 'DAI (Test)', icon: <CircleDollarSign className="h-5 w-5 text-amber-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Decentralized stablecoin', chain: 'ethereum' },
+  { id: 'busd-test', symbol: 'BUSD', name: 'Binance USD (Test)', icon: <CircleDollarSign className="h-5 w-5 text-yellow-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'BSC stablecoin', chain: 'bsc' },
+  { id: 'qtc', symbol: 'QTC', name: 'Quantum Time Crystal', icon: <Gem className="h-5 w-5 text-purple-500" />, claimAmount: 5, claimInterval: 8, available: true, category: 'platform', description: 'Native platform token', chain: 'platform', bonus: '2x weekends' },
+  { id: 'aiq', symbol: 'AIQ', name: 'AI Quant Token', icon: <Zap className="h-5 w-5 text-cyan-500" />, claimAmount: 25, claimInterval: 6, available: true, category: 'platform', description: 'Governance & AI access', chain: 'platform', bonus: 'Streak bonus' },
+  { id: 'nxs', symbol: 'NXS', name: 'Nexus Points', icon: <Star className="h-5 w-5 text-amber-400" />, claimAmount: 50, claimInterval: 4, available: true, category: 'platform', description: 'Loyalty points', chain: 'platform' },
+  { id: 'eth-test', symbol: 'ETH', name: 'Ethereum (Sepolia)', icon: <Flame className="h-5 w-5 text-indigo-400" />, claimAmount: 0.5, claimInterval: 24, available: true, category: 'testnet', description: 'Sepolia testnet ETH', chain: 'ethereum-sepolia' },
+  { id: 'btc-test', symbol: 'BTC', name: 'Bitcoin (Testnet)', icon: <Coins className="h-5 w-5 text-orange-500" />, claimAmount: 0.01, claimInterval: 48, available: true, category: 'testnet', description: 'Bitcoin testnet', chain: 'bitcoin-testnet' },
+  { id: 'sol-test', symbol: 'SOL', name: 'Solana (Devnet)', icon: <Zap className="h-5 w-5 text-emerald-400" />, claimAmount: 5, claimInterval: 12, available: true, category: 'testnet', description: 'Solana devnet', chain: 'solana-devnet' },
+  { id: 'matic-test', symbol: 'MATIC', name: 'Polygon (Mumbai)', icon: <Shield className="h-5 w-5 text-violet-500" />, claimAmount: 10, claimInterval: 12, available: true, category: 'testnet', description: 'Polygon testnet', chain: 'polygon-mumbai' },
+  { id: 'avax-test', symbol: 'AVAX', name: 'Avalanche (Fuji)', icon: <TrendingUp className="h-5 w-5 text-red-500" />, claimAmount: 2, claimInterval: 24, available: true, category: 'testnet', description: 'Avalanche testnet', chain: 'avalanche-fuji' },
+  { id: 'uni-test', symbol: 'UNI', name: 'Uniswap (Test)', icon: <RefreshCw className="h-5 w-5 text-pink-500" />, claimAmount: 10, claimInterval: 24, available: true, category: 'defi', description: 'Test UNI', chain: 'ethereum' },
+  { id: 'aave-test', symbol: 'AAVE', name: 'Aave (Test)', icon: <Shield className="h-5 w-5 text-sky-400" />, claimAmount: 2, claimInterval: 24, available: true, category: 'defi', description: 'Test AAVE', chain: 'ethereum' },
+  { id: 'link-test', symbol: 'LINK', name: 'Chainlink (Test)', icon: <Zap className="h-5 w-5 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'defi', description: 'Test LINK', chain: 'ethereum' },
 ];
 
 const CryptoFaucet = () => {
@@ -73,8 +41,8 @@ const CryptoFaucet = () => {
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
   const [autoCompound, setAutoCompound] = useState(false);
   const [reinvestPercent, setReinvestPercent] = useState(95);
-  const [compoundEngine, setCompoundEngine] = useState<{ id: string; total_capital: number; total_profit: number; total_deployed: number; strategy: string; cycle_count: number; reinvest_percent: number; status: string } | null>(null);
-  const [compoundStats, setCompoundStats] = useState({ deployed: 0, transactions: 0 });
+  const [compoundEngine, setCompoundEngine] = useState<any>(null);
+  const [compoundStats, setCompoundStats] = useState({ deployed: 0, transactions: 0, profit: 0 });
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
   const lastClaimTimesRef = useRef<Record<string, Date>>({});
@@ -94,27 +62,19 @@ const CryptoFaucet = () => {
     const records = data || [];
     setClaims(records);
 
-    // Compute balances and last claim times from DB records
     const bal: Record<string, number> = {};
     const lastTimes: Record<string, Date> = {};
-    
     for (const claim of records) {
-      // Extract symbol from chain field or match by amount
       const token = FAUCET_TOKENS.find(t => t.chain === claim.chain || t.id === claim.chain);
       const symbol = token?.symbol || claim.chain;
       bal[symbol] = (bal[symbol] || 0) + Number(claim.amount);
-
       const tokenId = token?.id || claim.chain;
-      if (!lastTimes[tokenId]) {
-        lastTimes[tokenId] = new Date(claim.created_at);
-      }
+      if (!lastTimes[tokenId]) lastTimes[tokenId] = new Date(claim.created_at);
     }
-    
     setBalances(bal);
     setLastClaimTimes(lastTimes);
     lastClaimTimesRef.current = lastTimes;
 
-    // Calculate streak (consecutive days with at least one claim)
     const claimDays = new Set(records.map(c => new Date(c.created_at).toDateString()));
     let streak = 0;
     const today = new Date();
@@ -130,105 +90,98 @@ const CryptoFaucet = () => {
 
   useEffect(() => { loadClaims(); }, [loadClaims]);
 
-  // Load or create compound engine
   const loadCompoundEngine = useCallback(async () => {
     if (!userId) return;
     const { data } = await supabase
       .from("auto_invest_engine")
-      .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent")
+      .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count")
       .limit(1) as any;
 
-    if (data && data.length > 0) {
+    if (data?.[0]) {
       setCompoundEngine(data[0]);
       setReinvestPercent(Number(data[0].reinvest_percent) || 95);
       setAutoCompound(data[0].status === 'active');
-      setCompoundStats({ deployed: Number(data[0].total_deployed) || 0, transactions: 0 });
 
-      // Get transaction count
       const { count } = await supabase
         .from("auto_invest_transactions")
         .select("id", { count: 'exact', head: true })
         .eq("engine_id", data[0].id) as any;
-      setCompoundStats(prev => ({ ...prev, transactions: count || 0 }));
+
+      setCompoundStats({
+        deployed: Number(data[0].total_deployed) || 0,
+        transactions: count || 0,
+        profit: Number(data[0].total_profit) || 0,
+      });
     }
   }, [userId]);
 
   useEffect(() => { if (userId) loadCompoundEngine(); }, [userId, loadCompoundEngine]);
 
-  // Route claimed assets to compound engine
   const routeToCompound = useCallback(async (tokenSymbol: string, amount: number) => {
     if (!autoCompoundRef.current || !compoundEngine) return;
-
     const deployAmount = amount * (reinvestPercent / 100);
     if (deployAmount <= 0) return;
 
-    // Top 3 allocation targets (platform-defined best strategies)
-    const TOP_STRATEGIES = [
-      { name: 'AI Momentum Alpha', symbol: tokenSymbol, pct: 50 },
-      { name: 'Quantum Mean Reversion', symbol: tokenSymbol, pct: 30 },
-      { name: 'DeFi Yield Optimizer', symbol: tokenSymbol, pct: 20 },
+    const strategies = [
+      { name: 'AI Momentum Alpha', pct: 50 },
+      { name: 'Quantum Mean Reversion', pct: 30 },
+      { name: 'DeFi Yield Optimizer', pct: 20 },
     ];
 
-    for (const strat of TOP_STRATEGIES) {
+    for (const strat of strategies) {
       const stratAmount = deployAmount * (strat.pct / 100);
       if (stratAmount <= 0) continue;
-
       await supabase.from("auto_invest_transactions").insert({
         engine_id: compoundEngine.id,
         transaction_type: 'deploy',
         amount_usd: stratAmount,
-        asset_symbol: strat.symbol,
+        asset_symbol: tokenSymbol,
         side: 'buy',
         status: 'completed',
         ai_triggered: true,
-        ai_reason: `Auto-compound from faucet claim → ${strat.name} (${strat.pct}%)`,
+        ai_reason: `Auto-compound → ${strat.name} (${strat.pct}%)`,
         ai_confidence: 0.85,
         market_regime: 'growth',
       } as any);
     }
 
-    // Update engine totals
     await supabase.from("auto_invest_engine").update({
       total_capital: (Number(compoundEngine.total_capital) || 0) + deployAmount,
       total_deployed: (Number(compoundEngine.total_deployed) || 0) + deployAmount,
-      cycle_count: (compoundEngine as any).cycle_count + 1,
+      cycle_count: (compoundEngine.cycle_count || 0) + 1,
     } as any).eq("id", compoundEngine.id) as any;
 
     await loadCompoundEngine();
   }, [compoundEngine, reinvestPercent, loadCompoundEngine]);
 
   useEffect(() => { autoCompoundRef.current = autoCompound; }, [autoCompound]);
+  useEffect(() => { autoClaimRef.current = autoClaim; }, [autoClaim]);
 
-  const isOnCooldown = (token: FaucetToken): boolean => {
+  const isOnCooldown = useCallback((token: FaucetToken): boolean => {
     const last = lastClaimTimes[token.id];
     if (!last) return false;
-    const cooldownMs = token.claimInterval * 60 * 60 * 1000;
-    return (Date.now() - last.getTime()) < cooldownMs;
-  };
+    return (Date.now() - last.getTime()) < (token.claimInterval * 3600000);
+  }, [lastClaimTimes]);
 
-  const getCooldownRemaining = (token: FaucetToken): string => {
+  const getCooldownRemaining = useCallback((token: FaucetToken): string => {
     const last = lastClaimTimes[token.id];
     if (!last) return 'Ready!';
-    const cooldownMs = token.claimInterval * 60 * 60 * 1000;
-    const remaining = cooldownMs - (Date.now() - last.getTime());
+    const remaining = (token.claimInterval * 3600000) - (Date.now() - last.getTime());
     if (remaining <= 0) return 'Ready!';
-    const hours = Math.floor(remaining / (1000 * 60 * 60));
-    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
-  };
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    return `${h}h ${m}m`;
+  }, [lastClaimTimes]);
 
-  const handleClaim = async (token: FaucetToken) => {
-    if (!userId) {
-      toast.error("Please sign in to claim tokens");
-      return;
-    }
-    if (isOnCooldown(token)) {
-      toast.error(`Please wait ${getCooldownRemaining(token)} before claiming again`);
-      return;
-    }
+  const getCooldownProgress = useCallback((token: FaucetToken): number => {
+    const last = lastClaimTimes[token.id];
+    if (!last) return 100;
+    const total = token.claimInterval * 3600000;
+    const elapsed = Date.now() - last.getTime();
+    return Math.min(100, (elapsed / total) * 100);
+  }, [lastClaimTimes]);
 
-    setClaiming(token.id);
-
+  const insertClaim = async (token: FaucetToken) => {
     const { error } = await supabase.from("faucet_claims").insert({
       user_id: userId,
       amount: token.claimAmount,
@@ -236,421 +189,115 @@ const CryptoFaucet = () => {
       wallet_address: '',
       status: 'completed',
     } as any);
+    return error;
+  };
 
-    if (error) {
-      toast.error("Failed to claim: " + error.message);
-      setClaiming(null);
-      return;
-    }
-
-    // Route to compound strategies
+  const handleClaim = async (token: FaucetToken) => {
+    if (!userId) { toast.error("Please sign in to claim tokens"); return; }
+    if (isOnCooldown(token)) { toast.error(`Wait ${getCooldownRemaining(token)}`); return; }
+    setClaiming(token.id);
+    const error = await insertClaim(token);
+    if (error) { toast.error("Claim failed: " + error.message); setClaiming(null); return; }
     await routeToCompound(token.symbol, token.claimAmount);
-
     toast.success(`Claimed ${token.claimAmount} ${token.symbol}!`, {
-      description: autoCompound
-        ? `${reinvestPercent}% routed to top 3 strategies`
-        : streakCount > 0 ? `🔥 ${streakCount + 1}-day streak!` : undefined,
+      description: autoCompound ? `${reinvestPercent}% → top strategies` : streakCount > 0 ? `🔥 ${streakCount + 1}-day streak!` : undefined,
     });
-
     await loadClaims();
     setClaiming(null);
   };
 
-  // Keep ref in sync
-  useEffect(() => { autoClaimRef.current = autoClaim; }, [autoClaim]);
+  const handleClaimAll = async () => {
+    if (!userId) { toast.error("Please sign in"); return; }
+    setClaiming('all');
+    let count = 0;
+    for (const token of FAUCET_TOKENS) {
+      if (!isOnCooldown(token) && token.available) {
+        const error = await insertClaim(token);
+        if (!error) { count++; await routeToCompound(token.symbol, token.claimAmount); }
+      }
+    }
+    if (count > 0) { toast.success(`Claimed ${count} tokens!`); await loadClaims(); }
+    else toast.info("All on cooldown");
+    setClaiming(null);
+  };
 
-  // Auto-claim: claim all available tokens every 30s when enabled
+  // Auto-claim loop
   useEffect(() => {
     if (!autoClaim || !userId) return;
-
-    const runAutoClaim = async () => {
+    const run = async () => {
       if (!autoClaimRef.current) return;
       setAutoClaimRunning(true);
-      
-      let claimedCount = 0;
+      let count = 0;
       for (const token of FAUCET_TOKENS) {
         if (!autoClaimRef.current) break;
-        
         const last = lastClaimTimesRef.current[token.id];
-        const cooldownMs = token.claimInterval * 60 * 60 * 1000;
-        const onCooldown = last && (Date.now() - last.getTime()) < cooldownMs;
-        
-        if (!onCooldown && token.available) {
+        const onCd = last && (Date.now() - last.getTime()) < (token.claimInterval * 3600000);
+        if (!onCd && token.available) {
           const { error } = await supabase.from("faucet_claims").insert({
-            user_id: userId,
-            amount: token.claimAmount,
-            chain: token.id,
-            wallet_address: '',
-            status: 'completed',
+            user_id: userId, amount: token.claimAmount, chain: token.id, wallet_address: '', status: 'completed',
           } as any);
-          
-          if (!error) {
-            claimedCount++;
-            await routeToCompound(token.symbol, token.claimAmount);
-          }
+          if (!error) { count++; await routeToCompound(token.symbol, token.claimAmount); }
         }
       }
-      
-      if (claimedCount > 0) {
-        toast.success(`Auto-claimed ${claimedCount} token${claimedCount > 1 ? 's' : ''}!`, {
-          icon: <Bot className="h-4 w-4" />,
-        });
+      if (count > 0) {
+        toast.success(`Auto-claimed ${count} token${count > 1 ? 's' : ''}!`, { icon: <Bot className="h-4 w-4" /> });
         await loadClaims();
       }
       setAutoClaimRunning(false);
     };
-
-    runAutoClaim();
-    const interval = setInterval(runAutoClaim, 30000); // Check every 30s
+    run();
+    const interval = setInterval(run, 30000);
     return () => clearInterval(interval);
-  }, [autoClaim, userId, loadClaims]);
+  }, [autoClaim, userId, loadClaims, routeToCompound]);
 
-  const handleClaimAll = async () => {
-    if (!userId) { toast.error("Please sign in"); return; }
-    setClaiming('all');
-    let claimedCount = 0;
-    
-    for (const token of FAUCET_TOKENS) {
-      if (!isOnCooldown(token) && token.available) {
-        const { error } = await supabase.from("faucet_claims").insert({
-          user_id: userId,
-          amount: token.claimAmount,
-          chain: token.id,
-          wallet_address: '',
-          status: 'completed',
-        } as any);
-        if (!error) {
-          claimedCount++;
-          await routeToCompound(token.symbol, token.claimAmount);
-        }
-      }
-    }
-    
-    if (claimedCount > 0) {
-      toast.success(`Claimed ${claimedCount} tokens at once!`);
-      await loadClaims();
-    } else {
-      toast.info("All tokens are on cooldown");
-    }
-    setClaiming(null);
-  };
-
-  const totalTokenTypes = Object.keys(balances).length;
-  const totalClaims = claims.length;
   const availableCount = FAUCET_TOKENS.filter(t => !isOnCooldown(t) && t.available).length;
+  const totalValue = Object.entries(balances).reduce((sum, [, amt]) => sum + amt, 0);
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-        {[
-          { icon: <Droplets className="h-5 w-5 md:h-8 md:w-8 text-primary" />, label: 'Available', value: FAUCET_TOKENS.length },
-          { icon: <Wallet className="h-5 w-5 md:h-8 md:w-8 text-green-500" />, label: 'Your Tokens', value: totalTokenTypes },
-          { icon: <Gift className="h-5 w-5 md:h-8 md:w-8 text-purple-500" />, label: 'Total Claims', value: totalClaims },
-          { icon: <Flame className="h-5 w-5 md:h-8 md:w-8 text-orange-500" />, label: 'Day Streak', value: `${streakCount}🔥` },
-        ].map((stat) => (
-          <Card key={stat.label} className="bg-gradient-to-br from-muted/50 to-background">
-            <CardContent className="pt-4 md:pt-6 pb-3 md:pb-4">
-              <div className="flex items-center gap-2 md:gap-3">
-                {stat.icon}
-                <div>
-                  <p className="text-[10px] md:text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-lg md:text-3xl font-bold">{stat.value}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <div className="space-y-4">
+      <FaucetStats
+        totalTokens={FAUCET_TOKENS.length}
+        ownedTokens={Object.keys(balances).length}
+        totalClaims={claims.length}
+        streakCount={streakCount}
+        totalValue={totalValue}
+      />
 
-      {/* Auto-Claim Controls */}
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-        <CardContent className="py-3 px-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <Bot className="h-5 w-5 text-primary shrink-0" />
-              <div>
-                <p className="font-medium text-sm">Auto-Claim Bot</p>
-                <p className="text-[10px] md:text-xs text-muted-foreground">
-                  {autoClaim 
-                    ? autoClaimRunning ? "Claiming available tokens..." : "Monitoring cooldowns — will claim when ready"
-                    : "Automatically claims all tokens as they become available"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleClaimAll}
-                disabled={claiming !== null || availableCount === 0 || loading}
-                className="text-xs gap-1"
-              >
-                <ArrowDownToLine className="h-3 w-3" />
-                Claim All ({availableCount})
-              </Button>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="auto-claim" className="text-xs cursor-pointer">
-                  {autoClaim ? "ON" : "OFF"}
-                </Label>
-                <Switch
-                  id="auto-claim"
-                  checked={autoClaim}
-                  onCheckedChange={setAutoClaim}
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <FaucetAutomation
+        autoClaim={autoClaim}
+        setAutoClaim={setAutoClaim}
+        autoClaimRunning={autoClaimRunning}
+        autoCompound={autoCompound}
+        setAutoCompound={setAutoCompound}
+        reinvestPercent={reinvestPercent}
+        setReinvestPercent={setReinvestPercent}
+        availableCount={availableCount}
+        claiming={claiming}
+        loading={loading}
+        onClaimAll={handleClaimAll}
+        compoundStats={compoundStats}
+      />
 
-      {/* Auto-Compound Strategies Card */}
-      <Card className="border-green-500/20 bg-gradient-to-r from-green-500/5 to-transparent">
-        <CardContent className="py-3 px-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-green-500 shrink-0" />
-                <div>
-                  <p className="font-medium text-sm">Auto-Compound to Top 3 Strategies</p>
-                  <p className="text-[10px] md:text-xs text-muted-foreground">
-                    {autoCompound
-                      ? `Routing ${reinvestPercent}% of claims → AI Momentum Alpha (50%) · Quantum Mean Reversion (30%) · DeFi Yield Optimizer (20%)`
-                      : "Route claimed tokens into the 3 highest-profit strategies automatically"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Label htmlFor="auto-compound" className="text-xs cursor-pointer">
-                  {autoCompound ? "ON" : "OFF"}
-                </Label>
-                <Switch
-                  id="auto-compound"
-                  checked={autoCompound}
-                  onCheckedChange={setAutoCompound}
-                />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <FaucetTokenList
+          tokens={FAUCET_TOKENS}
+          balances={balances}
+          claiming={claiming}
+          loading={loading}
+          isOnCooldown={isOnCooldown}
+          getCooldownRemaining={getCooldownRemaining}
+          getCooldownProgress={getCooldownProgress}
+          onClaim={handleClaim}
+        />
 
-            {autoCompound && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                <div className="p-2 rounded-md bg-muted/30 text-center">
-                  <p className="text-[10px] text-muted-foreground">Reinvest %</p>
-                  <div className="flex items-center justify-center gap-1">
-                    {[85, 90, 95, 100].map(pct => (
-                      <Button
-                        key={pct}
-                        size="sm"
-                        variant={reinvestPercent === pct ? "default" : "ghost"}
-                        className="h-6 px-1.5 text-[10px]"
-                        onClick={() => setReinvestPercent(pct)}
-                      >
-                        {pct}%
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-2 rounded-md bg-muted/30 text-center">
-                  <p className="text-[10px] text-muted-foreground">Deployed</p>
-                  <p className="font-bold text-sm text-green-500">${compoundStats.deployed.toFixed(2)}</p>
-                </div>
-                <div className="p-2 rounded-md bg-muted/30 text-center">
-                  <p className="text-[10px] text-muted-foreground">Txns</p>
-                  <p className="font-bold text-sm">{compoundStats.transactions}</p>
-                </div>
-                <div className="p-2 rounded-md bg-muted/30 text-center">
-                  <p className="text-[10px] text-muted-foreground">Profit</p>
-                  <p className="font-bold text-sm text-green-500">${(compoundEngine?.total_profit || 0).toFixed(2)}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        {/* Faucet List */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <Droplets className="h-5 w-5 text-primary" />
-              Crypto Faucet
-            </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              Claim testnet, platform & DeFi tokens for practice trading
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="all">
-              <TabsList className="mb-3 flex-wrap h-auto gap-1">
-                <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-                <TabsTrigger value="platform" className="text-xs">Platform</TabsTrigger>
-                <TabsTrigger value="stablecoin" className="text-xs">Stables</TabsTrigger>
-                <TabsTrigger value="testnet" className="text-xs">Testnet</TabsTrigger>
-                <TabsTrigger value="defi" className="text-xs">DeFi</TabsTrigger>
-              </TabsList>
-
-              {['all', 'platform', 'stablecoin', 'testnet', 'defi'].map(category => (
-                <TabsContent key={category} value={category}>
-                  <ScrollArea className="h-[400px] md:h-[500px]">
-                    <div className="space-y-2">
-                      {FAUCET_TOKENS
-                        .filter(t => category === 'all' || t.category === category)
-                        .map(token => {
-                          const onCooldown = isOnCooldown(token);
-                          const balance = balances[token.symbol] || 0;
-
-                          return (
-                            <div
-                              key={token.id}
-                              className="flex flex-col sm:flex-row sm:items-center justify-between p-3 md:p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors gap-2"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="shrink-0 p-2 rounded-lg bg-muted/50">{token.icon}</div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-bold text-sm">{token.symbol}</span>
-                                    {token.bonus && (
-                                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
-                                        {token.bonus}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-muted-foreground truncate">{token.name}</p>
-                                  <p className="text-[10px] text-muted-foreground/70 hidden md:block">{token.description}</p>
-                                  {balance > 0 && (
-                                    <p className="text-[10px] text-primary font-medium">
-                                      Balance: {balance.toFixed(balance < 1 ? 4 : 2)}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-3 justify-between sm:justify-end">
-                                <div className="text-right">
-                                  <p className="font-bold text-sm md:text-base text-green-500">+{token.claimAmount}</p>
-                                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground justify-end">
-                                    <Timer className="h-2.5 w-2.5" />
-                                    Every {token.claimInterval}h
-                                  </div>
-                                </div>
-
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleClaim(token)}
-                                  disabled={!token.available || claiming === token.id || onCooldown || loading}
-                                  className="min-w-[90px] md:min-w-[120px] text-xs"
-                                >
-                                  {claiming === token.id ? (
-                                    <><Clock className="h-3 w-3 mr-1 animate-spin" /> Claiming...</>
-                                  ) : onCooldown ? (
-                                    <><Timer className="h-3 w-3 mr-1" /> {getCooldownRemaining(token)}</>
-                                  ) : (
-                                    <><ArrowDownToLine className="h-3 w-3 mr-1" /> Claim</>
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* Sidebar: Balances & History */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Wallet className="h-4 w-4 text-primary" />
-                Your Balances
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[180px]">
-                {totalTokenTypes > 0 ? (
-                  <div className="space-y-2">
-                    {Object.entries(balances)
-                      .sort(([, a], [, b]) => b - a)
-                      .map(([symbol, amount]) => {
-                        const token = FAUCET_TOKENS.find(t => t.symbol === symbol);
-                        return (
-                          <div key={symbol} className="flex justify-between items-center p-2 rounded-md bg-muted/30">
-                            <div className="flex items-center gap-2">
-                              {token?.icon || <Coins className="h-4 w-4" />}
-                              <span className="font-medium text-sm">{symbol}</span>
-                            </div>
-                            <span className="font-mono text-sm">{amount < 1 ? amount.toFixed(4) : amount.toFixed(2)}</span>
-                          </div>
-                        );
-                      })}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-center py-8 text-sm">
-                    {loading ? "Loading..." : "No tokens claimed yet"}
-                  </p>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-primary" />
-                Recent Claims
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[200px]">
-                {claims.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {claims.slice(0, 20).map(claim => {
-                      const token = FAUCET_TOKENS.find(t => t.id === claim.chain);
-                      return (
-                        <div key={claim.id} className="flex justify-between items-center text-xs p-2 rounded-md bg-muted/20">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-500 shrink-0" />
-                            <span className="font-medium">{token?.symbol || claim.chain}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-mono text-green-500">+{Number(claim.amount)}</span>
-                            <p className="text-[10px] text-muted-foreground">
-                              {new Date(claim.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-center py-8 text-sm">
-                    {loading ? "Loading..." : "No claims yet — start claiming!"}
-                  </p>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {streakCount > 0 && (
-            <Card className="bg-gradient-to-br from-orange-500/10 to-amber-500/5 border-orange-500/20">
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-3">
-                  <Flame className="h-8 w-8 text-orange-500" />
-                  <div>
-                    <p className="font-bold text-lg">{streakCount}-Day Streak!</p>
-                    <p className="text-xs text-muted-foreground">Claim daily to keep your streak alive</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        <FaucetSidebar
+          balances={balances}
+          claims={claims}
+          tokens={FAUCET_TOKENS}
+          loading={loading}
+          streakCount={streakCount}
+          userId={userId}
+        />
       </div>
     </div>
   );
