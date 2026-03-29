@@ -23,7 +23,7 @@ import {
   ExternalLink,
   Key
 } from "lucide-react";
-import { paymentProcessors, PaymentProcessor } from "@/lib/payments/mockProcessors";
+import { paymentProcessors, PaymentProcessor } from "@/lib/payments/paymentProcessors";
 import { toast } from "sonner";
 
 const PaymentProcessors = () => {
