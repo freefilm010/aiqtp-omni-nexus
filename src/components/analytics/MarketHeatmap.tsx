@@ -145,13 +145,12 @@ const MarketHeatmap = () => {
     load();
   }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setStockData(generateStockData());
-      setCryptoData(generateCryptoData());
-      setIsLoading(false);
-    }, 500);
+    const [stocks, crypto] = await Promise.all([fetchStockData(), fetchCryptoData()]);
+    setStockData(stocks);
+    setCryptoData(crypto);
+    setIsLoading(false);
   };
 
   const filteredStocks = stockData
