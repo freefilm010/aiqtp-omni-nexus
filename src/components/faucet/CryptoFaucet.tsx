@@ -130,6 +130,75 @@ const CryptoFaucet = () => {
 
   useEffect(() => { loadClaims(); }, [loadClaims]);
 
+  // Load or create compound engine
+  const loadCompoundEngine = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("auto_invest_engine")
+      .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent")
+      .limit(1) as any;
+
+    if (data && data.length > 0) {
+      setCompoundEngine(data[0]);
+      setReinvestPercent(Number(data[0].reinvest_percent) || 95);
+      setAutoCompound(data[0].status === 'active');
+      setCompoundStats({ deployed: Number(data[0].total_deployed) || 0, transactions: 0 });
+
+      // Get transaction count
+      const { count } = await supabase
+        .from("auto_invest_transactions")
+        .select("id", { count: 'exact', head: true })
+        .eq("engine_id", data[0].id) as any;
+      setCompoundStats(prev => ({ ...prev, transactions: count || 0 }));
+    }
+  }, [userId]);
+
+  useEffect(() => { if (userId) loadCompoundEngine(); }, [userId, loadCompoundEngine]);
+
+  // Route claimed assets to compound engine
+  const routeToCompound = useCallback(async (tokenSymbol: string, amount: number) => {
+    if (!autoCompoundRef.current || !compoundEngine) return;
+
+    const deployAmount = amount * (reinvestPercent / 100);
+    if (deployAmount <= 0) return;
+
+    // Top 3 allocation targets (platform-defined best strategies)
+    const TOP_STRATEGIES = [
+      { name: 'AI Momentum Alpha', symbol: tokenSymbol, pct: 50 },
+      { name: 'Quantum Mean Reversion', symbol: tokenSymbol, pct: 30 },
+      { name: 'DeFi Yield Optimizer', symbol: tokenSymbol, pct: 20 },
+    ];
+
+    for (const strat of TOP_STRATEGIES) {
+      const stratAmount = deployAmount * (strat.pct / 100);
+      if (stratAmount <= 0) continue;
+
+      await supabase.from("auto_invest_transactions").insert({
+        engine_id: compoundEngine.id,
+        transaction_type: 'deploy',
+        amount_usd: stratAmount,
+        asset_symbol: strat.symbol,
+        side: 'buy',
+        status: 'completed',
+        ai_triggered: true,
+        ai_reason: `Auto-compound from faucet claim → ${strat.name} (${strat.pct}%)`,
+        ai_confidence: 0.85,
+        market_regime: 'growth',
+      } as any);
+    }
+
+    // Update engine totals
+    await supabase.from("auto_invest_engine").update({
+      total_capital: (Number(compoundEngine.total_capital) || 0) + deployAmount,
+      total_deployed: (Number(compoundEngine.total_deployed) || 0) + deployAmount,
+      cycle_count: (compoundEngine as any).cycle_count + 1,
+    } as any).eq("id", compoundEngine.id) as any;
+
+    await loadCompoundEngine();
+  }, [compoundEngine, reinvestPercent, loadCompoundEngine]);
+
+  useEffect(() => { autoCompoundRef.current = autoCompound; }, [autoCompound]);
+
   const isOnCooldown = (token: FaucetToken): boolean => {
     const last = lastClaimTimes[token.id];
     if (!last) return false;
