@@ -82,10 +82,16 @@ serve(async (req) => {
     // 2. Validate URLs - must be same origin
     const allowedOrigins = [
       "https://www.aiqtp.com",
-      "https://www.aiqtp.com",
+      "https://aiqtp.com",
       "https://aiqtp.lovable.app",
-      "https://id-preview--d588a2ef-0d53-4c77-8d2f-41dfd18dd47e.lovable.app",
     ];
+    const isValidUrl = (url: string) => {
+      try {
+        const parsed = new URL(url);
+        return allowedOrigins.some(o => parsed.origin === o) ||
+          parsed.origin.endsWith(".lovable.app");
+      } catch { return false; }
+    };
     const isValidUrl = (url: string) => {
       try {
         const parsed = new URL(url);
