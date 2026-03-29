@@ -72,6 +72,7 @@ const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
 const GiveawayPage = lazy(() => import("./pages/GiveawayPage"));
 const StatsArenaPage = lazy(() => import("./pages/StatsArenaPage"));
 const RewardsStorePage = lazy(() => import("./pages/RewardsStorePage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 
 const queryClient = new QueryClient();
 
@@ -473,6 +474,14 @@ const App = () => (
                       <Route path="/capitol-trades" element={<CapitolTradesPage />} />
                       <Route path="/broadcast" element={<BroadcastStationPage />} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
+                      <Route
+                        path="/notifications"
+                        element={
+                          <ProtectedRoute>
+                            <NotificationsPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
