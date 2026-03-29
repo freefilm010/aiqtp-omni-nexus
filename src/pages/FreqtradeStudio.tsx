@@ -13,19 +13,19 @@ import { Code2, BookOpen, FlaskConical, Play, History, Award, Trophy, ArrowUpDow
 
 const FreqtradeStudio = () => {
   return (
-    <div className="min-h-screen bg-[hsl(225,20%,6%)]">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8 pt-24">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground">Strategy Studio</h1>
           <p className="text-muted-foreground mt-1">
-            Build, backtest, graduate and deploy trading strategies • 92% profitability standard
+            Build, backtest, graduate and deploy trading strategies • 80% profitability standard
           </p>
         </div>
 
         <Tabs defaultValue="leaderboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 bg-[hsl(223,18%,9%)] border border-[hsl(222,14%,17%)]">
-            <TabsTrigger value="leaderboard" className="flex items-center gap-2 data-[state=active]:bg-[hsl(224,100%,58%,0.15)] data-[state=active]:text-[hsl(224,100%,58%)]">
+          <TabsList className="grid w-full grid-cols-8 border border-border bg-card">
+            <TabsTrigger value="leaderboard" className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
               <Trophy className="h-4 w-4" />
               Leaderboard
             </TabsTrigger>

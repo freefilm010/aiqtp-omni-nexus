@@ -8,12 +8,12 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { Explain, ExplainerTooltip } from "@/components/ui/explainer-tooltip";
-import { PROFIT_TIERS, MIN_INVESTMENT, calculatePlatformFee } from "@/lib/fees/platformFees";
+import { PROFIT_TIERS, MIN_INVESTMENT, STRATEGY_FEES } from "@/lib/fees/platformFees";
 import {
   Search,
-  Star,
   TrendingUp,
   Award,
   Users,
@@ -25,7 +25,7 @@ import {
   Zap,
   BarChart3,
   Target,
-  Filter,
+  Eye,
   Gift
 } from "lucide-react";
 
@@ -62,12 +62,14 @@ interface StrategyRental {
   strategy?: GraduatedStrategy;
 }
 
-const PROFITABILITY_THRESHOLD = 92;
-const CONSISTENCY_THRESHOLD = 85;
-const MIN_BACKTEST_COUNT = 5;
+const PROFITABILITY_THRESHOLD = STRATEGY_FEES.graduationThreshold;
+const CONSISTENCY_THRESHOLD = STRATEGY_FEES.consistencyThreshold;
+const MIN_BACKTEST_COUNT = STRATEGY_FEES.minBacktestCount;
+const DEFAULT_MONTHLY_RENTAL_PRICE = STRATEGY_FEES.defaultMonthlyRentalPrice;
 
 const StrategyMarketplace = () => {
   const { user } = useAuth();
+  const { isAdmin } = useAdminAuth();
   const [strategies, setStrategies] = useState<GraduatedStrategy[]>([]);
   const [myRentals, setMyRentals] = useState<StrategyRental[]>([]);
   const [myStrategies, setMyStrategies] = useState<GraduatedStrategy[]>([]);
@@ -77,17 +79,26 @@ const StrategyMarketplace = () => {
 
   useEffect(() => {
     fetchMarketplaceData();
-  }, [user]);
+  }, [user, isAdmin]);
+
+  const meetsMarketplaceCriteria = (strategy: GraduatedStrategy) =>
+    (strategy.profitability_score || 0) >= PROFITABILITY_THRESHOLD &&
+    (strategy.consistency_score || 0) >= CONSISTENCY_THRESHOLD &&
+    (strategy.backtest_count || 0) >= MIN_BACKTEST_COUNT;
 
   const fetchMarketplaceData = async () => {
     try {
-      // Fetch graduated strategies available for rent (only admin-approved ones for regular users)
-      const { data: graduated, error: gradError } = await supabase
+      let marketplaceQuery = supabase
         .from('ai_strategies')
         .select('*')
         .eq('is_graduated', true)
-        .eq('is_available_for_rent', true)
-        .eq('admin_approved', true);
+        .eq('is_available_for_rent', true);
+
+      if (!isAdmin) {
+        marketplaceQuery = marketplaceQuery.eq('admin_approved', true);
+      }
+
+      const { data: graduated, error: gradError } = await marketplaceQuery.order('profitability_score', { ascending: false });
 
       if (gradError) throw gradError;
       setStrategies((graduated as GraduatedStrategy[]) || []);
@@ -151,24 +162,49 @@ const StrategyMarketplace = () => {
     }
   };
 
-  const listForRent = async (strategyId: string, monthlyPrice: number) => {
+  const listForRent = async (strategy: GraduatedStrategy, monthlyPrice: number = DEFAULT_MONTHLY_RENTAL_PRICE) => {
     if (!user) return;
+
+    try {
+      const updatePayload = {
+        is_available_for_rent: true,
+        rental_price_monthly: monthlyPrice,
+        ...(isAdmin && meetsMarketplaceCriteria(strategy) ? { admin_approved: true } : {}),
+      };
+
+      const { error } = await supabase
+        .from('ai_strategies')
+        .update(updatePayload)
+        .eq('id', strategy.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      toast.success(isAdmin ? "Strategy published to the client marketplace!" : "Strategy listed for review.");
+      fetchMarketplaceData();
+    } catch (err) {
+      toast.error("Failed to list strategy");
+    }
+  };
+
+  const approveForClients = async (strategy: GraduatedStrategy) => {
+    if (!user || !isAdmin) return;
 
     try {
       const { error } = await supabase
         .from('ai_strategies')
         .update({
+          admin_approved: true,
           is_available_for_rent: true,
-          rental_price_monthly: monthlyPrice
+          rental_price_monthly: strategy.rental_price_monthly || DEFAULT_MONTHLY_RENTAL_PRICE,
         })
-        .eq('id', strategyId)
+        .eq('id', strategy.id)
         .eq('user_id', user.id);
 
       if (error) throw error;
-      toast.success("Strategy listed on marketplace!");
+      toast.success("Strategy is now client-visible.");
       fetchMarketplaceData();
     } catch (err) {
-      toast.error("Failed to list strategy");
+      toast.error("Failed to approve strategy");
     }
   };
 
@@ -186,8 +222,12 @@ const StrategyMarketplace = () => {
       }
     });
 
-  const graduatedOwnStrategies = myStrategies.filter(s => s.profitability_score && s.profitability_score >= PROFITABILITY_THRESHOLD);
-  const pendingGraduation = myStrategies.filter(s => !s.profitability_score || s.profitability_score < PROFITABILITY_THRESHOLD);
+  const clientVisibleStrategies = strategies.filter(strategy => strategy.admin_approved);
+  const graduatedOwnStrategies = myStrategies.filter(meetsMarketplaceCriteria);
+  const readyToListOwnStrategies = graduatedOwnStrategies.filter(strategy => !strategy.is_available_for_rent);
+  const pendingApprovalOwnStrategies = myStrategies.filter(
+    strategy => strategy.is_graduated && strategy.is_available_for_rent && !strategy.admin_approved,
+  );
 
   const totalEarnings = myStrategies.reduce((sum, s) => sum + (s.creator_earnings || 0), 0);
 
@@ -198,12 +238,12 @@ const StrategyMarketplace = () => {
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <ShoppingCart className="h-8 w-8 text-primary" />
+              <Eye className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Available <Explain term="aiTradingBots">AI Trading Bots</Explain>
+                  Client-Visible <Explain term="aiTradingBots">AI Trading Bots</Explain>
                 </p>
-                <p className="text-3xl font-bold">{strategies.length}</p>
+                <p className="text-3xl font-bold">{clientVisibleStrategies.length}</p>
               </div>
             </div>
           </CardContent>
@@ -213,8 +253,8 @@ const StrategyMarketplace = () => {
             <div className="flex items-center gap-3">
               <Award className="h-8 w-8 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">My Graduated</p>
-                <p className="text-3xl font-bold text-green-500">{graduatedOwnStrategies.length}</p>
+                <p className="text-sm text-muted-foreground">Ready to Publish</p>
+                <p className="text-3xl font-bold text-green-500">{readyToListOwnStrategies.length}</p>
               </div>
             </div>
           </CardContent>
@@ -224,8 +264,8 @@ const StrategyMarketplace = () => {
             <div className="flex items-center gap-3">
               <Users className="h-8 w-8 text-amber-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Active Rentals</p>
-                <p className="text-3xl font-bold text-amber-500">{myRentals.filter(r => r.status === 'active').length}</p>
+                <p className="text-sm text-muted-foreground">Pending Approval</p>
+                <p className="text-3xl font-bold text-amber-500">{pendingApprovalOwnStrategies.length}</p>
               </div>
             </div>
           </CardContent>
@@ -242,6 +282,22 @@ const StrategyMarketplace = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-border bg-muted/20">
+        <CardContent className="py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-medium">Client discovery pipeline</p>
+              <p className="text-sm text-muted-foreground">
+                Generated agents: {myStrategies.length} • Qualified: {graduatedOwnStrategies.length} • Client-visible: {clientVisibleStrategies.length}
+              </p>
+            </div>
+            <Badge variant="outline">
+              Clients only see graduated + listed + approved bots
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Fee Structure Info */}
       <Card className="border-success/30 bg-success/5">
@@ -347,9 +403,9 @@ const StrategyMarketplace = () => {
                 <Card className="col-span-1 lg:col-span-2">
                   <CardContent className="py-12 text-center">
                     <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No graduated strategies available yet</p>
+                      <p className="text-muted-foreground">No client-visible strategies available yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Strategies must pass {PROFITABILITY_THRESHOLD}% profitability threshold
+                        Inventory snapshot: {myStrategies.length} generated • {graduatedOwnStrategies.length} qualified • {clientVisibleStrategies.length} published
                     </p>
                   </CardContent>
                 </Card>
@@ -361,10 +417,14 @@ const StrategyMarketplace = () => {
                         <div>
                           <CardTitle className="text-lg flex items-center gap-2">
                             {strategy.name}
-                            <Badge variant="secondary" className="text-green-500">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Verified
-                            </Badge>
+                            {strategy.admin_approved ? (
+                              <Badge variant="success">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Client Visible
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">Owner Preview</Badge>
+                            )}
                           </CardTitle>
                           <CardDescription className="line-clamp-2 mt-1">
                             {strategy.description || "AI-generated trading strategy"}
@@ -493,12 +553,19 @@ const StrategyMarketplace = () => {
                 <Card key={strategy.id} className={isGraduated ? 'border-green-500/50' : ''}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{strategy.name}</CardTitle>
-                      {isGraduated ? (
-                        <Badge className="bg-green-500">
+                     <CardTitle className="text-lg">{strategy.name}</CardTitle>
+                       {strategy.is_available_for_rent && strategy.admin_approved ? (
+                         <Badge variant="success">
+                           <Eye className="h-3 w-3 mr-1" />
+                           Client Visible
+                         </Badge>
+                       ) : isGraduated ? (
+                         <Badge variant="success">
                           <Award className="h-3 w-3 mr-1" />
-                          Graduated
+                           Qualified
                         </Badge>
+                       ) : strategy.is_available_for_rent ? (
+                         <Badge variant="secondary">Listed for Review</Badge>
                       ) : (
                         <Badge variant="outline">In Progress</Badge>
                       )}
@@ -530,19 +597,28 @@ const StrategyMarketplace = () => {
                       </span>
                     </div>
 
-                    {isGraduated && !strategy.is_available_for_rent && (
+                     {isGraduated && !strategy.is_available_for_rent && (
                       <Button 
                         className="w-full"
-                        onClick={() => listForRent(strategy.id, 99)}
+                         onClick={() => listForRent(strategy, strategy.rental_price_monthly || DEFAULT_MONTHLY_RENTAL_PRICE)}
                       >
                         <ShoppingCart className="h-4 w-4 mr-2" />
-                        List on Marketplace
+                         {isAdmin ? 'Publish to Client Marketplace' : 'List for Review'}
                       </Button>
                     )}
 
+                     {isGraduated && strategy.is_available_for_rent && !strategy.admin_approved && isAdmin && (
+                       <Button variant="outline" className="w-full" onClick={() => approveForClients(strategy)}>
+                         <Eye className="h-4 w-4 mr-2" />
+                         Make Client Visible
+                       </Button>
+                     )}
+
                     {strategy.is_available_for_rent && (
-                      <div className="flex items-center justify-between p-2 rounded bg-green-500/10 text-green-500 text-sm">
-                        <span>Listed at ${strategy.rental_price_monthly}/mo</span>
+                       <div className="flex items-center justify-between p-2 rounded border bg-muted/40 text-sm">
+                         <span>
+                           ${strategy.rental_price_monthly || DEFAULT_MONTHLY_RENTAL_PRICE}/mo • {strategy.admin_approved ? 'client-visible' : 'owner preview only'}
+                         </span>
                         <span>{strategy.total_rentals || 0} renters</span>
                       </div>
                     )}
