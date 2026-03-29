@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,31 +62,55 @@ const CRYPTO_LIST = [
   { symbol: 'SHIB', name: 'Shiba Inu', marketCap: 15 },
 ];
 
-const generateStockData = (): HeatmapCell[] => {
-  const data: HeatmapCell[] = [];
+// Stock data: uses traditional_assets table
+const fetchStockData = async (): Promise<HeatmapCell[]> => {
+  const { data } = await supabase
+    .from('traditional_assets')
+    .select('*')
+    .in('asset_class', ['stock', 'equity'])
+    .limit(80);
+
+  if (data && data.length > 0) {
+    return data.map(d => ({
+      symbol: d.symbol,
+      name: d.name,
+      change: Number(d.price_change_24h) || 0,
+      marketCap: Number(d.market_cap) || 0,
+      volume: Number(d.volume_24h) || 0,
+      sector: d.sector || 'Other',
+    }));
+  }
+  // Fallback: config-based list with 0 change (no fake data)
+  const cells: HeatmapCell[] = [];
   SP500_SECTORS.forEach(sector => {
     sector.stocks.forEach(symbol => {
-      data.push({
-        symbol,
-        name: symbol,
-        change: (Math.random() - 0.5) * 10,
-        marketCap: 50 + Math.random() * 500,
-        volume: Math.random() * 100,
-        sector: sector.name
-      });
+      cells.push({ symbol, name: symbol, change: 0, marketCap: 0, volume: 0, sector: sector.name });
     });
   });
-  return data;
+  return cells;
 };
 
-const generateCryptoData = (): HeatmapCell[] => {
-  return CRYPTO_LIST.map(c => ({
-    symbol: c.symbol,
-    name: c.name,
-    change: (Math.random() - 0.5) * 20,
-    marketCap: c.marketCap,
-    volume: Math.random() * 10
-  }));
+// Crypto data: uses market_prices table
+const fetchCryptoData = async (): Promise<HeatmapCell[]> => {
+  const { data } = await supabase
+    .from('market_prices')
+    .select('*')
+    .in('coin_id', CRYPTO_LIST.map(c => c.symbol.toLowerCase()))
+    .limit(30);
+
+  if (data && data.length > 0) {
+    return data.map(d => {
+      const meta = CRYPTO_LIST.find(c => c.symbol.toLowerCase() === d.coin_id);
+      return {
+        symbol: (meta?.symbol || d.coin_id).toUpperCase(),
+        name: meta?.name || d.coin_id,
+        change: Number(d.price_change_percentage_24h) || 0,
+        marketCap: Number(d.market_cap) || meta?.marketCap || 0,
+        volume: Number(d.total_volume) || 0,
+      };
+    });
+  }
+  return CRYPTO_LIST.map(c => ({ symbol: c.symbol, name: c.name, change: 0, marketCap: c.marketCap, volume: 0 }));
 };
 
 const getColorByChange = (change: number): string => {
@@ -112,8 +137,12 @@ const MarketHeatmap = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setStockData(generateStockData());
-    setCryptoData(generateCryptoData());
+    const load = async () => {
+      const [stocks, crypto] = await Promise.all([fetchStockData(), fetchCryptoData()]);
+      setStockData(stocks);
+      setCryptoData(crypto);
+    };
+    load();
   }, []);
 
   const handleRefresh = () => {

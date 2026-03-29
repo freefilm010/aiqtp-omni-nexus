@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -33,108 +34,98 @@ const SentimentAnalysis = () => {
   const [selectedAsset, setSelectedAsset] = useState("BTC");
   const [timeframe, setTimeframe] = useState("24h");
 
-  // Sentiment History
-  const sentimentHistory = Array.from({ length: 48 }, (_, i) => ({
-    hour: i,
-    bullish: 40 + Math.random() * 30,
-    bearish: 20 + Math.random() * 25,
-    neutral: 10 + Math.random() * 20,
-    composite: 50 + (Math.random() - 0.5) * 40,
-  }));
+  const [sentimentHistory, setSentimentHistory] = useState<any[]>([]);
+  const [socialVolume, setSocialVolume] = useState<any[]>([]);
+  const [newsSentiment, setNewsSentiment] = useState<any[]>([]);
+  const [fearGreedIndex, setFearGreedIndex] = useState(0);
+  const [fearGreedComponents, setFearGreedComponents] = useState<any[]>([]);
+  const [influencerSentiment, setInfluencerSentiment] = useState<any[]>([]);
+  const [onChainMetrics, setOnChainMetrics] = useState<any[]>([]);
+  const [radarData, setRadarData] = useState<any[]>([]);
 
-  // Social Volume Data
-  const socialVolume = Array.from({ length: 24 }, (_, i) => ({
-    hour: i,
-    twitter: 5000 + Math.random() * 15000,
-    reddit: 2000 + Math.random() * 8000,
-    telegram: 1000 + Math.random() * 5000,
-    discord: 500 + Math.random() * 2000,
-  }));
+  useEffect(() => {
+    const loadSentiment = async () => {
+      // Load news from broadcast_content for sentiment
+      const { data: news } = await supabase
+        .from('broadcast_content')
+        .select('*')
+        .eq('content_type', 'news')
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-  // News Sentiment
-  const newsSentiment = [
-    { 
-      title: "Bitcoin ETF sees record inflows amid institutional demand",
-      source: "Bloomberg",
-      sentiment: "positive",
-      score: 0.85,
-      time: "2h ago",
-      impact: "high"
-    },
-    {
-      title: "Fed signals potential rate cut in upcoming meeting",
-      source: "Reuters",
-      sentiment: "positive",
-      score: 0.72,
-      time: "4h ago",
-      impact: "high"
-    },
-    {
-      title: "Ethereum upgrade encounters minor delay",
-      source: "CoinDesk",
-      sentiment: "neutral",
-      score: 0.48,
-      time: "5h ago",
-      impact: "medium"
-    },
-    {
-      title: "Regulatory concerns grow in Asian markets",
-      source: "Financial Times",
-      sentiment: "negative",
-      score: 0.28,
-      time: "6h ago",
-      impact: "medium"
-    },
-    {
-      title: "Major exchange reports security vulnerability patched",
-      source: "The Block",
-      sentiment: "neutral",
-      score: 0.52,
-      time: "8h ago",
-      impact: "low"
-    },
-  ];
+      if (news && news.length > 0) {
+        setNewsSentiment(news.map(n => ({
+          title: n.title,
+          source: n.source || 'Platform',
+          sentiment: n.category === 'positive' ? 'positive' : n.category === 'negative' ? 'negative' : 'neutral',
+          score: n.priority ? n.priority / 10 : 0.5,
+          time: new Date(n.created_at || '').toLocaleString(),
+          impact: (n.priority || 0) > 7 ? 'high' : (n.priority || 0) > 4 ? 'medium' : 'low',
+        })));
+      }
 
-  // Fear & Greed Components
-  const fearGreedComponents = [
-    { metric: "Volatility", value: 65, weight: 25 },
-    { metric: "Market Volume", value: 72, weight: 25 },
-    { metric: "Social Media", value: 58, weight: 15 },
-    { metric: "Surveys", value: 48, weight: 15 },
-    { metric: "Dominance", value: 55, weight: 10 },
-    { metric: "Trends", value: 62, weight: 10 },
-  ];
+      // Load AI signals for sentiment proxy
+      const { data: signals } = await supabase
+        .from('ai_signals')
+        .select('*')
+        .eq('is_active', true)
+        .order('triggered_at', { ascending: false })
+        .limit(50);
 
-  const fearGreedIndex = 62; // Greed
+      if (signals && signals.length > 0) {
+        const bullish = signals.filter(s => s.signal_type === 'buy').length;
+        const bearish = signals.filter(s => s.signal_type === 'sell').length;
+        const total = signals.length;
+        const fgi = total > 0 ? Math.round((bullish / total) * 100) : 50;
+        setFearGreedIndex(fgi);
 
-  // Influencer Sentiment
-  const influencerSentiment = [
-    { name: "CryptoWhale", followers: "1.2M", sentiment: "bullish", confidence: 85 },
-    { name: "BitcoinMagazine", followers: "850K", sentiment: "bullish", confidence: 78 },
-    { name: "WuBlockchain", followers: "620K", sentiment: "neutral", confidence: 65 },
-    { name: "CoinGecko", followers: "550K", sentiment: "bullish", confidence: 72 },
-    { name: "Messari", followers: "480K", sentiment: "neutral", confidence: 68 },
-  ];
+        // Build sentiment history from signal timestamps
+        const hourBuckets: Record<number, { bullish: number; bearish: number; neutral: number }> = {};
+        signals.forEach(s => {
+          const h = new Date(s.triggered_at).getHours();
+          if (!hourBuckets[h]) hourBuckets[h] = { bullish: 0, bearish: 0, neutral: 0 };
+          if (s.signal_type === 'buy') hourBuckets[h].bullish++;
+          else if (s.signal_type === 'sell') hourBuckets[h].bearish++;
+          else hourBuckets[h].neutral++;
+        });
+        setSentimentHistory(Object.entries(hourBuckets).map(([h, v]) => ({
+          hour: Number(h), ...v, composite: v.bullish - v.bearish,
+        })));
 
-  // On-Chain Sentiment Indicators
-  const onChainMetrics = [
-    { metric: "Exchange Inflow", value: -15, signal: "Accumulation", status: "bullish" },
-    { metric: "Active Addresses", value: 12, signal: "Increasing", status: "bullish" },
-    { metric: "NUPL", value: 0.45, signal: "Belief", status: "neutral" },
-    { metric: "MVRV Ratio", value: 1.8, signal: "Moderate", status: "neutral" },
-    { metric: "Whale Activity", value: 25, signal: "Accumulating", status: "bullish" },
-    { metric: "Exchange Reserves", value: -8, signal: "Decreasing", status: "bullish" },
-  ];
+        setFearGreedComponents([
+          { metric: "Buy Signals", value: Math.round((bullish / total) * 100), weight: 30 },
+          { metric: "Sell Signals", value: Math.round((bearish / total) * 100), weight: 30 },
+          { metric: "Avg Confidence", value: Math.round(signals.reduce((s, sig) => s + sig.confidence, 0) / total), weight: 20 },
+          { metric: "Active Signals", value: Math.min(100, total * 2), weight: 20 },
+        ]);
 
-  // Radar Chart Data
-  const radarData = [
-    { subject: "Twitter", A: 75, fullMark: 100 },
-    { subject: "Reddit", A: 65, fullMark: 100 },
-    { subject: "News", A: 82, fullMark: 100 },
-    { subject: "On-Chain", A: 70, fullMark: 100 },
-    { subject: "Futures", A: 58, fullMark: 100 },
-    { subject: "Options", A: 45, fullMark: 100 },
-  ];
+        setRadarData([
+          { subject: "Buy Signals", A: Math.round((bullish / total) * 100), fullMark: 100 },
+          { subject: "Sell Signals", A: Math.round((bearish / total) * 100), fullMark: 100 },
+          { subject: "Confidence", A: Math.round(signals.reduce((s, sig) => s + sig.confidence, 0) / total), fullMark: 100 },
+          { subject: "Strength", A: Math.round(signals.filter(s => s.strength === 'strong').length / total * 100), fullMark: 100 },
+        ]);
+      }
+
+      // Load smart money flows for on-chain metrics
+      const { data: flows } = await supabase
+        .from('smart_money_flows')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(6);
+
+      if (flows && flows.length > 0) {
+        setOnChainMetrics(flows.map(f => ({
+          metric: f.asset,
+          value: Number(f.net_flow_millions) || 0,
+          signal: f.whale_activity || 'neutral',
+          status: f.institutional_bias || 'neutral',
+        })));
+      }
+    };
+
+    loadSentiment();
+  }, [selectedAsset, timeframe]);
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {

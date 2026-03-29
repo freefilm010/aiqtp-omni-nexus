@@ -31,6 +31,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Signal {
   id: string;
@@ -64,70 +65,10 @@ const SignalMonitor = () => {
   const [signalFilter, setSignalFilter] = useState("all");
   const [refreshInterval, setRefreshInterval] = useState("5");
 
-  const [signals, setSignals] = useState<Signal[]>([
-    {
-      id: "1",
-      timestamp: new Date(),
-      symbol: "BTC",
-      type: "buy",
-      strength: 85,
-      source: "ML Ensemble",
-      factors: ["RSI Oversold", "MACD Cross", "Volume Surge"],
-      price: 43250,
-      targetPrice: 48000,
-      stopLoss: 41000,
-      confidence: 78,
-      status: "active",
-    },
-    {
-      id: "2",
-      timestamp: new Date(Date.now() - 300000),
-      symbol: "ETH",
-      type: "sell",
-      strength: 72,
-      source: "Pattern Recognition",
-      factors: ["Double Top", "Bearish Divergence"],
-      price: 2280,
-      targetPrice: 2050,
-      stopLoss: 2350,
-      confidence: 65,
-      status: "active",
-    },
-    {
-      id: "3",
-      timestamp: new Date(Date.now() - 600000),
-      symbol: "SOL",
-      type: "buy",
-      strength: 91,
-      source: "Sentiment Analysis",
-      factors: ["News Positive", "Social Volume", "Whale Activity"],
-      price: 98.5,
-      targetPrice: 120,
-      stopLoss: 90,
-      confidence: 82,
-      status: "active",
-    },
-  ]);
+  const [signals, setSignals] = useState<Signal[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [strengthHistory, setStrengthHistory] = useState<any[]>([]);
 
-  const [alerts, setAlerts] = useState<Alert[]>([
-    { id: "1", timestamp: new Date(), type: "signal", severity: "high", message: "Strong BUY signal detected for BTC", symbol: "BTC", read: false },
-    { id: "2", timestamp: new Date(Date.now() - 120000), type: "price", severity: "medium", message: "ETH approaching resistance at $2,300", symbol: "ETH", read: false },
-    { id: "3", timestamp: new Date(Date.now() - 240000), type: "volume", severity: "low", message: "Unusual volume detected in SOL", symbol: "SOL", read: true },
-    { id: "4", timestamp: new Date(Date.now() - 360000), type: "pattern", severity: "critical", message: "Head & Shoulders pattern forming on BTC 4H", symbol: "BTC", read: false },
-    { id: "5", timestamp: new Date(Date.now() - 480000), type: "news", severity: "medium", message: "Breaking: Major exchange announces new listing", read: true },
-  ]);
-
-  // Real-time signal strength data
-  const [strengthHistory, setStrengthHistory] = useState(
-    Array.from({ length: 60 }, (_, i) => ({
-      time: i,
-      btc: 50 + Math.random() * 50,
-      eth: 40 + Math.random() * 50,
-      sol: 30 + Math.random() * 60,
-    }))
-  );
-
-  // Factor contribution data
   const factorData = [
     { factor: "Technical", contribution: 35 },
     { factor: "Sentiment", contribution: 25 },
@@ -136,21 +77,65 @@ const SignalMonitor = () => {
     { factor: "Fundamental", contribution: 5 },
   ];
 
+  const loadSignals = async () => {
+    const { data } = await supabase
+      .from('trading_signals')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (data) {
+      setSignals(data.map(d => ({
+        id: d.id,
+        timestamp: new Date(d.created_at),
+        symbol: d.symbol,
+        type: d.signal_type as 'buy' | 'sell' | 'hold',
+        strength: Number(d.strength),
+        source: d.source || 'AI Engine',
+        factors: d.factors || [],
+        price: Number(d.price),
+        targetPrice: Number(d.target_price),
+        stopLoss: Number(d.stop_loss),
+        confidence: Number(d.confidence),
+        status: d.status as 'active' | 'executed' | 'expired' | 'cancelled',
+      })));
+    }
+
+    // Load market alerts as alerts
+    const { data: alertData } = await supabase
+      .from('market_alerts')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (alertData) {
+      setAlerts(alertData.map(a => ({
+        id: a.id,
+        timestamp: new Date(a.created_at),
+        type: (a.alert_type as Alert['type']) || 'signal',
+        severity: (a.severity as Alert['severity']) || 'medium',
+        message: a.message,
+        symbol: a.symbol || undefined,
+        read: a.is_read || false,
+      })));
+    }
+  };
+
+  useEffect(() => {
+    loadSignals();
+
+    const channel = supabase
+      .channel('signals-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trading_signals' }, () => loadSignals())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   useEffect(() => {
     if (!isMonitoring) return;
-
-    const interval = setInterval(() => {
-      setStrengthHistory(prev => {
-        const newData = [...prev.slice(1), {
-          time: prev[prev.length - 1].time + 1,
-          btc: Math.max(0, Math.min(100, prev[prev.length - 1].btc + (Math.random() - 0.5) * 10)),
-          eth: Math.max(0, Math.min(100, prev[prev.length - 1].eth + (Math.random() - 0.5) * 10)),
-          sol: Math.max(0, Math.min(100, prev[prev.length - 1].sol + (Math.random() - 0.5) * 10)),
-        }];
-        return newData;
-      });
-    }, parseInt(refreshInterval) * 1000);
-
+    const interval = setInterval(loadSignals, parseInt(refreshInterval) * 1000);
     return () => clearInterval(interval);
   }, [isMonitoring, refreshInterval]);
 

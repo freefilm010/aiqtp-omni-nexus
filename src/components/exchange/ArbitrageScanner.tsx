@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Zap,
   TrendingUp,
@@ -36,59 +37,56 @@ interface ArbitrageOpportunity {
   risk: 'low' | 'medium' | 'high';
 }
 
-const generateOpportunities = (): ArbitrageOpportunity[] => {
-  const pairs = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'XRP/USDT', 'DOGE/USDT'];
-  const exchanges = ['Binance', 'Coinbase', 'Kraken', 'KuCoin', 'OKX', 'Bybit'];
-  
-  return Array.from({ length: 8 }, (_, i) => {
-    const pair = pairs[Math.floor(Math.random() * pairs.length)];
-    const buyEx = exchanges[Math.floor(Math.random() * exchanges.length)];
-    let sellEx = exchanges[Math.floor(Math.random() * exchanges.length)];
-    while (sellEx === buyEx) sellEx = exchanges[Math.floor(Math.random() * exchanges.length)];
-    
-    const basePrice = pair.startsWith('BTC') ? 67500 : pair.startsWith('ETH') ? 3400 : pair.startsWith('SOL') ? 145 : 0.5;
-    const buyPrice = basePrice * (1 - Math.random() * 0.002);
-    const sellPrice = basePrice * (1 + Math.random() * 0.003);
-    const spread = sellPrice - buyPrice;
-    const spreadPercent = (spread / buyPrice) * 100;
-    const volume = Math.random() * 100000;
-    
-    const arbType: 'simple' | 'triangular' | 'cross-chain' = Math.random() > 0.7 ? 'triangular' : Math.random() > 0.5 ? 'cross-chain' : 'simple';
-    const risk: 'low' | 'medium' | 'high' = spreadPercent > 0.3 ? 'high' : spreadPercent > 0.15 ? 'medium' : 'low';
-    
-    return {
-      id: `arb-${i}`,
-      pair,
-      buyExchange: buyEx,
-      sellExchange: sellEx,
-      buyPrice,
-      sellPrice,
-      spread,
-      spreadPercent,
-      volume,
-      estimatedProfit: volume * spreadPercent / 100,
-      expiresIn: Math.floor(Math.random() * 30) + 5,
-      type: arbType,
-      risk
-    };
-  }).sort((a, b) => b.spreadPercent - a.spreadPercent);
-};
-
 const ArbitrageScanner = () => {
-  const [opportunities, setOpportunities] = useState<ArbitrageOpportunity[]>(() => generateOpportunities());
+  const [opportunities, setOpportunities] = useState<ArbitrageOpportunity[]>([]);
   const [isScanning, setIsScanning] = useState(true);
   const [minSpread, setMinSpread] = useState("0.1");
   const [autoExecute, setAutoExecute] = useState(false);
   const [showTriangular, setShowTriangular] = useState(true);
   const [showCrossChain, setShowCrossChain] = useState(true);
 
+  const fetchOpportunities = async () => {
+    const { data } = await supabase
+      .from('arbitrage_opportunities')
+      .select('*')
+      .order('spread_percent', { ascending: false })
+      .limit(20);
+
+    if (data) {
+      setOpportunities(data.map(d => ({
+        id: d.id,
+        pair: d.pair,
+        buyExchange: d.buy_exchange,
+        sellExchange: d.sell_exchange,
+        buyPrice: Number(d.buy_price),
+        sellPrice: Number(d.sell_price),
+        spread: Number(d.spread),
+        spreadPercent: Number(d.spread_percent),
+        volume: Number(d.volume),
+        estimatedProfit: Number(d.estimated_profit),
+        expiresIn: d.expires_at ? Math.max(0, Math.floor((new Date(d.expires_at).getTime() - Date.now()) / 1000)) : 0,
+        type: (d.arb_type as 'simple' | 'triangular' | 'cross-chain') || 'simple',
+        risk: (d.risk as 'low' | 'medium' | 'high') || 'low',
+      })));
+    }
+  };
+
+  useEffect(() => {
+    fetchOpportunities();
+
+    const channel = supabase
+      .channel('arbitrage-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'arbitrage_opportunities' }, () => {
+        fetchOpportunities();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   useEffect(() => {
     if (!isScanning) return;
-    
-    const interval = setInterval(() => {
-      setOpportunities(generateOpportunities());
-    }, 3000);
-    
+    const interval = setInterval(fetchOpportunities, 5000);
     return () => clearInterval(interval);
   }, [isScanning]);
 
