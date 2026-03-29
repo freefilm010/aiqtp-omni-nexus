@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import {
   ArrowUp,
   ArrowDown,
   TrendingUp,
-  Activity,
-  Zap,
-  RefreshCw
+  Activity
 } from "lucide-react";
 
 interface OrderBookEntry {
@@ -78,30 +76,28 @@ interface OrderBookProps {
 }
 
 const OrderBook = ({ symbol = "BTC/USDT", basePrice = 67500 }: OrderBookProps) => {
-  const [orderBook, setOrderBook] = useState(() => generateOrderBook(basePrice));
-  const [trades, setTrades] = useState<Trade[]>(() => generateTrades(basePrice));
-  const [lastPrice, setLastPrice] = useState(basePrice);
+  const { prices } = useMarketPrices(5000);
+  const livePrice = prices['BTC']?.priceNumeric || basePrice;
+  const [orderBook, setOrderBook] = useState(() => generateOrderBook(livePrice));
+  const [trades, setTrades] = useState<Trade[]>(() => generateTrades(livePrice));
+  const [lastPrice, setLastPrice] = useState(livePrice);
   const [priceChange, setPriceChange] = useState<'up' | 'down' | null>(null);
 
+  // Update order book when live price changes
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newPrice = basePrice + (Math.random() - 0.5) * basePrice * 0.001;
-      setPriceChange(newPrice > lastPrice ? 'up' : 'down');
-      setLastPrice(newPrice);
-      setOrderBook(generateOrderBook(newPrice));
-      
-      // Add new trade
+    if (livePrice && livePrice !== lastPrice) {
+      setPriceChange(livePrice > lastPrice ? 'up' : 'down');
+      setLastPrice(livePrice);
+      setOrderBook(generateOrderBook(livePrice));
       setTrades(prev => [{
         id: `trade-${Date.now()}`,
-        price: newPrice,
+        price: livePrice,
         size: Math.random() * 2 + 0.01,
-        side: Math.random() > 0.5 ? 'buy' : 'sell',
+        side: livePrice > lastPrice ? 'buy' : 'sell',
         timestamp: new Date()
       }, ...prev.slice(0, 49)]);
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [basePrice, lastPrice]);
+    }
+  }, [livePrice]);
 
   const spread = orderBook.asks[0]?.price - orderBook.bids[0]?.price;
   const spreadPercent = (spread / lastPrice) * 100;
