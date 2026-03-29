@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -50,6 +51,7 @@ const categoryConfig: Record<string, { icon: React.ElementType; label: string; c
 };
 
 const AutomationTemplates = () => {
+  const { isAdmin } = useAdminAuth();
   const [templates, setTemplates] = useState<AutomationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
@@ -70,7 +72,9 @@ const AutomationTemplates = () => {
     }
   };
 
-  useEffect(() => { fetchTemplates(); }, []);
+  useEffect(() => { if (isAdmin) fetchTemplates(); }, [isAdmin]);
+
+  if (!isAdmin) return null;
 
   const toggleTemplate = async (id: string, currentState: boolean) => {
     setActivating(id);

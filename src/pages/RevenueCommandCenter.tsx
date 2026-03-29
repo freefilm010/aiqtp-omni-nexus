@@ -30,6 +30,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useNavigate } from "react-router-dom";
+
 
 interface LiveRevenueData {
   totalRevenue: number;
@@ -39,6 +42,16 @@ interface LiveRevenueData {
 }
 
 const RevenueCommandCenter = () => {
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!adminLoading && !isAdmin) {
+      toast.error("Admin access required");
+      navigate("/");
+    }
+  }, [isAdmin, adminLoading, navigate]);
+
   const [liveData, setLiveData] = useState<LiveRevenueData>({
     totalRevenue: 0,
     pendingRevenue: 0,
@@ -85,7 +98,17 @@ const RevenueCommandCenter = () => {
     fetchRevenue();
     const interval = setInterval(fetchRevenue, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAdmin]);
+
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   const callAIQTPAgent = async (action: string) => {
     setIsCallingAgent(true);

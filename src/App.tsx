@@ -371,7 +371,7 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
-                      <Route path="/settings/accessibility" element={<AccessibilitySettingsPage />} />
+                      <Route path="/settings/accessibility" element={<ProtectedRoute><AccessibilitySettingsPage /></ProtectedRoute>} />
                       <Route
                         path="/alerts"
                         element={
@@ -430,7 +430,7 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
-                      <Route path="/watchlist" element={<WatchlistPage />} />
+                      <Route path="/watchlist" element={<ProtectedRoute><WatchlistPage /></ProtectedRoute>} />
                       <Route
                         path="/revenue"
                         element={
@@ -480,8 +480,8 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
-                      <Route path="/capitol-trades" element={<CapitolTradesPage />} />
-                      <Route path="/broadcast" element={<BroadcastStationPage />} />
+                      <Route path="/capitol-trades" element={<ProtectedRoute><CapitolTradesPage /></ProtectedRoute>} />
+                      <Route path="/broadcast" element={<ProtectedRoute><BroadcastStationPage /></ProtectedRoute>} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route
                         path="/notifications"
