@@ -55,10 +55,13 @@ export const NFT_FEES = {
 } as const;
 
 // Strategy/Bot Marketplace - profit sharing model for graduated bots
-// Bots achieving 92.5%+ profitability & consistency qualify
+// Bots achieving 80%+ profitability qualify for marketplace review
 export const STRATEGY_FEES = {
   listingFee: 0, // $0 to list
-  graduationThreshold: 92.5, // 92.5% profitability required
+  graduationThreshold: 80, // 80% profitability required
+  consistencyThreshold: 85,
+  minBacktestCount: 5,
+  defaultMonthlyRentalPrice: 99,
   profitShare: {
     creator: 0.25, // 25% lifetime share to strategy creator
     platform: 0.75, // 75% to platform (60% admin + 15% operations)

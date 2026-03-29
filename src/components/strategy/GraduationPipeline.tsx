@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { STRATEGY_FEES } from "@/lib/fees/platformFees";
 import { toast } from "sonner";
 import {
   Award,
@@ -49,9 +50,9 @@ interface GraduationTest {
   test_data: any;
 }
 
-const PROFITABILITY_THRESHOLD = 92;
-const CONSISTENCY_THRESHOLD = 85;
-const MIN_TESTS = 5;
+const PROFITABILITY_THRESHOLD = STRATEGY_FEES.graduationThreshold;
+const CONSISTENCY_THRESHOLD = STRATEGY_FEES.consistencyThreshold;
+const MIN_TESTS = STRATEGY_FEES.minBacktestCount;
 const MIN_WIN_RATE = 65;
 const MAX_DRAWDOWN = 15;
 
@@ -164,7 +165,8 @@ const GraduationPipeline = () => {
       ).length;
 
       const shouldGraduate = passedTests >= MIN_TESTS && 
-                            avgProfitability >= PROFITABILITY_THRESHOLD;
+                            avgProfitability >= PROFITABILITY_THRESHOLD &&
+                            avgConsistency >= CONSISTENCY_THRESHOLD;
 
       // Update strategy
       const { error: updateError } = await supabase
@@ -190,7 +192,7 @@ const GraduationPipeline = () => {
       }
 
       if (shouldGraduate) {
-        toast.success("🎉 Strategy graduated! Now eligible for marketplace listing.", {
+        toast.success("🎉 Strategy qualified! It is now ready for marketplace review.", {
           duration: 5000
         });
       }
@@ -231,7 +233,7 @@ const GraduationPipeline = () => {
             Graduation Requirements
           </CardTitle>
           <CardDescription>
-            Meet company standards to list your strategy on the marketplace
+            Meet company standards to qualify your strategy for marketplace review
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -383,7 +385,7 @@ const GraduationPipeline = () => {
                   {strategy.is_graduated && (
                     <div className="flex items-center justify-center gap-2 p-3 rounded bg-green-500/10 text-green-500 text-sm">
                       <Award className="h-5 w-5" />
-                      Ready for Marketplace!
+                      Ready for Marketplace Review!
                     </div>
                   )}
                 </CardContent>

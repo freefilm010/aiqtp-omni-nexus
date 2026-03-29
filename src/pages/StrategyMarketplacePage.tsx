@@ -6,7 +6,8 @@ import GraduationPipeline from "@/components/strategy/GraduationPipeline";
 import FactorLibrary from "@/components/strategy/FactorLibrary";
 import MarketplaceCompetitions from "@/components/marketplace/MarketplaceCompetitions";
 import MarketplaceSuggestions from "@/components/marketplace/MarketplaceSuggestions";
-import { ShoppingCart, Award, Code2, Trophy, Lightbulb } from "lucide-react";
+import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
+import { ShoppingCart, Award, Code2, Trophy, Lightbulb, Bot } from "lucide-react";
 
 const StrategyMarketplacePage = () => {
   return (
@@ -20,8 +21,12 @@ const StrategyMarketplacePage = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="marketplace" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <Tabs defaultValue="marketplace" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="agents" className="flex items-center gap-1 text-xs">
+              <Bot className="h-4 w-4" />
+              Agents
+            </TabsTrigger>
             <TabsTrigger value="marketplace" className="flex items-center gap-1 text-xs">
               <ShoppingCart className="h-4 w-4" />
               Market
@@ -43,6 +48,10 @@ const StrategyMarketplacePage = () => {
               Ideas
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="agents">
+            <AIAgentLeaderboard />
+          </TabsContent>
 
           <TabsContent value="marketplace">
             <StrategyMarketplace />
