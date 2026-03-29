@@ -9,6 +9,7 @@ import {
   Droplets, Clock, Timer, ArrowDownToLine, Sparkles
 } from "lucide-react";
 import type { FaucetToken } from "./faucetTypes";
+import { useAssetValuation, formatUsdValue, formatQuantity } from "@/hooks/useAssetValuation";
 
 interface FaucetTokenListProps {
   tokens: FaucetToken[];
@@ -33,6 +34,7 @@ const FaucetTokenList = ({
   tokens, balances, claiming, loading,
   isOnCooldown, getCooldownRemaining, getCooldownProgress, onClaim,
 }: FaucetTokenListProps) => {
+  const { getValuation } = useAssetValuation();
   return (
     <Card className="lg:col-span-2">
       <CardHeader className="pb-3">
