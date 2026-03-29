@@ -29,7 +29,8 @@ import {
   Store,
   MessageSquare,
   BarChart3,
-  Library
+  Library,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -42,6 +43,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Overview", href: "/admin", icon: LayoutDashboard },
+  { title: "Apex Prop Trading", href: "/admin/apex", icon: Target },
   { title: "Financials", href: "/admin/financials", icon: DollarSign },
   { title: "Revenue", href: "/admin/revenue", icon: TrendingUp },
   { title: "Treasury Wallets", href: "/admin/treasury", icon: Wallet },
