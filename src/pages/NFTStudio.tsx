@@ -8,6 +8,8 @@ import ContractBuilder from "@/components/nft/ContractBuilder";
 import ComplianceRegistry from "@/components/standards/ComplianceRegistry";
 import MarketplaceCompetitions from "@/components/marketplace/MarketplaceCompetitions";
 import MarketplaceSuggestions from "@/components/marketplace/MarketplaceSuggestions";
+import CrossChainBridge from "@/components/nft/CrossChainBridge";
+import NFTRarityAnalyzer from "@/components/nft/NFTRarityAnalyzer";
 import { 
   Palette, 
   Wallet, 
@@ -15,7 +17,9 @@ import {
   FileCode,
   Trophy,
   Lightbulb,
-  Shield
+  Shield,
+  ArrowLeftRight,
+  Diamond
 } from "lucide-react";
 
 const NFTStudio = () => {
@@ -31,7 +35,7 @@ const NFTStudio = () => {
         </div>
 
         <Tabs defaultValue="create" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="create" className="flex items-center gap-1 text-xs">
               <Palette className="h-4 w-4" />
               Create
@@ -43,6 +47,14 @@ const NFTStudio = () => {
             <TabsTrigger value="marketplace" className="flex items-center gap-1 text-xs">
               <ShoppingCart className="h-4 w-4" />
               Market
+            </TabsTrigger>
+            <TabsTrigger value="bridge" className="flex items-center gap-1 text-xs">
+              <ArrowLeftRight className="h-4 w-4" />
+              Bridge
+            </TabsTrigger>
+            <TabsTrigger value="rarity" className="flex items-center gap-1 text-xs">
+              <Diamond className="h-4 w-4" />
+              Rarity
             </TabsTrigger>
             <TabsTrigger value="competitions" className="flex items-center gap-1 text-xs">
               <Trophy className="h-4 w-4" />
@@ -72,6 +84,14 @@ const NFTStudio = () => {
 
           <TabsContent value="marketplace">
             <NFTMarketplace />
+          </TabsContent>
+
+          <TabsContent value="bridge">
+            <CrossChainBridge />
+          </TabsContent>
+
+          <TabsContent value="rarity">
+            <NFTRarityAnalyzer />
           </TabsContent>
 
           <TabsContent value="competitions">
