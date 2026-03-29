@@ -9,6 +9,7 @@ import {
   Droplets, Clock, Timer, ArrowDownToLine, Sparkles
 } from "lucide-react";
 import type { FaucetToken } from "./faucetTypes";
+import { useAssetValuation, formatUsdValue, formatQuantity } from "@/hooks/useAssetValuation";
 
 interface FaucetTokenListProps {
   tokens: FaucetToken[];
@@ -33,6 +34,7 @@ const FaucetTokenList = ({
   tokens, balances, claiming, loading,
   isOnCooldown, getCooldownRemaining, getCooldownProgress, onClaim,
 }: FaucetTokenListProps) => {
+  const { getValuation } = useAssetValuation();
   return (
     <Card className="lg:col-span-2">
       <CardHeader className="pb-3">
@@ -64,6 +66,7 @@ const FaucetTokenList = ({
                       const onCd = isOnCooldown(token);
                       const balance = balances[token.symbol] || 0;
                       const progress = getCooldownProgress(token);
+                      const valuation = balance > 0 ? getValuation(token.symbol, balance) : null;
 
                       return (
                         <motion.div
@@ -107,9 +110,9 @@ const FaucetTokenList = ({
                                     <Timer className="h-2.5 w-2.5" />
                                     {token.claimInterval}h
                                   </span>
-                                  {balance > 0 && (
+                                  {balance > 0 && valuation && (
                                     <span className="text-[10px] text-primary font-medium">
-                                      Bal: {balance < 1 ? balance.toFixed(4) : balance.toFixed(2)}
+                                      {formatQuantity(balance)} · {formatUsdValue(valuation.valueUsd)} USD
                                     </span>
                                   )}
                                 </div>
