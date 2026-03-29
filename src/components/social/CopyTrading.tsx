@@ -115,6 +115,10 @@ const CopyTrading = () => {
     t.strategy.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalCopiers = traders.reduce((sum, t) => sum + t.copiers, 0);
+  const totalAum = traders.reduce((sum, t) => sum + t.aum, 0);
+  const avgReturn = traders.length > 0 ? traders.reduce((sum, t) => sum + t.pnl30d, 0) / traders.length : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
