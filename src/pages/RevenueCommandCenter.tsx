@@ -32,7 +32,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+
 
 interface LiveRevenueData {
   totalRevenue: number;
