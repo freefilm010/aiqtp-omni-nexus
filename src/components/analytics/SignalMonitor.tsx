@@ -113,11 +113,11 @@ const SignalMonitor = () => {
       setAlerts(alertData.map(a => ({
         id: a.id,
         timestamp: new Date(a.created_at),
-        type: (a.alert_type as Alert['type']) || 'signal',
+        type: (a.category as Alert['type']) || 'signal',
         severity: (a.severity as Alert['severity']) || 'medium',
-        message: a.message,
+        message: a.description || a.title,
         symbol: a.symbol || undefined,
-        read: a.is_read || false,
+        read: a.read || false,
       })));
     }
   };

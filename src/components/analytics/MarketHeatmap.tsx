@@ -76,7 +76,7 @@ const fetchStockData = async (): Promise<HeatmapCell[]> => {
       name: d.name,
       change: Number(d.price_change_24h) || 0,
       marketCap: Number(d.market_cap) || 0,
-      volume: Number(d.volume_24h) || 0,
+      volume: Number(d.volume) || 0,
       sector: d.sector || 'Other',
     }));
   }
