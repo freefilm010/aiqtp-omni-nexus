@@ -3728,6 +3728,90 @@ export type Database = {
           },
         ]
       }
+      insider_trades: {
+        Row: {
+          company: string
+          created_at: string
+          id: string
+          insider_name: string
+          insider_title: string
+          ownership_percent: number | null
+          price: number
+          shares: number
+          source: string | null
+          symbol: string
+          trade_date: string
+          trade_type: string
+          value: number
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          id?: string
+          insider_name: string
+          insider_title: string
+          ownership_percent?: number | null
+          price?: number
+          shares?: number
+          source?: string | null
+          symbol: string
+          trade_date?: string
+          trade_type: string
+          value?: number
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          id?: string
+          insider_name?: string
+          insider_title?: string
+          ownership_percent?: number | null
+          price?: number
+          shares?: number
+          source?: string | null
+          symbol?: string
+          trade_date?: string
+          trade_type?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      institutional_filings: {
+        Row: {
+          aum_billions: number
+          created_at: string
+          exited_positions: string[] | null
+          filing_date: string
+          id: string
+          institution: string
+          new_positions: string[] | null
+          quarter_end: string | null
+          top_holdings: Json
+        }
+        Insert: {
+          aum_billions?: number
+          created_at?: string
+          exited_positions?: string[] | null
+          filing_date?: string
+          id?: string
+          institution: string
+          new_positions?: string[] | null
+          quarter_end?: string | null
+          top_holdings?: Json
+        }
+        Update: {
+          aum_billions?: number
+          created_at?: string
+          exited_positions?: string[] | null
+          filing_date?: string
+          id?: string
+          institution?: string
+          new_positions?: string[] | null
+          quarter_end?: string | null
+          top_holdings?: Json
+        }
+        Relationships: []
+      }
       investment_portfolio: {
         Row: {
           asset_name: string
@@ -3979,6 +4063,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      market_alerts: {
+        Row: {
+          actionable: boolean
+          bookmarked: boolean
+          category: string
+          created_at: string
+          description: string
+          id: string
+          link: string | null
+          metrics: Json | null
+          read: boolean
+          severity: string
+          source: string
+          symbol: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          actionable?: boolean
+          bookmarked?: boolean
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          link?: string | null
+          metrics?: Json | null
+          read?: boolean
+          severity?: string
+          source?: string
+          symbol?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          actionable?: boolean
+          bookmarked?: boolean
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          link?: string | null
+          metrics?: Json | null
+          read?: boolean
+          severity?: string
+          source?: string
+          symbol?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       market_coins: {
         Row: {
@@ -5722,6 +5857,78 @@ export type Database = {
             referencedColumns: ["wallet_address"]
           },
         ]
+      }
+      quantum_backends: {
+        Row: {
+          avg_job_time: string | null
+          id: string
+          name: string
+          provider: string | null
+          qubits: number
+          queue_length: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          avg_job_time?: string | null
+          id: string
+          name: string
+          provider?: string | null
+          qubits?: number
+          queue_length?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          avg_job_time?: string | null
+          id?: string
+          name?: string
+          provider?: string | null
+          qubits?: number
+          queue_length?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quantum_jobs: {
+        Row: {
+          backend: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          name: string
+          qubits: number
+          result: Json | null
+          shots: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          backend: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          qubits?: number
+          result?: Json | null
+          shots?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          backend?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          qubits?: number
+          result?: Json | null
+          shots?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       quwallet_addresses: {
         Row: {
