@@ -27,7 +27,6 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("node_modules/react-router")) return "vendor-router";
           if (id.includes("node_modules/@supabase")) return "vendor-supabase";
           if (id.includes("node_modules/@radix-ui")) return "vendor-radix";
-          if (id.includes("node_modules/recharts") || id.includes("node_modules/lightweight-charts") || id.includes("node_modules/d3-")) return "vendor-charts";
           if (id.includes("node_modules/framer-motion")) return "vendor-motion";
           if (id.includes("node_modules/@tanstack")) return "vendor-query";
           if (id.includes("node_modules/lucide-react")) return "vendor-icons";
