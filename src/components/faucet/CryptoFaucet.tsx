@@ -69,6 +69,10 @@ const CryptoFaucet = () => {
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [lastClaimTimes, setLastClaimTimes] = useState<Record<string, Date>>({});
   const [streakCount, setStreakCount] = useState(0);
+  const [autoClaim, setAutoClaim] = useState(false);
+  const [autoClaimRunning, setAutoClaimRunning] = useState(false);
+  const autoClaimRef = useRef(false);
+  const lastClaimTimesRef = useRef<Record<string, Date>>({});
 
   const loadClaims = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
