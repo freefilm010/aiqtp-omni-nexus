@@ -98,7 +98,17 @@ const RevenueCommandCenter = () => {
     fetchRevenue();
     const interval = setInterval(fetchRevenue, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAdmin]);
+
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) return null;
 
   const callAIQTPAgent = async (action: string) => {
     setIsCallingAgent(true);
