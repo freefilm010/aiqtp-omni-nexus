@@ -1,37 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate, Routes, Route, Navigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminOverview from "@/components/admin/AdminOverview";
-import AdminFinancials from "@/components/admin/AdminFinancials";
-import ChatManagement from "@/components/admin/ChatManagement";
-import RevenueManager from "@/components/admin/RevenueManager";
-import InvestmentManager from "@/components/admin/InvestmentManager";
-import PaymentProcessors from "@/components/admin/PaymentProcessors";
-import AICopilot from "@/components/admin/AICopilot";
-import SecurityCenter from "@/components/admin/SecurityCenter";
-import AutomationCenter from "@/components/admin/AutomationCenter";
-import TreasuryWallets from "@/components/admin/TreasuryWallets";
-import ProfitAutomation from "@/components/admin/ProfitAutomation";
-import ProfitDistributionRules from "@/components/admin/ProfitDistributionRules";
-import PlatformDocumentation from "@/components/admin/PlatformDocumentation";
-import TokenFactory from "@/components/admin/TokenFactory";
-import InfluencerProgram from "@/components/admin/InfluencerProgram";
-import ContestManager from "@/components/admin/ContestManager";
-import OperatorManager from "@/components/admin/OperatorManager";
-import ExchangeManager from "@/components/admin/ExchangeManager";
-import AutoNFTGenerator from "@/components/admin/AutoNFTGenerator";
-import DataMarketplace from "@/components/admin/DataMarketplace";
-import BrandingRegistry from "@/components/admin/BrandingRegistry";
-import MarketCrawlerAnalytics from "@/components/intelligence/MarketCrawlerAnalytics";
-import StoreListingAutomation from "@/components/admin/StoreListingAutomation";
-import FeedbackManager from "@/components/admin/FeedbackManager";
-import AdminKnowledgeBase from "@/components/admin/AdminKnowledgeBase";
-import AdminReportsCenter from "@/components/admin/AdminReportsCenter";
-import AdminUsersManagement from "@/components/admin/AdminUsersManagement";
-import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
-import ApexDashboard from "@/components/admin/ApexDashboard";
 import { Loader2 } from "lucide-react";
+
+const AdminOverview = lazy(() => import("@/components/admin/AdminOverview"));
+const AdminFinancials = lazy(() => import("@/components/admin/AdminFinancials"));
+const ChatManagement = lazy(() => import("@/components/admin/ChatManagement"));
+const RevenueManager = lazy(() => import("@/components/admin/RevenueManager"));
+const InvestmentManager = lazy(() => import("@/components/admin/InvestmentManager"));
+const PaymentProcessors = lazy(() => import("@/components/admin/PaymentProcessors"));
+const AICopilot = lazy(() => import("@/components/admin/AICopilot"));
+const SecurityCenter = lazy(() => import("@/components/admin/SecurityCenter"));
+const AutomationCenter = lazy(() => import("@/components/admin/AutomationCenter"));
+const TreasuryWallets = lazy(() => import("@/components/admin/TreasuryWallets"));
+const ProfitAutomation = lazy(() => import("@/components/admin/ProfitAutomation"));
+const ProfitDistributionRules = lazy(() => import("@/components/admin/ProfitDistributionRules"));
+const PlatformDocumentation = lazy(() => import("@/components/admin/PlatformDocumentation"));
+const TokenFactory = lazy(() => import("@/components/admin/TokenFactory"));
+const InfluencerProgram = lazy(() => import("@/components/admin/InfluencerProgram"));
+const ContestManager = lazy(() => import("@/components/admin/ContestManager"));
+const OperatorManager = lazy(() => import("@/components/admin/OperatorManager"));
+const ExchangeManager = lazy(() => import("@/components/admin/ExchangeManager"));
+const AutoNFTGenerator = lazy(() => import("@/components/admin/AutoNFTGenerator"));
+const DataMarketplace = lazy(() => import("@/components/admin/DataMarketplace"));
+const BrandingRegistry = lazy(() => import("@/components/admin/BrandingRegistry"));
+const MarketCrawlerAnalytics = lazy(() => import("@/components/intelligence/MarketCrawlerAnalytics"));
+const StoreListingAutomation = lazy(() => import("@/components/admin/StoreListingAutomation"));
+const FeedbackManager = lazy(() => import("@/components/admin/FeedbackManager"));
+const AdminKnowledgeBase = lazy(() => import("@/components/admin/AdminKnowledgeBase"));
+const AdminReportsCenter = lazy(() => import("@/components/admin/AdminReportsCenter"));
+const AdminUsersManagement = lazy(() => import("@/components/admin/AdminUsersManagement"));
+const AdminSettingsPage = lazy(() => import("@/components/admin/AdminSettingsPage"));
+const ApexDashboard = lazy(() => import("@/components/admin/ApexDashboard"));
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
@@ -68,38 +69,40 @@ const AdminDashboard = () => {
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="container max-w-7xl py-6 px-4 md:px-6">
-          <Routes>
-            <Route index element={<AdminOverview />} />
-            <Route path="financials" element={<AdminFinancials />} />
-            <Route path="chats" element={<ChatManagement />} />
-            <Route path="revenue" element={<RevenueManager />} />
-            <Route path="investments" element={<InvestmentManager />} />
-            <Route path="payments" element={<PaymentProcessors />} />
-            <Route path="automation" element={<AutomationCenter />} />
-            <Route path="treasury" element={<TreasuryWallets />} />
-            <Route path="profit-automation" element={<ProfitDistributionRules />} />
-            <Route path="security" element={<SecurityCenter />} />
-            <Route path="copilot" element={<AICopilot />} />
-            <Route path="documentation" element={<PlatformDocumentation />} />
-            <Route path="tokens" element={<TokenFactory />} />
-            <Route path="influencers" element={<InfluencerProgram />} />
-            <Route path="contests" element={<ContestManager />} />
-            <Route path="operators" element={<OperatorManager />} />
-            <Route path="exchange" element={<ExchangeManager />} />
-            <Route path="nft-generator" element={<AutoNFTGenerator />} />
-            <Route path="data-marketplace" element={<DataMarketplace />} />
-            <Route path="branding" element={<BrandingRegistry />} />
-            <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
-            <Route path="store-listings" element={<StoreListingAutomation />} />
-            <Route path="feedback" element={<FeedbackManager />} />
-            <Route path="knowledge" element={<AdminKnowledgeBase />} />
-            <Route path="reports" element={<AdminReportsCenter />} />
-            <Route path="users" element={<AdminUsersManagement />} />
-            <Route path="logs" element={<AdminReportsCenter />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
-            <Route path="apex" element={<ApexDashboard />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
+          <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <Routes>
+              <Route index element={<AdminOverview />} />
+              <Route path="financials" element={<AdminFinancials />} />
+              <Route path="chats" element={<ChatManagement />} />
+              <Route path="revenue" element={<RevenueManager />} />
+              <Route path="investments" element={<InvestmentManager />} />
+              <Route path="payments" element={<PaymentProcessors />} />
+              <Route path="automation" element={<AutomationCenter />} />
+              <Route path="treasury" element={<TreasuryWallets />} />
+              <Route path="profit-automation" element={<ProfitDistributionRules />} />
+              <Route path="security" element={<SecurityCenter />} />
+              <Route path="copilot" element={<AICopilot />} />
+              <Route path="documentation" element={<PlatformDocumentation />} />
+              <Route path="tokens" element={<TokenFactory />} />
+              <Route path="influencers" element={<InfluencerProgram />} />
+              <Route path="contests" element={<ContestManager />} />
+              <Route path="operators" element={<OperatorManager />} />
+              <Route path="exchange" element={<ExchangeManager />} />
+              <Route path="nft-generator" element={<AutoNFTGenerator />} />
+              <Route path="data-marketplace" element={<DataMarketplace />} />
+              <Route path="branding" element={<BrandingRegistry />} />
+              <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
+              <Route path="store-listings" element={<StoreListingAutomation />} />
+              <Route path="feedback" element={<FeedbackManager />} />
+              <Route path="knowledge" element={<AdminKnowledgeBase />} />
+              <Route path="reports" element={<AdminReportsCenter />} />
+              <Route path="users" element={<AdminUsersManagement />} />
+              <Route path="logs" element={<AdminReportsCenter />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="apex" element={<ApexDashboard />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Routes>
+          </Suspense>
         </div>
       </main>
     </div>

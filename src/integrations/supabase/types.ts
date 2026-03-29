@@ -7727,6 +7727,66 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_templates_safe: {
+        Row: {
+          action_config: Json | null
+          action_type: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          is_system: boolean | null
+          last_run_at: string | null
+          name: string | null
+          run_count: number | null
+          schedule: string | null
+          subcategory: string | null
+          trigger_config: Json | null
+          trigger_type: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_config?: Json | null
+          action_type?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_system?: boolean | null
+          last_run_at?: string | null
+          name?: string | null
+          run_count?: number | null
+          schedule?: string | null
+          subcategory?: string | null
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_config?: Json | null
+          action_type?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_system?: boolean | null
+          last_run_at?: string | null
+          name?: string | null
+          run_count?: number | null
+          schedule?: string | null
+          subcategory?: string | null
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       connected_accounts_safe: {
         Row: {
           account_name: string | null
