@@ -1685,6 +1685,39 @@ export type Database = {
         }
         Relationships: []
       }
+      consensus_signals: {
+        Row: {
+          agent_votes: Json
+          consensus_score: number
+          created_at: string
+          direction: string
+          executed: boolean
+          id: string
+          pair: string
+          pnl: number | null
+        }
+        Insert: {
+          agent_votes?: Json
+          consensus_score?: number
+          created_at?: string
+          direction: string
+          executed?: boolean
+          id?: string
+          pair: string
+          pnl?: number | null
+        }
+        Update: {
+          agent_votes?: Json
+          consensus_score?: number
+          created_at?: string
+          direction?: string
+          executed?: boolean
+          id?: string
+          pair?: string
+          pnl?: number | null
+        }
+        Relationships: []
+      }
       contest_entries: {
         Row: {
           contest_id: string
@@ -3860,6 +3893,93 @@ export type Database = {
         }
         Relationships: []
       }
+      live_strategies: {
+        Row: {
+          catchphrase: string | null
+          code_name: string | null
+          created_at: string
+          drawdown: number
+          id: string
+          last_trade_at: string | null
+          name: string
+          open_positions: number
+          pairs: string[]
+          persona_id: string | null
+          personality: string | null
+          primary_color: string | null
+          profit: number
+          profit_percent: number
+          status: string
+          strategy_id: string | null
+          trades: number
+          updated_at: string
+          uptime_seconds: number
+          user_id: string
+          win_rate: number
+        }
+        Insert: {
+          catchphrase?: string | null
+          code_name?: string | null
+          created_at?: string
+          drawdown?: number
+          id?: string
+          last_trade_at?: string | null
+          name: string
+          open_positions?: number
+          pairs?: string[]
+          persona_id?: string | null
+          personality?: string | null
+          primary_color?: string | null
+          profit?: number
+          profit_percent?: number
+          status?: string
+          strategy_id?: string | null
+          trades?: number
+          updated_at?: string
+          uptime_seconds?: number
+          user_id: string
+          win_rate?: number
+        }
+        Update: {
+          catchphrase?: string | null
+          code_name?: string | null
+          created_at?: string
+          drawdown?: number
+          id?: string
+          last_trade_at?: string | null
+          name?: string
+          open_positions?: number
+          pairs?: string[]
+          persona_id?: string | null
+          personality?: string | null
+          primary_color?: string | null
+          profit?: number
+          profit_percent?: number
+          status?: string
+          strategy_id?: string | null
+          trades?: number
+          updated_at?: string
+          uptime_seconds?: number
+          user_id?: string
+          win_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_strategies_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_strategies_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_coins: {
         Row: {
           created_at: string | null
@@ -4296,6 +4416,51 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           votes?: number
+        }
+        Relationships: []
+      }
+      ml_models: {
+        Row: {
+          accuracy: number
+          config: Json
+          confusion_matrix: Json
+          created_at: string
+          feature_importance: Json
+          id: string
+          model_type: string
+          name: string
+          status: string
+          training_metrics: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number
+          config?: Json
+          confusion_matrix?: Json
+          created_at?: string
+          feature_importance?: Json
+          id?: string
+          model_type: string
+          name: string
+          status?: string
+          training_metrics?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy?: number
+          config?: Json
+          confusion_matrix?: Json
+          created_at?: string
+          feature_importance?: Json
+          id?: string
+          model_type?: string
+          name?: string
+          status?: string
+          training_metrics?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -4745,6 +4910,36 @@ export type Database = {
           name?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_activity_log: {
+        Row: {
+          activity_type: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -6739,6 +6934,57 @@ export type Database = {
           supported_chains?: string[] | null
           trading_pairs_count?: number | null
           websocket_url?: string | null
+        }
+        Relationships: []
+      }
+      swarm_agents: {
+        Row: {
+          accuracy_7d: number
+          confidence: number
+          created_at: string
+          domain: string
+          generation: number
+          icon_name: string
+          id: string
+          last_signal: string | null
+          name: string
+          signals_today: number
+          status: string
+          streak: number
+          updated_at: string
+          vote: string
+        }
+        Insert: {
+          accuracy_7d?: number
+          confidence?: number
+          created_at?: string
+          domain: string
+          generation?: number
+          icon_name?: string
+          id: string
+          last_signal?: string | null
+          name: string
+          signals_today?: number
+          status?: string
+          streak?: number
+          updated_at?: string
+          vote?: string
+        }
+        Update: {
+          accuracy_7d?: number
+          confidence?: number
+          created_at?: string
+          domain?: string
+          generation?: number
+          icon_name?: string
+          id?: string
+          last_signal?: string | null
+          name?: string
+          signals_today?: number
+          status?: string
+          streak?: number
+          updated_at?: string
+          vote?: string
         }
         Relationships: []
       }

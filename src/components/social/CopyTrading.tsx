@@ -115,6 +115,10 @@ const CopyTrading = () => {
     t.strategy.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalCopiers = traders.reduce((sum, t) => sum + t.copiers, 0);
+  const totalAum = traders.reduce((sum, t) => sum + t.aum, 0);
+  const avgReturn = traders.length > 0 ? traders.reduce((sum, t) => sum + t.pnl30d, 0) / traders.length : 0;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -142,7 +146,7 @@ const CopyTrading = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Traders</p>
-                <p className="text-xl font-bold text-foreground">2,847</p>
+                <p className="text-xl font-bold text-foreground">{traders.length}</p>
               </div>
             </div>
           </CardContent>
@@ -155,7 +159,9 @@ const CopyTrading = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Avg. 30D Return</p>
-                <p className="text-xl font-bold text-green-500">+34.2%</p>
+                <p className={`text-xl font-bold ${avgReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {avgReturn >= 0 ? '+' : ''}{avgReturn.toFixed(1)}%
+                </p>
               </div>
             </div>
           </CardContent>
@@ -168,7 +174,7 @@ const CopyTrading = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Active Copiers</p>
-                <p className="text-xl font-bold text-foreground">15,420</p>
+                <p className="text-xl font-bold text-foreground">{totalCopiers.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -181,7 +187,7 @@ const CopyTrading = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total AUM</p>
-                <p className="text-xl font-bold text-foreground">$847M</p>
+                <p className="text-xl font-bold text-foreground">${(totalAum / 1000000).toFixed(1)}M</p>
               </div>
             </div>
           </CardContent>
