@@ -144,10 +144,10 @@ serve(async (req) => {
             );
           }
 
-          // Fetch exchange credentials
+          // Fetch exchange account metadata
           const { data: account, error: accountError } = await supabase
             .from('connected_accounts')
-            .select('*')
+            .select('id, account_name, account_type, status')
             .eq('id', exchangeAccountId)
             .eq('user_id', user.id)
             .single();
@@ -159,8 +159,14 @@ serve(async (req) => {
             );
           }
 
-          // Decrypt API key (in production, use proper encryption)
-          const apiKey = account.api_key_encrypted; // This should be properly decrypted
+          // Fetch API key from secure vault
+          const { data: vault } = await supabase
+            .from('account_key_vault')
+            .select('api_key_encrypted')
+            .eq('account_id', exchangeAccountId)
+            .single();
+
+          const apiKey = vault?.api_key_encrypted || '';
           const exchangeType = account.account_type;
 
           // Route to appropriate exchange

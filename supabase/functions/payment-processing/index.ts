@@ -224,14 +224,21 @@ serve(async (req) => {
           if (!resp.ok) throw new Error(`Plaid exchange error [${resp.status}]`);
           const plaidResult = await resp.json();
 
-          // Store connected account (access_token encrypted server-side)
-          await supabase.from('connected_accounts').insert({
+          // Store connected account metadata
+          const { data: newAccount } = await supabase.from('connected_accounts').insert({
             user_id: user.id,
             account_name: (params.institutionName as string) || 'Bank Account',
             account_type: 'bank_plaid',
-            api_key_encrypted: plaidResult.access_token,
             status: 'active',
-          });
+          }).select('id').single();
+
+          // Store access token in secure vault
+          if (newAccount) {
+            await supabase.from('account_key_vault').insert({
+              account_id: newAccount.id,
+              api_key_encrypted: plaidResult.access_token,
+            });
+          }
 
           result = { connected: true, institution: params.institutionName };
           break;
