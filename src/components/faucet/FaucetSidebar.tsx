@@ -2,10 +2,11 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Clock, CheckCircle, Coins, Flame, Trophy, Users, Share2 } from "lucide-react";
+import { Wallet, Clock, CheckCircle, Coins, Flame, Trophy, Users, Share2, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { FaucetToken, ClaimRecord } from "./faucetTypes";
+import { useAssetValuation, formatUsdValue, formatQuantity } from "@/hooks/useAssetValuation";
 
 interface FaucetSidebarProps {
   balances: Record<string, number>;
@@ -26,6 +27,8 @@ const MOCK_LEADERBOARD = [
 
 const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
   const totalTokenTypes = Object.keys(balances).length;
+  const { getPortfolioValuation } = useAssetValuation();
+  const { items: valuedItems, totalUsd, totalUsdt } = getPortfolioValuation(balances);
 
   const handleReferral = () => {
     if (!userId) { toast.error("Sign in first"); return; }
@@ -56,7 +59,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
         </Card>
       </motion.div>
 
-      {/* Balances */}
+      {/* Balances with USD/USDT */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
         <Card>
           <CardHeader className="pb-2 px-3 pt-3">
@@ -67,22 +70,44 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                 <Badge variant="secondary" className="text-[9px] ml-auto">{totalTokenTypes}</Badge>
               )}
             </CardTitle>
+            {totalUsd > 0 && (
+              <div className="flex items-center gap-2 mt-1">
+                <DollarSign className="h-3 w-3 text-green-500" />
+                <span className="text-xs font-bold text-green-500">{formatUsdValue(totalUsd)}</span>
+                <span className="text-[9px] text-muted-foreground">≈ {formatUsdValue(totalUsdt)} USDT</span>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="px-3 pb-3">
-            <ScrollArea className="h-[160px]">
-              {totalTokenTypes > 0 ? (
+            <ScrollArea className="h-[200px]">
+              {valuedItems.length > 0 ? (
                 <div className="space-y-1.5">
-                  {Object.entries(balances)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([symbol, amount]) => {
-                      const token = tokens.find(t => t.symbol === symbol);
+                  {/* Header row */}
+                  <div className="flex items-center justify-between text-[9px] text-muted-foreground px-2 pb-1 border-b border-border/30">
+                    <span className="w-16">Asset</span>
+                    <span className="text-right w-16">Qty</span>
+                    <span className="text-right w-16">USD</span>
+                    <span className="text-right w-16">USDT</span>
+                  </div>
+                  {valuedItems
+                    .sort((a, b) => b.valueUsd - a.valueUsd)
+                    .map((item) => {
+                      const token = tokens.find(t => t.symbol === item.symbol);
                       return (
-                        <div key={symbol} className="flex justify-between items-center p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
-                          <div className="flex items-center gap-2">
-                            {token?.icon || <Coins className="h-4 w-4" />}
-                            <span className="font-medium text-xs">{symbol}</span>
+                        <div key={item.symbol} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
+                          <div className="flex items-center gap-1.5 w-16">
+                            {token?.icon || <Coins className="h-3.5 w-3.5" />}
+                            <span className="font-medium text-[10px]">{item.symbol}</span>
                           </div>
-                          <span className="font-mono text-xs">{amount < 1 ? amount.toFixed(4) : amount.toFixed(2)}</span>
+                          <span className="font-mono text-[10px] text-right w-16">
+                            {formatQuantity(item.quantity)}
+                          </span>
+                          <span className="font-mono text-[10px] text-green-500 text-right w-16">
+                            {formatUsdValue(item.valueUsd)}
+                          </span>
+                          <span className="font-mono text-[10px] text-muted-foreground text-right w-16">
+                            {formatUsdValue(item.valueUsdt)}
+                          </span>
                         </div>
                       );
                     })}
