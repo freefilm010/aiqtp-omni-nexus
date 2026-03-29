@@ -278,7 +278,47 @@ const CryptoFaucet = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* Auto-Claim Controls */}
+      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+        <CardContent className="py-3 px-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Bot className="h-5 w-5 text-primary shrink-0" />
+              <div>
+                <p className="font-medium text-sm">Auto-Claim Bot</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">
+                  {autoClaim 
+                    ? autoClaimRunning ? "Claiming available tokens..." : "Monitoring cooldowns — will claim when ready"
+                    : "Automatically claims all tokens as they become available"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClaimAll}
+                disabled={claiming !== null || availableCount === 0 || loading}
+                className="text-xs gap-1"
+              >
+                <ArrowDownToLine className="h-3 w-3" />
+                Claim All ({availableCount})
+              </Button>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="auto-claim" className="text-xs cursor-pointer">
+                  {autoClaim ? "ON" : "OFF"}
+                </Label>
+                <Switch
+                  id="auto-claim"
+                  checked={autoClaim}
+                  onCheckedChange={setAutoClaim}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
         {/* Faucet List */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
