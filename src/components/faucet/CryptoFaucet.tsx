@@ -190,7 +190,17 @@ const CryptoFaucet = () => {
       wallet_address: '',
       status: 'completed',
     } as any);
-    return error;
+    if (error) return error;
+
+    // Credit portfolio_holdings via DB function
+    const { error: creditError } = await supabase.rpc('credit_faucet_claim', {
+      p_user_id: userId,
+      p_symbol: token.symbol,
+      p_amount: token.claimAmount,
+      p_chain: token.id,
+    });
+    if (creditError) console.error('Credit error:', creditError);
+    return null;
   };
 
   const handleClaim = async (token: FaucetToken) => {
