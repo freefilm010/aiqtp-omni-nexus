@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Droplets, Clock, Coins, Gift, Timer, Wallet,
   TrendingUp, Shield, Zap, Star, CheckCircle, RefreshCw,
-  ArrowDownToLine, Flame, Gem, CircleDollarSign
+  ArrowDownToLine, Flame, Gem, CircleDollarSign, Bot
 } from "lucide-react";
 
 interface FaucetToken {
@@ -67,6 +69,10 @@ const CryptoFaucet = () => {
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [lastClaimTimes, setLastClaimTimes] = useState<Record<string, Date>>({});
   const [streakCount, setStreakCount] = useState(0);
+  const [autoClaim, setAutoClaim] = useState(false);
+  const [autoClaimRunning, setAutoClaimRunning] = useState(false);
+  const autoClaimRef = useRef(false);
+  const lastClaimTimesRef = useRef<Record<string, Date>>({});
 
   const loadClaims = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -101,6 +107,7 @@ const CryptoFaucet = () => {
     
     setBalances(bal);
     setLastClaimTimes(lastTimes);
+    lastClaimTimesRef.current = lastTimes;
 
     // Calculate streak (consecutive days with at least one claim)
     const claimDays = new Set(records.map(c => new Date(c.created_at).toDateString()));
@@ -170,8 +177,82 @@ const CryptoFaucet = () => {
     setClaiming(null);
   };
 
+  // Keep ref in sync
+  useEffect(() => { autoClaimRef.current = autoClaim; }, [autoClaim]);
+
+  // Auto-claim: claim all available tokens every 30s when enabled
+  useEffect(() => {
+    if (!autoClaim || !userId) return;
+
+    const runAutoClaim = async () => {
+      if (!autoClaimRef.current) return;
+      setAutoClaimRunning(true);
+      
+      let claimedCount = 0;
+      for (const token of FAUCET_TOKENS) {
+        if (!autoClaimRef.current) break;
+        
+        const last = lastClaimTimesRef.current[token.id];
+        const cooldownMs = token.claimInterval * 60 * 60 * 1000;
+        const onCooldown = last && (Date.now() - last.getTime()) < cooldownMs;
+        
+        if (!onCooldown && token.available) {
+          const { error } = await supabase.from("faucet_claims").insert({
+            user_id: userId,
+            amount: token.claimAmount,
+            chain: token.id,
+            wallet_address: '',
+            status: 'completed',
+          } as any);
+          
+          if (!error) claimedCount++;
+        }
+      }
+      
+      if (claimedCount > 0) {
+        toast.success(`Auto-claimed ${claimedCount} token${claimedCount > 1 ? 's' : ''}!`, {
+          icon: <Bot className="h-4 w-4" />,
+        });
+        await loadClaims();
+      }
+      setAutoClaimRunning(false);
+    };
+
+    runAutoClaim();
+    const interval = setInterval(runAutoClaim, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, [autoClaim, userId, loadClaims]);
+
+  const handleClaimAll = async () => {
+    if (!userId) { toast.error("Please sign in"); return; }
+    setClaiming('all');
+    let claimedCount = 0;
+    
+    for (const token of FAUCET_TOKENS) {
+      if (!isOnCooldown(token) && token.available) {
+        const { error } = await supabase.from("faucet_claims").insert({
+          user_id: userId,
+          amount: token.claimAmount,
+          chain: token.id,
+          wallet_address: '',
+          status: 'completed',
+        } as any);
+        if (!error) claimedCount++;
+      }
+    }
+    
+    if (claimedCount > 0) {
+      toast.success(`Claimed ${claimedCount} tokens at once!`);
+      await loadClaims();
+    } else {
+      toast.info("All tokens are on cooldown");
+    }
+    setClaiming(null);
+  };
+
   const totalTokenTypes = Object.keys(balances).length;
   const totalClaims = claims.length;
+  const availableCount = FAUCET_TOKENS.filter(t => !isOnCooldown(t) && t.available).length;
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -196,6 +277,47 @@ const CryptoFaucet = () => {
           </Card>
         ))}
       </div>
+
+      {/* Auto-Claim Controls */}
+      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+        <CardContent className="py-3 px-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Bot className="h-5 w-5 text-primary shrink-0" />
+              <div>
+                <p className="font-medium text-sm">Auto-Claim Bot</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">
+                  {autoClaim 
+                    ? autoClaimRunning ? "Claiming available tokens..." : "Monitoring cooldowns — will claim when ready"
+                    : "Automatically claims all tokens as they become available"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClaimAll}
+                disabled={claiming !== null || availableCount === 0 || loading}
+                className="text-xs gap-1"
+              >
+                <ArrowDownToLine className="h-3 w-3" />
+                Claim All ({availableCount})
+              </Button>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="auto-claim" className="text-xs cursor-pointer">
+                  {autoClaim ? "ON" : "OFF"}
+                </Label>
+                <Switch
+                  id="auto-claim"
+                  checked={autoClaim}
+                  onCheckedChange={setAutoClaim}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Faucet List */}
