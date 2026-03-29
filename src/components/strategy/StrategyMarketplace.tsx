@@ -46,6 +46,7 @@ interface GraduatedStrategy {
   risk_parameters: any;
   backtest_count: number;
   created_at: string;
+  is_graduated?: boolean;
   is_available_for_rent?: boolean;
   admin_approved?: boolean;
   code_protected?: boolean;
