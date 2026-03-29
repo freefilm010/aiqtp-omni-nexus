@@ -33,6 +33,8 @@ const NFTCreator = () => {
   const [useAI, setUseAI] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isMinting, setIsMinting] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const addAttribute = () => {
     setAttributes([...attributes, { trait: "", value: "" }]);
@@ -40,6 +42,38 @@ const NFTCreator = () => {
 
   const removeAttribute = (index: number) => {
     setAttributes(attributes.filter((_, i) => i !== index));
+  };
+
+  const generateAIImage = async () => {
+    if (!user) {
+      toast.error("Please sign in to generate images");
+      return;
+    }
+    if (!aiPrompt.trim()) {
+      toast.error("Please describe your NFT first");
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("nft-generate-image", {
+        body: { prompt: aiPrompt.trim(), style: "digital collectible art" },
+      });
+
+      if (error) throw error;
+
+      if (data?.image_url) {
+        setPreviewImage(data.image_url);
+        toast.success("AI image generated!", { description: "Preview updated" });
+      } else {
+        toast.info("Image generation completed", { description: "The model processed your prompt but no image was returned. Try a more descriptive prompt." });
+      }
+    } catch (error: any) {
+      console.error("AI generation error:", error);
+      toast.error("Failed to generate image", { description: error.message });
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   const mint = async () => {
@@ -54,7 +88,7 @@ const NFTCreator = () => {
 
     setIsMinting(true);
     try {
-      const { error } = await supabase.from("user_nfts").insert({
+      const { data: nftData, error } = await supabase.from("user_nfts").insert({
         user_id: user.id,
         name: name.trim(),
         description: description.trim() || null,
@@ -64,10 +98,18 @@ const NFTCreator = () => {
         attributes: attributes.filter(a => a.trait && a.value),
         ai_generated: useAI,
         ai_prompt: useAI ? aiPrompt : null,
+        image_url: previewImage,
         mint_status: "minted",
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // If AI was used and we have a preview but it wasn't saved yet, update with nft_id
+      if (useAI && previewImage && nftData) {
+        await supabase.functions.invoke("nft-generate-image", {
+          body: { prompt: aiPrompt.trim(), nft_id: nftData.id, style: "digital collectible art" },
+        }).catch(() => {}); // Non-critical
+      }
 
       toast.success("NFT created successfully!", {
         description: `${name} has been minted on ${chain}`
@@ -79,6 +121,7 @@ const NFTCreator = () => {
       setAttributes([]);
       setAiPrompt("");
       setUseAI(false);
+      setPreviewImage(null);
     } catch (error: any) {
       console.error("NFT creation error:", error);
       toast.error("Failed to create NFT", { description: error.message });
@@ -123,9 +166,16 @@ const NFTCreator = () => {
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
                 />
-                <Button className="w-full">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate with AI
+                <Button 
+                  className="w-full" 
+                  onClick={generateAIImage} 
+                  disabled={isGeneratingImage || !aiPrompt.trim()}
+                >
+                  {isGeneratingImage ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" /> Generate with AI</>
+                  )}
                 </Button>
               </div>
             )}
@@ -210,8 +260,12 @@ const NFTCreator = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="aspect-square rounded-lg bg-muted flex items-center justify-center mb-6">
-            <Layers className="h-24 w-24 text-muted-foreground" />
+          <div className="aspect-square rounded-lg bg-muted flex items-center justify-center mb-6 overflow-hidden">
+            {previewImage ? (
+              <img src={previewImage} alt={name || "NFT Preview"} className="w-full h-full object-cover" />
+            ) : (
+              <Layers className="h-24 w-24 text-muted-foreground" />
+            )}
           </div>
           <div className="space-y-4">
             <div>
@@ -222,6 +276,7 @@ const NFTCreator = () => {
               <Badge>{chain}</Badge>
               <Badge variant="outline">{royalties}% royalties</Badge>
               <Badge variant="secondary">{supply} edition{parseInt(supply) > 1 ? 's' : ''}</Badge>
+              {useAI && <Badge variant="secondary" className="bg-primary/10 text-primary">AI Generated</Badge>}
             </div>
             {attributes.length > 0 && (
               <div className="grid grid-cols-2 gap-2 mt-4">
