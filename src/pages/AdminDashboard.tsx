@@ -69,38 +69,40 @@ const AdminDashboard = () => {
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="container max-w-7xl py-6 px-4 md:px-6">
-          <Routes>
-            <Route index element={<AdminOverview />} />
-            <Route path="financials" element={<AdminFinancials />} />
-            <Route path="chats" element={<ChatManagement />} />
-            <Route path="revenue" element={<RevenueManager />} />
-            <Route path="investments" element={<InvestmentManager />} />
-            <Route path="payments" element={<PaymentProcessors />} />
-            <Route path="automation" element={<AutomationCenter />} />
-            <Route path="treasury" element={<TreasuryWallets />} />
-            <Route path="profit-automation" element={<ProfitDistributionRules />} />
-            <Route path="security" element={<SecurityCenter />} />
-            <Route path="copilot" element={<AICopilot />} />
-            <Route path="documentation" element={<PlatformDocumentation />} />
-            <Route path="tokens" element={<TokenFactory />} />
-            <Route path="influencers" element={<InfluencerProgram />} />
-            <Route path="contests" element={<ContestManager />} />
-            <Route path="operators" element={<OperatorManager />} />
-            <Route path="exchange" element={<ExchangeManager />} />
-            <Route path="nft-generator" element={<AutoNFTGenerator />} />
-            <Route path="data-marketplace" element={<DataMarketplace />} />
-            <Route path="branding" element={<BrandingRegistry />} />
-            <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
-            <Route path="store-listings" element={<StoreListingAutomation />} />
-            <Route path="feedback" element={<FeedbackManager />} />
-            <Route path="knowledge" element={<AdminKnowledgeBase />} />
-            <Route path="reports" element={<AdminReportsCenter />} />
-            <Route path="users" element={<AdminUsersManagement />} />
-            <Route path="logs" element={<AdminReportsCenter />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
-            <Route path="apex" element={<ApexDashboard />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
+          <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <Routes>
+              <Route index element={<AdminOverview />} />
+              <Route path="financials" element={<AdminFinancials />} />
+              <Route path="chats" element={<ChatManagement />} />
+              <Route path="revenue" element={<RevenueManager />} />
+              <Route path="investments" element={<InvestmentManager />} />
+              <Route path="payments" element={<PaymentProcessors />} />
+              <Route path="automation" element={<AutomationCenter />} />
+              <Route path="treasury" element={<TreasuryWallets />} />
+              <Route path="profit-automation" element={<ProfitDistributionRules />} />
+              <Route path="security" element={<SecurityCenter />} />
+              <Route path="copilot" element={<AICopilot />} />
+              <Route path="documentation" element={<PlatformDocumentation />} />
+              <Route path="tokens" element={<TokenFactory />} />
+              <Route path="influencers" element={<InfluencerProgram />} />
+              <Route path="contests" element={<ContestManager />} />
+              <Route path="operators" element={<OperatorManager />} />
+              <Route path="exchange" element={<ExchangeManager />} />
+              <Route path="nft-generator" element={<AutoNFTGenerator />} />
+              <Route path="data-marketplace" element={<DataMarketplace />} />
+              <Route path="branding" element={<BrandingRegistry />} />
+              <Route path="market-intel" element={<MarketCrawlerAnalytics />} />
+              <Route path="store-listings" element={<StoreListingAutomation />} />
+              <Route path="feedback" element={<FeedbackManager />} />
+              <Route path="knowledge" element={<AdminKnowledgeBase />} />
+              <Route path="reports" element={<AdminReportsCenter />} />
+              <Route path="users" element={<AdminUsersManagement />} />
+              <Route path="logs" element={<AdminReportsCenter />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
+              <Route path="apex" element={<ApexDashboard />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Routes>
+          </Suspense>
         </div>
       </main>
     </div>
