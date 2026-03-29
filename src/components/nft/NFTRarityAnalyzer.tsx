@@ -48,8 +48,6 @@ const NFTRarityAnalyzer = () => {
         .select("id, name, image_url, collection_name, attributes")
         .eq("owner_id", user.id)
         .limit(20);
-        .eq("owner_id", user.id)
-        .limit(20);
 
       if (data && data.length > 0) {
         setResults(data.map((nft: any, idx: number) => ({
