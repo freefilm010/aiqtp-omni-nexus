@@ -41,10 +41,10 @@ const PredictionDashboard = () => {
   useEffect(() => {
     const load = async () => {
       const { data: models } = await supabase
-        .from('ml_models')
+        .from('ml_models' as any)
         .select('*')
         .eq('is_deployed', true)
-        .limit(5);
+        .limit(5) as { data: any[] | null };
 
       const assets = [
         { symbol: 'BTC', name: 'Bitcoin', priceKey: 'BTC' },
@@ -56,7 +56,7 @@ const PredictionDashboard = () => {
         const marketPrice = prices[asset.priceKey];
         const currentPrice = marketPrice?.priceNumeric || 0;
         const model = models?.[idx % (models?.length || 1)];
-        const accuracy = model ? Number((model.metrics as any)?.accuracy || 70) : 70;
+        const accuracy = model ? Number(model.accuracy || 70) : 70;
         const modelName = model?.model_type || 'Ensemble';
 
         // Use ai_signals for direction

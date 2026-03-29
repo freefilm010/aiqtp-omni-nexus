@@ -505,7 +505,7 @@ const PortfolioOptimizer = () => {
                   <XAxis dataKey="volatility" name="Volatility" unit="%" />
                   <YAxis dataKey="return" name="Return" unit="%" />
                   <Tooltip />
-                  <Scatter name="Simulated Portfolios" data={monteCarloData} fill="hsl(180, 84%, 35%)" fillOpacity={0.3} />
+                  <Scatter name="Simulated Portfolios" data={efficientFrontierData} fill="hsl(180, 84%, 35%)" fillOpacity={0.3} />
                 </ScatterChart>
               </ResponsiveContainer>
             </CardContent>
