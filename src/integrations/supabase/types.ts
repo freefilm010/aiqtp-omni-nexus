@@ -3128,11 +3128,11 @@ export type Database = {
           token_id: string | null
           tx_hash: string | null
           user_id: string
-          wallet_address: string
+          wallet_address: string | null
         }
         Insert: {
           amount: number
-          chain: string
+          chain?: string
           created_at?: string
           id?: string
           ip_hash?: string | null
@@ -3140,7 +3140,7 @@ export type Database = {
           token_id?: string | null
           tx_hash?: string | null
           user_id: string
-          wallet_address: string
+          wallet_address?: string | null
         }
         Update: {
           amount?: number
@@ -3152,7 +3152,7 @@ export type Database = {
           token_id?: string | null
           tx_hash?: string | null
           user_id?: string
-          wallet_address?: string
+          wallet_address?: string | null
         }
         Relationships: [
           {
