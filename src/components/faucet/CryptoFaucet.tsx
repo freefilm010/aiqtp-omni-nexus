@@ -40,7 +40,7 @@ const CryptoFaucet = () => {
   const [streakCount, setStreakCount] = useState(0);
   const [autoClaim, setAutoClaim] = useState(false);
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
-  const [autoCompound, setAutoCompound] = useState(false);
+  const [autoCompound, setAutoCompound] = useState(true);
   const [reinvestPercent, setReinvestPercent] = useState(95);
   const [compoundEngine, setCompoundEngine] = useState<any>(null);
   const [compoundStats, setCompoundStats] = useState({ deployed: 0, transactions: 0, profit: 0 });
@@ -101,7 +101,8 @@ const CryptoFaucet = () => {
     if (data?.[0]) {
       setCompoundEngine(data[0]);
       setReinvestPercent(Number(data[0].reinvest_percent) || 95);
-      setAutoCompound(data[0].status === 'active');
+      // Always keep compound active — only read UI toggle state, don't override to false
+      if (data[0].status === 'active') setAutoCompound(true);
 
       const { count } = await supabase
         .from("auto_invest_transactions")
@@ -113,13 +114,35 @@ const CryptoFaucet = () => {
         transactions: count || 0,
         profit: Number(data[0].total_profit) || 0,
       });
+    } else {
+      // Auto-create engine so claims always compound
+      const { data: newEngine } = await supabase.from("auto_invest_engine").insert({
+        engine_name: 'Faucet Compound Engine',
+        strategy: 'ultra_aggressive',
+        status: 'active',
+        reinvest_percent: 95,
+        growth_target_percent: 95,
+        stable_target_percent: 5,
+        total_capital: 0,
+        total_deployed: 0,
+        total_profit: 0,
+        total_reinvested: 0,
+        rebalance_threshold: 5,
+        cycle_count: 0,
+      } as any).select('id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count').single() as any;
+
+      if (newEngine) {
+        setCompoundEngine(newEngine);
+        setAutoCompound(true);
+      }
     }
   }, [userId]);
 
   useEffect(() => { if (userId) loadCompoundEngine(); }, [userId, loadCompoundEngine]);
 
   const routeToCompound = useCallback(async (tokenSymbol: string, amount: number) => {
-    if (!autoCompoundRef.current || !compoundEngine) return;
+    // Always compound — if engine doesn't exist yet, skip silently
+    if (!compoundEngine) return;
     const deployAmount = amount * (reinvestPercent / 100);
     if (deployAmount <= 0) return;
 
