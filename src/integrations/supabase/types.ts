@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_key_vault: {
+        Row: {
+          account_id: string
+          api_key_encrypted: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          account_id: string
+          api_key_encrypted: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          account_id?: string
+          api_key_encrypted?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       achievement_definitions: {
         Row: {
           category: string
@@ -1629,7 +1650,6 @@ export type Database = {
         Row: {
           account_name: string
           account_type: string
-          api_key_encrypted: string | null
           balance: number | null
           change_24h: number | null
           created_at: string
@@ -1642,7 +1662,6 @@ export type Database = {
         Insert: {
           account_name: string
           account_type: string
-          api_key_encrypted?: string | null
           balance?: number | null
           change_24h?: number | null
           created_at?: string
@@ -1655,7 +1674,6 @@ export type Database = {
         Update: {
           account_name?: string
           account_type?: string
-          api_key_encrypted?: string | null
           balance?: number | null
           change_24h?: number | null
           created_at?: string
@@ -3105,7 +3123,7 @@ export type Database = {
           chain: string
           created_at: string
           id: string
-          ip_address: string | null
+          ip_hash: string | null
           status: string | null
           token_id: string | null
           tx_hash: string | null
@@ -3117,7 +3135,7 @@ export type Database = {
           chain: string
           created_at?: string
           id?: string
-          ip_address?: string | null
+          ip_hash?: string | null
           status?: string | null
           token_id?: string | null
           tx_hash?: string | null
@@ -3129,7 +3147,7 @@ export type Database = {
           chain?: string
           created_at?: string
           id?: string
-          ip_address?: string | null
+          ip_hash?: string | null
           status?: string | null
           token_id?: string | null
           tx_hash?: string | null
@@ -4253,6 +4271,7 @@ export type Database = {
           style: string | null
           theme: string | null
           total_count: number | null
+          user_id: string | null
         }
         Insert: {
           base_price?: number | null
@@ -4267,6 +4286,7 @@ export type Database = {
           style?: string | null
           theme?: string | null
           total_count?: number | null
+          user_id?: string | null
         }
         Update: {
           base_price?: number | null
@@ -4281,6 +4301,7 @@ export type Database = {
           style?: string | null
           theme?: string | null
           total_count?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -5515,13 +5536,11 @@ export type Database = {
           created_at: string
           dilithium_public_key: string
           ecdsa_public_key: string | null
-          encrypted_private_keys: string
           hardware_type: string | null
           id: string
           is_active: boolean | null
           is_admin_controlled: boolean | null
           is_hardware: boolean | null
-          key_derivation_salt: string
           kyber_public_key: string
           multi_sig_config: Json | null
           updated_at: string
@@ -5534,13 +5553,11 @@ export type Database = {
           created_at?: string
           dilithium_public_key: string
           ecdsa_public_key?: string | null
-          encrypted_private_keys: string
           hardware_type?: string | null
           id?: string
           is_active?: boolean | null
           is_admin_controlled?: boolean | null
           is_hardware?: boolean | null
-          key_derivation_salt: string
           kyber_public_key: string
           multi_sig_config?: Json | null
           updated_at?: string
@@ -5553,13 +5570,11 @@ export type Database = {
           created_at?: string
           dilithium_public_key?: string
           ecdsa_public_key?: string | null
-          encrypted_private_keys?: string
           hardware_type?: string | null
           id?: string
           is_active?: boolean | null
           is_admin_controlled?: boolean | null
           is_hardware?: boolean | null
-          key_derivation_salt?: string
           kyber_public_key?: string
           multi_sig_config?: Json | null
           updated_at?: string
@@ -6344,7 +6359,6 @@ export type Database = {
           balance_sol: number | null
           chain: string | null
           created_at: string | null
-          encrypted_private_key: string | null
           id: string
           is_active: boolean | null
           label: string | null
@@ -6359,7 +6373,6 @@ export type Database = {
           balance_sol?: number | null
           chain?: string | null
           created_at?: string | null
-          encrypted_private_key?: string | null
           id?: string
           is_active?: boolean | null
           label?: string | null
@@ -6374,7 +6387,6 @@ export type Database = {
           balance_sol?: number | null
           chain?: string | null
           created_at?: string | null
-          encrypted_private_key?: string | null
           id?: string
           is_active?: boolean | null
           label?: string | null
@@ -7590,6 +7602,33 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_key_vault: {
+        Row: {
+          created_at: string | null
+          encrypted_key_data: string
+          id: string
+          key_derivation_salt: string | null
+          wallet_id: string
+          wallet_source: string
+        }
+        Insert: {
+          created_at?: string | null
+          encrypted_key_data: string
+          id?: string
+          key_derivation_salt?: string | null
+          wallet_id: string
+          wallet_source: string
+        }
+        Update: {
+          created_at?: string | null
+          encrypted_key_data?: string
+          id?: string
+          key_derivation_salt?: string | null
+          wallet_id?: string
+          wallet_source?: string
+        }
+        Relationships: []
+      }
       watchlist: {
         Row: {
           created_at: string
@@ -7864,6 +7903,45 @@ export type Database = {
           wallet_address?: string | null
           wallet_name?: string | null
           wallet_type?: string | null
+        }
+        Relationships: []
+      }
+      saved_payment_methods_safe: {
+        Row: {
+          card_brand: string | null
+          created_at: string | null
+          exp_month: number | null
+          exp_year: number | null
+          id: string | null
+          is_default: boolean | null
+          last_four: string | null
+          nickname: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string | null
+          is_default?: boolean | null
+          last_four?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          card_brand?: string | null
+          created_at?: string | null
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string | null
+          is_default?: boolean | null
+          last_four?: string | null
+          nickname?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

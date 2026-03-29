@@ -209,7 +209,7 @@ serve(async (req) => {
           salt
         );
 
-        // Store wallet in database
+        // Store wallet in database (no private keys in this table)
         const { data: wallet, error: walletError } = await supabase
           .from('quwallet_wallets')
           .insert({
@@ -219,14 +219,20 @@ serve(async (req) => {
             kyber_public_key: kyberKeys.publicKey,
             dilithium_public_key: dilithiumKeys.publicKey,
             ecdsa_public_key: ecdsaKeys.publicKey,
-            encrypted_private_keys: encryptedKeys,
-            key_derivation_salt: arrayToHex(salt),
             wallet_type: 'standard'
           })
           .select()
           .single();
 
         if (walletError) throw walletError;
+
+        // Store private keys in secure vault
+        await supabase.from('wallet_key_vault').insert({
+          wallet_id: wallet.id,
+          wallet_source: 'quwallet_wallets',
+          encrypted_key_data: encryptedKeys,
+          key_derivation_salt: arrayToHex(salt),
+        });
 
         // Create ledger entry for this wallet
         const { error: ledgerError } = await supabase
