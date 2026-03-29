@@ -43,9 +43,11 @@ const NFTRarityAnalyzer = () => {
   useEffect(() => {
     if (!user) return;
     const loadUserNFTs = async () => {
-      const { data } = await supabase
-        .from("user_nfts")
+      const { data } = await (supabase
+        .from("user_nfts") as any)
         .select("id, name, image_url, collection_name, attributes")
+        .eq("owner_id", user.id)
+        .limit(20);
         .eq("owner_id", user.id)
         .limit(20);
 

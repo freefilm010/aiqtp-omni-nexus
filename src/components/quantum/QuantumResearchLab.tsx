@@ -198,7 +198,7 @@ const QuantumResearchLab = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockBackends.filter(b => b.status === 'online').map(backend => (
+                    {backends.filter(b => b.status === 'online').map(backend => (
                       <SelectItem key={backend.name} value={backend.name}>
                         {backend.name} ({backend.qubits} qubits)
                       </SelectItem>
@@ -314,7 +314,7 @@ const QuantumResearchLab = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              {mockBackends.map(backend => (
+              {backends.map(backend => (
                 <div key={backend.name} className="p-4 rounded-lg border">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
