@@ -69,6 +69,7 @@ interface Model {
 
 const MLTrainingInterface = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isTraining, setIsTraining] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState(0);
   const [currentEpoch, setCurrentEpoch] = useState(0);
@@ -101,45 +102,32 @@ const MLTrainingInterface = () => {
     { name: "MFI", selected: false },
   ]);
 
-  const [trainingHistory, setTrainingHistory] = useState<TrainingMetrics[]>(
-    Array.from({ length: 50 }, (_, i) => ({
-      epoch: i + 1,
-      loss: 0.5 * Math.exp(-i / 20) + 0.1 + Math.random() * 0.05,
-      accuracy: 0.5 + 0.4 * (1 - Math.exp(-i / 15)) + Math.random() * 0.05,
-      valLoss: 0.55 * Math.exp(-i / 22) + 0.12 + Math.random() * 0.08,
-      valAccuracy: 0.48 + 0.38 * (1 - Math.exp(-i / 18)) + Math.random() * 0.06,
-    }))
-  );
+  const [trainingHistory, setTrainingHistory] = useState<TrainingMetrics[]>([]);
+  const [savedModels, setSavedModels] = useState<Model[]>([]);
 
-  const [savedModels, setSavedModels] = useState<Model[]>([
-    {
-      id: "1",
-      name: "BTC Price Predictor v2",
-      type: "LSTM",
-      accuracy: 78.5,
-      status: "deployed",
-      createdAt: new Date(Date.now() - 86400000 * 2),
-      metrics: trainingHistory,
-    },
-    {
-      id: "2",
-      name: "Multi-Asset Classifier",
-      type: "Random Forest",
-      accuracy: 82.3,
-      status: "ready",
-      createdAt: new Date(Date.now() - 86400000 * 5),
-      metrics: trainingHistory,
-    },
-    {
-      id: "3",
-      name: "Trend Direction Model",
-      type: "Gradient Boosting",
-      accuracy: 75.8,
-      status: "ready",
-      createdAt: new Date(Date.now() - 86400000 * 10),
-      metrics: trainingHistory,
-    },
-  ]);
+  // Load saved models from DB
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("ml_models")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (data) {
+        setSavedModels(data.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          type: m.model_type,
+          accuracy: Number(m.accuracy),
+          status: m.status as Model["status"],
+          createdAt: new Date(m.created_at),
+          metrics: (m.training_metrics as TrainingMetrics[]) || [],
+        })));
+      }
+    };
+    load();
+  }, [user]);
 
   // Feature importance data
   const featureImportance = [
@@ -190,21 +178,43 @@ const MLTrainingInterface = () => {
     });
   };
 
-  const handleSaveModel = () => {
-    const newModel: Model = {
-      id: Date.now().toString(),
+  const handleSaveModel = async () => {
+    if (!user) return;
+    const accuracy = trainingHistory.length > 0 ? (trainingHistory[trainingHistory.length - 1]?.accuracy * 100 || 85) : 85;
+    const { data, error } = await supabase.from("ml_models").insert({
+      user_id: user.id,
       name: `New Model ${savedModels.length + 1}`,
-      type: modelConfig.type,
-      accuracy: trainingHistory[trainingHistory.length - 1]?.accuracy * 100 || 85,
+      model_type: modelConfig.type,
+      accuracy,
       status: "ready",
-      createdAt: new Date(),
-      metrics: trainingHistory,
-    };
-    setSavedModels([newModel, ...savedModels]);
-    toast({ title: "Model Saved", description: "Model saved successfully" });
+      config: modelConfig as any,
+      training_metrics: trainingHistory as any,
+      feature_importance: featureImportance as any,
+      confusion_matrix: confusionMatrix as any,
+    }).select().single();
+
+    if (!error && data) {
+      const newModel: Model = {
+        id: data.id,
+        name: data.name,
+        type: data.model_type,
+        accuracy: Number(data.accuracy),
+        status: "ready",
+        createdAt: new Date(data.created_at),
+        metrics: trainingHistory,
+      };
+      setSavedModels([newModel, ...savedModels]);
+      toast({ title: "Model Saved", description: "Model saved to database" });
+    }
   };
 
-  const handleDeployModel = (modelId: string) => {
+  const handleDeployModel = async (modelId: string) => {
+    // Undeploy current deployed, deploy new
+    const currentDeployed = savedModels.find(m => m.status === "deployed");
+    if (currentDeployed) {
+      await supabase.from("ml_models").update({ status: "ready" }).eq("id", currentDeployed.id);
+    }
+    await supabase.from("ml_models").update({ status: "deployed" }).eq("id", modelId);
     setSavedModels(savedModels.map(m => 
       m.id === modelId ? { ...m, status: "deployed" as const } : 
       m.status === "deployed" ? { ...m, status: "ready" as const } : m
