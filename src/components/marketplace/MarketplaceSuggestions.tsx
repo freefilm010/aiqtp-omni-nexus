@@ -1,114 +1,32 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import {
-  Lightbulb,
-  ThumbsUp,
-  ThumbsDown,
-  MessageSquare,
-  TrendingUp,
-  Clock,
-  CheckCircle2,
-  Circle,
-  Loader2,
-  Send,
-  Sparkles,
-  Flame,
-  Star
+  Lightbulb, ThumbsUp, MessageSquare, TrendingUp, Clock,
+  CheckCircle2, Circle, Loader2, Send, Sparkles, Flame
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Suggestion {
   id: string;
   title: string;
   description: string;
-  author: string;
+  user_id: string;
   votes: number;
   comments: number;
-  status: "new" | "under_review" | "planned" | "in_progress" | "completed" | "declined";
+  status: string;
   category: string;
-  createdAt: Date;
-  isHot?: boolean;
+  created_at: string;
+  is_hot: boolean;
 }
 
 interface MarketplaceSuggestionsProps {
   marketType: "nft" | "strategy" | "token" | "general";
 }
-
-const mockSuggestions: Suggestion[] = [
-  {
-    id: "1",
-    title: "Add cross-chain NFT bridging",
-    description: "Allow users to move NFTs between Ethereum, Polygon, and Solana seamlessly",
-    author: "CryptoDesigner",
-    votes: 342,
-    comments: 28,
-    status: "planned",
-    category: "NFT",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    isHot: true
-  },
-  {
-    id: "2",
-    title: "Strategy performance comparison tool",
-    description: "Side-by-side comparison of multiple strategies with detailed metrics",
-    author: "QuantTrader",
-    votes: 256,
-    comments: 15,
-    status: "in_progress",
-    category: "Strategy",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: "3",
-    title: "Mobile push notifications for trades",
-    description: "Get instant alerts when bot executes trades or hits targets",
-    author: "MobileFirst",
-    votes: 189,
-    comments: 12,
-    status: "under_review",
-    category: "Platform",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: "4",
-    title: "NFT rarity analyzer integration",
-    description: "Auto-analyze rarity scores for any NFT collection on listing",
-    author: "NFTHunter",
-    votes: 145,
-    comments: 8,
-    status: "new",
-    category: "NFT",
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: "5",
-    title: "Copy trading with profit limits",
-    description: "Set max profit/loss limits when copying other traders",
-    author: "SafeTrader",
-    votes: 423,
-    comments: 45,
-    status: "completed",
-    category: "Trading",
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    isHot: true
-  },
-  {
-    id: "6",
-    title: "Token launch countdown timers",
-    description: "Visual countdown for upcoming token launches with alerts",
-    author: "LaunchPad",
-    votes: 98,
-    comments: 6,
-    status: "new",
-    category: "Token",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-  }
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -131,40 +49,77 @@ const getStatusIcon = (status: string) => {
 };
 
 export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsProps) => {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [voted, setVoted] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"votes" | "recent">("votes");
   const [showForm, setShowForm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const handleVote = (id: string) => {
+  const loadSuggestions = useCallback(async () => {
+    const { data } = await supabase
+      .from("marketplace_suggestions" as any)
+      .select("*")
+      .order(sortBy === "votes" ? "votes" : "created_at", { ascending: false }) as any;
+    if (data) setSuggestions(data);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: myVotes } = await supabase
+        .from("suggestion_votes" as any)
+        .select("suggestion_id")
+        .eq("user_id", user.id) as any;
+      if (myVotes) setVoted(myVotes.map((v: any) => v.suggestion_id));
+    }
+    setLoading(false);
+  }, [sortBy]);
+
+  useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
+
+  const handleVote = async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Sign in to vote"); return; }
+
     if (voted.includes(id)) {
+      await supabase.from("suggestion_votes" as any).delete().eq("suggestion_id", id).eq("user_id", user.id);
+      await supabase.from("marketplace_suggestions" as any).update({ votes: suggestions.find(s => s.id === id)!.votes - 1 } as any).eq("id", id);
       setVoted(prev => prev.filter(v => v !== id));
     } else {
+      await supabase.from("suggestion_votes" as any).insert({ suggestion_id: id, user_id: user.id } as any);
+      await supabase.from("marketplace_suggestions" as any).update({ votes: suggestions.find(s => s.id === id)!.votes + 1 } as any).eq("id", id);
       setVoted(prev => [...prev, id]);
       toast.success("Vote recorded!");
     }
+    loadSuggestions();
   };
 
-  const handleSubmit = () => {
-    if (!newTitle.trim() || !newDesc.trim()) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-    toast.success("Suggestion submitted! Community can now vote on it.");
+  const handleSubmit = async () => {
+    if (!newTitle.trim() || !newDesc.trim()) { toast.error("Please fill in all fields"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Sign in first"); return; }
+
+    const category = marketType === "nft" ? "NFT" : marketType === "strategy" ? "Strategy" : marketType === "token" ? "Token" : "Platform";
+    await supabase.from("marketplace_suggestions" as any).insert({
+      user_id: user.id,
+      title: newTitle,
+      description: newDesc,
+      category,
+    } as any);
+
+    toast.success("Suggestion submitted!");
     setNewTitle("");
     setNewDesc("");
     setShowForm(false);
+    loadSuggestions();
   };
 
-  const filteredSuggestions = mockSuggestions
-    .filter(s => {
-      if (marketType === "nft") return s.category === "NFT" || s.category === "Platform";
-      if (marketType === "strategy") return s.category === "Strategy" || s.category === "Trading";
-      if (marketType === "token") return s.category === "Token" || s.category === "Trading";
-      return true;
-    })
-    .sort((a, b) => sortBy === "votes" ? b.votes - a.votes : b.createdAt.getTime() - a.createdAt.getTime());
+  const filteredSuggestions = suggestions.filter(s => {
+    if (marketType === "nft") return s.category === "NFT" || s.category === "Platform";
+    if (marketType === "strategy") return s.category === "Strategy" || s.category === "Trading";
+    if (marketType === "token") return s.category === "Token" || s.category === "Trading";
+    return true;
+  });
 
   const totalVotes = filteredSuggestions.reduce((sum, s) => sum + s.votes, 0);
   const completedCount = filteredSuggestions.filter(s => s.status === "completed").length;
@@ -202,7 +157,7 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
         </CardContent>
       </Card>
 
-      {/* Submit New Suggestion */}
+      {/* Submit New */}
       <Card>
         <CardContent className="py-4">
           {!showForm ? (
@@ -211,24 +166,12 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
                 <Sparkles className="h-5 w-5 text-primary" />
                 <span className="font-medium">Have an idea? Share it with the community!</span>
               </div>
-              <Button onClick={() => setShowForm(true)}>
-                <Send className="h-4 w-4 mr-2" />
-                Submit Suggestion
-              </Button>
+              <Button onClick={() => setShowForm(true)}><Send className="h-4 w-4 mr-2" />Submit Suggestion</Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <Input 
-                placeholder="Suggestion title..." 
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-              <Textarea 
-                placeholder="Describe your idea in detail..."
-                value={newDesc}
-                onChange={(e) => setNewDesc(e.target.value)}
-                rows={3}
-              />
+              <Input placeholder="Suggestion title..." value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+              <Textarea placeholder="Describe your idea in detail..." value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={3} />
               <div className="flex gap-2">
                 <Button onClick={handleSubmit}>Submit</Button>
                 <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
@@ -238,33 +181,26 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
         </CardContent>
       </Card>
 
-      {/* Sort Options */}
+      {/* Sort */}
       <div className="flex gap-2">
-        <Button 
-          variant={sortBy === "votes" ? "default" : "outline"} 
-          size="sm"
-          onClick={() => setSortBy("votes")}
-        >
-          <TrendingUp className="h-4 w-4 mr-1" />
-          Top Voted
+        <Button variant={sortBy === "votes" ? "default" : "outline"} size="sm" onClick={() => setSortBy("votes")}>
+          <TrendingUp className="h-4 w-4 mr-1" />Top Voted
         </Button>
-        <Button 
-          variant={sortBy === "recent" ? "default" : "outline"} 
-          size="sm"
-          onClick={() => setSortBy("recent")}
-        >
-          <Clock className="h-4 w-4 mr-1" />
-          Recent
+        <Button variant={sortBy === "recent" ? "default" : "outline"} size="sm" onClick={() => setSortBy("recent")}>
+          <Clock className="h-4 w-4 mr-1" />Recent
         </Button>
       </div>
 
-      {/* Suggestions List */}
+      {/* List */}
       <div className="space-y-4">
-        {filteredSuggestions.map(suggestion => (
+        {loading ? (
+          <Card><CardContent className="py-8 text-center text-muted-foreground">Loading suggestions...</CardContent></Card>
+        ) : filteredSuggestions.length === 0 ? (
+          <Card><CardContent className="py-8 text-center text-muted-foreground">No suggestions yet — be the first!</CardContent></Card>
+        ) : filteredSuggestions.map(suggestion => (
           <Card key={suggestion.id} className="hover:border-primary/50 transition-colors">
             <CardContent className="py-4">
               <div className="flex gap-4">
-                {/* Vote Button */}
                 <div className="flex flex-col items-center gap-1">
                   <Button
                     variant={voted.includes(suggestion.id) ? "default" : "outline"}
@@ -272,24 +208,17 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
                     className="h-12 w-12"
                     onClick={() => handleVote(suggestion.id)}
                   >
-                    <ThumbsUp className={`h-5 w-5 ${voted.includes(suggestion.id) ? '' : ''}`} />
+                    <ThumbsUp className="h-5 w-5" />
                   </Button>
-                  <span className="font-bold text-lg">
-                    {suggestion.votes + (voted.includes(suggestion.id) ? 1 : 0)}
-                  </span>
+                  <span className="font-bold text-lg">{suggestion.votes}</span>
                 </div>
-
-                {/* Content */}
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold">{suggestion.title}</h3>
-                        {suggestion.isHot && (
-                          <Badge className="bg-orange-500 gap-1">
-                            <Flame className="h-3 w-3" />
-                            Hot
-                          </Badge>
+                        {suggestion.is_hot && (
+                          <Badge className="bg-orange-500 gap-1"><Flame className="h-3 w-3" />Hot</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">{suggestion.description}</p>
@@ -299,12 +228,9 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
                       {suggestion.status.replace("_", " ")}
                     </Badge>
                   </div>
-
                   <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                    <span>by {suggestion.author}</span>
                     <span className="flex items-center gap-1">
-                      <MessageSquare className="h-3 w-3" />
-                      {suggestion.comments} comments
+                      <MessageSquare className="h-3 w-3" />{suggestion.comments} comments
                     </span>
                     <Badge variant="outline">{suggestion.category}</Badge>
                   </div>

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, ArrowLeftRight, Shield, Clock, CheckCircle, Loader2, AlertTriangle, Zap } from "lucide-react";
 
 interface BridgeTransaction {
@@ -16,7 +16,14 @@ interface BridgeTransaction {
   status: "pending" | "locking" | "minting" | "completed" | "failed";
   progress: number;
   timestamp: string;
-  txHash?: string;
+}
+
+interface UserNFT {
+  id: string;
+  name: string;
+  chain: string;
+  collection: string;
+  image: string;
 }
 
 const CHAINS = [
@@ -25,32 +32,38 @@ const CHAINS = [
   { id: "solana", name: "Solana", icon: "◎", color: "text-green-400", fees: 0.0005 },
 ];
 
-const MOCK_NFTS = [
-  { id: "1", name: "Quantum Bot #42", chain: "ethereum", collection: "QuantBots", image: "🤖" },
-  { id: "2", name: "Alpha Signal #7", chain: "ethereum", collection: "AlphaSignals", image: "📡" },
-  { id: "3", name: "DeFi Guardian #12", chain: "polygon", collection: "DeFiGuardians", image: "🛡️" },
-  { id: "4", name: "Solana Voyager #3", chain: "solana", collection: "Voyagers", image: "🚀" },
-];
-
 const CrossChainBridge = () => {
   const [fromChain, setFromChain] = useState("ethereum");
   const [toChain, setToChain] = useState("solana");
   const [selectedNft, setSelectedNft] = useState("");
   const [bridging, setBridging] = useState(false);
-  const [transactions, setTransactions] = useState<BridgeTransaction[]>([
-    {
-      id: "tx-001",
-      nftName: "Quantum Bot #18",
-      fromChain: "ethereum",
-      toChain: "polygon",
-      status: "completed",
-      progress: 100,
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      txHash: "0xabc...def",
-    },
-  ]);
+  const [transactions, setTransactions] = useState<BridgeTransaction[]>([]);
+  const [userNfts, setUserNfts] = useState<UserNFT[]>([]);
 
-  const availableNfts = MOCK_NFTS.filter((n) => n.chain === fromChain);
+  const loadUserNfts = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("auto_nft_generations")
+      .select("id, name, chain, description, image_url")
+      .eq("user_id", user.id)
+      .eq("mint_status", "minted") as any;
+
+    if (data) {
+      setUserNfts(data.map((n: any) => ({
+        id: n.id,
+        name: n.name,
+        chain: n.chain || 'ethereum',
+        collection: 'My NFTs',
+        image: n.image_url ? '🖼️' : '🎨',
+      })));
+    }
+  }, []);
+
+  useEffect(() => { loadUserNfts(); }, [loadUserNfts]);
+
+  const availableNfts = userNfts.filter((n) => n.chain === fromChain);
   const fromChainData = CHAINS.find((c) => c.id === fromChain)!;
   const toChainData = CHAINS.find((c) => c.id === toChain)!;
   const estimatedFee = fromChainData.fees + toChainData.fees;
@@ -62,27 +75,17 @@ const CrossChainBridge = () => {
   };
 
   const handleBridge = async () => {
-    if (!selectedNft) {
-      toast.error("Select an NFT to bridge");
-      return;
-    }
-    const nft = MOCK_NFTS.find((n) => n.id === selectedNft);
+    if (!selectedNft) { toast.error("Select an NFT to bridge"); return; }
+    const nft = userNfts.find((n) => n.id === selectedNft);
     if (!nft) return;
 
     setBridging(true);
     const txId = `tx-${Date.now()}`;
     const newTx: BridgeTransaction = {
-      id: txId,
-      nftName: nft.name,
-      fromChain,
-      toChain,
-      status: "pending",
-      progress: 0,
-      timestamp: new Date().toISOString(),
+      id: txId, nftName: nft.name, fromChain, toChain, status: "pending", progress: 0, timestamp: new Date().toISOString(),
     };
     setTransactions((prev) => [newTx, ...prev]);
 
-    // Simulate bridge stages
     const stages: Array<{ status: BridgeTransaction["status"]; progress: number; delay: number }> = [
       { status: "locking", progress: 25, delay: 1500 },
       { status: "locking", progress: 50, delay: 2000 },
@@ -97,9 +100,13 @@ const CrossChainBridge = () => {
       );
     }
 
+    // Update chain in DB
+    await supabase.from("auto_nft_generations").update({ chain: toChain } as any).eq("id", selectedNft);
+
     toast.success(`${nft.name} bridged to ${toChainData.name}!`);
     setBridging(false);
     setSelectedNft("");
+    loadUserNfts();
   };
 
   const statusIcon = (status: BridgeTransaction["status"]) => {
@@ -114,54 +121,39 @@ const CrossChainBridge = () => {
 
   return (
     <div className="space-y-6">
-      {/* Bridge Interface */}
       <Card className="border-primary/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ArrowLeftRight className="h-5 w-5 text-primary" />
-            Cross-Chain NFT Bridge
+            <ArrowLeftRight className="h-5 w-5 text-primary" />Cross-Chain NFT Bridge
           </CardTitle>
-          <CardDescription>
-            Move NFTs seamlessly between Ethereum, Polygon, and Solana using lock-and-mint bridging
-          </CardDescription>
+          <CardDescription>Move your NFTs between Ethereum, Polygon, and Solana</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Chain Selection */}
           <div className="flex items-center gap-4">
             <div className="flex-1 space-y-2">
               <label className="text-sm font-medium text-muted-foreground">From</label>
               <Select value={fromChain} onValueChange={(v) => { setFromChain(v); setSelectedNft(""); }}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CHAINS.filter((c) => c.id !== toChain).map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      <span className="flex items-center gap-2">
-                        <span className={c.color}>{c.icon}</span> {c.name}
-                      </span>
+                      <span className="flex items-center gap-2"><span className={c.color}>{c.icon}</span> {c.name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <Button variant="ghost" size="icon" className="mt-6" onClick={handleSwapChains}>
               <ArrowLeftRight className="h-4 w-4" />
             </Button>
-
             <div className="flex-1 space-y-2">
               <label className="text-sm font-medium text-muted-foreground">To</label>
               <Select value={toChain} onValueChange={setToChain}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CHAINS.filter((c) => c.id !== fromChain).map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      <span className="flex items-center gap-2">
-                        <span className={c.color}>{c.icon}</span> {c.name}
-                      </span>
+                      <span className="flex items-center gap-2"><span className={c.color}>{c.icon}</span> {c.name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -169,7 +161,6 @@ const CrossChainBridge = () => {
             </div>
           </div>
 
-          {/* NFT Selection */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Select NFT</label>
             {availableNfts.length > 0 ? (
@@ -179,9 +170,7 @@ const CrossChainBridge = () => {
                     key={nft.id}
                     onClick={() => setSelectedNft(nft.id)}
                     className={`p-3 rounded-lg border text-left transition-all ${
-                      selectedNft === nft.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
+                      selectedNft === nft.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -201,7 +190,6 @@ const CrossChainBridge = () => {
             )}
           </div>
 
-          {/* Fee Estimate */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
             <div className="flex items-center gap-2 text-sm">
               <Zap className="h-4 w-4 text-yellow-400" />
@@ -210,67 +198,50 @@ const CrossChainBridge = () => {
             <span className="font-mono font-medium">{estimatedFee.toFixed(4)} ETH</span>
           </div>
 
-          {/* Security Notice */}
           <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
             <Shield className="h-4 w-4 text-green-400 mt-0.5" />
             <p className="text-xs text-green-300">
-              Protected by lock-and-mint protocol. Your NFT is locked on the source chain and a verified copy is minted on the destination chain. Original metadata and provenance are preserved.
+              Protected by lock-and-mint protocol. Original metadata and provenance are preserved.
             </p>
           </div>
 
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleBridge}
-            disabled={!selectedNft || bridging}
-          >
-            {bridging ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Bridging...</>
-            ) : (
-              <><ArrowRight className="h-4 w-4 mr-2" /> Bridge NFT</>
-            )}
+          <Button className="w-full" size="lg" onClick={handleBridge} disabled={!selectedNft || bridging}>
+            {bridging ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Bridging...</> : <><ArrowRight className="h-4 w-4 mr-2" /> Bridge NFT</>}
           </Button>
         </CardContent>
       </Card>
 
-      {/* Transaction History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Bridge History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {transactions.map((tx) => {
-              const from = CHAINS.find((c) => c.id === tx.fromChain)!;
-              const to = CHAINS.find((c) => c.id === tx.toChain)!;
-              return (
-                <div key={tx.id} className="p-3 rounded-lg border border-border space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {statusIcon(tx.status)}
-                      <span className="font-medium text-sm">{tx.nftName}</span>
+      {transactions.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-lg">Bridge History</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {transactions.map((tx) => {
+                const from = CHAINS.find((c) => c.id === tx.fromChain)!;
+                const to = CHAINS.find((c) => c.id === tx.toChain)!;
+                return (
+                  <div key={tx.id} className="p-3 rounded-lg border border-border space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {statusIcon(tx.status)}
+                        <span className="font-medium text-sm">{tx.nftName}</span>
+                      </div>
+                      <Badge variant={tx.status === "completed" ? "default" : "secondary"} className="text-xs">{tx.status}</Badge>
                     </div>
-                    <Badge variant={tx.status === "completed" ? "default" : "secondary"} className="text-xs">
-                      {tx.status}
-                    </Badge>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className={from.color}>{from.icon} {from.name}</span>
+                      <ArrowRight className="h-3 w-3" />
+                      <span className={to.color}>{to.icon} {to.name}</span>
+                    </div>
+                    {tx.status !== "completed" && tx.status !== "failed" && <Progress value={tx.progress} className="h-1" />}
+                    <p className="text-xs text-muted-foreground">{new Date(tx.timestamp).toLocaleString()}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={from.color}>{from.icon} {from.name}</span>
-                    <ArrowRight className="h-3 w-3" />
-                    <span className={to.color}>{to.icon} {to.name}</span>
-                  </div>
-                  {tx.status !== "completed" && tx.status !== "failed" && (
-                    <Progress value={tx.progress} className="h-1" />
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(tx.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

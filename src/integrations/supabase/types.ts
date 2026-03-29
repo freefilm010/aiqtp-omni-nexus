@@ -4257,6 +4257,48 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_suggestions: {
+        Row: {
+          category: string
+          comments: number
+          created_at: string | null
+          description: string
+          id: string
+          is_hot: boolean | null
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+          votes: number
+        }
+        Insert: {
+          category?: string
+          comments?: number
+          created_at?: string | null
+          description: string
+          id?: string
+          is_hot?: boolean | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+          votes?: number
+        }
+        Update: {
+          category?: string
+          comments?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          is_hot?: boolean | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          votes?: number
+        }
+        Relationships: []
+      }
       nft_generation_queue: {
         Row: {
           base_price: number | null
@@ -6581,6 +6623,35 @@ export type Database = {
           },
         ]
       }
+      suggestion_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          suggestion_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          suggestion_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          suggestion_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestion_votes_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supported_chains: {
         Row: {
           chain_type: string
@@ -7106,6 +7177,57 @@ export type Database = {
           total?: number
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      trading_bots: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_dry_run: boolean | null
+          last_trade_at: string | null
+          name: string
+          pair: string
+          profit: number | null
+          status: string
+          strategy: string
+          timeframe: string
+          trades: number | null
+          updated_at: string | null
+          user_id: string
+          win_rate: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_dry_run?: boolean | null
+          last_trade_at?: string | null
+          name: string
+          pair?: string
+          profit?: number | null
+          status?: string
+          strategy: string
+          timeframe?: string
+          trades?: number | null
+          updated_at?: string | null
+          user_id: string
+          win_rate?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_dry_run?: boolean | null
+          last_trade_at?: string | null
+          name?: string
+          pair?: string
+          profit?: number | null
+          status?: string
+          strategy?: string
+          timeframe?: string
+          trades?: number | null
+          updated_at?: string | null
+          user_id?: string
+          win_rate?: number | null
         }
         Relationships: []
       }
@@ -7911,6 +8033,15 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faucet_leaderboard: {
+        Row: {
+          active_days: number | null
+          display_name: string | null
+          total_claims: number | null
+          user_id: string | null
+        }
+        Relationships: []
       }
       quwallet_wallets_safe: {
         Row: {
