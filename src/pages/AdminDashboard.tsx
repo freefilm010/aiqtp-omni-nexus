@@ -30,6 +30,7 @@ import AdminKnowledgeBase from "@/components/admin/AdminKnowledgeBase";
 import AdminReportsCenter from "@/components/admin/AdminReportsCenter";
 import AdminUsersManagement from "@/components/admin/AdminUsersManagement";
 import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
+import ApexDashboard from "@/components/admin/ApexDashboard";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -96,6 +97,7 @@ const AdminDashboard = () => {
             <Route path="users" element={<AdminUsersManagement />} />
             <Route path="logs" element={<AdminReportsCenter />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="apex" element={<ApexDashboard />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </div>
