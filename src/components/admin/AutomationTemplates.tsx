@@ -180,15 +180,29 @@ const AutomationTemplates = () => {
                           <Input
                             placeholder="Webhook URL (optional)"
                             className="text-xs h-8"
-                            onChange={async (e) => {
-                              if (e.target.value) {
-                                await supabase
-                                  .from("automation_templates")
-                                  .update({ webhook_url: e.target.value })
-                                  .eq("id", template.id);
+                            onBlur={async (e) => {
+                              const url = e.target.value.trim();
+                              if (url) {
+                                try {
+                                  const parsed = new URL(url);
+                                  // Strip query params that may contain tokens
+                                  parsed.search = '';
+                                  await supabase
+                                    .from("automation_templates")
+                                    .update({ webhook_url: parsed.toString() })
+                                    .eq("id", template.id);
+                                  toast.success("Webhook URL saved (query parameters stripped for security)");
+                                } catch {
+                                  toast.error("Invalid URL format");
+                                }
                               }
                             }}
                           />
+                        )}
+                        {template.webhook_url && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            Webhook: {(() => { try { return new URL(template.webhook_url).hostname; } catch { return '***'; } })()}
+                          </p>
                         )}
 
                         <div className="flex gap-2">

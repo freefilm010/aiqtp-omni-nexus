@@ -46,7 +46,7 @@ const SavedPaymentMethods = () => {
     if (!user) { setLoading(false); return; }
 
     const { data } = await supabase
-      .from("saved_payment_methods")
+      .from("saved_payment_methods_safe" as any)
       .select("id, nickname, method_type, last_four, card_brand, bank_name, is_default, created_at, exp_month, exp_year")
       .order("is_default", { ascending: false }) as { data: SavedMethod[] | null };
 
