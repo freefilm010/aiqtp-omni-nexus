@@ -10,22 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
-  Search,
-  Plus,
-  Star,
-  TrendingUp,
-  TrendingDown,
-  Filter,
-  Tag,
-  Code2,
-  BarChart3,
-  Activity,
-  Brain,
-  Sparkles,
-  Copy,
-  Trash2,
-  Edit,
-  Lock
+  Search, Plus, Star, TrendingUp, TrendingDown, Filter, Tag,
+  Code2, BarChart3, Activity, Brain, Sparkles, Copy, Trash2,
+  Edit, Lock, Loader2, Rocket
 } from "lucide-react";
 import { BlurredCode, ProtectedCodeBadge } from "@/components/ui/blurred-code";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
