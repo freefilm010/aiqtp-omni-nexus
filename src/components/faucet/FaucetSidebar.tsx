@@ -96,28 +96,33 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
               {valuedItems.length > 0 ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[9px] text-muted-foreground px-2 pb-1 border-b border-border/30">
-                    <span className="w-16">Asset</span>
-                    <span className="text-right w-16">Qty</span>
-                    <span className="text-right w-16">USD</span>
-                    <span className="text-right w-16">USDT</span>
+                    <span className="w-14">Asset</span>
+                    <span className="text-right w-12">Qty</span>
+                    <span className="text-right w-14">Unit $</span>
+                    <span className="text-right w-14">USD</span>
+                    <span className="text-right w-14">USDT</span>
                   </div>
                   {valuedItems
                     .sort((a, b) => b.valueUsd - a.valueUsd)
                     .map((item) => {
                       const token = tokens.find(t => t.symbol === item.symbol);
+                      const unitPrice = item.quantity > 0 ? item.valueUsd / item.quantity : 0;
                       return (
                         <div key={item.symbol} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
-                          <div className="flex items-center gap-1.5 w-16">
+                          <div className="flex items-center gap-1 w-14">
                             {token?.icon || <Coins className="h-3.5 w-3.5" />}
                             <span className="font-medium text-[10px]">{item.symbol}</span>
                           </div>
-                          <span className="font-mono text-[10px] text-right w-16">
+                          <span className="font-mono text-[10px] text-right w-12">
                             {formatQuantity(item.quantity)}
                           </span>
-                          <span className="font-mono text-[10px] text-green-500 text-right w-16">
+                          <span className="font-mono text-[10px] text-primary text-right w-14">
+                            {formatUsdValue(unitPrice)}
+                          </span>
+                          <span className="font-mono text-[10px] text-green-500 text-right w-14">
                             {formatUsdValue(item.valueUsd)}
                           </span>
-                          <span className="font-mono text-[10px] text-muted-foreground text-right w-16">
+                          <span className="font-mono text-[10px] text-muted-foreground text-right w-14">
                             {formatUsdValue(item.valueUsdt)}
                           </span>
                         </div>
