@@ -418,23 +418,37 @@ const FactorLibrary = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => duplicateFactor(selectedFactor)}
-                    >
-                      <Copy className="h-4 w-4 mr-1" />
-                      Duplicate
-                    </Button>
-                    <Button 
-                      variant="outline" 
+                      className="w-full"
                       size="sm"
-                      onClick={() => deleteFactor(selectedFactor.id)}
+                      onClick={() => autoGenerateFromFactor(selectedFactor)}
+                      disabled={generatingStrategy}
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      {generatingStrategy ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Generating...</>
+                      ) : (
+                        <><Rocket className="h-4 w-4 mr-1" />Auto: Generate → Enhance → Train</>
+                      )}
                     </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => duplicateFactor(selectedFactor)}
+                      >
+                        <Copy className="h-4 w-4 mr-1" />
+                        Duplicate
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => deleteFactor(selectedFactor.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
