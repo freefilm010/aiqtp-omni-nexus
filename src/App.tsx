@@ -73,6 +73,7 @@ const GiveawayPage = lazy(() => import("./pages/GiveawayPage"));
 const StatsArenaPage = lazy(() => import("./pages/StatsArenaPage"));
 const RewardsStorePage = lazy(() => import("./pages/RewardsStorePage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -491,6 +492,7 @@ const App = () => (
                           </ProtectedRoute>
                         }
                       />
+                      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
