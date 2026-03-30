@@ -49,6 +49,7 @@ const CryptoFaucet = () => {
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
   const lastClaimTimesRef = useRef<Record<string, Date>>({});
+  const { getValuation } = useAssetValuation();
 
   const loadClaims = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -145,7 +146,13 @@ const CryptoFaucet = () => {
   const routeToCompound = useCallback(async (tokenSymbol: string, amount: number) => {
     // Always compound — if engine doesn't exist yet, skip silently
     if (!compoundEngine) return;
-    const deployAmount = amount * (reinvestPercent / 100);
+    
+    // Convert token amount to real USD value using live prices
+    const valuation = getValuation(tokenSymbol, amount);
+    const usdValue = valuation.valueUsd;
+    if (usdValue <= 0) return;
+    
+    const deployAmount = usdValue * (reinvestPercent / 100);
     if (deployAmount <= 0) return;
 
     const strategies = [
@@ -157,15 +164,35 @@ const CryptoFaucet = () => {
     for (const strat of strategies) {
       const stratAmount = deployAmount * (strat.pct / 100);
       if (stratAmount <= 0) continue;
+      
+      // Create allocation record for tracking
+      await supabase.from("auto_invest_allocations").insert({
+        engine_id: compoundEngine.id,
+        asset_symbol: tokenSymbol,
+        asset_name: strat.name,
+        asset_class: 'strategy',
+        allocation_type: 'growth',
+        target_percent: strat.pct,
+        current_percent: strat.pct,
+        value_usd: stratAmount,
+        quantity: amount * (strat.pct / 100),
+        entry_price: valuation.priceUsd,
+        current_price: valuation.priceUsd,
+        is_active: true,
+      } as any);
+      
+      // Log transaction
       await supabase.from("auto_invest_transactions").insert({
         engine_id: compoundEngine.id,
         transaction_type: 'deploy',
         amount_usd: stratAmount,
         asset_symbol: tokenSymbol,
         side: 'buy',
+        price: valuation.priceUsd,
+        quantity: amount * (strat.pct / 100),
         status: 'completed',
         ai_triggered: true,
-        ai_reason: `Auto-compound → ${strat.name} (${strat.pct}%)`,
+        ai_reason: `Auto-compound ${tokenSymbol} → ${strat.name} (${strat.pct}%) | $${usdValue.toFixed(2)} total`,
         ai_confidence: 0.85,
         market_regime: 'growth',
       } as any);
@@ -178,7 +205,7 @@ const CryptoFaucet = () => {
     } as any).eq("id", compoundEngine.id) as any;
 
     await loadCompoundEngine();
-  }, [compoundEngine, reinvestPercent, loadCompoundEngine]);
+  }, [compoundEngine, reinvestPercent, loadCompoundEngine, getValuation]);
 
   useEffect(() => { autoCompoundRef.current = autoCompound; }, [autoCompound]);
   useEffect(() => { autoClaimRef.current = autoClaim; }, [autoClaim]);
