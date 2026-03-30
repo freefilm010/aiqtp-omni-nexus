@@ -19,6 +19,7 @@ import {
   Zap,
   AlertTriangle
 } from "lucide-react";
+import GasFeeOptimizer from "./GasFeeOptimizer";
 
 const TokenCreator = () => {
   const [name, setName] = useState("");
@@ -277,7 +278,7 @@ const TokenCreator = () => {
         <Card className="border-amber-500/50 bg-amber-500/5">
           <CardContent className="py-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+      <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-medium text-amber-500">Trading Warning</p>
                 <p className="text-muted-foreground">
@@ -287,6 +288,8 @@ const TokenCreator = () => {
             </div>
           </CardContent>
         </Card>
+
+        <GasFeeOptimizer selectedChain={chain} onChainRecommend={setChain} />
       </div>
     </div>
   );

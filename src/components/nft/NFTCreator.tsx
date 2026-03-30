@@ -21,6 +21,7 @@ import {
   Zap,
   Loader2
 } from "lucide-react";
+import GasFeeOptimizer from "@/components/token/GasFeeOptimizer";
 
 const NFTCreator = () => {
   const { user } = useAuth();
@@ -291,6 +292,8 @@ const NFTCreator = () => {
           </div>
         </CardContent>
       </Card>
+
+      <GasFeeOptimizer selectedChain={chain} onChainRecommend={setChain} />
     </div>
   );
 };
