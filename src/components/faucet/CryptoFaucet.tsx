@@ -296,9 +296,7 @@ const CryptoFaucet = () => {
         const last = lastClaimTimesRef.current[token.id];
         const onCd = last && (Date.now() - last.getTime()) < (token.claimInterval * 3600000);
         if (!onCd && token.available) {
-          const { error } = await supabase.from("faucet_claims").insert({
-            user_id: userId, amount: token.claimAmount, chain: token.id, wallet_address: '', status: 'completed',
-          } as any);
+          const error = await insertClaim(token);
           if (!error) { count++; await routeToCompound(token.symbol, token.claimAmount); }
         }
       }
