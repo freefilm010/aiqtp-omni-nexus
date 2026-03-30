@@ -2024,6 +2024,48 @@ export type Database = {
           },
         ]
       }
+      custody_accounts: {
+        Row: {
+          account_type: string
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          insurance_coverage: number
+          last_audit_date: string | null
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          insurance_coverage?: number
+          last_audit_date?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          insurance_coverage?: number
+          last_audit_date?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_feedback: {
         Row: {
           admin_notes: string | null
@@ -2695,6 +2737,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      deployed_contracts: {
+        Row: {
+          chain: string
+          contract_address: string
+          created_at: string
+          deployed_at: string
+          id: string
+          max_supply: number | null
+          mint_price: number | null
+          name: string
+          status: string
+          symbol: string | null
+          template: string
+          user_id: string
+        }
+        Insert: {
+          chain?: string
+          contract_address: string
+          created_at?: string
+          deployed_at?: string
+          id?: string
+          max_supply?: number | null
+          mint_price?: number | null
+          name: string
+          status?: string
+          symbol?: string | null
+          template: string
+          user_id: string
+        }
+        Update: {
+          chain?: string
+          contract_address?: string
+          created_at?: string
+          deployed_at?: string
+          id?: string
+          max_supply?: number | null
+          mint_price?: number | null
+          name?: string
+          status?: string
+          symbol?: string | null
+          template?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       dex_pairs: {
         Row: {
@@ -4219,6 +4306,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      margin_facilities: {
+        Row: {
+          collateral_value: number
+          created_at: string
+          credit_limit: number
+          credit_used: number
+          facility_type: string
+          id: string
+          interest_rate: number
+          ltv_ratio: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          collateral_value?: number
+          created_at?: string
+          credit_limit?: number
+          credit_used?: number
+          facility_type: string
+          id?: string
+          interest_rate?: number
+          ltv_ratio?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          collateral_value?: number
+          created_at?: string
+          credit_limit?: number
+          credit_used?: number
+          facility_type?: string
+          id?: string
+          interest_rate?: number
+          ltv_ratio?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       market_alerts: {
         Row: {
@@ -6438,6 +6567,36 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          severity: string
+          user_id: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          severity?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          severity?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       satellite_services: {
         Row: {
           affiliate_code: string | null
@@ -7557,6 +7716,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      token_listings: {
+        Row: {
+          bonding_progress: number
+          chain: string
+          created_at: string
+          creator_address: string | null
+          description: string | null
+          holders: number
+          id: string
+          is_graduated: boolean
+          is_verified: boolean
+          market_cap: number
+          name: string
+          price: number
+          price_change_24h: number
+          symbol: string
+          updated_at: string
+          volume_24h: number
+        }
+        Insert: {
+          bonding_progress?: number
+          chain?: string
+          created_at?: string
+          creator_address?: string | null
+          description?: string | null
+          holders?: number
+          id?: string
+          is_graduated?: boolean
+          is_verified?: boolean
+          market_cap?: number
+          name: string
+          price?: number
+          price_change_24h?: number
+          symbol: string
+          updated_at?: string
+          volume_24h?: number
+        }
+        Update: {
+          bonding_progress?: number
+          chain?: string
+          created_at?: string
+          creator_address?: string | null
+          description?: string | null
+          holders?: number
+          id?: string
+          is_graduated?: boolean
+          is_verified?: boolean
+          market_cap?: number
+          name?: string
+          price?: number
+          price_change_24h?: number
+          symbol?: string
+          updated_at?: string
+          volume_24h?: number
+        }
+        Relationships: []
       }
       token_price_feeds: {
         Row: {
