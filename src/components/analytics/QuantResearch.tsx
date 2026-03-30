@@ -60,10 +60,10 @@ transaction_cost = 0.001
   const [isExecuting, setIsExecuting] = useState(false);
   const [selectedNotebook, setSelectedNotebook] = useState("alpha-research");
 
-  // Factor Decay Analysis
+  // Factor Decay Analysis — deterministic noise via sine
   const factorDecay = Array.from({ length: 30 }, (_, i) => ({
     day: i + 1,
-    ic: 0.12 * Math.exp(-i / 15) + Math.random() * 0.02,
+    ic: 0.12 * Math.exp(-i / 15) + Math.abs(Math.sin(i * 3.14159)) * 0.02,
     icSmooth: 0.12 * Math.exp(-i / 15),
     cumReturn: (1 + 0.003) ** i - 1,
   }));

@@ -286,7 +286,7 @@ const QuantAnalytics = () => {
         </div>
         <div className="h-12 flex items-end gap-0.5">
           {Array.from({ length: 24 }, (_, i) => {
-            const height = Math.random() * 100;
+            const height = Math.abs(Math.sin(i * 1.618 + 0.5)) * 100;
             const isHigh = height > 60;
             return (
               <div 

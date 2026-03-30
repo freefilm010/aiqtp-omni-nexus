@@ -98,12 +98,17 @@ export interface NFTAttribute {
   rarity_score?: number;
 }
 
-function getRandomElement<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+// Deterministic seeded pseudo-random for reproducible NFT generation
+function seededValue(seed: number, offset: number): number {
+  return Math.abs(Math.sin(seed * 0.7127 + offset * 1.618033));
 }
 
-function calculateRarity(): { name: string; score: number; color: string } {
-  const roll = Math.random() * 100;
+function getSeededElement<T>(arr: T[], seed: number, offset: number): T {
+  return arr[Math.floor(seededValue(seed, offset) * arr.length)];
+}
+
+function calculateRarity(seed: number): { name: string; score: number; color: string } {
+  const roll = seededValue(seed, 99) * 100;
   let cumulative = 0;
   for (const tier of TRENDING_ATTRIBUTES.rarityTiers) {
     cumulative += tier.weight;
@@ -114,33 +119,34 @@ function calculateRarity(): { name: string; score: number; color: string } {
   return { name: 'Common', score: 50, color: '#8B9A9A' };
 }
 
-function generateTokenId(): string {
+function generateTokenId(edition: number): string {
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 10);
-  return `AIQTP-${timestamp}-${random}`.toUpperCase();
+  const editionHex = edition.toString(36).padStart(6, '0');
+  return `AIQTP-${timestamp}-${editionHex}`.toUpperCase();
 }
 
 export function generateCopyrightNFT(edition: number): GeneratedNFT {
-  const theme = getRandomElement(COPYRIGHT_THEMES);
-  const rarity = calculateRarity();
+  const seed = edition * 31;
+  const theme = getSeededElement(COPYRIGHT_THEMES, seed, 0);
+  const rarity = calculateRarity(seed);
   const now = new Date();
   
-  const background = getRandomElement(TRENDING_ATTRIBUTES.backgrounds);
-  const style = getRandomElement(TRENDING_ATTRIBUTES.styles);
-  const effect = getRandomElement(TRENDING_ATTRIBUTES.effects);
-  const motion = getRandomElement(TRENDING_ATTRIBUTES.motionTypes);
-  const aura = getRandomElement(TRENDING_ATTRIBUTES.auras);
-  const pattern = getRandomElement(TRENDING_ATTRIBUTES.patterns);
+  const background = getSeededElement(TRENDING_ATTRIBUTES.backgrounds, seed, 1);
+  const style = getSeededElement(TRENDING_ATTRIBUTES.styles, seed, 2);
+  const effect = getSeededElement(TRENDING_ATTRIBUTES.effects, seed, 3);
+  const motion = getSeededElement(TRENDING_ATTRIBUTES.motionTypes, seed, 4);
+  const aura = getSeededElement(TRENDING_ATTRIBUTES.auras, seed, 5);
+  const pattern = getSeededElement(TRENDING_ATTRIBUTES.patterns, seed, 6);
 
   const attributes: NFTAttribute[] = [
     { trait_type: 'Type', value: 'Copyright', rarity_score: 100 },
     { trait_type: 'Category', value: theme.category, rarity_score: 85 },
-    { trait_type: 'Background', value: background, rarity_score: Math.random() * 50 + 50 },
-    { trait_type: 'Style', value: style, rarity_score: Math.random() * 60 + 40 },
-    { trait_type: 'Effect', value: effect, rarity_score: Math.random() * 70 + 30 },
+    { trait_type: 'Background', value: background, rarity_score: seededValue(seed, 10) * 50 + 50 },
+    { trait_type: 'Style', value: style, rarity_score: seededValue(seed, 11) * 60 + 40 },
+    { trait_type: 'Effect', value: effect, rarity_score: seededValue(seed, 12) * 70 + 30 },
     { trait_type: 'Motion', value: motion, rarity_score: motion !== 'Static' ? 75 : 30 },
     { trait_type: 'Aura', value: aura, rarity_score: aura !== 'None' ? 80 : 20 },
-    { trait_type: 'Pattern', value: pattern, rarity_score: Math.random() * 55 + 45 },
+    { trait_type: 'Pattern', value: pattern, rarity_score: seededValue(seed, 13) * 55 + 45 },
     { trait_type: 'Edition', value: edition },
     { trait_type: 'Genesis', value: 'AIQTP Platform' },
     { trait_type: 'Rarity Tier', value: rarity.name, rarity_score: rarity.score }
@@ -153,7 +159,7 @@ export function generateCopyrightNFT(edition: number): GeneratedNFT {
 
   return {
     id: `copyright-${edition}`,
-    tokenId: generateTokenId(),
+    tokenId: generateTokenId(edition),
     name: `${theme.prefix} © #${edition.toString().padStart(4, '0')}`,
     description: `Official AIQTP™ AI Quantum Trading Portal Copyright NFT for ${theme.category}. Protected intellectual property registered on the Quantum Time Crystal Chain. Edition ${edition} of 10,000. Features ${style} style with ${effect} effects.`,
     type: 'copyright',
@@ -171,7 +177,7 @@ export function generateCopyrightNFT(edition: number): GeneratedNFT {
     attributes,
     rarity: rarity.name,
     rarityScore: rarity.score,
-    estimatedValue: baseValue * (1 + Math.random() * 0.5),
+    estimatedValue: baseValue * (1 + seededValue(seed, 20) * 0.5),
     chain: 'QTC',
     status: 'minted',
     owner: 'admin-wallet-0x000',
@@ -180,27 +186,28 @@ export function generateCopyrightNFT(edition: number): GeneratedNFT {
 }
 
 export function generateTrademarkNFT(edition: number): GeneratedNFT {
-  const theme = getRandomElement(TRADEMARK_THEMES);
-  const rarity = calculateRarity();
+  const seed = edition * 37 + 10000;
+  const theme = getSeededElement(TRADEMARK_THEMES, seed, 0);
+  const rarity = calculateRarity(seed);
   const now = new Date();
   
-  const background = getRandomElement(TRENDING_ATTRIBUTES.backgrounds);
-  const style = getRandomElement(TRENDING_ATTRIBUTES.styles);
-  const effect = getRandomElement(TRENDING_ATTRIBUTES.effects);
-  const motion = getRandomElement(TRENDING_ATTRIBUTES.motionTypes);
-  const aura = getRandomElement(TRENDING_ATTRIBUTES.auras);
-  const pattern = getRandomElement(TRENDING_ATTRIBUTES.patterns);
+  const background = getSeededElement(TRENDING_ATTRIBUTES.backgrounds, seed, 1);
+  const style = getSeededElement(TRENDING_ATTRIBUTES.styles, seed, 2);
+  const effect = getSeededElement(TRENDING_ATTRIBUTES.effects, seed, 3);
+  const motion = getSeededElement(TRENDING_ATTRIBUTES.motionTypes, seed, 4);
+  const aura = getSeededElement(TRENDING_ATTRIBUTES.auras, seed, 5);
+  const pattern = getSeededElement(TRENDING_ATTRIBUTES.patterns, seed, 6);
 
   const attributes: NFTAttribute[] = [
     { trait_type: 'Type', value: 'Trademark', rarity_score: 100 },
     { trait_type: 'Category', value: theme.category, rarity_score: 90 },
     { trait_type: 'Brand', value: theme.prefix, rarity_score: 95 },
-    { trait_type: 'Background', value: background, rarity_score: Math.random() * 50 + 50 },
-    { trait_type: 'Style', value: style, rarity_score: Math.random() * 60 + 40 },
-    { trait_type: 'Effect', value: effect, rarity_score: Math.random() * 70 + 30 },
+    { trait_type: 'Background', value: background, rarity_score: seededValue(seed, 10) * 50 + 50 },
+    { trait_type: 'Style', value: style, rarity_score: seededValue(seed, 11) * 60 + 40 },
+    { trait_type: 'Effect', value: effect, rarity_score: seededValue(seed, 12) * 70 + 30 },
     { trait_type: 'Motion', value: motion, rarity_score: motion !== 'Static' ? 75 : 30 },
     { trait_type: 'Aura', value: aura, rarity_score: aura !== 'None' ? 80 : 20 },
-    { trait_type: 'Pattern', value: pattern, rarity_score: Math.random() * 55 + 45 },
+    { trait_type: 'Pattern', value: pattern, rarity_score: seededValue(seed, 13) * 55 + 45 },
     { trait_type: 'Edition', value: edition },
     { trait_type: 'Genesis', value: 'AIQTP Platform' },
     { trait_type: 'Rarity Tier', value: rarity.name, rarity_score: rarity.score },
@@ -214,7 +221,7 @@ export function generateTrademarkNFT(edition: number): GeneratedNFT {
 
   return {
     id: `trademark-${edition}`,
-    tokenId: generateTokenId(),
+    tokenId: generateTokenId(edition + 10000),
     name: `${theme.prefix}™ #${edition.toString().padStart(4, '0')}`,
     description: `Official AIQTP™ AI Quantum Trading Portal Trademark NFT for ${theme.category}. Registered brand identity on the Quantum Time Crystal Chain. Edition ${edition} of 10,000. Features ${style} style with ${effect} effects.`,
     type: 'trademark',
@@ -232,7 +239,7 @@ export function generateTrademarkNFT(edition: number): GeneratedNFT {
     attributes,
     rarity: rarity.name,
     rarityScore: rarity.score,
-    estimatedValue: baseValue * (1 + Math.random() * 0.5),
+    estimatedValue: baseValue * (1 + seededValue(seed, 20) * 0.5),
     chain: 'QTC',
     status: 'minted',
     owner: 'admin-wallet-0x000',

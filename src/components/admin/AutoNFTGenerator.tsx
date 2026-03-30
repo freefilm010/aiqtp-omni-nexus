@@ -128,22 +128,25 @@ const AutoNFTGenerator = () => {
       started_at: new Date().toISOString()
     }).select().single();
 
-    // Simulate generating NFTs
+    // Generate NFTs with deterministic seeding per batch item
     const generatedNFTs: any[] = [];
+    const batchSeed = Date.now();
     for (let i = 0; i < batchSize[0]; i++) {
-      const promptBase = theme?.prompts[Math.floor(Math.random() * theme.prompts.length)] || 'digital art';
+      const s = (offset: number) => Math.abs(Math.sin(batchSeed * 0.0001 + i * 1.618 + offset));
+      const promptBase = theme?.prompts[Math.floor(s(0) * (theme?.prompts.length || 1))] || 'digital art';
+      const rarityRoll = s(5);
       const nft = {
-        name: `${theme?.label} #${Math.floor(Math.random() * 9999)}`,
+        name: `${theme?.label} #${(batchSeed % 10000 + i).toString().padStart(4, '0')}`,
         description: `AI-generated ${theme?.label} NFT in ${selectedStyle} style`,
         prompt: `${promptBase}, ${selectedStyle} style, ultra detailed, 8k`,
         chain: selectedChain,
         mint_status: autoList ? 'listed' : 'minted',
-        list_price: basePrice[0] * (0.8 + Math.random() * 0.4), // Price variation
+        list_price: basePrice[0] * (0.8 + s(1) * 0.4),
         currency: selectedChain === 'ethereum' ? 'ETH' : selectedChain === 'solana' ? 'SOL' : 'ETH',
         attributes: JSON.stringify([
           { trait: 'Theme', value: theme?.label },
           { trait: 'Style', value: selectedStyle },
-          { trait: 'Rarity', value: Math.random() > 0.9 ? 'Legendary' : Math.random() > 0.7 ? 'Epic' : 'Rare' }
+          { trait: 'Rarity', value: rarityRoll > 0.9 ? 'Legendary' : rarityRoll > 0.7 ? 'Epic' : 'Rare' }
         ])
       };
       generatedNFTs.push(nft);

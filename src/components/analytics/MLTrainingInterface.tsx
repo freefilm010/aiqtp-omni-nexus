@@ -165,10 +165,10 @@ const MLTrainingInterface = () => {
       if (epoch % 10 === 0) {
         setTrainingHistory(prev => [...prev, {
           epoch,
-          loss: 0.5 * Math.exp(-epoch / 30) + 0.08 + Math.random() * 0.03,
-          accuracy: 0.5 + 0.45 * (1 - Math.exp(-epoch / 25)) + Math.random() * 0.03,
-          valLoss: 0.55 * Math.exp(-epoch / 35) + 0.1 + Math.random() * 0.05,
-          valAccuracy: 0.48 + 0.42 * (1 - Math.exp(-epoch / 30)) + Math.random() * 0.04,
+          loss: 0.5 * Math.exp(-epoch / 30) + 0.08 + Math.abs(Math.sin(epoch * 1.618)) * 0.03,
+          accuracy: 0.5 + 0.45 * (1 - Math.exp(-epoch / 25)) + Math.abs(Math.sin(epoch * 2.236)) * 0.03,
+          valLoss: 0.55 * Math.exp(-epoch / 35) + 0.1 + Math.abs(Math.sin(epoch * 3.14)) * 0.05,
+          valAccuracy: 0.48 + 0.42 * (1 - Math.exp(-epoch / 30)) + Math.abs(Math.sin(epoch * 0.618)) * 0.04,
         }]);
       }
     }
