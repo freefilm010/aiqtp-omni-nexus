@@ -49,6 +49,7 @@ const CryptoFaucet = () => {
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
   const lastClaimTimesRef = useRef<Record<string, Date>>({});
+  const { getValuation } = useAssetValuation();
 
   const loadClaims = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
