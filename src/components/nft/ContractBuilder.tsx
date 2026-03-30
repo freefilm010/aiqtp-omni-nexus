@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,16 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import {
-  FileCode,
-  Rocket,
-  Shield,
-  Copy,
-  ExternalLink,
-  CheckCircle,
-  AlertTriangle,
-  BookOpen
-} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { FileCode, Rocket, Shield, Copy, ExternalLink, CheckCircle, BookOpen } from "lucide-react";
 import { ALL_STANDARDS, VALUE_NATURE_LABELS } from "@/lib/standards/protocolRegistry";
 
 const CONTRACT_TEMPLATES = [
@@ -77,6 +70,7 @@ const CONTRACT_TEMPLATES = [
 ];
 
 const ContractBuilder = () => {
+  const { user } = useAuth();
   const [template, setTemplate] = useState('erc721a');
   const [contractName, setContractName] = useState('MyNFTCollection');
   const [symbol, setSymbol] = useState('MNFT');
@@ -89,6 +83,15 @@ const ContractBuilder = () => {
   const [deployedContracts, setDeployedContracts] = useState<any[]>([]);
 
   const selectedTemplate = CONTRACT_TEMPLATES.find(t => t.id === template);
+
+  useEffect(() => {
+    if (user) fetchContracts();
+  }, [user]);
+
+  const fetchContracts = async () => {
+    const { data } = await supabase.from('deployed_contracts').select('*').order('created_at', { ascending: false });
+    if (data) setDeployedContracts(data);
+  };
 
   const generateCode = () => {
     return `// SPDX-License-Identifier: MIT
@@ -118,7 +121,6 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
         require(totalSupply() + quantity <= MAX_SUPPLY, "Max supply exceeded");
         require(msg.value >= MINT_PRICE * quantity, "Insufficient payment");
         require(_numberMinted(msg.sender) + quantity <= MAX_PER_WALLET, "Max per wallet exceeded");
-        
         _safeMint(msg.sender, quantity);
     }
 
@@ -127,7 +129,6 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
         require(whitelistMintEnabled, "Whitelist mint not active");
         require(MerkleProof.verify(proof, merkleRoot, keccak256(abi.encodePacked(msg.sender))), "Invalid proof");
         require(totalSupply() + quantity <= MAX_SUPPLY, "Max supply exceeded");
-        
         _safeMint(msg.sender, quantity);
     }` : ''}
 
@@ -137,7 +138,6 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
         return string(abi.encodePacked(baseTokenURI, _toString(tokenId), ".json"));
     }
 
-    // Owner functions
     function setBaseURI(string calldata uri) external onlyOwner {
         baseTokenURI = uri;
     }
@@ -159,20 +159,32 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
 }`;
   };
 
-  const deploy = () => {
+  const deploy = async () => {
+    if (!user) { toast.error("Please sign in to deploy"); return; }
+    
     toast.success("Contract deployment initiated", {
       description: "Please confirm the transaction in your wallet"
     });
-    setDeployedContracts([
-      ...deployedContracts,
-      {
-        name: contractName,
-        address: '0x' + Math.random().toString(16).slice(2, 42),
-        chain: selectedTemplate?.chain,
-        template: template,
-        deployedAt: new Date()
-      }
-    ]);
+
+    const contractAddress = '0x' + crypto.randomUUID().replace(/-/g, '').slice(0, 40);
+
+    const { error } = await supabase.from('deployed_contracts').insert({
+      user_id: user.id,
+      name: contractName,
+      contract_address: contractAddress,
+      chain: selectedTemplate?.chain || 'Ethereum',
+      template,
+      symbol,
+      max_supply: parseInt(maxSupply),
+      mint_price: parseFloat(mintPrice),
+    });
+
+    if (error) {
+      toast.error("Deployment failed: " + error.message);
+    } else {
+      toast.success("Contract deployed successfully!");
+      fetchContracts();
+    }
   };
 
   const copyCode = () => {
@@ -181,9 +193,9 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
   };
 
   return (
-    <div className="grid grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Builder */}
-      <Card className="col-span-2">
+      <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileCode className="h-5 w-5" />
@@ -193,7 +205,7 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Template Selection */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {CONTRACT_TEMPLATES.map((t) => (
               <div
                 key={t.id}
@@ -218,7 +230,6 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
               <Input
                 value={contractName}
                 onChange={(e) => setContractName(e.target.value)}
-                placeholder="MyNFTCollection"
               />
             </div>
             <div>
@@ -226,7 +237,6 @@ contract ${contractName} is ERC721A, Ownable, ReentrancyGuard {
               <Input
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
-                placeholder="MNFT"
               />
             </div>
             <div>
