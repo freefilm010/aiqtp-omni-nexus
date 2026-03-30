@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { User, Save, Trophy, Flame, Link2, Twitter, Github, Globe } from "lucide-react";
+import { User, Save, Trophy, Flame, Link2, Twitter, Github, Globe, Upload } from "lucide-react";
 
 interface Profile {
   username: string;
@@ -89,6 +89,20 @@ const ProfilePage = () => {
     setSaving(false);
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    if (file.size > 2 * 1024 * 1024) { toast.error("Avatar must be under 2MB"); return; }
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/avatar.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (error) { toast.error("Upload failed: " + error.message); return; }
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatarUrl = urlData.publicUrl + "?t=" + Date.now();
+    setProfile(p => ({ ...p, avatar_url: avatarUrl }));
+    toast.success("Avatar uploaded!");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -103,10 +117,16 @@ const ProfilePage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={profile.avatar_url} />
-                  <AvatarFallback className="text-lg">{(profile.username || profile.full_name || "?")[0]?.toUpperCase()}</AvatarFallback>
-                </Avatar>
+                <div className="relative group">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={profile.avatar_url} />
+                    <AvatarFallback className="text-lg">{(profile.username || profile.full_name || "?")[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <Upload className="h-5 w-5 text-white" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                  </label>
+                </div>
                 <div className="flex-1 space-y-2">
                   <div>
                     <Label>Username (public)</Label>
@@ -117,10 +137,6 @@ const ProfilePage = () => {
               <div>
                 <Label>Full Name</Label>
                 <Input value={profile.full_name} onChange={e => setProfile(p => ({ ...p, full_name: e.target.value }))} placeholder="Your name" />
-              </div>
-              <div>
-                <Label>Avatar URL</Label>
-                <Input value={profile.avatar_url} onChange={e => setProfile(p => ({ ...p, avatar_url: e.target.value }))} placeholder="https://..." />
               </div>
               <div>
                 <Label>Bio</Label>
