@@ -64,6 +64,10 @@ const FreqtradeStudio = () => {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="templates">
+            <StrategyTemplates />
+          </TabsContent>
+
           <TabsContent value="leaderboard">
             <AIAgentLeaderboard />
           </TabsContent>
