@@ -1620,6 +1620,39 @@ export type Database = {
         }
         Relationships: []
       }
+      compound_snapshots: {
+        Row: {
+          engine_id: string
+          id: string
+          snapshot_at: string | null
+          strategy_breakdown: Json | null
+          total_deployed: number | null
+          total_profit: number | null
+          total_value: number | null
+          user_id: string
+        }
+        Insert: {
+          engine_id: string
+          id?: string
+          snapshot_at?: string | null
+          strategy_breakdown?: Json | null
+          total_deployed?: number | null
+          total_profit?: number | null
+          total_value?: number | null
+          user_id: string
+        }
+        Update: {
+          engine_id?: string
+          id?: string
+          snapshot_at?: string | null
+          strategy_breakdown?: Json | null
+          total_deployed?: number | null
+          total_profit?: number | null
+          total_value?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       congress_featured_issuers: {
         Row: {
           created_at: string
@@ -3439,6 +3472,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faucet_schedules: {
+        Row: {
+          created_at: string | null
+          id: string
+          interval_hours: number
+          is_active: boolean
+          last_claimed_at: string | null
+          next_claim_at: string | null
+          token_id: string
+          total_auto_claims: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interval_hours?: number
+          is_active?: boolean
+          last_claimed_at?: string | null
+          next_claim_at?: string | null
+          token_id: string
+          total_auto_claims?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interval_hours?: number
+          is_active?: boolean
+          last_claimed_at?: string | null
+          next_claim_at?: string | null
+          token_id?: string
+          total_auto_claims?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       fee_discount_tiers: {
         Row: {
@@ -5738,25 +5810,34 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
+          display_badge: string | null
           full_name: string | null
           id: string
+          social_links: Json | null
           updated_at: string
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          display_badge?: string | null
           full_name?: string | null
           id: string
+          social_links?: Json | null
           updated_at?: string
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          display_badge?: string | null
           full_name?: string | null
           id?: string
+          social_links?: Json | null
           updated_at?: string
           username?: string | null
         }
