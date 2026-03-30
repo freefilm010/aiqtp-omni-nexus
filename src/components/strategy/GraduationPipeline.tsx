@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,17 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { STRATEGY_FEES } from "@/lib/fees/platformFees";
 import { toast } from "sonner";
 import {
-  Award,
-  Play,
-  CheckCircle,
-  XCircle,
-  Clock,
-  TrendingUp,
-  Target,
-  BarChart3,
-  Zap,
-  Loader2,
-  AlertTriangle
+  Award, Play, CheckCircle, XCircle, Clock, TrendingUp, Target,
+  BarChart3, Zap, Loader2, AlertTriangle, Wand2, RotateCcw, Rocket
 } from "lucide-react";
 
 interface Strategy {
@@ -31,70 +22,52 @@ interface Strategy {
   consistency_score: number | null;
   backtest_count: number;
   is_graduated: boolean;
+  is_available_for_rent: boolean;
   entry_rules: any;
   exit_rules: any;
   risk_parameters: any;
 }
 
-interface GraduationTest {
-  id: string;
-  strategy_id: string;
-  test_number: number;
-  profitability: number;
-  win_rate: number;
-  sharpe_ratio: number;
-  max_drawdown: number;
-  consistency_score: number;
-  passed: boolean;
-  created_at: string;
-  test_data: any;
-}
-
 const PROFITABILITY_THRESHOLD = STRATEGY_FEES.graduationThreshold;
 const CONSISTENCY_THRESHOLD = STRATEGY_FEES.consistencyThreshold;
-const MIN_TESTS = STRATEGY_FEES.minBacktestCount;
 const MIN_WIN_RATE = 65;
 const MAX_DRAWDOWN = 15;
+const TOTAL_CYCLES = 10000;
+const BATCH_SIZE = 200;
 
 const GraduationPipeline = () => {
   const { user } = useAuth();
   const [strategies, setStrategies] = useState<Strategy[]>([]);
-  const [tests, setTests] = useState<Record<string, GraduationTest[]>>({});
-  const [runningTest, setRunningTest] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [enhancing, setEnhancing] = useState<string | null>(null);
+  const [training, setTraining] = useState<string | null>(null);
+  const [trainingProgress, setTrainingProgress] = useState<Record<string, { completed: number; stats: any }>>({});
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
+    if (user) fetchData();
   }, [user]);
 
   const fetchData = async () => {
     try {
-      const { data: strats, error } = await supabase
+      const { data, error } = await supabase
         .from('ai_strategies')
         .select('*')
-        .eq('user_id', user?.id);
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setStrategies((strats as Strategy[]) || []);
+      setStrategies((data as Strategy[]) || []);
 
-      // Fetch tests for each strategy
-      const testPromises = (strats || []).map(async (s: any) => {
-        const { data: testData } = await supabase
+      // Fetch existing test counts for progress
+      const progressMap: Record<string, { completed: number; stats: any }> = {};
+      for (const s of data || []) {
+        const { count } = await supabase
           .from('graduation_tests')
-          .select('*')
-          .eq('strategy_id', s.id)
-          .order('test_number', { ascending: true });
-        return { strategyId: s.id, tests: testData || [] };
-      });
-
-      const allTests = await Promise.all(testPromises);
-      const testMap: Record<string, GraduationTest[]> = {};
-      allTests.forEach(({ strategyId, tests: t }) => {
-        testMap[strategyId] = t as GraduationTest[];
-      });
-      setTests(testMap);
+          .select('*', { count: 'exact', head: true })
+          .eq('strategy_id', s.id);
+        progressMap[s.id] = { completed: count || 0, stats: null };
+      }
+      setTrainingProgress(progressMap);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -102,117 +75,108 @@ const GraduationPipeline = () => {
     }
   };
 
-  const runGraduationTest = async (strategy: Strategy) => {
-    if (!user) return;
-    setRunningTest(strategy.id);
-
+  const enhanceStrategy = async (strategyId: string) => {
+    setEnhancing(strategyId);
     try {
-      // Simulate a rigorous backtest
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data, error } = await supabase.functions.invoke('enhance-strategy', {
+        body: { strategyId }
+      });
 
-      const testNumber = (tests[strategy.id]?.length || 0) + 1;
-      
-      // Deterministic test results seeded by strategy ID hash + test number
-      const seed = (offset: number) => Math.abs(Math.sin(
-        strategy.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 0.01 + testNumber * 1.618 + offset
-      ));
-      const baseProfit = 85 + seed(1) * 15;
-      const profitability = Math.min(99, baseProfit + (testNumber * 0.5));
-      const winRate = 60 + seed(2) * 35;
-      const sharpeRatio = 1.2 + seed(3) * 1.5;
-      const maxDrawdown = 5 + seed(4) * 15;
-      const consistency = 80 + seed(5) * 18;
-
-      const passed = profitability >= PROFITABILITY_THRESHOLD &&
-                    winRate >= MIN_WIN_RATE &&
-                    maxDrawdown <= MAX_DRAWDOWN &&
-                    consistency >= CONSISTENCY_THRESHOLD;
-
-      // Insert test result
-      const { error: testError } = await supabase
-        .from('graduation_tests')
-        .insert({
-          strategy_id: strategy.id,
-          user_id: user.id,
-          test_number: testNumber,
-          profitability,
-          win_rate: winRate,
-          sharpe_ratio: sharpeRatio,
-          max_drawdown: maxDrawdown,
-          consistency_score: consistency,
-          passed,
-          test_data: {
-            trades: Math.floor(50 + seed(6) * 200),
-            period_days: 365,
-            capital: 10000,
-            final_capital: 10000 * (1 + profitability / 100)
-          }
-        });
-
-      if (testError) throw testError;
-
-      // Get all tests for this strategy to calculate averages
-      const stratTests = [...(tests[strategy.id] || []), {
-        profitability,
-        win_rate: winRate,
-        consistency_score: consistency
-      }];
-
-      const avgProfitability = stratTests.reduce((s, t: any) => s + t.profitability, 0) / stratTests.length;
-      const avgConsistency = stratTests.reduce((s, t: any) => s + t.consistency_score, 0) / stratTests.length;
-
-      // Check if strategy qualifies for graduation
-      const passedTests = stratTests.filter((t: any) => 
-        t.profitability >= PROFITABILITY_THRESHOLD && 
-        t.consistency_score >= CONSISTENCY_THRESHOLD
-      ).length;
-
-      const shouldGraduate = passedTests >= MIN_TESTS && 
-                            avgProfitability >= PROFITABILITY_THRESHOLD &&
-                            avgConsistency >= CONSISTENCY_THRESHOLD;
-
-      // Update strategy
-      const { error: updateError } = await supabase
-        .from('ai_strategies')
-        .update({
-          profitability_score: avgProfitability,
-          consistency_score: avgConsistency,
-          backtest_count: stratTests.length,
-          ...(shouldGraduate ? {
-            is_graduated: true,
-            graduation_date: new Date().toISOString(),
-            status: 'paper_trading'
-          } : {})
-        })
-        .eq('id', strategy.id);
-
-      if (updateError) throw updateError;
-
-      if (passed) {
-        toast.success(`Test ${testNumber} passed! Profitability: ${profitability.toFixed(1)}%`);
-      } else {
-        toast.error(`Test ${testNumber} failed. Keep optimizing!`);
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
       }
 
-      if (shouldGraduate) {
-        toast.success("🎉 Strategy qualified! It is now ready for marketplace review.", {
-          duration: 5000
-        });
-      }
-
+      toast.success("Strategy enhanced by AI!", {
+        description: data.enhancement_notes?.slice(0, 2).join(', ') || 'Improvements applied'
+      });
       fetchData();
-    } catch (err) {
-      console.error('Test error:', err);
-      toast.error("Failed to run graduation test");
+    } catch (err: any) {
+      console.error('Enhance error:', err);
+      toast.error(err.message || "Enhancement failed");
     } finally {
-      setRunningTest(null);
+      setEnhancing(null);
     }
   };
 
-  const getProgressToGraduation = (strategy: Strategy) => {
-    const stratTests = tests[strategy.id] || [];
-    const passedCount = stratTests.filter(t => t.passed).length;
-    return (passedCount / MIN_TESTS) * 100;
+  const runTrainingBatch = useCallback(async (strategyId: string) => {
+    setTraining(strategyId);
+    let isComplete = false;
+
+    try {
+      while (!isComplete) {
+        const { data, error } = await supabase.functions.invoke('train-strategy', {
+          body: { strategyId, batchSize: BATCH_SIZE }
+        });
+
+        if (error) throw error;
+        if (data?.error) {
+          toast.error(data.error);
+          return;
+        }
+
+        setTrainingProgress(prev => ({
+          ...prev,
+          [strategyId]: {
+            completed: data.totalCompleted,
+            stats: data.stats,
+          }
+        }));
+
+        if (data.completed) {
+          isComplete = true;
+          if (data.graduated) {
+            toast.success("🎉 Strategy GRADUATED! Now available for rental!", { duration: 6000 });
+          } else {
+            toast.warning("Training complete but strategy didn't meet graduation thresholds. Consider enhancing and re-training.");
+          }
+          fetchData();
+        } else {
+          toast.info(`Training: ${data.totalCompleted}/${TOTAL_CYCLES} cycles completed`);
+          // Small delay between batches
+          await new Promise(r => setTimeout(r, 500));
+        }
+      }
+    } catch (err: any) {
+      console.error('Training error:', err);
+      toast.error(err.message || "Training failed");
+    } finally {
+      setTraining(null);
+    }
+  }, []);
+
+  const resetTraining = async (strategyId: string) => {
+    try {
+      // Delete existing tests (via edge function or direct)
+      const { error } = await supabase
+        .from('graduation_tests')
+        .delete()
+        .eq('strategy_id', strategyId);
+
+      if (error) throw error;
+
+      await supabase.from('ai_strategies').update({
+        profitability_score: null,
+        consistency_score: null,
+        backtest_count: 0,
+        is_graduated: false,
+        graduation_date: null,
+        status: 'draft',
+      }).eq('id', strategyId);
+
+      setTrainingProgress(prev => ({ ...prev, [strategyId]: { completed: 0, stats: null } }));
+      toast.success("Training reset. Ready for re-training.");
+      fetchData();
+    } catch (err: any) {
+      toast.error("Failed to reset: " + err.message);
+    }
+  };
+
+  const autoEnhanceAndTrain = async (strategyId: string) => {
+    toast.info("Starting auto-pipeline: Enhance → Train → Graduate");
+    await enhanceStrategy(strategyId);
+    await runTrainingBatch(strategyId);
   };
 
   if (loading) {
@@ -233,10 +197,10 @@ const GraduationPipeline = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
-            Graduation Requirements
+            Graduation Pipeline — 10,000 Cycle Training
           </CardTitle>
           <CardDescription>
-            Meet company standards to qualify your strategy for marketplace review
+            Strategies auto-enhanced by AI → trained through 10K simulated cycles with real market data patterns → graduated if meeting thresholds → auto-listed for rental
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -263,132 +227,158 @@ const GraduationPipeline = () => {
             </div>
             <div className="text-center p-3 rounded-lg bg-background/50 border">
               <BarChart3 className="h-6 w-6 mx-auto text-purple-500 mb-1" />
-              <p className="font-bold">{MIN_TESTS}+</p>
-              <p className="text-xs text-muted-foreground">Passed Tests</p>
+              <p className="font-bold">10,000</p>
+              <p className="text-xs text-muted-foreground">Training Cycles</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Strategies Grid */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {strategies.length === 0 ? (
-          <Card className="col-span-2">
+          <Card className="col-span-full">
             <CardContent className="py-12 text-center">
               <Zap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No strategies yet</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Create strategies in the Strategy Builder to begin graduation testing
+                Create strategies in the Strategy Builder or Factor Library to begin the pipeline
               </p>
             </CardContent>
           </Card>
         ) : (
           strategies.map(strategy => {
-            const stratTests = tests[strategy.id] || [];
-            const passedTests = stratTests.filter(t => t.passed).length;
-            const progressPct = getProgressToGraduation(strategy);
-            const isRunning = runningTest === strategy.id;
+            const progress = trainingProgress[strategy.id] || { completed: 0, stats: null };
+            const progressPct = (progress.completed / TOTAL_CYCLES) * 100;
+            const isTraining = training === strategy.id;
+            const isEnhancing = enhancing === strategy.id;
 
             return (
-              <Card key={strategy.id} className={strategy.is_graduated ? 'border-green-500' : ''}>
+              <Card key={strategy.id} className={strategy.is_graduated ? 'border-green-500 shadow-green-500/10 shadow-lg' : ''}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{strategy.name}</CardTitle>
-                    {strategy.is_graduated ? (
-                      <Badge className="bg-green-500">
-                        <Award className="h-3 w-3 mr-1" />
-                        Graduated
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">
-                        {passedTests}/{MIN_TESTS} Tests Passed
-                      </Badge>
-                    )}
+                    <div className="flex gap-1">
+                      {strategy.status === 'enhanced' && (
+                        <Badge variant="outline" className="text-purple-500 border-purple-500">
+                          <Wand2 className="h-3 w-3 mr-1" />
+                          Enhanced
+                        </Badge>
+                      )}
+                      {strategy.is_graduated ? (
+                        <Badge className="bg-green-500">
+                          <Award className="h-3 w-3 mr-1" />
+                          Graduated
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">
+                          {progress.completed.toLocaleString()}/{TOTAL_CYCLES.toLocaleString()}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <CardDescription>{strategy.description || "AI-generated strategy"}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Progress to graduation */}
+                  {/* Training Progress */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Graduation Progress</span>
+                      <span>Training Progress</span>
                       <span className={progressPct >= 100 ? 'text-green-500 font-bold' : ''}>
-                        {progressPct.toFixed(0)}%
+                        {progressPct.toFixed(1)}% ({progress.completed.toLocaleString()} cycles)
                       </span>
                     </div>
                     <Progress value={Math.min(100, progressPct)} className="h-3" />
                   </div>
 
-                  {/* Current Scores */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="p-2 rounded bg-muted/50">
-                      <p className="text-muted-foreground">Avg Profitability</p>
-                      <p className={`font-bold ${(strategy.profitability_score || 0) >= PROFITABILITY_THRESHOLD ? 'text-green-500' : ''}`}>
-                        {strategy.profitability_score?.toFixed(1) || '—'}%
-                      </p>
+                  {/* Stats */}
+                  {(progress.stats || strategy.profitability_score) && (
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div className="p-2 rounded bg-muted/50">
+                        <p className="text-muted-foreground text-xs">Avg Profit</p>
+                        <p className={`font-bold ${(progress.stats?.avgProfitability || strategy.profitability_score || 0) >= PROFITABILITY_THRESHOLD ? 'text-green-500' : 'text-red-500'}`}>
+                          {(progress.stats?.avgProfitability || strategy.profitability_score || 0).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="p-2 rounded bg-muted/50">
+                        <p className="text-muted-foreground text-xs">Win Rate</p>
+                        <p className={`font-bold ${(progress.stats?.avgWinRate || 0) >= MIN_WIN_RATE ? 'text-green-500' : 'text-red-500'}`}>
+                          {(progress.stats?.avgWinRate || 0).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="p-2 rounded bg-muted/50">
+                        <p className="text-muted-foreground text-xs">Pass Rate</p>
+                        <p className={`font-bold ${(progress.stats?.passRate || 0) >= 80 ? 'text-green-500' : 'text-amber-500'}`}>
+                          {(progress.stats?.passRate || 0).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="p-2 rounded bg-muted/50">
+                        <p className="text-muted-foreground text-xs">Consistency</p>
+                        <p className="font-bold">
+                          {(progress.stats?.avgConsistency || strategy.consistency_score || 0).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="p-2 rounded bg-muted/50">
+                        <p className="text-muted-foreground text-xs">Sharpe</p>
+                        <p className="font-bold">{(progress.stats?.avgSharpe || 0).toFixed(2)}</p>
+                      </div>
+                      <div className="p-2 rounded bg-muted/50">
+                        <p className="text-muted-foreground text-xs">Drawdown</p>
+                        <p className={`font-bold ${(progress.stats?.avgDrawdown || 0) <= MAX_DRAWDOWN ? 'text-green-500' : 'text-red-500'}`}>
+                          {(progress.stats?.avgDrawdown || 0).toFixed(1)}%
+                        </p>
+                      </div>
                     </div>
-                    <div className="p-2 rounded bg-muted/50">
-                      <p className="text-muted-foreground">Avg Consistency</p>
-                      <p className={`font-bold ${(strategy.consistency_score || 0) >= CONSISTENCY_THRESHOLD ? 'text-green-500' : ''}`}>
-                        {strategy.consistency_score?.toFixed(1) || '—'}%
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
-                  {/* Test History */}
-                  {stratTests.length > 0 && (
+                  {/* Action Buttons */}
+                  {!strategy.is_graduated ? (
                     <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Test History</p>
-                      <ScrollArea className="h-[100px]">
-                        <div className="space-y-1">
-                          {stratTests.map((test, i) => (
-                            <div 
-                              key={test.id} 
-                              className="flex items-center justify-between p-2 rounded bg-muted/30 text-xs"
-                            >
-                              <span className="flex items-center gap-2">
-                                {test.passed ? (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                ) : (
-                                  <XCircle className="h-4 w-4 text-red-500" />
-                                )}
-                                Test #{test.test_number}
-                              </span>
-                              <span>Profit: {test.profitability.toFixed(1)}%</span>
-                              <span>Win: {test.win_rate.toFixed(1)}%</span>
-                              <span>DD: {test.max_drawdown.toFixed(1)}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
+                      <Button
+                        className="w-full"
+                        variant="default"
+                        onClick={() => autoEnhanceAndTrain(strategy.id)}
+                        disabled={isTraining || isEnhancing}
+                      >
+                        {isEnhancing ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Enhancing...</>
+                        ) : isTraining ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Training {progress.completed.toLocaleString()}/{TOTAL_CYCLES.toLocaleString()}...</>
+                        ) : (
+                          <><Rocket className="h-4 w-4 mr-2" />Auto: Enhance → Train → Graduate</>
+                        )}
+                      </Button>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          size="sm" variant="outline"
+                          onClick={() => enhanceStrategy(strategy.id)}
+                          disabled={isTraining || isEnhancing}
+                        >
+                          <Wand2 className="h-3 w-3 mr-1" />Enhance
+                        </Button>
+                        <Button
+                          size="sm" variant="outline"
+                          onClick={() => runTrainingBatch(strategy.id)}
+                          disabled={isTraining || isEnhancing}
+                        >
+                          <Play className="h-3 w-3 mr-1" />Train
+                        </Button>
+                        <Button
+                          size="sm" variant="ghost"
+                          onClick={() => resetTraining(strategy.id)}
+                          disabled={isTraining || isEnhancing}
+                        >
+                          <RotateCcw className="h-3 w-3 mr-1" />Reset
+                        </Button>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Action Button */}
-                  {!strategy.is_graduated && (
-                    <Button 
-                      className="w-full"
-                      onClick={() => runGraduationTest(strategy)}
-                      disabled={isRunning}
-                    >
-                      {isRunning ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Running Test...
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-2" />
-                          Run Graduation Test #{(stratTests.length || 0) + 1}
-                        </>
-                      )}
-                    </Button>
-                  )}
-
-                  {strategy.is_graduated && (
+                  ) : (
                     <div className="flex items-center justify-center gap-2 p-3 rounded bg-green-500/10 text-green-500 text-sm">
                       <Award className="h-5 w-5" />
-                      Ready for Marketplace Review!
+                      {strategy.is_available_for_rent
+                        ? "Graduated & Listed for Rental!"
+                        : "Graduated — Pending Admin Approval"
+                      }
                     </div>
                   )}
                 </CardContent>

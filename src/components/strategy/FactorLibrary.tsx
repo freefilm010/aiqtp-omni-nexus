@@ -10,22 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
-  Search,
-  Plus,
-  Star,
-  TrendingUp,
-  TrendingDown,
-  Filter,
-  Tag,
-  Code2,
-  BarChart3,
-  Activity,
-  Brain,
-  Sparkles,
-  Copy,
-  Trash2,
-  Edit,
-  Lock
+  Search, Plus, Star, TrendingUp, TrendingDown, Filter, Tag,
+  Code2, BarChart3, Activity, Brain, Sparkles, Copy, Trash2,
+  Edit, Lock, Loader2, Rocket
 } from "lucide-react";
 import { BlurredCode, ProtectedCodeBadge } from "@/components/ui/blurred-code";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -74,6 +61,43 @@ const FactorLibrary = () => {
   const [sortBy, setSortBy] = useState<'date' | 'performance' | 'name'>('date');
   const [loading, setLoading] = useState(true);
   const [selectedFactor, setSelectedFactor] = useState<Factor | null>(null);
+  const [generatingStrategy, setGeneratingStrategy] = useState(false);
+
+  const autoGenerateFromFactor = async (factor: Factor) => {
+    if (!user) return;
+    setGeneratingStrategy(true);
+    try {
+      // Step 1: Generate strategy from factor
+      const { data: genData, error: genErr } = await supabase.functions.invoke('generate-strategy', {
+        body: { factorIds: [factor.id], userGoals: `Build a high-performance strategy using the ${factor.name} factor` }
+      });
+      if (genErr) throw genErr;
+      if (genData?.error) { toast.error(genData.error); return; }
+
+      const strategyId = genData?.strategy?.id;
+      if (!strategyId) { toast.error('Failed to generate strategy'); return; }
+      toast.success('Strategy generated! Enhancing...');
+
+      // Step 2: Enhance
+      const { data: enhData, error: enhErr } = await supabase.functions.invoke('enhance-strategy', {
+        body: { strategyId }
+      });
+      if (enhErr) throw enhErr;
+      toast.success('Strategy enhanced! Starting training...');
+
+      // Step 3: Start training (first batch)
+      const { data: trainData, error: trainErr } = await supabase.functions.invoke('train-strategy', {
+        body: { strategyId, batchSize: 200 }
+      });
+      if (trainErr) throw trainErr;
+      toast.success(`Training started: ${trainData?.totalCompleted || 0}/10,000 cycles. Continue in Graduation tab.`);
+    } catch (err: any) {
+      console.error('Auto-generate error:', err);
+      toast.error(err.message || 'Auto-generate failed');
+    } finally {
+      setGeneratingStrategy(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -418,23 +442,37 @@ const FactorLibrary = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => duplicateFactor(selectedFactor)}
-                    >
-                      <Copy className="h-4 w-4 mr-1" />
-                      Duplicate
-                    </Button>
-                    <Button 
-                      variant="outline" 
+                      className="w-full"
                       size="sm"
-                      onClick={() => deleteFactor(selectedFactor.id)}
+                      onClick={() => autoGenerateFromFactor(selectedFactor)}
+                      disabled={generatingStrategy}
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      {generatingStrategy ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Generating...</>
+                      ) : (
+                        <><Rocket className="h-4 w-4 mr-1" />Auto: Generate → Enhance → Train</>
+                      )}
                     </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => duplicateFactor(selectedFactor)}
+                      >
+                        <Copy className="h-4 w-4 mr-1" />
+                        Duplicate
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => deleteFactor(selectedFactor.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
