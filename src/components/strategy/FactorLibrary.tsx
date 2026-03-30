@@ -61,6 +61,43 @@ const FactorLibrary = () => {
   const [sortBy, setSortBy] = useState<'date' | 'performance' | 'name'>('date');
   const [loading, setLoading] = useState(true);
   const [selectedFactor, setSelectedFactor] = useState<Factor | null>(null);
+  const [generatingStrategy, setGeneratingStrategy] = useState(false);
+
+  const autoGenerateFromFactor = async (factor: Factor) => {
+    if (!user) return;
+    setGeneratingStrategy(true);
+    try {
+      // Step 1: Generate strategy from factor
+      const { data: genData, error: genErr } = await supabase.functions.invoke('generate-strategy', {
+        body: { factorIds: [factor.id], userGoals: `Build a high-performance strategy using the ${factor.name} factor` }
+      });
+      if (genErr) throw genErr;
+      if (genData?.error) { toast.error(genData.error); return; }
+
+      const strategyId = genData?.strategy?.id;
+      if (!strategyId) { toast.error('Failed to generate strategy'); return; }
+      toast.success('Strategy generated! Enhancing...');
+
+      // Step 2: Enhance
+      const { data: enhData, error: enhErr } = await supabase.functions.invoke('enhance-strategy', {
+        body: { strategyId }
+      });
+      if (enhErr) throw enhErr;
+      toast.success('Strategy enhanced! Starting training...');
+
+      // Step 3: Start training (first batch)
+      const { data: trainData, error: trainErr } = await supabase.functions.invoke('train-strategy', {
+        body: { strategyId, batchSize: 200 }
+      });
+      if (trainErr) throw trainErr;
+      toast.success(`Training started: ${trainData?.totalCompleted || 0}/10,000 cycles. Continue in Graduation tab.`);
+    } catch (err: any) {
+      console.error('Auto-generate error:', err);
+      toast.error(err.message || 'Auto-generate failed');
+    } finally {
+      setGeneratingStrategy(false);
+    }
+  };
 
   useEffect(() => {
     if (user) {
