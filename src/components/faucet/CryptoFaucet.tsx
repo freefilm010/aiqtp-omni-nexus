@@ -100,7 +100,7 @@ const CryptoFaucet = () => {
 
     if (data?.[0]) {
       setCompoundEngine(data[0]);
-      setReinvestPercent(Number(data[0].reinvest_percent) || 95);
+      setReinvestPercent(Number(data[0].reinvest_percent) || 100);
       // Always keep compound active — only read UI toggle state, don't override to false
       if (data[0].status === 'active') setAutoCompound(true);
 
