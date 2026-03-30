@@ -2,15 +2,34 @@ import { lazy, Suspense, useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { LayoutGrid, BarChart3, Wallet, TrendingUp, Coins, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAssetValuation } from "@/hooks/useAssetValuation";
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const MarketHeatmap = lazy(() => import("@/components/analytics/MarketHeatmap"));
 const FundamentalAnalysis = lazy(() => import("@/components/analytics/FundamentalAnalysis"));
 const CompoundAnalytics = lazy(() => import("@/components/faucet/CompoundAnalytics"));
+
+const FAUCET_CHAIN_TO_SYMBOL: Record<string, string> = {
+  "usdc-test": "USDC",
+  "usdt-test": "USDT",
+  "dai-test": "DAI",
+  "busd-test": "BUSD",
+  qtc: "QTC",
+  aiq: "AIQ",
+  nxs: "NXS",
+  "eth-test": "ETH",
+  "btc-test": "BTC",
+  "sol-test": "SOL",
+  "matic-test": "MATIC",
+  "avax-test": "AVAX",
+  "uni-test": "UNI",
+  "aave-test": "AAVE",
+  "link-test": "LINK",
+};
 
 const TabLoader = () => (
   <div className="flex items-center justify-center h-[400px]">
@@ -20,6 +39,7 @@ const TabLoader = () => (
 
 const PortfolioPage = () => {
   const { user } = useAuth();
+  const { getValuation } = useAssetValuation();
   const [netWorth, setNetWorth] = useState({ portfolio: 0, faucet: 0, compound: 0, strategies: 0 });
   const [engineId, setEngineId] = useState<string | null>(null);
 
@@ -27,27 +47,39 @@ const PortfolioPage = () => {
     if (!user) return;
     const load = async () => {
       const [holdingsRes, engineRes, claimsRes] = await Promise.all([
-        supabase.from("portfolio_holdings").select("value_usd, quantity").eq("user_id", user.id) as any,
+        supabase.from("portfolio_holdings").select("symbol, quantity").eq("user_id", user.id) as any,
         supabase.from("auto_invest_engine").select("id, total_deployed, total_profit").limit(1) as any,
-        supabase.from("faucet_claims").select("amount").eq("user_id", user.id) as any,
+        supabase.from("faucet_claims").select("amount, chain").eq("user_id", user.id) as any,
       ]);
 
-      const portfolioVal = (holdingsRes.data || []).reduce((s: number, h: any) => s + (Number(h.value_usd) || 0), 0);
-      const faucetVal = (claimsRes.data || []).reduce((s: number, c: any) => s + (Number(c.amount) || 0), 0);
+      const portfolioVal = (holdingsRes.data || []).reduce(
+        (sum: number, holding: { symbol: string; quantity: number | string }) =>
+          sum + getValuation(holding.symbol, Number(holding.quantity) || 0).valueUsd,
+        0,
+      );
+
+      const faucetVal = (claimsRes.data || []).reduce(
+        (sum: number, claim: { amount: number | string; chain: string }) => {
+          const symbol = FAUCET_CHAIN_TO_SYMBOL[claim.chain] ?? claim.chain.toUpperCase();
+          return sum + getValuation(symbol, Number(claim.amount) || 0).valueUsd;
+        },
+        0,
+      );
+
       const engine = engineRes.data?.[0];
       if (engine) setEngineId(engine.id);
 
       setNetWorth({
         portfolio: portfolioVal,
         faucet: faucetVal,
-        compound: engine ? Number(engine.total_deployed) + Number(engine.total_profit) : 0,
+        compound: engine ? Number(engine.total_deployed || 0) + Number(engine.total_profit || 0) : 0,
         strategies: 0,
       });
     };
     load();
-  }, [user]);
+  }, [user, getValuation]);
 
-  const total = netWorth.portfolio + netWorth.compound;
+  const total = netWorth.portfolio;
 
   return (
     <div className="min-h-screen bg-background">
