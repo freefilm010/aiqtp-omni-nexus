@@ -935,6 +935,7 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
           webhook_url: string | null
+          webhook_url_masked: string | null
         }
         Insert: {
           action_config?: Json | null
@@ -955,6 +956,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           webhook_url?: string | null
+          webhook_url_masked?: string | null
         }
         Update: {
           action_config?: Json | null
@@ -975,6 +977,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           webhook_url?: string | null
+          webhook_url_masked?: string | null
         }
         Relationships: []
       }
