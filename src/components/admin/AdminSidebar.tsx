@@ -22,6 +22,7 @@ import {
   Trophy,
   Building2,
   ArrowUpDown,
+  ArrowLeft,
   Palette,
   Database,
   Globe,
