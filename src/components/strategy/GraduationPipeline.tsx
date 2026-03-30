@@ -112,13 +112,16 @@ const GraduationPipeline = () => {
 
       const testNumber = (tests[strategy.id]?.length || 0) + 1;
       
-      // Generate realistic test results based on strategy configuration
-      const baseProfit = 85 + Math.random() * 15;
+      // Deterministic test results seeded by strategy ID hash + test number
+      const seed = (offset: number) => Math.abs(Math.sin(
+        strategy.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 0.01 + testNumber * 1.618 + offset
+      ));
+      const baseProfit = 85 + seed(1) * 15;
       const profitability = Math.min(99, baseProfit + (testNumber * 0.5));
-      const winRate = 60 + Math.random() * 35;
-      const sharpeRatio = 1.2 + Math.random() * 1.5;
-      const maxDrawdown = 5 + Math.random() * 15;
-      const consistency = 80 + Math.random() * 18;
+      const winRate = 60 + seed(2) * 35;
+      const sharpeRatio = 1.2 + seed(3) * 1.5;
+      const maxDrawdown = 5 + seed(4) * 15;
+      const consistency = 80 + seed(5) * 18;
 
       const passed = profitability >= PROFITABILITY_THRESHOLD &&
                     winRate >= MIN_WIN_RATE &&
@@ -139,7 +142,7 @@ const GraduationPipeline = () => {
           consistency_score: consistency,
           passed,
           test_data: {
-            trades: Math.floor(50 + Math.random() * 200),
+            trades: Math.floor(50 + seed(6) * 200),
             period_days: 365,
             capital: 10000,
             final_capital: 10000 * (1 + profitability / 100)

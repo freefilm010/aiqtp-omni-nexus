@@ -169,11 +169,16 @@ const DataBotBuilder = () => {
   };
 
   const simulateCollection = async (bot: DataBot) => {
-    const records = Math.floor(Math.random() * 5000) + 1000;
+    // Deterministic collection amount seeded by bot ID + current hour
+    const hourSeed = Math.floor(Date.now() / 3600000);
+    const s = (offset: number) => Math.abs(Math.sin(
+      bot.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) * 0.01 + hourSeed * 1.618 + offset
+    ));
+    const records = Math.floor(s(0) * 5000) + 1000;
     await supabase.from('data_aggregator_bots').update({
       total_records_collected: (bot.total_records_collected || 0) + records,
-      quality_score: Math.min(100, (bot.quality_score || 0) + Math.random() * 5),
-      reliability_score: Math.min(100, (bot.reliability_score || 0) + Math.random() * 3),
+      quality_score: Math.min(100, (bot.quality_score || 0) + s(1) * 5),
+      reliability_score: Math.min(100, (bot.reliability_score || 0) + s(2) * 3),
       last_collection_at: new Date().toISOString()
     }).eq('id', bot.id);
 

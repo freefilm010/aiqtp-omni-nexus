@@ -95,6 +95,10 @@ const generateFundamentals = (symbol: string): StockFundamentals => {
 
   const base = baseData[symbol] || { name: symbol, price: 100, marketCap: 50, pe: 20, sector: 'Unknown', industry: 'Unknown' };
 
+  // Deterministic seed from symbol name
+  const symbolSeed = symbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const s = (offset: number) => Math.abs(Math.sin(symbolSeed * 0.1 + offset * 1.618));
+
   return {
     symbol,
     name: base.name || symbol,
@@ -102,49 +106,52 @@ const generateFundamentals = (symbol: string): StockFundamentals => {
     marketCap: base.marketCap || 50,
     pe: base.pe || 20,
     forwardPe: (base.pe || 20) * 0.85,
-    peg: 1.2 + Math.random() * 1.5,
-    ps: 3 + Math.random() * 10,
-    pb: 2 + Math.random() * 15,
-    evEbitda: 10 + Math.random() * 30,
-    revenue: 50 + Math.random() * 300,
-    revenueGrowth: -10 + Math.random() * 50,
-    eps: 2 + Math.random() * 15,
-    epsGrowth: -20 + Math.random() * 80,
-    profit: 5 + Math.random() * 50,
-    profitMargin: 5 + Math.random() * 35,
-    roe: 10 + Math.random() * 40,
-    roa: 5 + Math.random() * 20,
-    debtEquity: 0.1 + Math.random() * 2,
-    currentRatio: 0.8 + Math.random() * 2,
-    dividendYield: Math.random() * 4,
-    payoutRatio: Math.random() * 60,
-    beta: 0.5 + Math.random() * 1.5,
-    avgVolume: 10 + Math.random() * 100,
-    shortInterest: 1 + Math.random() * 15,
-    institutionalOwnership: 50 + Math.random() * 40,
-    insiderOwnership: 1 + Math.random() * 20,
-    analystRating: (['Strong Buy', 'Buy', 'Hold', 'Sell'] as const)[Math.floor(Math.random() * 4)],
-    targetPrice: (base.price || 100) * (1 + (Math.random() - 0.3) * 0.3),
-    earningsDate: new Date(Date.now() + Math.random() * 90 * 86400000).toLocaleDateString(),
+    peg: 1.2 + s(1) * 1.5,
+    ps: 3 + s(2) * 10,
+    pb: 2 + s(3) * 15,
+    evEbitda: 10 + s(4) * 30,
+    revenue: 50 + s(5) * 300,
+    revenueGrowth: -10 + s(6) * 50,
+    eps: 2 + s(7) * 15,
+    epsGrowth: -20 + s(8) * 80,
+    profit: 5 + s(9) * 50,
+    profitMargin: 5 + s(10) * 35,
+    roe: 10 + s(11) * 40,
+    roa: 5 + s(12) * 20,
+    debtEquity: 0.1 + s(13) * 2,
+    currentRatio: 0.8 + s(14) * 2,
+    dividendYield: s(15) * 4,
+    payoutRatio: s(16) * 60,
+    beta: 0.5 + s(17) * 1.5,
+    avgVolume: 10 + s(18) * 100,
+    shortInterest: 1 + s(19) * 15,
+    institutionalOwnership: 50 + s(20) * 40,
+    insiderOwnership: 1 + s(21) * 20,
+    analystRating: (['Strong Buy', 'Buy', 'Hold', 'Sell'] as const)[Math.floor(s(22) * 4)],
+    targetPrice: (base.price || 100) * (1 + (s(23) - 0.3) * 0.3),
+    earningsDate: new Date(Date.now() + s(24) * 90 * 86400000).toLocaleDateString(),
     sector: base.sector || 'Unknown',
     industry: base.industry || 'Unknown',
   };
 };
 
-const generateEarningsHistory = (): EarningsData[] => {
+const generateEarningsHistory = (symbol: string): EarningsData[] => {
+  const symbolSeed = symbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const s = (qi: number, offset: number) => Math.abs(Math.sin(symbolSeed * 0.1 + qi * 2.718 + offset));
+
   const quarters = ['Q1 2024', 'Q4 2023', 'Q3 2023', 'Q2 2023', 'Q1 2023', 'Q4 2022', 'Q3 2022', 'Q2 2022'];
-  return quarters.map(quarter => {
-    const epsEstimate = 2 + Math.random() * 3;
-    const revenueEstimate = 20 + Math.random() * 50;
-    const beatEps = Math.random() > 0.3;
-    const beatRev = Math.random() > 0.35;
+  return quarters.map((quarter, qi) => {
+    const epsEstimate = 2 + s(qi, 1) * 3;
+    const revenueEstimate = 20 + s(qi, 2) * 50;
+    const beatEps = s(qi, 3) > 0.3;
+    const beatRev = s(qi, 4) > 0.35;
     return {
       quarter,
       epsEstimate,
-      epsActual: epsEstimate * (beatEps ? 1 + Math.random() * 0.15 : 1 - Math.random() * 0.1),
+      epsActual: epsEstimate * (beatEps ? 1 + s(qi, 5) * 0.15 : 1 - s(qi, 6) * 0.1),
       revenueEstimate,
-      revenueActual: revenueEstimate * (beatRev ? 1 + Math.random() * 0.08 : 1 - Math.random() * 0.05),
-      surprise: beatEps ? Math.random() * 15 : -Math.random() * 10
+      revenueActual: revenueEstimate * (beatRev ? 1 + s(qi, 7) * 0.08 : 1 - s(qi, 8) * 0.05),
+      surprise: beatEps ? s(qi, 9) * 15 : -s(qi, 10) * 10
     };
   });
 };

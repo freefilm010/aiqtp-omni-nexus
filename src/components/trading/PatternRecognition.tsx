@@ -65,13 +65,17 @@ const TIMEFRAMES = ['1m', '5m', '15m', '30m', '1H', '4H', '1D', '1W', '1M'];
 
 const VOLUME_LEVELS = ['Low', 'Average', 'High', 'Very High'];
 
+// Deterministic seeded pseudo-random based on price + index
+const seeded = (seed: number, i: number): number => Math.abs(Math.sin(seed * 0.0001 + i * 1.618033)) ;
+
 const generatePatterns = (basePrice: number): Pattern[] => {
   const symbols = ['BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK'];
   const statuses: ('forming' | 'confirmed' | 'triggered')[] = ['forming', 'confirmed', 'triggered'];
 
   return Array.from({ length: 16 }, (_, i) => {
-    const patternType = PATTERN_TYPES[Math.floor(Math.random() * PATTERN_TYPES.length)];
-    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+    const s = (offset: number) => seeded(basePrice, i * 7 + offset);
+    const patternType = PATTERN_TYPES[Math.floor(s(0) * PATTERN_TYPES.length)];
+    const symbol = symbols[Math.floor(s(1) * symbols.length)];
     const symbolPrice = symbol === 'BTC' ? basePrice :
                        symbol === 'ETH' ? basePrice * 0.05 :
                        symbol === 'SOL' ? 145 :
@@ -80,23 +84,23 @@ const generatePatterns = (basePrice: number): Pattern[] => {
                        symbol === 'AVAX' ? 35 :
                        symbol === 'LINK' ? 14 : 0.12;
 
-    const expectedMove = patternType.move + (Math.random() - 0.5) * 2;
+    const expectedMove = patternType.move + (s(2) - 0.5) * 2;
 
     return {
-      id: `pattern-${Date.now()}-${i}`,
+      id: `pattern-${i}-${Math.floor(basePrice)}`,
       name: patternType.name,
       type: patternType.type,
       symbol,
-      timeframe: TIMEFRAMES[Math.floor(Math.random() * TIMEFRAMES.length)],
-      confidence: 60 + Math.random() * 35,
+      timeframe: TIMEFRAMES[Math.floor(s(3) * TIMEFRAMES.length)],
+      confidence: 60 + s(4) * 35,
       priceTarget: symbolPrice * (1 + expectedMove / 100),
       currentPrice: symbolPrice,
       expectedMove,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      detectedAt: new Date(Date.now() - Math.random() * 300000), // within last 5 min
-      description: `${patternType.name} pattern detected on ${symbol} with ${patternType.type} implications. Volume ${VOLUME_LEVELS[Math.floor(Math.random() * VOLUME_LEVELS.length)].toLowerCase()}.`,
-      volume: VOLUME_LEVELS[Math.floor(Math.random() * VOLUME_LEVELS.length)],
-      riskReward: 1 + Math.random() * 4,
+      status: statuses[Math.floor(s(5) * statuses.length)],
+      detectedAt: new Date(Date.now() - s(6) * 300000),
+      description: `${patternType.name} pattern detected on ${symbol} with ${patternType.type} implications. Volume ${VOLUME_LEVELS[Math.floor(s(7) * VOLUME_LEVELS.length)].toLowerCase()}.`,
+      volume: VOLUME_LEVELS[Math.floor(s(8) * VOLUME_LEVELS.length)],
+      riskReward: 1 + s(9) * 4,
     };
   });
 };

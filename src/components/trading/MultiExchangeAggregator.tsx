@@ -52,14 +52,18 @@ const exchanges: Exchange[] = [
   { id: 'curve', name: 'Curve Finance', type: 'dex', chain: 'Ethereum', logo: '🌀', volume24h: 380000000, pairs: 128, fee: 0.04, status: 'online' },
 ];
 
+// Deterministic price generation seeded by exchange index + base price
 const generatePrices = (basePrice: number): AggregatedPrice[] => {
-  return exchanges.map(ex => ({
-    exchange: ex.name,
-    price: basePrice * (1 + (Math.random() - 0.5) * 0.002),
-    volume: Math.random() * 1000000,
-    spread: Math.random() * 0.1,
-    lastUpdate: new Date()
-  }));
+  return exchanges.map((ex, i) => {
+    const seed = Math.abs(Math.sin(basePrice * 0.0001 + i * 2.718));
+    return {
+      exchange: ex.name,
+      price: basePrice * (1 + (seed - 0.5) * 0.002),
+      volume: ex.volume24h * 0.001 * (0.5 + seed),
+      spread: 0.01 + seed * 0.05,
+      lastUpdate: new Date()
+    };
+  });
 };
 
 const MultiExchangeAggregator = () => {
