@@ -184,7 +184,7 @@ const CryptoFaucet = () => {
       // Log transaction
       await supabase.from("auto_invest_transactions").insert({
         engine_id: compoundEngine.id,
-        transaction_type: 'deploy',
+        transaction_type: 'reinvest',
         amount_usd: stratAmount,
         asset_symbol: tokenSymbol,
         side: 'buy',
