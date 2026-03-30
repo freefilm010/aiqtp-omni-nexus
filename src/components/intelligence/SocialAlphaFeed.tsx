@@ -75,6 +75,10 @@ const INFLUENCERS = [
   { name: '@blknoiz06', followers: 180000, platform: 'twitter' },
 ];
 
+// Deterministic seeded function
+const seeded = (base: number, i: number, offset: number = 0): number =>
+  Math.abs(Math.sin(base * 0.001 + i * 1.618 + offset * 2.718));
+
 const generateMentions = (): SocialMention[] => {
   const symbols = ['BTC', 'ETH', 'SOL', 'DOGE', 'PEPE', 'WIF', 'BONK', 'ARB', 'OP', 'LINK'];
   const platforms: ('reddit' | 'twitter' | 'discord' | 'telegram')[] = ['reddit', 'twitter', 'discord', 'telegram'];
@@ -95,25 +99,27 @@ const generateMentions = (): SocialMention[] => {
   ];
   
   const mentions: SocialMention[] = [];
+  const baseSeed = Math.floor(Date.now() / 60000); // changes every minute
   
   for (let i = 0; i < 25; i++) {
-    const sentiment = Math.random() > 0.4 ? 'bullish' : Math.random() > 0.5 ? 'bearish' : 'neutral';
-    const isInfluencer = Math.random() > 0.8;
-    const influencer = isInfluencer ? INFLUENCERS[Math.floor(Math.random() * INFLUENCERS.length)] : null;
+    const s = (offset: number) => seeded(baseSeed, i, offset);
+    const sentiment = s(0) > 0.4 ? 'bullish' : s(1) > 0.5 ? 'bearish' : 'neutral';
+    const isInfluencer = s(2) > 0.8;
+    const influencer = isInfluencer ? INFLUENCERS[Math.floor(s(3) * INFLUENCERS.length)] : null;
     
     mentions.push({
       id: `mention-${i}`,
-      platform: platforms[Math.floor(Math.random() * platforms.length)],
-      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      platform: platforms[Math.floor(s(4) * platforms.length)],
+      symbol: symbols[Math.floor(s(5) * symbols.length)],
       content: sentiment === 'bullish' 
-        ? bullishPhrases[Math.floor(Math.random() * bullishPhrases.length)]
+        ? bullishPhrases[Math.floor(s(6) * bullishPhrases.length)]
         : sentiment === 'bearish'
-        ? bearishPhrases[Math.floor(Math.random() * bearishPhrases.length)]
+        ? bearishPhrases[Math.floor(s(7) * bearishPhrases.length)]
         : 'Watching this closely...',
-      author: isInfluencer ? influencer!.name : `@user${Math.floor(Math.random() * 10000)}`,
+      author: isInfluencer ? influencer!.name : `@user${Math.floor(s(8) * 10000)}`,
       sentiment,
-      engagement: isInfluencer ? 500 + Math.random() * 5000 : 10 + Math.random() * 500,
-      timestamp: new Date(Date.now() - Math.random() * 7200000),
+      engagement: isInfluencer ? 500 + s(9) * 5000 : 10 + s(10) * 500,
+      timestamp: new Date(Date.now() - s(11) * 7200000),
       isInfluencer,
       followers: isInfluencer ? influencer!.followers : undefined
     });
@@ -136,31 +142,39 @@ const generateTrendingTickers = (): TrendingTicker[] => {
     { symbol: 'SUI', name: 'Sui' },
   ];
   
-  return tickers.map(t => ({
-    ...t,
-    mentions24h: 1000 + Math.floor(Math.random() * 50000),
-    mentionChange: (Math.random() - 0.3) * 200,
-    sentiment: (Math.random() - 0.3) * 100,
-    topPlatform: ['Twitter', 'Reddit', 'Discord'][Math.floor(Math.random() * 3)],
-    momentum: (Math.random() > 0.6 ? 'rising' : Math.random() > 0.3 ? 'stable' : 'falling') as 'rising' | 'falling' | 'stable'
-  })).sort((a, b) => b.mentionChange - a.mentionChange);
+  const baseSeed = Math.floor(Date.now() / 60000);
+  return tickers.map((t, i) => {
+    const s = (offset: number) => seeded(baseSeed, i, offset);
+    return {
+      ...t,
+      mentions24h: 1000 + Math.floor(s(0) * 50000),
+      mentionChange: (s(1) - 0.3) * 200,
+      sentiment: (s(2) - 0.3) * 100,
+      topPlatform: ['Twitter', 'Reddit', 'Discord'][Math.floor(s(3) * 3)],
+      momentum: (s(4) > 0.6 ? 'rising' : s(4) > 0.3 ? 'stable' : 'falling') as 'rising' | 'falling' | 'stable'
+    };
+  }).sort((a, b) => b.mentionChange - a.mentionChange);
 };
 
 const generateInfluencerCalls = (): InfluencerCall[] => {
   const symbols = ['BTC', 'ETH', 'SOL', 'LINK', 'ARB', 'OP', 'AVAX', 'DOT'];
+  const baseSeed = Math.floor(Date.now() / 60000);
   
-  return INFLUENCERS.map((inf, i) => ({
-    id: `call-${i}`,
-    influencer: inf.name,
-    platform: inf.platform,
-    followers: inf.followers,
-    symbol: symbols[Math.floor(Math.random() * symbols.length)],
-    callType: (['buy', 'sell', 'watch'] as const)[Math.floor(Math.random() * 3)],
-    targetPrice: Math.random() > 0.5 ? 100 + Math.random() * 1000 : undefined,
-    confidence: ['High', 'Medium', 'Low'][Math.floor(Math.random() * 3)],
-    timestamp: new Date(Date.now() - Math.random() * 86400000 * 3),
-    performance: Math.random() > 0.3 ? (Math.random() - 0.3) * 50 : undefined
-  }));
+  return INFLUENCERS.map((inf, i) => {
+    const s = (offset: number) => seeded(baseSeed, i, offset);
+    return {
+      id: `call-${i}`,
+      influencer: inf.name,
+      platform: inf.platform,
+      followers: inf.followers,
+      symbol: symbols[Math.floor(s(0) * symbols.length)],
+      callType: (['buy', 'sell', 'watch'] as const)[Math.floor(s(1) * 3)],
+      targetPrice: s(2) > 0.5 ? 100 + s(3) * 1000 : undefined,
+      confidence: ['High', 'Medium', 'Low'][Math.floor(s(4) * 3)],
+      timestamp: new Date(Date.now() - s(5) * 86400000 * 3),
+      performance: s(6) > 0.3 ? (s(7) - 0.3) * 50 : undefined
+    };
+  });
 };
 
 const SocialAlphaFeed = () => {

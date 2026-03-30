@@ -167,7 +167,7 @@ const FundamentalAnalysis = () => {
 
   useEffect(() => {
     setFundamentals(generateFundamentals(selectedSymbol));
-    setEarningsHistory(generateEarningsHistory());
+    setEarningsHistory(generateEarningsHistory(selectedSymbol));
     setRevenueHistory([
       { year: '2019', revenue: 100, profit: 20 },
       { year: '2020', revenue: 120, profit: 25 },
