@@ -1,12 +1,16 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PieChart, LayoutGrid, BarChart3, Wallet } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LayoutGrid, BarChart3, Wallet, TrendingUp, Coins, Target } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const MarketHeatmap = lazy(() => import("@/components/analytics/MarketHeatmap"));
 const FundamentalAnalysis = lazy(() => import("@/components/analytics/FundamentalAnalysis"));
+const CompoundAnalytics = lazy(() => import("@/components/faucet/CompoundAnalytics"));
 
 const TabLoader = () => (
   <div className="flex items-center justify-center h-[400px]">
@@ -15,36 +19,92 @@ const TabLoader = () => (
 );
 
 const PortfolioPage = () => {
+  const { user } = useAuth();
+  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucet: 0, compound: 0, strategies: 0 });
+  const [engineId, setEngineId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const [holdingsRes, engineRes, claimsRes] = await Promise.all([
+        supabase.from("portfolio_holdings").select("value_usd, quantity").eq("user_id", user.id) as any,
+        supabase.from("auto_invest_engine").select("id, total_deployed, total_profit").limit(1) as any,
+        supabase.from("faucet_claims").select("amount").eq("user_id", user.id) as any,
+      ]);
+
+      const portfolioVal = (holdingsRes.data || []).reduce((s: number, h: any) => s + (Number(h.value_usd) || 0), 0);
+      const faucetVal = (claimsRes.data || []).reduce((s: number, c: any) => s + (Number(c.amount) || 0), 0);
+      const engine = engineRes.data?.[0];
+      if (engine) setEngineId(engine.id);
+
+      setNetWorth({
+        portfolio: portfolioVal,
+        faucet: faucetVal,
+        compound: engine ? Number(engine.total_deployed) + Number(engine.total_profit) : 0,
+        strategies: 0,
+      });
+    };
+    load();
+  }, [user]);
+
+  const total = netWorth.portfolio + netWorth.compound;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Portfolio & Analytics</h1>
+          <h1 className="text-3xl font-bold">Portfolio Command Center</h1>
           <p className="text-muted-foreground mt-1">
-            Comprehensive portfolio analytics • Heatmaps • Fundamental analysis
+            Unified view • Faucet earnings • Compound growth • Strategy P&L
           </p>
         </div>
 
+        {/* Net Worth Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: "Net Worth", value: total, icon: <Wallet className="h-4 w-4" />, color: "text-primary" },
+            { label: "Portfolio", value: netWorth.portfolio, icon: <TrendingUp className="h-4 w-4" />, color: "text-green-500" },
+            { label: "Faucet Earned", value: netWorth.faucet, icon: <Coins className="h-4 w-4" />, color: "text-amber-500" },
+            { label: "Compounding", value: netWorth.compound, icon: <Target className="h-4 w-4" />, color: "text-cyan-500" },
+          ].map(item => (
+            <Card key={item.label}>
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={item.color}>{item.icon}</span>
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                </div>
+                <p className="text-lg font-bold">${item.value.toFixed(2)}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
         <Tabs defaultValue="portfolio" className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
-            <TabsTrigger value="portfolio" className="gap-2">
-              <Wallet className="h-4 w-4" />
-              Portfolio
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+            <TabsTrigger value="portfolio" className="gap-1.5 text-xs">
+              <Wallet className="h-3.5 w-3.5" /> Portfolio
             </TabsTrigger>
-            <TabsTrigger value="heatmap" className="gap-2">
-              <LayoutGrid className="h-4 w-4" />
-              Heatmaps
+            <TabsTrigger value="compound" className="gap-1.5 text-xs">
+              <Target className="h-3.5 w-3.5" /> Compound
             </TabsTrigger>
-            <TabsTrigger value="fundamentals" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Fundamentals
+            <TabsTrigger value="heatmap" className="gap-1.5 text-xs">
+              <LayoutGrid className="h-3.5 w-3.5" /> Heatmaps
+            </TabsTrigger>
+            <TabsTrigger value="fundamentals" className="gap-1.5 text-xs">
+              <BarChart3 className="h-3.5 w-3.5" /> Fundamentals
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="portfolio">
             <Suspense fallback={<TabLoader />}>
               <PortfolioAnalyticsDashboard />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="compound">
+            <Suspense fallback={<TabLoader />}>
+              <CompoundAnalytics userId={user?.id || null} engineId={engineId} />
             </Suspense>
           </TabsContent>
 
