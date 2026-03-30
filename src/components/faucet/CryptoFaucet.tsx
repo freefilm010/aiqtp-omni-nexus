@@ -41,7 +41,7 @@ const CryptoFaucet = () => {
   const [autoClaim, setAutoClaim] = useState(false);
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
   const [autoCompound, setAutoCompound] = useState(true);
-  const [reinvestPercent, setReinvestPercent] = useState(95);
+  const [reinvestPercent, setReinvestPercent] = useState(100);
   const [compoundEngine, setCompoundEngine] = useState<any>(null);
   const [compoundStats, setCompoundStats] = useState({ deployed: 0, transactions: 0, profit: 0 });
   const autoClaimRef = useRef(false);
@@ -100,7 +100,7 @@ const CryptoFaucet = () => {
 
     if (data?.[0]) {
       setCompoundEngine(data[0]);
-      setReinvestPercent(Number(data[0].reinvest_percent) || 95);
+      setReinvestPercent(Number(data[0].reinvest_percent) || 100);
       // Always keep compound active — only read UI toggle state, don't override to false
       if (data[0].status === 'active') setAutoCompound(true);
 
@@ -120,7 +120,7 @@ const CryptoFaucet = () => {
         engine_name: 'Faucet Compound Engine',
         strategy: 'ultra_aggressive',
         status: 'active',
-        reinvest_percent: 95,
+        reinvest_percent: 100,
         growth_target_percent: 95,
         stable_target_percent: 5,
         total_capital: 0,
