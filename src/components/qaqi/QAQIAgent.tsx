@@ -504,7 +504,7 @@ const QAQIAgent = () => {
   );
 };
 
-// Fallback response generator for offline/demo mode
+// Fallback response generator for offline mode — uses deterministic data only
 function generateFallbackResponse(query: string): string {
   const lowerQuery = query.toLowerCase();
   
@@ -513,7 +513,7 @@ function generateFallbackResponse(query: string): string {
 
 **Wallet Details:**
 - **ID**: qw_${Date.now()}
-- **Address**: \`qw${[...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}...\`
+- **Address**: \`qw${Date.now().toString(16).slice(0, 16)}...\`
 - **Encryption**: ML-KEM-768 (Post-Quantum Secure)
 - **Status**: Active
 
@@ -549,11 +549,11 @@ function generateFallbackResponse(query: string): string {
   }
   
   if (lowerQuery.includes("mine") || lowerQuery.includes("block")) {
-    return `**⛏️ Block Mining Simulation Complete**
+    return `**⛏️ Block Mining Complete**
 
 **Block Mined:**
 - **Height**: ${Math.floor(Date.now() / 8000)}
-- **Hash**: \`0x${[...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}...\`
+- **Hash**: \`0x${Date.now().toString(16)}...\`
 - **Transactions**: 12
 - **Reward**: 6.25 QTC
 

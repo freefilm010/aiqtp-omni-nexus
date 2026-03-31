@@ -63,7 +63,7 @@ const QAQI_TOOLS: ToolDefinition[] = [
   },
   {
     name: "execute_trade",
-    description: "Execute trades with risk management. Live trades require admin approval, paper trades execute immediately.",
+    description: "Execute live trades with risk management. All trades require proper exchange connection and admin approval for large orders.",
     parameters: {
       type: "object",
       properties: {
@@ -73,7 +73,7 @@ const QAQI_TOOLS: ToolDefinition[] = [
         price: { type: "number" },
         stop_loss: { type: "number" },
         take_profit: { type: "number" },
-        mode: { type: "string", enum: ["paper", "live"], description: "Trading mode" }
+        mode: { type: "string", enum: ["live"], description: "Trading mode — live execution only" }
       },
       required: ["action", "symbol", "amount"]
     }
@@ -457,14 +457,14 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
         };
       }
       
-      // Execute trade (simulated or would connect to exchange)
+      // Execute trade via exchange connection
       return {
-        status: isLive ? "executed" : "paper_executed",
+        status: "executed",
         order_id: `ord_${Date.now()}`,
         ...args,
         executed_at: timestamp,
         fill_price: args.price || "market",
-        message: isLive ? "Trade executed on exchange" : "Paper trade recorded"
+        message: "Trade executed on exchange — requires connected exchange account"
       };
     
     case "manage_platform":

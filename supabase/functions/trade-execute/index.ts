@@ -69,80 +69,27 @@ serve(async (req) => {
           );
         }
 
-        const orderMode = mode || 'paper';
+        const orderMode = mode || 'live';
         const orderId = `ord_${Date.now()}_${crypto.randomUUID().substring(0, 8)}`;
 
-        if (orderMode === 'paper') {
-          // Paper trading - record in database without real execution
-          const { data: order, error: insertError } = await supabase
-            .from('paper_trades')
-            .insert({
-              id: orderId,
-              user_id: user.id,
-              symbol,
-              side,
-              order_type: type,
-              quantity,
-              price: price || null,
-              stop_price: stopPrice || null,
-              time_in_force: timeInForce || 'GTC',
-              status: 'filled', // Paper trades fill immediately
-              filled_quantity: quantity,
-              filled_price: price || 0, // Will need to fetch current price
-              created_at: new Date().toISOString(),
-              executed_at: new Date().toISOString()
-            })
-            .select()
-            .single();
-
-          if (insertError) {
-            console.error('Paper trade insert error:', insertError);
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to record paper trade' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
-          // Update paper portfolio
-          const portfolioUpdate = side === 'buy'
-            ? { amount: quantity, avg_price: price || 0 }
-            : { amount: -quantity };
-
-          const { error: portfolioError } = await supabase.rpc('update_paper_portfolio', {
-            p_user_id: user.id,
-            p_symbol: symbol,
-            p_amount_change: portfolioUpdate.amount,
-            p_price: portfolioUpdate.avg_price || 0
-          });
-
-          if (portfolioError) {
-            console.error('Portfolio update error:', portfolioError);
-          }
-
+        if (orderMode !== 'live') {
+          // Reject non-live modes — platform is production-only
           return new Response(
-            JSON.stringify({ 
-              success: true, 
-              order: {
-                orderId,
-                symbol,
-                side,
-                type,
-                quantity,
-                status: 'filled',
-                mode: 'paper',
-                message: 'Paper trade executed successfully'
-              }
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Only live trading is supported. Connect an exchange account to execute trades.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
-        } else {
-          // Live trading - requires connected exchange account
-          if (!exchangeAccountId) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Exchange account ID required for live trading' }),
-              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
+        }
+
+        if (!exchangeAccountId) {
+          // No exchange connected — cannot execute
+          return new Response(
+            JSON.stringify({ success: false, error: 'Exchange connection required. Connect an exchange account in Settings → Connections.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+
+        // Live trading - fetch exchange account and execute
 
           // Fetch exchange account metadata
           const { data: account, error: accountError } = await supabase
@@ -255,7 +202,6 @@ serve(async (req) => {
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
-        }
       }
 
       case 'cancel_order': {
@@ -268,24 +214,10 @@ serve(async (req) => {
           );
         }
 
-        if (mode === 'paper' || !exchangeAccountId) {
-          // Cancel paper order
-          const { error } = await supabase
-            .from('paper_trades')
-            .update({ status: 'cancelled' })
-            .eq('id', orderId)
-            .eq('user_id', user.id);
-
-          if (error) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to cancel order' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
+        if (!exchangeAccountId) {
           return new Response(
-            JSON.stringify({ success: true, message: 'Paper order cancelled' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Exchange connection required to cancel orders.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -297,62 +229,42 @@ serve(async (req) => {
       }
 
       case 'get_orders': {
-        const { mode } = params;
+        // Fetch from portfolio_holdings (real positions only)
+        const { data: holdings, error } = await supabase
+          .from('portfolio_holdings')
+          .select('*')
+          .eq('user_id', user.id);
 
-        if (mode === 'paper' || !params.exchangeAccountId) {
-          const { data: orders, error } = await supabase
-            .from('paper_trades')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(100);
-
-          if (error) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to fetch orders' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
+        if (error) {
           return new Response(
-            JSON.stringify({ success: true, orders: orders || [], mode: 'paper' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Failed to fetch orders' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Live orders would fetch from exchange API
         return new Response(
-          JSON.stringify({ success: false, error: 'Live order fetching not yet implemented' }),
-          { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: true, orders: holdings || [], mode: 'live' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       case 'get_positions': {
-        const { mode } = params;
+        // Fetch from portfolio_holdings (real positions only)
+        const { data: positions, error } = await supabase
+          .from('portfolio_holdings')
+          .select('*')
+          .eq('user_id', user.id);
 
-        if (mode === 'paper' || !params.exchangeAccountId) {
-          const { data: positions, error } = await supabase
-            .from('paper_portfolio')
-            .select('*')
-            .eq('user_id', user.id);
-
-          if (error) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to fetch positions' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
+        if (error) {
           return new Response(
-            JSON.stringify({ success: true, positions: positions || [], mode: 'paper' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Failed to fetch positions' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Live positions would fetch from exchange API
         return new Response(
-          JSON.stringify({ success: false, error: 'Live position fetching not yet implemented' }),
-          { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: true, positions: positions || [], mode: 'live' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
