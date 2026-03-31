@@ -89,8 +89,7 @@ serve(async (req) => {
         }
 
 
-        // Live trading - requires connected exchange account
-        {
+        // Live trading - fetch exchange account and execute
 
           // Fetch exchange account metadata
           const { data: account, error: accountError } = await supabase
