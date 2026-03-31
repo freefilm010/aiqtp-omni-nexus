@@ -37,7 +37,6 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
       return {
         date: new Date(t.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
         deployed: parseFloat(cumulative.toFixed(2)),
-        projected: parseFloat((cumulative * 1.08).toFixed(2)),
       };
     });
     setGrowthData(growth);
@@ -53,8 +52,8 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
       Object.entries(stratMap).map(([name, value]) => ({ name, value: parseFloat(value.toFixed(2)) }))
     );
 
-    // Simple projection: 8% monthly growth on current deployed
-    setProjectedEarnings(parseFloat((cumulative * 0.08).toFixed(2)));
+    // No fabricated projections — show actual deployed total only
+    setProjectedEarnings(0);
   }, [engineId]);
 
   useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
@@ -102,7 +101,6 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
               <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={v => `$${v}`} />
               <Tooltip contentStyle={{ fontSize: 11, backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
               <Area type="monotone" dataKey="deployed" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} name="Deployed" />
-              <Area type="monotone" dataKey="projected" stroke="hsl(var(--chart-2))" fill="hsl(var(--chart-2))" fillOpacity={0.08} strokeDasharray="5 5" name="Projected" />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
@@ -147,28 +145,21 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Target className="h-4 w-4 text-primary" />
-              Projected Earnings
+              Deployment Summary
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              { period: "Monthly", value: projectedEarnings, pct: "8%" },
-              { period: "Quarterly", value: projectedEarnings * 3.2, pct: "25.6%" },
-              { period: "Annually", value: projectedEarnings * 15.2, pct: "151.8%" },
-            ].map(p => (
-              <div key={p.period} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20">
-                <div>
-                  <p className="text-xs font-medium">{p.period}</p>
-                  <p className="text-[10px] text-muted-foreground">~{p.pct} growth</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-sm text-green-500">${p.value.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+            <div className="p-2.5 rounded-lg bg-muted/20">
+              <p className="text-xs font-medium">Total Deployed</p>
+              <p className="font-bold text-sm">${growthData.length > 0 ? growthData[growthData.length - 1].deployed.toFixed(2) : '0.00'}</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-muted/20">
+              <p className="text-xs font-medium">Transactions</p>
+              <p className="font-bold text-sm">{transactions.length}</p>
+            </div>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-2">
               <Zap className="h-3 w-3" />
-              Based on ultra-aggressive strategy with 100% compound rate
+              Actual values from auto-compound deployments
             </div>
           </CardContent>
         </Card>
