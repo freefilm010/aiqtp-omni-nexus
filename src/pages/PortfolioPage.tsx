@@ -113,12 +113,9 @@ const PortfolioPage = () => {
         </div>
 
         <Tabs defaultValue="portfolio" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-xl grid-cols-3">
             <TabsTrigger value="portfolio" className="gap-1.5 text-xs">
               <Wallet className="h-3.5 w-3.5" /> Portfolio
-            </TabsTrigger>
-            <TabsTrigger value="compound" className="gap-1.5 text-xs">
-              <Target className="h-3.5 w-3.5" /> Compound
             </TabsTrigger>
             <TabsTrigger value="heatmap" className="gap-1.5 text-xs">
               <LayoutGrid className="h-3.5 w-3.5" /> Heatmaps
@@ -131,12 +128,6 @@ const PortfolioPage = () => {
           <TabsContent value="portfolio">
             <Suspense fallback={<TabLoader />}>
               <PortfolioAnalyticsDashboard />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="compound">
-            <Suspense fallback={<TabLoader />}>
-              <CompoundAnalytics userId={user?.id || null} engineId={engineId} />
             </Suspense>
           </TabsContent>
 
