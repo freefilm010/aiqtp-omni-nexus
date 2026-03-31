@@ -33,6 +33,12 @@ export function useAssetValuation() {
   const getValuation = useCallback(
     (symbol: string, quantity: number): AssetValuation => {
       const upper = symbol.toUpperCase();
+      
+      // Testnet tokens (t-prefixed) have $0 value — they are not real assets
+      if (upper.startsWith('T') && upper.length > 1 && ['TUSDC','TUSDT','TDAI','TBUSD','TETH','TBTC','TSOL','TMATIC','TAVAX','TUNI','TAAVE','TLINK'].includes(upper)) {
+        return { symbol: upper, quantity, priceUsd: 0, valueUsd: 0, valueUsdt: 0, change24h: null, isLive: false };
+      }
+
       const marketPrice = getPrice(upper);
 
       let priceUsd = 0;
