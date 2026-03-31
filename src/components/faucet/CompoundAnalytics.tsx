@@ -37,7 +37,6 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
       return {
         date: new Date(t.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
         deployed: parseFloat(cumulative.toFixed(2)),
-        projected: parseFloat((cumulative * 1.08).toFixed(2)),
       };
     });
     setGrowthData(growth);
