@@ -772,7 +772,7 @@ const AIResearchLab = () => {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="backtesting">Backtesting</SelectItem>
-                    <SelectItem value="paper_trading">Paper Trading</SelectItem>
+                    <SelectItem value="paper_trading">Validation</SelectItem>
                     <SelectItem value="live">Live</SelectItem>
                     <SelectItem value="archived">Archived</SelectItem>
                   </SelectContent>
