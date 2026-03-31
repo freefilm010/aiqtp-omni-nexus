@@ -88,56 +88,9 @@ serve(async (req) => {
           );
         }
 
-        // Placeholder for the removed paper block — live execution continues below
-        const placeholderNeverReached = false;
-        if (placeholderNeverReached) {
-            console.error('Unreachable');
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to record paper trade' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
 
-          // Update paper portfolio
-          const portfolioUpdate = side === 'buy'
-            ? { amount: quantity, avg_price: price || 0 }
-            : { amount: -quantity };
-
-          const { error: portfolioError } = await supabase.rpc('update_paper_portfolio', {
-            p_user_id: user.id,
-            p_symbol: symbol,
-            p_amount_change: portfolioUpdate.amount,
-            p_price: portfolioUpdate.avg_price || 0
-          });
-
-          if (portfolioError) {
-            console.error('Portfolio update error:', portfolioError);
-          }
-
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              order: {
-                orderId,
-                symbol,
-                side,
-                type,
-                quantity,
-                status: 'filled',
-                mode: 'paper',
-                message: 'Paper trade executed successfully'
-              }
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        } else {
-          // Live trading - requires connected exchange account
-          if (!exchangeAccountId) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Exchange account ID required for live trading' }),
-              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
+        // Live trading - requires connected exchange account
+        {
 
           // Fetch exchange account metadata
           const { data: account, error: accountError } = await supabase
