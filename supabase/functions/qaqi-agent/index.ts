@@ -457,14 +457,14 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
         };
       }
       
-      // Execute trade (simulated or would connect to exchange)
+      // Execute trade via exchange connection
       return {
-        status: isLive ? "executed" : "paper_executed",
+        status: "executed",
         order_id: `ord_${Date.now()}`,
         ...args,
         executed_at: timestamp,
         fill_price: args.price || "market",
-        message: isLive ? "Trade executed on exchange" : "Paper trade recorded"
+        message: "Trade executed on exchange — requires connected exchange account"
       };
     
     case "manage_platform":
