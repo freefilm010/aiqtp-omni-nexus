@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { LayoutGrid, BarChart3, Wallet, TrendingUp, Coins, Target } from "lucide-react";
+import { LayoutGrid, BarChart3, Wallet, TrendingUp, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
