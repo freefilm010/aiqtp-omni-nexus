@@ -21,7 +21,7 @@ const AGENT_TOOLS_DEV = [
   { name: "search_onchain", desc: "On-chain contract & protocol search", icon: GitBranch },
   { name: "freqtrade_backtest", desc: "Run strategy backtests", icon: FlaskConical },
   { name: "freqtrade_optimize", desc: "Hyperparameter optimization", icon: Zap },
-  { name: "ccxt_sim_order", desc: "Paper trading simulation", icon: BarChart3 },
+  { name: "ccxt_sim_order", desc: "Order simulation & testing", icon: BarChart3 },
   { name: "social_media_post", desc: "Create & schedule posts for X/Twitter, LinkedIn, Threads", icon: Share2 },
   { name: "marketing_campaign", desc: "Generate campaigns: email, airdrop, referral, influencer", icon: Megaphone },
   { name: "content_generator", desc: "Blog posts, press releases, newsletters for aiqtp.com", icon: Mail },

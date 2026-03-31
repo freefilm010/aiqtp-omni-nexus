@@ -51,27 +51,29 @@ const PositionsOrders = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    // Load positions from paper_portfolio
+    // Load positions from portfolio_holdings (real assets only)
     const { data: portfolio } = await supabase
-      .from("paper_portfolio")
+      .from("portfolio_holdings")
       .select("*")
       .eq("user_id", user.id) as any;
 
     if (portfolio) {
-      setPositions(portfolio.map((p: any) => ({
-        id: p.id,
-        symbol: p.symbol + '/USDT',
-        side: 'long' as const,
-        size: Number(p.quantity),
-        entryPrice: Number(p.avg_price),
-        markPrice: Number(p.avg_price), // Will be updated by market data
-        liquidationPrice: 0,
-        margin: Number(p.quantity) * Number(p.avg_price),
-        leverage: 1,
-        pnl: 0,
-        pnlPercent: 0,
-        roe: 0,
-      })));
+      setPositions(portfolio
+        .filter((p: any) => !p.symbol.startsWith('t')) // exclude testnet tokens
+        .map((p: any) => ({
+          id: p.id,
+          symbol: p.symbol + '/USDT',
+          side: 'long' as const,
+          size: Number(p.quantity),
+          entryPrice: 0,
+          markPrice: 0,
+          liquidationPrice: 0,
+          margin: 0,
+          leverage: 1,
+          pnl: 0,
+          pnlPercent: 0,
+          roe: 0,
+        })));
     }
 
     // Load orders from trade_logs
@@ -109,19 +111,7 @@ const PositionsOrders = () => {
   const closePosition = async (id: string) => {
     const pos = positions.find(p => p.id === id);
     if (!pos) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const symbol = pos.symbol.replace('/USDT', '');
-    await supabase.rpc('update_paper_portfolio', {
-      p_user_id: user.id,
-      p_symbol: symbol,
-      p_amount_change: -pos.size,
-      p_price: pos.markPrice,
-    });
-
-    setPositions(prev => prev.filter(p => p.id !== id));
-    toast.success("Position closed");
+    toast.info("Live position management coming soon — connect an exchange to execute trades.");
   };
 
   const totalPnl = positions.reduce((acc, p) => acc + p.pnl, 0);

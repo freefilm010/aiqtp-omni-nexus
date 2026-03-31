@@ -377,7 +377,7 @@ const COMPETITIVE_MATRIX = {
         payments: "No crypto native",
         advisor: "Community ideas",
         builder: "Pine Script only",
-        exchanges: "Paper trading",
+        exchanges: "Simulated only",
         defi: "None",
         nft: "None",
         data: "15-min delay free"

@@ -265,7 +265,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
               <div className="flex items-center justify-between p-4 rounded-lg border">
                 <div>
                   <Label className="text-base">Dry Run Mode</Label>
-                  <p className="text-sm text-muted-foreground">Test with paper trading before going live</p>
+                  <p className="text-sm text-muted-foreground">Test with dry run mode before going live</p>
                 </div>
                 <Switch checked={dryRun} onCheckedChange={setDryRun} />
               </div>

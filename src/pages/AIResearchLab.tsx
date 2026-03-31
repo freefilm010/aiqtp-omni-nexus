@@ -366,7 +366,7 @@ const AIResearchLab = () => {
       draft: 'bg-muted text-muted-foreground',
       backtesting: 'bg-primary/20 text-primary',
       paper_trading: 'bg-accent/20 text-accent-foreground',
-      live: 'bg-success/20 text-success',
+      live: 'bg-green-500/20 text-green-400',
       archived: 'bg-muted text-muted-foreground'
     };
     return colors[status] || 'bg-muted';
@@ -772,7 +772,7 @@ const AIResearchLab = () => {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="backtesting">Backtesting</SelectItem>
-                    <SelectItem value="paper_trading">Paper Trading</SelectItem>
+                    <SelectItem value="paper_trading">Validation</SelectItem>
                     <SelectItem value="live">Live</SelectItem>
                     <SelectItem value="archived">Archived</SelectItem>
                   </SelectContent>
@@ -847,7 +847,7 @@ const AIResearchLab = () => {
                                 <DropdownMenuItem 
                                   onClick={() => updateStrategyStatusMutation.mutate({ id: strategy.id, status: 'paper_trading' })}
                                 >
-                                  <Play className="mr-2 h-4 w-4" /> Paper Trading
+                                  <Play className="mr-2 h-4 w-4" /> Validation
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => updateStrategyStatusMutation.mutate({ id: strategy.id, status: 'live' })}
