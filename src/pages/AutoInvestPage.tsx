@@ -118,12 +118,8 @@ const AutoInvestPage = () => {
       setAllocations((allocs || []) as unknown as Allocation[]);
     } else {
       // Create default engine
-      const { data: newEngine } = await supabase
-        .from("auto_invest_engine")
-        .insert({ engine_name: "QAQI Alpha Engine", strategy: "aggressive" })
-        .select()
-        .single();
-      if (newEngine) setEngine(newEngine as unknown as EngineState);
+      // Engine will be auto-created via edge function on first deposit
+      setEngine(null);
     }
     setLoading(false);
   };
