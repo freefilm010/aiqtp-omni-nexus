@@ -202,7 +202,6 @@ serve(async (req) => {
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
-        }
       }
 
       case 'cancel_order': {
