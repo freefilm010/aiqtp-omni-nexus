@@ -231,33 +231,22 @@ serve(async (req) => {
       }
 
       case 'get_orders': {
-        const { mode } = params;
+        // Fetch from portfolio_holdings (real positions only)
+        const { data: holdings, error } = await supabase
+          .from('portfolio_holdings')
+          .select('*')
+          .eq('user_id', user.id);
 
-        if (mode === 'paper' || !params.exchangeAccountId) {
-          const { data: orders, error } = await supabase
-            .from('paper_trades')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(100);
-
-          if (error) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to fetch orders' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
+        if (error) {
           return new Response(
-            JSON.stringify({ success: true, orders: orders || [], mode: 'paper' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Failed to fetch orders' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Live orders would fetch from exchange API
         return new Response(
-          JSON.stringify({ success: false, error: 'Live order fetching not yet implemented' }),
-          { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: true, orders: holdings || [], mode: 'live' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
