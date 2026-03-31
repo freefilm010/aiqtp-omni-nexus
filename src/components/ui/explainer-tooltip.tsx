@@ -157,7 +157,7 @@ export const EXPLAINER_TERMS: Record<string, { term: string; explanation: string
   },
   "strategyGraduation": {
     term: "Strategy Graduation",
-    explanation: "Our 10-test validation pipeline that strategies must pass before going live. Tests include historical backtesting, walk-forward analysis, Monte Carlo simulation, stress testing, and live paper trading validation.",
+    explanation: "Our 10-test validation pipeline that strategies must pass before going live. Tests include historical backtesting, walk-forward analysis, Monte Carlo simulation, stress testing, and live validation.",
     category: "Quality Assurance",
   },
   "backtesting": {
