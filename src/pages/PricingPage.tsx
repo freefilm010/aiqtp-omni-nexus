@@ -67,7 +67,7 @@ const PRICING_TIERS: PricingTier[] = [
     icon: <Star className="h-6 w-6" />,
     features: [
       "Full platform access",
-      "Unlimited paper trading",
+      "Unlimited backtesting",
       "5 saved strategies",
       "Basic AI signals",
       "Community access",

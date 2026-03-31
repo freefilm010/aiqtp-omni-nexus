@@ -205,7 +205,7 @@ const BottomToolbar = ({ assetCount }: { assetCount: number }) => (
       </button>
       <button className="flex items-center gap-1.5 rounded bg-[hsl(162,91%,32%,0.1)] px-3 py-1.5 text-[11px] font-medium text-[hsl(162,91%,32%)] transition-colors">
         <LineChart className="w-3.5 h-3.5" />
-        Paper Trading ▲
+        Live Trading ▲
       </button>
     </div>
     <div className="flex-1" />

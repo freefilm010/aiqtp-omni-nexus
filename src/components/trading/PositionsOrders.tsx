@@ -111,19 +111,7 @@ const PositionsOrders = () => {
   const closePosition = async (id: string) => {
     const pos = positions.find(p => p.id === id);
     if (!pos) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const symbol = pos.symbol.replace('/USDT', '');
-    await supabase.rpc('update_paper_portfolio', {
-      p_user_id: user.id,
-      p_symbol: symbol,
-      p_amount_change: -pos.size,
-      p_price: pos.markPrice,
-    });
-
-    setPositions(prev => prev.filter(p => p.id !== id));
-    toast.success("Position closed");
+    toast.info("Live position management coming soon — connect an exchange to execute trades.");
   };
 
   const totalPnl = positions.reduce((acc, p) => acc + p.pnl, 0);
