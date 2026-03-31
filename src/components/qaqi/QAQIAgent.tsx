@@ -513,7 +513,7 @@ function generateFallbackResponse(query: string): string {
 
 **Wallet Details:**
 - **ID**: qw_${Date.now()}
-- **Address**: \`qw${[...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}...\`
+- **Address**: \`qw${Date.now().toString(16).slice(0, 16)}...\`
 - **Encryption**: ML-KEM-768 (Post-Quantum Secure)
 - **Status**: Active
 
