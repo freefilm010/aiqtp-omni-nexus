@@ -53,8 +53,8 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
       Object.entries(stratMap).map(([name, value]) => ({ name, value: parseFloat(value.toFixed(2)) }))
     );
 
-    // Simple projection: 8% monthly growth on current deployed
-    setProjectedEarnings(parseFloat((cumulative * 0.08).toFixed(2)));
+    // No fabricated projections — show actual deployed total only
+    setProjectedEarnings(0);
   }, [engineId]);
 
   useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
