@@ -40,46 +40,44 @@ const TabLoader = () => (
 const PortfolioPage = () => {
   const { user } = useAuth();
   const { getValuation } = useAssetValuation();
-  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucet: 0, compound: 0, strategies: 0 });
-  const [engineId, setEngineId] = useState<string | null>(null);
+  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucetLifetime: 0 });
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [holdingsRes, engineRes, claimsRes] = await Promise.all([
-        supabase.from("portfolio_holdings").select("symbol, quantity").eq("user_id", user.id) as any,
-        supabase.from("auto_invest_engine").select("id, total_deployed, total_profit").limit(1) as any,
-        supabase.from("faucet_claims").select("amount, chain").eq("user_id", user.id) as any,
-      ]);
+      // Portfolio holdings = the single source of truth for current balances
+      const { data: holdings } = await supabase
+        .from("portfolio_holdings")
+        .select("symbol, quantity")
+        .eq("user_id", user.id) as any;
 
-      const portfolioVal = (holdingsRes.data || []).reduce(
-        (sum: number, holding: { symbol: string; quantity: number | string }) =>
-          sum + getValuation(holding.symbol, Number(holding.quantity) || 0).valueUsd,
+      const portfolioVal = (holdings || []).reduce(
+        (sum: number, h: { symbol: string; quantity: number | string }) =>
+          sum + getValuation(h.symbol, Number(h.quantity) || 0).valueUsd,
         0,
       );
 
-      const faucetVal = (claimsRes.data || []).reduce(
-        (sum: number, claim: { amount: number | string; chain: string }) => {
-          const symbol = FAUCET_CHAIN_TO_SYMBOL[claim.chain] ?? claim.chain.toUpperCase();
-          return sum + getValuation(symbol, Number(claim.amount) || 0).valueUsd;
+      // Faucet lifetime: informational only (already included in portfolio_holdings)
+      const { data: claims } = await supabase
+        .from("faucet_claims")
+        .select("amount, chain")
+        .eq("user_id", user.id) as any;
+
+      const faucetLifetime = (claims || []).reduce(
+        (sum: number, c: { amount: number | string; chain: string }) => {
+          const symbol = FAUCET_CHAIN_TO_SYMBOL[c.chain] ?? c.chain.toUpperCase();
+          return sum + getValuation(symbol, Number(c.amount) || 0).valueUsd;
         },
         0,
       );
 
-      const engine = engineRes.data?.[0];
-      if (engine) setEngineId(engine.id);
-
-      setNetWorth({
-        portfolio: portfolioVal,
-        faucet: faucetVal,
-        compound: engine ? Number(engine.total_deployed || 0) + Number(engine.total_profit || 0) : 0,
-        strategies: 0,
-      });
+      setNetWorth({ portfolio: portfolioVal, faucetLifetime });
     };
     load();
   }, [user, getValuation]);
 
-  const total = netWorth.portfolio + netWorth.faucet + netWorth.compound;
+  // Net Worth = portfolio holdings only (no double-counting)
+  const total = netWorth.portfolio;
 
   return (
     <div className="min-h-screen bg-background">
