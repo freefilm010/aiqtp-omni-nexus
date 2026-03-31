@@ -847,7 +847,7 @@ const AIResearchLab = () => {
                                 <DropdownMenuItem 
                                   onClick={() => updateStrategyStatusMutation.mutate({ id: strategy.id, status: 'paper_trading' })}
                                 >
-                                  <Play className="mr-2 h-4 w-4" /> Paper Trading
+                                  <Play className="mr-2 h-4 w-4" /> Validation
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={() => updateStrategyStatusMutation.mutate({ id: strategy.id, status: 'live' })}
