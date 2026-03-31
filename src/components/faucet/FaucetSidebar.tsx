@@ -41,7 +41,18 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
       if (data) setLeaderboard(data);
     };
     loadLeaderboard();
-  }, [claims.length]);
+
+    // Realtime refresh for leaderboard when claims change
+    const channel = supabase
+      .channel('leaderboard-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'faucet_claims' },
+        () => { loadLeaderboard(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const handleReferral = () => {
     if (!userId) { toast.error("Sign in first"); return; }

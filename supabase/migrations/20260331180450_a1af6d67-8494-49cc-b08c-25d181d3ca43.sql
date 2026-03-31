@@ -1,0 +1,2 @@
+ALTER PUBLICATION supabase_realtime ADD TABLE public.auto_invest_transactions;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.auto_invest_engine;
