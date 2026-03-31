@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { LayoutGrid, BarChart3, Wallet, TrendingUp, Coins, Target } from "lucide-react";
+import { LayoutGrid, BarChart3, Wallet, TrendingUp, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
@@ -11,7 +11,7 @@ import { useAssetValuation } from "@/hooks/useAssetValuation";
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const MarketHeatmap = lazy(() => import("@/components/analytics/MarketHeatmap"));
 const FundamentalAnalysis = lazy(() => import("@/components/analytics/FundamentalAnalysis"));
-const CompoundAnalytics = lazy(() => import("@/components/faucet/CompoundAnalytics"));
+
 
 const FAUCET_CHAIN_TO_SYMBOL: Record<string, string> = {
   "usdc-test": "tUSDC",
@@ -40,46 +40,44 @@ const TabLoader = () => (
 const PortfolioPage = () => {
   const { user } = useAuth();
   const { getValuation } = useAssetValuation();
-  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucet: 0, compound: 0, strategies: 0 });
-  const [engineId, setEngineId] = useState<string | null>(null);
+  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucetLifetime: 0 });
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const [holdingsRes, engineRes, claimsRes] = await Promise.all([
-        supabase.from("portfolio_holdings").select("symbol, quantity").eq("user_id", user.id) as any,
-        supabase.from("auto_invest_engine").select("id, total_deployed, total_profit").limit(1) as any,
-        supabase.from("faucet_claims").select("amount, chain").eq("user_id", user.id) as any,
-      ]);
+      // Portfolio holdings = the single source of truth for current balances
+      const { data: holdings } = await supabase
+        .from("portfolio_holdings")
+        .select("symbol, quantity")
+        .eq("user_id", user.id) as any;
 
-      const portfolioVal = (holdingsRes.data || []).reduce(
-        (sum: number, holding: { symbol: string; quantity: number | string }) =>
-          sum + getValuation(holding.symbol, Number(holding.quantity) || 0).valueUsd,
+      const portfolioVal = (holdings || []).reduce(
+        (sum: number, h: { symbol: string; quantity: number | string }) =>
+          sum + getValuation(h.symbol, Number(h.quantity) || 0).valueUsd,
         0,
       );
 
-      const faucetVal = (claimsRes.data || []).reduce(
-        (sum: number, claim: { amount: number | string; chain: string }) => {
-          const symbol = FAUCET_CHAIN_TO_SYMBOL[claim.chain] ?? claim.chain.toUpperCase();
-          return sum + getValuation(symbol, Number(claim.amount) || 0).valueUsd;
+      // Faucet lifetime: informational only (already included in portfolio_holdings)
+      const { data: claims } = await supabase
+        .from("faucet_claims")
+        .select("amount, chain")
+        .eq("user_id", user.id) as any;
+
+      const faucetLifetime = (claims || []).reduce(
+        (sum: number, c: { amount: number | string; chain: string }) => {
+          const symbol = FAUCET_CHAIN_TO_SYMBOL[c.chain] ?? c.chain.toUpperCase();
+          return sum + getValuation(symbol, Number(c.amount) || 0).valueUsd;
         },
         0,
       );
 
-      const engine = engineRes.data?.[0];
-      if (engine) setEngineId(engine.id);
-
-      setNetWorth({
-        portfolio: portfolioVal,
-        faucet: faucetVal,
-        compound: engine ? Number(engine.total_deployed || 0) + Number(engine.total_profit || 0) : 0,
-        strategies: 0,
-      });
+      setNetWorth({ portfolio: portfolioVal, faucetLifetime });
     };
     load();
   }, [user, getValuation]);
 
-  const total = netWorth.portfolio + netWorth.faucet + netWorth.compound;
+  // Net Worth = portfolio holdings only (no double-counting)
+  const total = netWorth.portfolio;
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,12 +91,11 @@ const PortfolioPage = () => {
         </div>
 
         {/* Net Worth Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           {[
             { label: "Net Worth", value: total, icon: <Wallet className="h-4 w-4" />, color: "text-primary" },
-            { label: "Portfolio", value: netWorth.portfolio, icon: <TrendingUp className="h-4 w-4" />, color: "text-green-500" },
-            { label: "Faucet Earned", value: netWorth.faucet, icon: <Coins className="h-4 w-4" />, color: "text-amber-500" },
-            { label: "Compounding", value: netWorth.compound, icon: <Target className="h-4 w-4" />, color: "text-cyan-500" },
+            { label: "Holdings Value", value: netWorth.portfolio, icon: <TrendingUp className="h-4 w-4" />, color: "text-green-500" },
+            { label: "Faucet Earned (lifetime)", value: netWorth.faucetLifetime, icon: <Coins className="h-4 w-4" />, color: "text-amber-500", subtitle: "included in holdings" },
           ].map(item => (
             <Card key={item.label}>
               <CardContent className="p-3">
@@ -107,18 +104,18 @@ const PortfolioPage = () => {
                   <span className="text-xs text-muted-foreground">{item.label}</span>
                 </div>
                 <p className="text-lg font-bold">${item.value.toFixed(2)}</p>
+                {"subtitle" in item && item.subtitle && (
+                  <p className="text-[10px] text-muted-foreground">{item.subtitle}</p>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
 
         <Tabs defaultValue="portfolio" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
+          <TabsList className="grid w-full max-w-xl grid-cols-3">
             <TabsTrigger value="portfolio" className="gap-1.5 text-xs">
               <Wallet className="h-3.5 w-3.5" /> Portfolio
-            </TabsTrigger>
-            <TabsTrigger value="compound" className="gap-1.5 text-xs">
-              <Target className="h-3.5 w-3.5" /> Compound
             </TabsTrigger>
             <TabsTrigger value="heatmap" className="gap-1.5 text-xs">
               <LayoutGrid className="h-3.5 w-3.5" /> Heatmaps
@@ -131,12 +128,6 @@ const PortfolioPage = () => {
           <TabsContent value="portfolio">
             <Suspense fallback={<TabLoader />}>
               <PortfolioAnalyticsDashboard />
-            </Suspense>
-          </TabsContent>
-
-          <TabsContent value="compound">
-            <Suspense fallback={<TabLoader />}>
-              <CompoundAnalytics userId={user?.id || null} engineId={engineId} />
             </Suspense>
           </TabsContent>
 
