@@ -57,10 +57,10 @@ const NFTRarityAnalyzer = () => {
           collection: nft.collection_name || "User Collection",
           rank: idx + 1,
           totalSupply: data.length,
-          rarityScore: 100 + Math.random() * 200,
+          rarityScore: 0,
           traits: (nft.attributes as RarityTrait[]) || [],
-          estimatedValue: `${(0.1 + Math.random() * 5).toFixed(2)} ETH`,
-          priceVsFloor: `+${(20 + Math.random() * 300).toFixed(0)}%`,
+          estimatedValue: "—",
+          priceVsFloor: "—",
         })));
       }
     };

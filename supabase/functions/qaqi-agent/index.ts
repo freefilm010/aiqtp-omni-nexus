@@ -63,7 +63,7 @@ const QAQI_TOOLS: ToolDefinition[] = [
   },
   {
     name: "execute_trade",
-    description: "Execute trades with risk management. Live trades require admin approval, paper trades execute immediately.",
+    description: "Execute live trades with risk management. All trades require proper exchange connection and admin approval for large orders.",
     parameters: {
       type: "object",
       properties: {
@@ -73,7 +73,7 @@ const QAQI_TOOLS: ToolDefinition[] = [
         price: { type: "number" },
         stop_loss: { type: "number" },
         take_profit: { type: "number" },
-        mode: { type: "string", enum: ["paper", "live"], description: "Trading mode" }
+        mode: { type: "string", enum: ["live"], description: "Trading mode — live execution only" }
       },
       required: ["action", "symbol", "amount"]
     }

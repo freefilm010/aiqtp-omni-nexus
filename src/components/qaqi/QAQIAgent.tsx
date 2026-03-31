@@ -504,7 +504,7 @@ const QAQIAgent = () => {
   );
 };
 
-// Fallback response generator for offline/demo mode
+// Fallback response generator for offline mode — uses deterministic data only
 function generateFallbackResponse(query: string): string {
   const lowerQuery = query.toLowerCase();
   

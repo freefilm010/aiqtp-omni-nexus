@@ -175,7 +175,7 @@ const PlatformDocumentation = () => {
                     <h4 className="font-semibold mb-2">🔐 Security Access Levels</h4>
                     <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
                       <div><strong>Admin Approved:</strong> Full 127-qubit IBM Quantum, live trades, treasury access</div>
-                      <div><strong>Standard User:</strong> 32-qubit simulator, paper trades only</div>
+                      <div><strong>Standard User:</strong> 32-qubit simulator, backtesting & validation only</div>
                       <div><strong>Unauthenticated:</strong> No access</div>
                     </div>
                   </div>

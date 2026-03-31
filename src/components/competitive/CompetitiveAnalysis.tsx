@@ -71,7 +71,7 @@ const FEATURE_COMPARISONS: FeatureComparison[] = [
   { feature: 'Custom Scripts', category: 'Scripting', us: 'yes', bloomberg: 'yes', thinkorswim: 'yes', tradingview: 'yes', aladdin: 'yes', importance: 'high' },
   { feature: 'Strategy Marketplace', category: 'Scripting', us: 'yes', bloomberg: 'partial', thinkorswim: 'no', tradingview: 'yes', aladdin: 'no', importance: 'medium' },
   { feature: 'Backtesting Engine', category: 'Scripting', us: 'yes', bloomberg: 'yes', thinkorswim: 'yes', tradingview: 'yes', aladdin: 'yes', importance: 'critical' },
-  { feature: 'Paper Trading', category: 'Scripting', us: 'yes', bloomberg: 'yes', thinkorswim: 'yes', tradingview: 'yes', aladdin: 'yes', importance: 'high' },
+  { feature: 'Strategy Validation', category: 'Scripting', us: 'yes', bloomberg: 'yes', thinkorswim: 'yes', tradingview: 'yes', aladdin: 'yes', importance: 'high' },
   
   // Risk & Portfolio
   { feature: 'Real-time Risk Analytics', category: 'Risk', us: 'yes', bloomberg: 'yes', thinkorswim: 'partial', tradingview: 'partial', aladdin: 'yes', importance: 'critical' },

@@ -69,34 +69,29 @@ serve(async (req) => {
           );
         }
 
-        const orderMode = mode || 'paper';
+        const orderMode = mode || 'live';
         const orderId = `ord_${Date.now()}_${crypto.randomUUID().substring(0, 8)}`;
 
-        if (orderMode === 'paper') {
-          // Paper trading - record in database without real execution
-          const { data: order, error: insertError } = await supabase
-            .from('paper_trades')
-            .insert({
-              id: orderId,
-              user_id: user.id,
-              symbol,
-              side,
-              order_type: type,
-              quantity,
-              price: price || null,
-              stop_price: stopPrice || null,
-              time_in_force: timeInForce || 'GTC',
-              status: 'filled', // Paper trades fill immediately
-              filled_quantity: quantity,
-              filled_price: price || 0, // Will need to fetch current price
-              created_at: new Date().toISOString(),
-              executed_at: new Date().toISOString()
-            })
-            .select()
-            .single();
+        if (orderMode !== 'live') {
+          // Reject non-live modes — platform is production-only
+          return new Response(
+            JSON.stringify({ success: false, error: 'Only live trading is supported. Connect an exchange account to execute trades.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
-          if (insertError) {
-            console.error('Paper trade insert error:', insertError);
+        if (!exchangeAccountId) {
+          // No exchange connected — cannot execute
+          return new Response(
+            JSON.stringify({ success: false, error: 'Exchange connection required. Connect an exchange account in Settings → Connections.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Placeholder for the removed paper block — live execution continues below
+        const placeholderNeverReached = false;
+        if (placeholderNeverReached) {
+            console.error('Unreachable');
             return new Response(
               JSON.stringify({ success: false, error: 'Failed to record paper trade' }),
               { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
