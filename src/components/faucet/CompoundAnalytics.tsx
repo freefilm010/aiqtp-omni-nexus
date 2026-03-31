@@ -102,7 +102,6 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
               <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={v => `$${v}`} />
               <Tooltip contentStyle={{ fontSize: 11, backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
               <Area type="monotone" dataKey="deployed" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} name="Deployed" />
-              <Area type="monotone" dataKey="projected" stroke="hsl(var(--chart-2))" fill="hsl(var(--chart-2))" fillOpacity={0.08} strokeDasharray="5 5" name="Projected" />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
