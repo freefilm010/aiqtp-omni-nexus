@@ -11,7 +11,7 @@ import { useAssetValuation } from "@/hooks/useAssetValuation";
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const MarketHeatmap = lazy(() => import("@/components/analytics/MarketHeatmap"));
 const FundamentalAnalysis = lazy(() => import("@/components/analytics/FundamentalAnalysis"));
-const CompoundAnalytics = lazy(() => import("@/components/faucet/CompoundAnalytics"));
+
 
 const FAUCET_CHAIN_TO_SYMBOL: Record<string, string> = {
   "usdc-test": "tUSDC",
