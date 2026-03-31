@@ -79,7 +79,7 @@ const PortfolioPage = () => {
     load();
   }, [user, getValuation]);
 
-  const total = netWorth.portfolio;
+  const total = netWorth.portfolio + netWorth.faucet + netWorth.compound;
 
   return (
     <div className="min-h-screen bg-background">
