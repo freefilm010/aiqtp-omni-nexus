@@ -14,21 +14,21 @@ const FundamentalAnalysis = lazy(() => import("@/components/analytics/Fundamenta
 const CompoundAnalytics = lazy(() => import("@/components/faucet/CompoundAnalytics"));
 
 const FAUCET_CHAIN_TO_SYMBOL: Record<string, string> = {
-  "usdc-test": "USDC",
-  "usdt-test": "USDT",
-  "dai-test": "DAI",
-  "busd-test": "BUSD",
+  "usdc-test": "tUSDC",
+  "usdt-test": "tUSDT",
+  "dai-test": "tDAI",
+  "busd-test": "tBUSD",
   qtc: "QTC",
   aiq: "AIQ",
   nxs: "NXS",
-  "eth-test": "ETH",
-  "btc-test": "BTC",
-  "sol-test": "SOL",
-  "matic-test": "MATIC",
-  "avax-test": "AVAX",
-  "uni-test": "UNI",
-  "aave-test": "AAVE",
-  "link-test": "LINK",
+  "eth-test": "tETH",
+  "btc-test": "tBTC",
+  "sol-test": "tSOL",
+  "matic-test": "tMATIC",
+  "avax-test": "tAVAX",
+  "uni-test": "tUNI",
+  "aave-test": "tAAVE",
+  "link-test": "tLINK",
 };
 
 const TabLoader = () => (
