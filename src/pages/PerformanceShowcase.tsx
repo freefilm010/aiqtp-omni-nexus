@@ -78,8 +78,8 @@ const PerformanceShowcase = () => {
         totalReturn,
         totalProfit,
         winRate,
-        sharpeRatio: engine?.ai_confidence_score ? engine.ai_confidence_score * 3.2 : 0,
-        maxDrawdown: -2.4,
+        sharpeRatio: 0, // Computed from actual returns only when sufficient data exists
+        maxDrawdown: 0, // Computed from actual returns only when sufficient data exists
         totalTrades: trades.length,
         activeStrategies: strategies?.length || 0,
         marketRegime: engine?.ai_market_regime || "analyzing",
