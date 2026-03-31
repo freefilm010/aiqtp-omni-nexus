@@ -366,7 +366,7 @@ const AIResearchLab = () => {
       draft: 'bg-muted text-muted-foreground',
       backtesting: 'bg-primary/20 text-primary',
       paper_trading: 'bg-accent/20 text-accent-foreground',
-      live: 'bg-success/20 text-success',
+      live: 'bg-green-500/20 text-green-400',
       archived: 'bg-muted text-muted-foreground'
     };
     return colors[status] || 'bg-muted';
