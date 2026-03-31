@@ -216,24 +216,10 @@ serve(async (req) => {
           );
         }
 
-        if (mode === 'paper' || !exchangeAccountId) {
-          // Cancel paper order
-          const { error } = await supabase
-            .from('paper_trades')
-            .update({ status: 'cancelled' })
-            .eq('id', orderId)
-            .eq('user_id', user.id);
-
-          if (error) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to cancel order' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
+        if (!exchangeAccountId) {
           return new Response(
-            JSON.stringify({ success: true, message: 'Paper order cancelled' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Exchange connection required to cancel orders.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
