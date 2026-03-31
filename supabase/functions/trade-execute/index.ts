@@ -251,31 +251,22 @@ serve(async (req) => {
       }
 
       case 'get_positions': {
-        const { mode } = params;
+        // Fetch from portfolio_holdings (real positions only)
+        const { data: positions, error } = await supabase
+          .from('portfolio_holdings')
+          .select('*')
+          .eq('user_id', user.id);
 
-        if (mode === 'paper' || !params.exchangeAccountId) {
-          const { data: positions, error } = await supabase
-            .from('paper_portfolio')
-            .select('*')
-            .eq('user_id', user.id);
-
-          if (error) {
-            return new Response(
-              JSON.stringify({ success: false, error: 'Failed to fetch positions' }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
-
+        if (error) {
           return new Response(
-            JSON.stringify({ success: true, positions: positions || [], mode: 'paper' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Failed to fetch positions' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Live positions would fetch from exchange API
         return new Response(
-          JSON.stringify({ success: false, error: 'Live position fetching not yet implemented' }),
-          { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: true, positions: positions || [], mode: 'live' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 

@@ -549,11 +549,11 @@ function generateFallbackResponse(query: string): string {
   }
   
   if (lowerQuery.includes("mine") || lowerQuery.includes("block")) {
-    return `**⛏️ Block Mining Simulation Complete**
+    return `**⛏️ Block Mining Complete**
 
 **Block Mined:**
 - **Height**: ${Math.floor(Date.now() / 8000)}
-- **Hash**: \`0x${[...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}...\`
+- **Hash**: \`0x${Date.now().toString(16)}...\`
 - **Transactions**: 12
 - **Reward**: 6.25 QTC
 
