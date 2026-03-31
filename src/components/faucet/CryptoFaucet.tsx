@@ -94,6 +94,20 @@ const CryptoFaucet = () => {
 
   useEffect(() => { loadClaims(); }, [loadClaims]);
 
+  // Realtime subscription for faucet_claims
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel('faucet-claims-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'faucet_claims', filter: `user_id=eq.${userId}` },
+        () => { loadClaims(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, loadClaims]);
+
   const loadCompoundEngine = useCallback(async () => {
     if (!userId) return;
     const { data } = await supabase
