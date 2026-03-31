@@ -100,10 +100,20 @@ const AutoInvestPage = () => {
 
   const fetchEngine = async () => {
     setLoading(true);
-    // Get or create engine
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      setEngine(null);
+      setAllocations([]);
+      setLoading(false);
+      return;
+    }
+
     const { data: engines } = await supabase
       .from("auto_invest_engine")
       .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
       .limit(1);
 
     if (engines && engines.length > 0) {
@@ -117,9 +127,8 @@ const AutoInvestPage = () => {
         .order("target_percent", { ascending: false });
       setAllocations((allocs || []) as unknown as Allocation[]);
     } else {
-      // Create default engine
-      // Engine will be auto-created via edge function on first deposit
       setEngine(null);
+      setAllocations([]);
     }
     setLoading(false);
   };

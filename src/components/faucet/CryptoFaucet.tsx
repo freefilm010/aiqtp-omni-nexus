@@ -49,7 +49,7 @@ const CryptoFaucet = () => {
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
   const lastClaimTimesRef = useRef<Record<string, Date>>({});
-  const { getValuation } = useAssetValuation();
+  const { getValuation, getPortfolioValuation } = useAssetValuation();
 
   const loadClaims = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -113,6 +113,8 @@ const CryptoFaucet = () => {
     const { data } = await supabase
       .from("auto_invest_engine")
       .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
       .limit(1) as any;
 
     if (data?.[0]) {
@@ -134,6 +136,7 @@ const CryptoFaucet = () => {
     } else {
       // Auto-create engine so claims always compound
       const { data: newEngine } = await supabase.from("auto_invest_engine").insert({
+        user_id: userId,
         engine_name: 'Faucet Compound Engine',
         strategy: 'ultra_aggressive',
         status: 'active',
@@ -161,7 +164,7 @@ const CryptoFaucet = () => {
     // Always compound — if engine doesn't exist yet, skip silently
     if (!compoundEngine) return;
     
-    // Convert token amount to real USD value using live prices
+    // Convert token amount to USD value using configured live price sources only
     const valuation = getValuation(tokenSymbol, amount);
     const usdValue = valuation.valueUsd;
     if (usdValue <= 0) return;
@@ -207,8 +210,6 @@ const CryptoFaucet = () => {
         status: 'completed',
         ai_triggered: true,
         ai_reason: `Auto-compound ${tokenSymbol} → ${strat.name} (${strat.pct}%) | $${usdValue.toFixed(2)} total`,
-        ai_confidence: 0.85,
-        market_regime: 'growth',
       } as any);
     }
 
@@ -325,7 +326,6 @@ const CryptoFaucet = () => {
     return () => clearInterval(interval);
   }, [autoClaim, userId, loadClaims, routeToCompound]);
 
-  const { getPortfolioValuation } = useAssetValuation();
   const availableCount = FAUCET_TOKENS.filter(t => !isOnCooldown(t) && t.available).length;
   const { totalUsd } = getPortfolioValuation(balances);
 
@@ -377,7 +377,7 @@ const CryptoFaucet = () => {
       </div>
 
       {/* Compound Analytics */}
-      <CompoundAnalytics userId={userId} engineId={compoundEngine?.id || null} />
+      <CompoundAnalytics engineId={compoundEngine?.id || null} />
 
       {/* Claim Scheduler */}
       <FaucetScheduler tokens={FAUCET_TOKENS} userId={userId} />

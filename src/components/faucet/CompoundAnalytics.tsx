@@ -3,20 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BarChart3, Target, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
 
 interface CompoundAnalyticsProps {
-  userId: string | null;
   engineId: string | null;
 }
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
-const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
+const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [growthData, setGrowthData] = useState<any[]>([]);
   const [strategyBreakdown, setStrategyBreakdown] = useState<any[]>([]);
-  const [projectedEarnings, setProjectedEarnings] = useState(0);
 
   const loadAnalytics = useCallback(async () => {
     if (!engineId) return;
@@ -52,8 +50,6 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
       Object.entries(stratMap).map(([name, value]) => ({ name, value: parseFloat(value.toFixed(2)) }))
     );
 
-    // No fabricated projections — show actual deployed total only
-    setProjectedEarnings(0);
   }, [engineId]);
 
   useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
@@ -159,7 +155,7 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-2">
               <Zap className="h-3 w-3" />
-              Actual values from auto-compound deployments
+              Actual deployment records only • not withdrawable cash
             </div>
           </CardContent>
         </Card>

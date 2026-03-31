@@ -40,7 +40,7 @@ const TabLoader = () => (
 const PortfolioPage = () => {
   const { user } = useAuth();
   const { getValuation } = useAssetValuation();
-  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucetLifetime: 0 });
+  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucetLifetime: 0, assetCount: 0 });
 
   useEffect(() => {
     if (!user) return;
@@ -51,7 +51,11 @@ const PortfolioPage = () => {
         .select("symbol, quantity")
         .eq("user_id", user.id) as any;
 
-      const portfolioVal = (holdings || []).reduce(
+      const activeHoldings = (holdings || []).filter(
+        (holding: { quantity: number | string }) => (Number(holding.quantity) || 0) > 0,
+      );
+
+      const portfolioVal = activeHoldings.reduce(
         (sum: number, h: { symbol: string; quantity: number | string }) =>
           sum + getValuation(h.symbol, Number(h.quantity) || 0).valueUsd,
         0,
@@ -71,7 +75,7 @@ const PortfolioPage = () => {
         0,
       );
 
-      setNetWorth({ portfolio: portfolioVal, faucetLifetime });
+      setNetWorth({ portfolio: portfolioVal, faucetLifetime, assetCount: activeHoldings.length });
     };
     load();
   }, [user, getValuation]);
@@ -86,16 +90,16 @@ const PortfolioPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Portfolio Command Center</h1>
           <p className="text-muted-foreground mt-1">
-            Unified view • Faucet earnings • Compound growth • Strategy P&L
+            Current holdings • claim history • live market valuation
           </p>
         </div>
 
         {/* Net Worth Summary */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           {[
-            { label: "Net Worth", value: total, icon: <Wallet className="h-4 w-4" />, color: "text-primary" },
-            { label: "Holdings Value", value: netWorth.portfolio, icon: <TrendingUp className="h-4 w-4" />, color: "text-green-500" },
-            { label: "Faucet Earned (lifetime)", value: netWorth.faucetLifetime, icon: <Coins className="h-4 w-4" />, color: "text-amber-500", subtitle: "included in holdings" },
+            { label: "Current Net Worth", value: total, icon: <Wallet className="h-4 w-4" />, color: "text-primary", format: "currency" },
+            { label: "Held Assets", value: netWorth.assetCount, icon: <LayoutGrid className="h-4 w-4" />, color: "text-muted-foreground", format: "count" },
+            { label: "Claim History Value", value: netWorth.faucetLifetime, icon: <Coins className="h-4 w-4" />, color: "text-primary", subtitle: "historical claim valuation • not cash", format: "currency" },
           ].map(item => (
             <Card key={item.label}>
               <CardContent className="p-3">
@@ -103,7 +107,9 @@ const PortfolioPage = () => {
                   <span className={item.color}>{item.icon}</span>
                   <span className="text-xs text-muted-foreground">{item.label}</span>
                 </div>
-                <p className="text-lg font-bold">${item.value.toFixed(2)}</p>
+                <p className="text-lg font-bold">
+                  {item.format === "count" ? String(item.value) : `$${Number(item.value).toFixed(2)}`}
+                </p>
                 {"subtitle" in item && item.subtitle && (
                   <p className="text-[10px] text-muted-foreground">{item.subtitle}</p>
                 )}
