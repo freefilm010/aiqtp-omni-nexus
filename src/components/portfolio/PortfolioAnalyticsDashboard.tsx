@@ -89,11 +89,15 @@ const PortfolioAnalyticsDashboard = () => {
         const positions: Position[] = holdings.map(h => {
           const val = getValuation(h.symbol, Number(h.quantity));
           const meta = ASSET_META[h.symbol] || { sector: 'Other', assetClass: 'crypto' as const, region: 'Global' };
+          // Use stored value_usd / quantity as cost basis if available, otherwise use current price (no fake P&L)
+          const storedValuePerUnit = Number(h.quantity) > 0 && Number(h.value_usd) > 0
+            ? Number(h.value_usd) / Number(h.quantity)
+            : val.priceUsd;
           return {
             symbol: h.symbol,
             name: h.name || h.symbol,
             quantity: Number(h.quantity),
-            avgCost: val.priceUsd * 0.95,
+            avgCost: storedValuePerUnit,
             currentPrice: val.priceUsd,
             sector: meta.sector,
             assetClass: meta.assetClass,

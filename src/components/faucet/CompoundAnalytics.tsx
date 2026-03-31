@@ -150,24 +150,17 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              { period: "Monthly", value: projectedEarnings, pct: "8%" },
-              { period: "Quarterly", value: projectedEarnings * 3.2, pct: "25.6%" },
-              { period: "Annually", value: projectedEarnings * 15.2, pct: "151.8%" },
-            ].map(p => (
-              <div key={p.period} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20">
-                <div>
-                  <p className="text-xs font-medium">{p.period}</p>
-                  <p className="text-[10px] text-muted-foreground">~{p.pct} growth</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-sm text-green-500">${p.value.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+            <div className="p-2.5 rounded-lg bg-muted/20">
+              <p className="text-xs font-medium">Total Deployed</p>
+              <p className="font-bold text-sm">${growthData.length > 0 ? growthData[growthData.length - 1].deployed.toFixed(2) : '0.00'}</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-muted/20">
+              <p className="text-xs font-medium">Transactions</p>
+              <p className="font-bold text-sm">{transactions.length}</p>
+            </div>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-2">
               <Zap className="h-3 w-3" />
-              Based on ultra-aggressive strategy with 100% compound rate
+              Actual values from auto-compound deployments
             </div>
           </CardContent>
         </Card>
