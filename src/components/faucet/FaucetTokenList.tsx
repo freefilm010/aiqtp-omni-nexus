@@ -66,7 +66,7 @@ const FaucetTokenList = ({
                       const onCd = isOnCooldown(token);
                       const balance = balances[token.symbol] || 0;
                       const progress = getCooldownProgress(token);
-                      const valuation = balance > 0 ? getValuation(token.symbol, balance) : null;
+                      const valuation = getValuation(token.symbol, balance > 0 ? balance : 1);
 
                       return (
                         <motion.div
