@@ -91,12 +91,11 @@ const PortfolioPage = () => {
         </div>
 
         {/* Net Worth Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           {[
             { label: "Net Worth", value: total, icon: <Wallet className="h-4 w-4" />, color: "text-primary" },
-            { label: "Portfolio", value: netWorth.portfolio, icon: <TrendingUp className="h-4 w-4" />, color: "text-green-500" },
-            { label: "Faucet Earned", value: netWorth.faucet, icon: <Coins className="h-4 w-4" />, color: "text-amber-500" },
-            { label: "Compounding", value: netWorth.compound, icon: <Target className="h-4 w-4" />, color: "text-cyan-500" },
+            { label: "Holdings Value", value: netWorth.portfolio, icon: <TrendingUp className="h-4 w-4" />, color: "text-green-500" },
+            { label: "Faucet Earned (lifetime)", value: netWorth.faucetLifetime, icon: <Coins className="h-4 w-4" />, color: "text-amber-500", subtitle: "included in holdings" },
           ].map(item => (
             <Card key={item.label}>
               <CardContent className="p-3">
@@ -105,6 +104,9 @@ const PortfolioPage = () => {
                   <span className="text-xs text-muted-foreground">{item.label}</span>
                 </div>
                 <p className="text-lg font-bold">${item.value.toFixed(2)}</p>
+                {"subtitle" in item && item.subtitle && (
+                  <p className="text-[10px] text-muted-foreground">{item.subtitle}</p>
+                )}
               </CardContent>
             </Card>
           ))}
