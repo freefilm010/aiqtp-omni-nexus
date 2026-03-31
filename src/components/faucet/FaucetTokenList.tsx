@@ -66,7 +66,7 @@ const FaucetTokenList = ({
                       const onCd = isOnCooldown(token);
                       const balance = balances[token.symbol] || 0;
                       const progress = getCooldownProgress(token);
-                      const valuation = balance > 0 ? getValuation(token.symbol, balance) : null;
+                      const valuation = getValuation(token.symbol, balance > 0 ? balance : 1);
 
                       return (
                         <motion.div
@@ -105,14 +105,17 @@ const FaucetTokenList = ({
                                     </Badge>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 mt-0.5">
+                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                   <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                                     <Timer className="h-2.5 w-2.5" />
                                     {token.claimInterval}h
                                   </span>
-                                  {balance > 0 && valuation && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    @ {formatUsdValue(valuation.priceUsd)}
+                                  </span>
+                                  {balance > 0 && (
                                     <span className="text-[10px] text-primary font-medium">
-                                      {formatQuantity(balance)} · {formatUsdValue(valuation.valueUsd)} USD
+                                      {formatQuantity(balance)} · {formatUsdValue(valuation.priceUsd * balance)}
                                     </span>
                                   )}
                                 </div>

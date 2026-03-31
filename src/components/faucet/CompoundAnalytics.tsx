@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BarChart3, Target, Zap } from "lucide-react";
@@ -18,47 +18,60 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
   const [strategyBreakdown, setStrategyBreakdown] = useState<any[]>([]);
   const [projectedEarnings, setProjectedEarnings] = useState(0);
 
+  const loadAnalytics = useCallback(async () => {
+    if (!engineId) return;
+    const { data } = await supabase
+      .from("auto_invest_transactions")
+      .select("amount_usd, asset_symbol, ai_reason, created_at, status")
+      .eq("engine_id", engineId)
+      .order("created_at", { ascending: true })
+      .limit(500) as any;
+
+    if (!data?.length) return;
+    setTransactions(data);
+
+    // Build cumulative growth curve
+    let cumulative = 0;
+    const growth = data.map((t: any) => {
+      cumulative += Number(t.amount_usd) || 0;
+      return {
+        date: new Date(t.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        deployed: parseFloat(cumulative.toFixed(2)),
+        projected: parseFloat((cumulative * 1.08).toFixed(2)),
+      };
+    });
+    setGrowthData(growth);
+
+    // Strategy attribution
+    const stratMap: Record<string, number> = {};
+    for (const t of data) {
+      const reason = t.ai_reason || "Unknown";
+      const stratName = reason.includes("→") ? reason.split("→")[1]?.trim().split("(")[0]?.trim() : reason;
+      stratMap[stratName] = (stratMap[stratName] || 0) + (Number(t.amount_usd) || 0);
+    }
+    setStrategyBreakdown(
+      Object.entries(stratMap).map(([name, value]) => ({ name, value: parseFloat(value.toFixed(2)) }))
+    );
+
+    // Simple projection: 8% monthly growth on current deployed
+    setProjectedEarnings(parseFloat((cumulative * 0.08).toFixed(2)));
+  }, [engineId]);
+
+  useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
+
+  // Realtime: auto-refresh when new compound transactions arrive
   useEffect(() => {
     if (!engineId) return;
-    const load = async () => {
-      const { data } = await supabase
-        .from("auto_invest_transactions")
-        .select("amount_usd, asset_symbol, ai_reason, created_at, status")
-        .eq("engine_id", engineId)
-        .order("created_at", { ascending: true })
-        .limit(500) as any;
-
-      if (!data?.length) return;
-      setTransactions(data);
-
-      // Build cumulative growth curve
-      let cumulative = 0;
-      const growth = data.map((t: any, i: number) => {
-        cumulative += Number(t.amount_usd) || 0;
-        return {
-          date: new Date(t.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-          deployed: parseFloat(cumulative.toFixed(2)),
-          projected: parseFloat((cumulative * 1.08).toFixed(2)),
-        };
-      });
-      setGrowthData(growth);
-
-      // Strategy attribution
-      const stratMap: Record<string, number> = {};
-      for (const t of data) {
-        const reason = t.ai_reason || "Unknown";
-        const stratName = reason.includes("→") ? reason.split("→")[1]?.trim().split("(")[0]?.trim() : reason;
-        stratMap[stratName] = (stratMap[stratName] || 0) + (Number(t.amount_usd) || 0);
-      }
-      setStrategyBreakdown(
-        Object.entries(stratMap).map(([name, value]) => ({ name, value: parseFloat(value.toFixed(2)) }))
-      );
-
-      // Simple projection: 8% monthly growth on current deployed
-      setProjectedEarnings(parseFloat((cumulative * 0.08).toFixed(2)));
-    };
-    load();
-  }, [engineId]);
+    const channel = supabase
+      .channel('compound-analytics-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'auto_invest_transactions' },
+        () => { loadAnalytics(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [engineId, loadAnalytics]);
 
   if (!engineId || transactions.length === 0) {
     return (
