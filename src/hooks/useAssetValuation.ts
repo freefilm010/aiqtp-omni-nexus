@@ -1,17 +1,31 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
 
-/** Simulated prices for platform-only tokens that aren't on CoinGecko */
-const PLATFORM_TOKEN_PRICES: Record<string, number> = {
-  QTC: 0.85,
-  AIQ: 0.42,
-  NXS: 0.015,
-  QAQI: 0.31,
-  AIQTP: 0.18,
-};
+const TESTNET_TOKENS = new Set([
+  "TUSDC",
+  "TUSDT",
+  "TDAI",
+  "TBUSD",
+  "TETH",
+  "TBTC",
+  "TSOL",
+  "TMATIC",
+  "TAVAX",
+  "TUNI",
+  "TAAVE",
+  "TLINK",
+]);
+
+const STABLECOINS = new Set(["USDC", "USDT", "DAI", "BUSD"]);
 
 /** USDT is pegged ~1:1 to USD */
 const USDT_USD_RATIO = 1.0;
+
+interface PlatformTokenFeed {
+  price: number;
+  change24h: number | null;
+}
 
 export interface AssetValuation {
   symbol: string;
@@ -29,17 +43,85 @@ export interface AssetValuation {
  */
 export function useAssetValuation() {
   const { getPrice, isLive, loading } = useMarketPrices(30000);
+  const [platformTokenPrices, setPlatformTokenPrices] = useState<Record<string, PlatformTokenFeed>>({});
+
+  const loadPlatformTokenPrices = useCallback(async () => {
+    try {
+      const [tokensRes, feedsRes] = await Promise.all([
+        supabase.from("platform_tokens").select("id, symbol").eq("is_active", true),
+        supabase
+          .from("token_price_feeds")
+          .select("token_id, price, change_24h_percent, last_updated")
+          .eq("base_currency", "USD"),
+      ]);
+
+      if (tokensRes.error || feedsRes.error) return;
+
+      const symbolById = new Map<string, string>(
+        (tokensRes.data ?? []).map((token) => [token.id, token.symbol.toUpperCase()])
+      );
+
+      const latestBySymbol: Record<string, PlatformTokenFeed & { updatedAt: number }> = {};
+
+      for (const feed of feedsRes.data ?? []) {
+        const symbol = symbolById.get(String(feed.token_id ?? ""));
+        if (!symbol) continue;
+
+        const updatedAt = feed.last_updated ? new Date(feed.last_updated).getTime() : 0;
+        const current = latestBySymbol[symbol];
+
+        if (!current || updatedAt >= current.updatedAt) {
+          latestBySymbol[symbol] = {
+            price: Number(feed.price ?? 0),
+            change24h: feed.change_24h_percent == null ? null : Number(feed.change_24h_percent),
+            updatedAt,
+          };
+        }
+      }
+
+      setPlatformTokenPrices(
+        Object.fromEntries(
+          Object.entries(latestBySymbol).map(([symbol, feed]) => [
+            symbol,
+            { price: feed.price, change24h: feed.change24h },
+          ])
+        )
+      );
+    } catch {
+      setPlatformTokenPrices({});
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPlatformTokenPrices();
+
+    const channel = supabase
+      .channel("platform-token-prices-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "token_price_feeds" },
+        () => {
+          loadPlatformTokenPrices();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadPlatformTokenPrices]);
 
   const getValuation = useCallback(
     (symbol: string, quantity: number): AssetValuation => {
       const upper = symbol.toUpperCase();
       
       // Testnet tokens (t-prefixed) have $0 value — they are not real assets
-      if (upper.startsWith('T') && upper.length > 1 && ['TUSDC','TUSDT','TDAI','TBUSD','TETH','TBTC','TSOL','TMATIC','TAVAX','TUNI','TAAVE','TLINK'].includes(upper)) {
+      if (TESTNET_TOKENS.has(upper)) {
         return { symbol: upper, quantity, priceUsd: 0, valueUsd: 0, valueUsdt: 0, change24h: null, isLive: false };
       }
 
       const marketPrice = getPrice(upper);
+      const platformTokenPrice = platformTokenPrices[upper];
 
       let priceUsd = 0;
       let change24h: number | null = null;
@@ -49,13 +131,14 @@ export function useAssetValuation() {
         priceUsd = marketPrice.priceNumeric;
         change24h = marketPrice.changePercent;
         live = isLive;
-      } else if (PLATFORM_TOKEN_PRICES[upper] !== undefined) {
-        priceUsd = PLATFORM_TOKEN_PRICES[upper];
-        live = false;
+      } else if (platformTokenPrice) {
+        priceUsd = platformTokenPrice.price;
+        change24h = platformTokenPrice.change24h;
+        live = true;
       }
 
       // Stablecoins default to $1
-      if (['USDC', 'USDT', 'DAI', 'BUSD'].includes(upper) && priceUsd === 0) {
+      if (STABLECOINS.has(upper) && priceUsd === 0) {
         priceUsd = 1;
       }
 
@@ -64,7 +147,7 @@ export function useAssetValuation() {
 
       return { symbol: upper, quantity, priceUsd, valueUsd, valueUsdt, change24h, isLive: live };
     },
-    [getPrice, isLive]
+    [getPrice, isLive, platformTokenPrices]
   );
 
   const getPortfolioValuation = useCallback(

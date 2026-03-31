@@ -9,9 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Shield, AlertTriangle, Target, Activity, Bell, Settings, RefreshCw, Zap, Lock
+  Shield, AlertTriangle, Bell, Settings, RefreshCw, Zap, Lock
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
 interface RiskMetric {
   name: string;
@@ -36,26 +35,70 @@ const AdvancedRiskManager = () => {
   }, [user]);
 
   const fetchRiskData = async () => {
-    // Derive risk metrics from portfolio holdings
-    const { data: holdings } = await supabase.from('portfolio_holdings').select('*');
-    const { data: backtests } = await supabase.from('backtest_results').select('max_drawdown, sharpe_ratio, win_rate').order('created_at', { ascending: false }).limit(5);
+    if (!user) return;
 
-    const totalValue = (holdings || []).reduce((s, h) => s + Number(h.value_usd), 0);
-    const maxAlloc = (holdings || []).reduce((max, h) => Math.max(max, Number(h.allocation_percent)), 0);
-    const avgDrawdown = (backtests || []).reduce((s, b) => s + (Number(b.max_drawdown) || 0), 0) / Math.max((backtests || []).length, 1);
-
-    setRiskMetrics([
-      { name: "Portfolio VaR (95%)", value: Math.min(avgDrawdown * 0.6, 10), limit: 5, status: avgDrawdown * 0.6 > 4 ? "warning" : "safe", description: "Value at Risk" },
-      { name: "Portfolio VaR (99%)", value: Math.min(avgDrawdown * 0.9, 15), limit: 8, status: avgDrawdown * 0.9 > 7 ? "warning" : "safe", description: "Extreme VaR" },
-      { name: "Max Drawdown", value: avgDrawdown, limit: 15, status: avgDrawdown > 12 ? "danger" : avgDrawdown > 8 ? "warning" : "safe", description: "Current drawdown" },
-      { name: "Concentration Risk", value: maxAlloc, limit: 30, status: maxAlloc > 25 ? "warning" : "safe", description: "Largest position %" },
-      { name: "Beta Exposure", value: 1.15, limit: 1.5, status: "safe", description: "Market beta" },
-      { name: "Holdings Count", value: (holdings || []).length, limit: 50, status: "safe", description: "Active positions" },
+    const [{ data: holdings }, { data: backtests }] = await Promise.all([
+      supabase
+        .from('portfolio_holdings')
+        .select('value_usd, allocation_percent')
+        .eq('user_id', user.id),
+      supabase
+        .from('backtest_results')
+        .select('max_drawdown, sharpe_ratio')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5),
     ]);
+
+    if ((!holdings || holdings.length === 0) && (!backtests || backtests.length === 0)) {
+      setRiskMetrics([]);
+      return;
+    }
+
+    const maxAlloc = (holdings || []).reduce((max, h) => Math.max(max, Number(h.allocation_percent) || 0), 0);
+    const avgDrawdown = (backtests || []).reduce((sum, backtest) => sum + (Number(backtest.max_drawdown) || 0), 0) / Math.max((backtests || []).length, 1);
+    const avgSharpe = (backtests || []).reduce((sum, backtest) => sum + (Number(backtest.sharpe_ratio) || 0), 0) / Math.max((backtests || []).length, 1);
+
+    const metrics: RiskMetric[] = [
+      {
+        name: "Max Drawdown",
+        value: avgDrawdown,
+        limit: 15,
+        status: avgDrawdown > 12 ? "danger" : avgDrawdown > 8 ? "warning" : "safe",
+        description: "Average of recent account backtests",
+      },
+      {
+        name: "Concentration Risk",
+        value: maxAlloc,
+        limit: 30,
+        status: maxAlloc > 25 ? "warning" : "safe",
+        description: "Largest saved holding allocation",
+      },
+      {
+        name: "Holdings Count",
+        value: (holdings || []).length,
+        limit: 50,
+        status: (holdings || []).length === 0 ? "warning" : "safe",
+        description: "Tracked positions in this account",
+      },
+    ];
+
+    if (backtests && backtests.length > 0) {
+      metrics.unshift({
+        name: "Avg Sharpe Ratio",
+        value: avgSharpe,
+        limit: 2,
+        status: avgSharpe < 0 ? "danger" : avgSharpe < 1 ? "warning" : "safe",
+        description: "Recent account backtests",
+      });
+    }
+
+    setRiskMetrics(metrics);
   };
 
   const fetchAlerts = async () => {
-    const { data } = await supabase.from('risk_alerts').select('*').order('created_at', { ascending: false }).limit(10);
+    if (!user) return;
+    const { data } = await supabase.from('risk_alerts').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10);
     setAlerts(data || []);
   };
 
@@ -78,13 +121,13 @@ const AdvancedRiskManager = () => {
   };
 
   const riskScore = riskMetrics.length > 0
-    ? Math.round(100 - riskMetrics.reduce((s, m) => s + (m.value / m.limit) * 15, 0))
+    ? Math.max(0, Math.round(100 - riskMetrics.reduce((sum, metric) => sum + Math.min((Math.abs(metric.value) / Math.max(metric.limit, 1)) * 15, 30), 0)))
     : 0;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h2 className="text-2xl font-bold text-foreground">Risk Management</h2><p className="text-muted-foreground">Real-time portfolio risk monitoring & controls</p></div>
+        <div><h2 className="text-2xl font-bold text-foreground">Risk Management</h2><p className="text-muted-foreground">Account-scoped risk monitoring from saved holdings and backtests</p></div>
         <div className="flex gap-2"><Button variant="outline" onClick={() => { fetchRiskData(); fetchAlerts(); }}><RefreshCw className="h-4 w-4 mr-2" />Refresh</Button><Button><Settings className="h-4 w-4 mr-2" />Configure</Button></div>
       </div>
 
@@ -129,20 +172,10 @@ const AdvancedRiskManager = () => {
           <Card className="bg-card border-border">
             <CardHeader><CardTitle className="text-lg">Stress Test Scenarios</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: "2008 Financial Crisis", impact: -32.5, probability: "Low" },
-                  { name: "COVID-19 March 2020", impact: -28.4, probability: "Low" },
-                  { name: "Crypto Winter 2022", impact: -45.2, probability: "Medium" },
-                  { name: "Flash Crash Scenario", impact: -18.6, probability: "Medium" },
-                  { name: "Black Swan Event", impact: -52.8, probability: "Very Low" },
-                  { name: "Gradual Bear Market", impact: -22.3, probability: "High" }
-                ].map((scenario, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
-                    <div><p className="font-medium text-foreground">{scenario.name}</p><p className="text-sm text-muted-foreground">Probability: {scenario.probability}</p></div>
-                    <div className="text-right"><p className="text-xl font-bold text-red-500">{scenario.impact}%</p><p className="text-sm text-muted-foreground">Est. Portfolio Impact</p></div>
-                  </div>
-                ))}
+              <div className="py-10 text-center text-muted-foreground space-y-2">
+                <AlertTriangle className="h-10 w-10 mx-auto opacity-50" />
+                <p>Scenario stress testing is hidden until account-specific historical return series are available.</p>
+                <p className="text-xs">No modeled crash percentages are shown here unless they are calculated from real saved data.</p>
               </div>
             </CardContent>
           </Card>

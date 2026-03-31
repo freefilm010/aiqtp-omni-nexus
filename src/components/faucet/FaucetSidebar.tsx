@@ -29,7 +29,7 @@ interface LeaderboardEntry {
 const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
   const totalTokenTypes = Object.keys(balances).length;
   const { getPortfolioValuation } = useAssetValuation();
-  const { items: valuedItems, totalUsd, totalUsdt } = getPortfolioValuation(balances);
+  const { items: valuedItems, totalUsd } = getPortfolioValuation(balances);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
@@ -89,16 +89,19 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
           <CardHeader className="pb-2 px-3 pt-3">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Wallet className="h-4 w-4 text-primary" />
-              Balances
+              Claimed Assets
               {totalTokenTypes > 0 && (
                 <Badge variant="secondary" className="text-[9px] ml-auto">{totalTokenTypes}</Badge>
               )}
             </CardTitle>
             {totalUsd > 0 && (
-              <div className="flex items-center gap-2 mt-1">
-                <DollarSign className="h-3 w-3 text-green-500" />
-                <span className="text-xs font-bold text-green-500">{formatUsdValue(totalUsd)}</span>
-                <span className="text-[9px] text-muted-foreground">≈ {formatUsdValue(totalUsdt)} USDT</span>
+              <div className="mt-1 space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-3 w-3 text-primary" />
+                  <span className="text-[10px] text-muted-foreground">Claim history value</span>
+                  <span className="text-xs font-bold text-primary">{formatUsdValue(totalUsd)}</span>
+                </div>
+                <p className="text-[9px] text-muted-foreground">Historical claim valuation • not a cash balance</p>
               </div>
             )}
           </CardHeader>
@@ -141,8 +144,8 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                     })}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-6 text-xs">
-                  {loading ? "Loading..." : "No tokens yet"}
+                  <p className="text-muted-foreground text-center py-6 text-xs">
+                    {loading ? "Loading..." : "No claimed assets yet"}
                 </p>
               )}
             </ScrollArea>

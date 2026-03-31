@@ -43,7 +43,7 @@ const FaucetTokenList = ({
           Crypto Faucet
         </CardTitle>
         <CardDescription className="text-xs md:text-sm">
-          Claim testnet, platform & DeFi tokens — compound into strategies
+          Claim testnet, platform & DeFi tokens — only priced assets count toward value
         </CardDescription>
       </CardHeader>
       <CardContent>
