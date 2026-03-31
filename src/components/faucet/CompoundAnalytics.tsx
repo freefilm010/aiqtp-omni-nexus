@@ -145,7 +145,7 @@ const CompoundAnalytics = ({ userId, engineId }: CompoundAnalyticsProps) => {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Target className="h-4 w-4 text-primary" />
-              Projected Earnings
+              Deployment Summary
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
