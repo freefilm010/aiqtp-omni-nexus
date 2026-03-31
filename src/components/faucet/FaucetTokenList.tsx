@@ -110,14 +110,12 @@ const FaucetTokenList = ({
                                     <Timer className="h-2.5 w-2.5" />
                                     {token.claimInterval}h
                                   </span>
-                                  {valuation && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      @ {formatUsdValue(valuation.priceUsd)}
-                                    </span>
-                                  )}
-                                  {balance > 0 && valuation && (
+                                  <span className="text-[10px] text-muted-foreground">
+                                    @ {formatUsdValue(valuation.priceUsd)}
+                                  </span>
+                                  {balance > 0 && (
                                     <span className="text-[10px] text-primary font-medium">
-                                      {formatQuantity(balance)} · {formatUsdValue(valuation.valueUsd)}
+                                      {formatQuantity(balance)} · {formatUsdValue(valuation.priceUsd * balance)}
                                     </span>
                                   )}
                                 </div>
