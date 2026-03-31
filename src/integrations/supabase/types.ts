@@ -732,6 +732,7 @@ export type Database = {
           total_profit: number
           total_reinvested: number
           updated_at: string
+          user_id: string
         }
         Insert: {
           ai_confidence_score?: number | null
@@ -753,6 +754,7 @@ export type Database = {
           total_profit?: number
           total_reinvested?: number
           updated_at?: string
+          user_id: string
         }
         Update: {
           ai_confidence_score?: number | null
@@ -774,6 +776,7 @@ export type Database = {
           total_profit?: number
           total_reinvested?: number
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -9210,6 +9213,10 @@ export type Database = {
       log_security_event: {
         Args: { p_details?: Json; p_event_type: string; p_severity?: string }
         Returns: string
+      }
+      owns_auto_invest_engine: {
+        Args: { _engine_id: string }
+        Returns: boolean
       }
       process_profit_distribution: {
         Args: { p_revenue_id: string }
