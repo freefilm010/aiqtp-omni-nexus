@@ -95,12 +95,6 @@ serve(async (req) => {
           parsed.origin.endsWith(".lovable.app");
       } catch { return false; }
     };
-    const isValidUrl = (url: string) => {
-      try {
-        const parsed = new URL(url);
-        return allowedOrigins.some(o => parsed.origin === o);
-      } catch { return false; }
-    };
     if (!isValidUrl(successUrl) || !isValidUrl(cancelUrl)) {
       return new Response(
         JSON.stringify({ error: "Invalid redirect URL" }),
