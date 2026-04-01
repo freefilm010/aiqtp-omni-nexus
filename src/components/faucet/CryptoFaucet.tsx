@@ -431,6 +431,9 @@ const CryptoFaucet = () => {
       {/* Faucet Orchestrator Dashboard */}
       <FaucetOrchestratorDashboard />
 
+      {/* Agent Competition Arena */}
+      <FaucetCompetitionDashboard />
+
       {/* Compound Analytics */}
       <CompoundAnalytics engineId={compoundEngine?.id || null} />
 
