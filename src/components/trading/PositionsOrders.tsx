@@ -76,7 +76,7 @@ const PositionsOrders = () => {
         id: t.id,
         symbol: t.symbol,
         side: t.side as 'buy' | 'sell',
-        type: t.orderType,
+        type: t.action,
         price: t.price,
         amount: t.quantity,
         filled: t.quantity,
