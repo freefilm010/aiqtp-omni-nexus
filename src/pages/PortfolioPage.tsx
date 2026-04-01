@@ -23,8 +23,8 @@ const TabLoader = () => (
 const PriceBadge = ({ val }: { val: AssetValuation }) => {
   if (val.isTestnet) return <Badge variant="outline" className="text-[10px] px-1.5 py-0">Test</Badge>;
   if (val.priceUnavailable) return <Badge variant="destructive" className="text-[10px] px-1.5 py-0 gap-0.5"><XCircle className="h-2.5 w-2.5" /> No Price</Badge>;
-  if (val.isStale) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-yellow-600"><AlertTriangle className="h-2.5 w-2.5" /> Stale</Badge>;
-  if (val.isLive) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-green-600"><CheckCircle2 className="h-2.5 w-2.5" /> Live</Badge>;
+  if (val.isStale) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-accent-foreground"><AlertTriangle className="h-2.5 w-2.5" /> Stale</Badge>;
+  if (val.isLive) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-primary"><CheckCircle2 className="h-2.5 w-2.5" /> Live</Badge>;
   return null;
 };
 
