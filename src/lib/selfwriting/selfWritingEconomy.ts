@@ -127,15 +127,15 @@ export interface Invariants {
   minPrice: number;
 }
 
-export function enforceInvariants<T extends Record<string, number>>(
-  state: T,
+export function enforceInvariants(
+  state: Record<string, number>,
   invariants: Invariants
-): T {
+): Record<string, number> {
   const patched = { ...state };
-  if ("leverage" in patched) patched.leverage = Math.min(patched.leverage as number, invariants.maxLeverageCap) as T[keyof T] & number;
-  if ("liquidity" in patched) patched.liquidity = Math.max(patched.liquidity as number, invariants.minLiquidity) as T[keyof T] & number;
-  if ("volatility" in patched) patched.volatility = Math.min(patched.volatility as number, invariants.maxVolatility) as T[keyof T] & number;
-  if ("price" in patched) patched.price = Math.max(patched.price as number, invariants.minPrice) as T[keyof T] & number;
+  if ("leverage" in patched) patched.leverage = Math.min(patched.leverage, invariants.maxLeverageCap);
+  if ("liquidity" in patched) patched.liquidity = Math.max(patched.liquidity, invariants.minLiquidity);
+  if ("volatility" in patched) patched.volatility = Math.min(patched.volatility, invariants.maxVolatility);
+  if ("price" in patched) patched.price = Math.max(patched.price, invariants.minPrice);
   return patched;
 }
 
