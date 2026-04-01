@@ -474,6 +474,7 @@ const App = () => (
                         }
                       />
                       <Route path="/performance" element={<PerformanceShowcase />} />
+                      <Route path="/simulation" element={<SimulationDashboard />} />
                       <Route
                         path="/quantclaw"
                         element={
