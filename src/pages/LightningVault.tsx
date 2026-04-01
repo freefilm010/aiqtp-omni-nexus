@@ -93,6 +93,14 @@ const LightningVault = () => {
   const [activeInvoice, setActiveInvoice] = useState<Invoice | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
+  // ZBD state
+  const [zbdBalance, setZbdBalance] = useState<number | null>(null);
+  const [zbdLoading, setZbdLoading] = useState(false);
+  const [zbdConnected, setZbdConnected] = useState(false);
+  const [zbdDepositAmount, setZbdDepositAmount] = useState("");
+  const [zbdDepositLoading, setZbdDepositLoading] = useState(false);
+  const [zbdInvoice, setZbdInvoice] = useState<string | null>(null);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
