@@ -1,17 +1,26 @@
 /**
- * usePortfolioPnL — FIFO PnL engine with fee + slippage + time-aware FX.
+ * usePortfolioPnL — Tax-grade FIFO/LIFO/HIFO PnL engine.
  *
- * Async computation: FX rates are resolved per-trade timestamp for
- * deterministic, audit-safe PnL reconstruction.
+ * Features:
+ * - Lot ID tracking for audit trail
+ * - Strategy-aware sell matching (FIFO | LIFO | HIFO)
+ * - Fee + slippage in cost basis / proceeds
+ * - Time-aware FX normalization
+ * - Holding period classification (short/long term)
+ * - Deterministic replay (same trades → same PnL)
  */
 import { useEffect, useState, useRef } from "react";
 import { useTradeHistoryQuery } from "@/hooks/usePortfolioQuery";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
 import { normalizeFeeToUsd } from "@/lib/normalizeFee";
+import { orderLotsByStrategy } from "@/lib/lotStrategy";
+import type { TaxLot, RealizedEvent, LotStrategy } from "@/lib/taxLots";
 
-interface Lot {
+interface InternalLot {
+  lotId: string;
   qty: number;
-  price: number;
+  price: number;          // effective (includes fee + slippage)
+  buyTimestamp: string;
 }
 
 export interface PnLAsset {
@@ -42,11 +51,23 @@ const EMPTY_TOTALS: PnLTotals = {
   totalRealized: 0, totalUnrealizedPercent: 0, totalFees: 0,
 };
 
-export function usePortfolioPnL() {
+const DEFAULT_STRATEGY: LotStrategy = "FIFO";
+
+let lotCounter = 0;
+function nextLotId(): string {
+  return `lot-${++lotCounter}-${Date.now().toString(36)}`;
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.floor((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000);
+}
+
+export function usePortfolioPnL(strategy: LotStrategy = DEFAULT_STRATEGY) {
   const { data: trades = [] } = useTradeHistoryQuery(500);
   const { getValuation } = useAssetValuation();
   const [assets, setAssets] = useState<PnLAsset[]>([]);
   const [totals, setTotals] = useState<PnLTotals>(EMPTY_TOTALS);
+  const [realizedEvents, setRealizedEvents] = useState<RealizedEvent[]>([]);
   const [isComputing, setIsComputing] = useState(false);
   const versionRef = useRef(0);
 
@@ -54,16 +75,19 @@ export function usePortfolioPnL() {
     if (trades.length === 0) {
       setAssets([]);
       setTotals(EMPTY_TOTALS);
+      setRealizedEvents([]);
       return;
     }
 
     const version = ++versionRef.current;
+    lotCounter = 0;
     setIsComputing(true);
 
     (async () => {
-      const lotsMap = new Map<string, Lot[]>();
+      const lotsMap = new Map<string, InternalLot[]>();
       const realizedMap = new Map<string, number>();
       const feesMap = new Map<string, number>();
+      const events: RealizedEvent[] = [];
 
       const chronological = [...trades].reverse();
 
@@ -80,35 +104,69 @@ export function usePortfolioPnL() {
           feesMap.set(symbol, 0);
         }
 
-        // Time-aware fee normalization to USD
         const feeUsd = await normalizeFeeToUsd(t.fee ?? 0, "USD", t.createdAt);
         feesMap.set(symbol, (feesMap.get(symbol) ?? 0) + feeUsd);
 
         if (isBuy) {
           const effectivePrice = price * (1 + slippagePct) + (qty > 0 ? feeUsd / qty : 0);
-          lotsMap.get(symbol)!.push({ qty, price: effectivePrice });
+          lotsMap.get(symbol)!.push({
+            lotId: nextLotId(),
+            qty,
+            price: effectivePrice,
+            buyTimestamp: t.createdAt,
+          });
         } else {
           const effectivePrice = price * (1 - slippagePct);
           let sellQty = qty;
-          const lots = lotsMap.get(symbol)!;
-          let feeApplied = false;
+          const allLots = lotsMap.get(symbol)!;
 
-          while (sellQty > 0 && lots.length > 0) {
-            const lot = lots[0];
+          // Apply lot strategy ordering
+          const taxLots: TaxLot[] = allLots.map((l) => ({
+            lotId: l.lotId, symbol, qty: l.qty,
+            buyPrice: l.price, buyPriceEffective: l.price,
+            buyFxRate: 1, buyTimestamp: l.buyTimestamp,
+            costBasisUsd: l.qty * l.price,
+          }));
+          const ordered = orderLotsByStrategy(taxLots, strategy);
+          const orderedIds = ordered.map((o) => o.lotId);
+
+          let feeApplied = false;
+          for (const lotId of orderedIds) {
+            if (sellQty <= 0) break;
+            const lot = allLots.find((l) => l.lotId === lotId);
+            if (!lot || lot.qty <= 0) continue;
+
             const used = Math.min(lot.qty, sellQty);
             const sellFee = !feeApplied ? feeUsd : 0;
             feeApplied = true;
             const proceeds = used * effectivePrice - sellFee;
             const cost = used * lot.price;
-            realizedMap.set(symbol, (realizedMap.get(symbol) ?? 0) + (proceeds - cost));
+            const gain = proceeds - cost;
+
+            realizedMap.set(symbol, (realizedMap.get(symbol) ?? 0) + gain);
+
+            const holdDays = daysBetween(lot.buyTimestamp, t.createdAt);
+            events.push({
+              lotId: lot.lotId, symbol, qty: used,
+              costBasisUsd: Math.round(cost * 100) / 100,
+              proceedsUsd: Math.round(proceeds * 100) / 100,
+              gainLossUsd: Math.round(gain * 100) / 100,
+              buyDate: lot.buyTimestamp,
+              sellDate: t.createdAt,
+              holdingDays: holdDays,
+              isLongTerm: holdDays > 365,
+            });
+
             lot.qty -= used;
             sellQty -= used;
-            if (lot.qty <= 0) lots.shift();
           }
+
+          // Remove empty lots
+          const remaining = allLots.filter((l) => l.qty > 0);
+          lotsMap.set(symbol, remaining);
         }
       }
 
-      // Stale check — abort if a newer computation started
       if (version !== versionRef.current) return;
 
       const computed: PnLAsset[] = [];
@@ -140,8 +198,7 @@ export function usePortfolioPnL() {
         const totalReturnPct = costBasis > 0 ? ((unrealized + realizedPnL) / costBasis) * 100 : 0;
 
         computed.push({
-          symbol,
-          quantity: totalQty,
+          symbol, quantity: totalQty,
           avgCost: Math.round(avgCost * 100) / 100,
           currentPrice: val.priceUsd,
           currentValue: Math.round(val.valueUsd * 100) / 100,
@@ -155,7 +212,6 @@ export function usePortfolioPnL() {
       }
 
       computed.sort((a, b) => b.currentValue - a.currentValue);
-
       if (version !== versionRef.current) return;
 
       const tv = computed.reduce((s, a) => s + a.currentValue, 0);
@@ -165,6 +221,7 @@ export function usePortfolioPnL() {
       const tf = computed.reduce((s, a) => s + a.totalFeesPaid, 0);
 
       setAssets(computed);
+      setRealizedEvents(events);
       setTotals({
         totalValue: Math.round(tv * 100) / 100,
         totalCostBasis: Math.round(tcb * 100) / 100,
@@ -175,7 +232,7 @@ export function usePortfolioPnL() {
       });
       setIsComputing(false);
     })();
-  }, [trades, getValuation]);
+  }, [trades, getValuation, strategy]);
 
-  return { assets, totals, isComputing };
+  return { assets, totals, realizedEvents, isComputing };
 }
