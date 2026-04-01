@@ -48,23 +48,16 @@ const PositionsOrders = () => {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
-
-    // Load positions from portfolio_holdings (real assets only)
-    const { data: portfolio } = await supabase
-      .from("portfolio_holdings")
-      .select("*")
-      .eq("user_id", user.id) as any;
-
-    if (portfolio) {
-      setPositions(portfolio
-        .filter((p: any) => !p.symbol.startsWith('t')) // exclude testnet tokens
-        .map((p: any) => ({
-          id: p.id,
-          symbol: p.symbol + '/USDT',
+    // Load positions via DAL
+    const holdingsResult = await portfolioService.getUserHoldings();
+    if (holdingsResult.data) {
+      setPositions(holdingsResult.data
+        .filter((h) => !h.symbol.startsWith('t') && h.quantity > 0)
+        .map((h) => ({
+          id: h.id,
+          symbol: h.symbol + '/USDT',
           side: 'long' as const,
-          size: Number(p.quantity),
+          size: h.quantity,
           entryPrice: 0,
           markPrice: 0,
           liquidationPrice: 0,
@@ -76,25 +69,19 @@ const PositionsOrders = () => {
         })));
     }
 
-    // Load orders from trade_logs
-    const { data: trades } = await supabase
-      .from("trade_logs")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(50) as any;
-
-    if (trades) {
-      setOrders(trades.map((t: any) => ({
+    // Load orders via DAL
+    const tradesResult = await portfolioService.getTradeHistory(50);
+    if (tradesResult.data) {
+      setOrders(tradesResult.data.map((t) => ({
         id: t.id,
-        symbol: t.symbol || 'BTC/USDT',
-        side: t.side || 'buy',
-        type: t.order_type || 'market',
-        price: Number(t.price) || 0,
-        amount: Number(t.quantity) || 0,
-        filled: Number(t.quantity) || 0,
+        symbol: t.symbol,
+        side: t.side as 'buy' | 'sell',
+        type: t.orderType,
+        price: t.price,
+        amount: t.quantity,
+        filled: t.quantity,
         status: (t.status === 'executed' ? 'filled' : t.status || 'filled') as Order['status'],
-        createdAt: new Date(t.created_at),
+        createdAt: new Date(t.createdAt),
       })));
     }
 
