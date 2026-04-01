@@ -541,6 +541,16 @@ const PricingPage = () => {
           </p>
           <Button variant="link">View Full FAQ →</Button>
         </div>
+
+        {/* Exchange Affiliate Links */}
+        <div className="mb-16">
+          <ExchangeAffiliateLinks />
+        </div>
+
+        {/* Platform Staking */}
+        <div className="mb-16">
+          <PlatformStaking />
+        </div>
       </main>
       <Footer />
     </div>
