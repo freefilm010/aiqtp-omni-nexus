@@ -78,6 +78,7 @@ const StatsArenaPage = lazy(() => import("./pages/StatsArenaPage"));
 const RewardsStorePage = lazy(() => import("./pages/RewardsStorePage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const SimulationDashboard = lazy(() => import("./pages/SimulationDashboard"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
