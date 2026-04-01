@@ -1,4 +1,5 @@
 import { useEffect, lazy, Suspense } from "react";
+import { useRealtimePortfolio } from "@/hooks/useRealtimePortfolio";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -120,6 +121,8 @@ const AuthDeepLinkHandler = () => {
 
   return null;
 };
+/** Mounts global realtime subscriptions inside provider tree */
+const RealtimeSync = () => { useRealtimePortfolio(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -132,6 +135,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <FloatingWindowsProvider>
+                  <RealtimeSync />
                   <AuthDeepLinkHandler />
                   <SkipLinks />
                   <ScreenReaderAnnouncer />
