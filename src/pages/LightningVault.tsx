@@ -28,7 +28,10 @@ import {
   Loader2,
   FileText,
   Download,
-  DollarSign
+  DollarSign,
+  Bolt,
+  Plug,
+  RefreshCw
 } from "lucide-react";
 import { z } from "zod";
 
