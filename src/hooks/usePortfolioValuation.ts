@@ -64,11 +64,13 @@ export function usePortfolioValuation(): PortfolioValuationResult {
     const active = holdings.filter((h) => h.quantity > 0);
     const valuations = active.map((h) => getValuation(h.symbol, h.quantity));
 
-    const realAssets = valuations.filter((v) => !v.isTestnet);
+    const realAssets = valuations
+      .filter((v) => !v.isTestnet)
+      .sort((a, b) => b.valueUsd - a.valueUsd); // R4: sorted by value desc
     const testAssets = valuations.filter((v) => v.isTestnet);
 
-    let netWorth = 0;
-    let netWorthIncludingStale = 0;
+    let netWorthRaw = 0;
+    let netWorthIncludingStaleRaw = 0;
     let validAssetCount = 0;
     let staleAssetCount = 0;
     let missingPriceCount = 0;
@@ -81,16 +83,20 @@ export function usePortfolioValuation(): PortfolioValuationResult {
 
       if (v.isStale) {
         staleAssetCount++;
-        netWorthIncludingStale += v.valueUsd;
+        netWorthIncludingStaleRaw += v.valueUsd;
         // EXCLUDED from net worth — stale data is not trusted
         continue;
       }
 
       // Only live, valid prices contribute
-      netWorth += v.valueUsd;
-      netWorthIncludingStale += v.valueUsd;
+      netWorthRaw += v.valueUsd;
+      netWorthIncludingStaleRaw += v.valueUsd;
       validAssetCount++;
     }
+
+    // R2: Round to cents to avoid floating-point drift in financial display
+    const netWorth = Math.round(netWorthRaw * 100) / 100;
+    const netWorthIncludingStale = Math.round(netWorthIncludingStaleRaw * 100) / 100;
 
     return {
       realAssets,
