@@ -150,8 +150,18 @@ export function useAssetValuation() {
 
       const valueUsd = quantity * priceUsd;
       const valueUsdt = valueUsd / USDT_USD_RATIO;
+      const priceUnavailable = priceUsd === 0 && !STABLECOINS.has(upper);
 
-      return { symbol: upper, quantity, priceUsd, valueUsd, valueUsdt, change24h, isLive: live };
+      // Detect staleness: if last market price update is older than 5 minutes
+      let isStale = false;
+      if (marketPrice) {
+        const lastUpdate = marketPrice.lastUpdate;
+        if (lastUpdate && (Date.now() - new Date(lastUpdate).getTime()) > 5 * 60 * 1000) {
+          isStale = true;
+        }
+      }
+
+      return { symbol: upper, quantity, priceUsd, valueUsd, valueUsdt, change24h, isLive: live, isStale, priceUnavailable, isTestnet: false };
     },
     [getPrice, isLive, platformTokenPrices]
   );
