@@ -133,6 +133,7 @@ const App = () => (
       <ThemeProvider>
         <LanguageProvider>
           <AccessibilityProvider>
+          <BaseCurrencyProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
