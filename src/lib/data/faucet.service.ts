@@ -3,7 +3,18 @@
  * Handles faucet_claims and credit_faucet_claim RPC.
  */
 import { supabase } from "@/integrations/supabase/client";
-import type { ServiceResult, FaucetClaim } from "./types";
+import type { ServiceResult, FaucetClaim, FaucetClaimRow } from "./types";
+
+function toFaucetClaim(row: FaucetClaimRow): FaucetClaim {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    tokenId: row.token_id,
+    amount: Number(row.amount) || 0,
+    chain: row.chain ?? "testnet",
+    claimedAt: row.created_at,
+  };
+}
 
 /** Get faucet claim history for the current user. */
 export async function getUserFaucetClaims(limit = 50): Promise<ServiceResult<FaucetClaim[]>> {
@@ -14,22 +25,11 @@ export async function getUserFaucetClaims(limit = 50): Promise<ServiceResult<Fau
     .from("faucet_claims")
     .select("*")
     .eq("user_id", user.id)
-    .order("claimed_at", { ascending: false })
-    .limit(limit) as any;
+    .order("created_at", { ascending: false })
+    .limit(limit);
 
   if (error) return { data: null, error: error.message };
-
-  return {
-    data: (data ?? []).map((row: any) => ({
-      id: row.id,
-      userId: row.user_id,
-      tokenSymbol: row.token_symbol,
-      amount: Number(row.amount) || 0,
-      chain: row.chain ?? "testnet",
-      claimedAt: row.claimed_at,
-    })),
-    error: null,
-  };
+  return { data: (data ?? []).map(toFaucetClaim), error: null };
 }
 
 /** Execute a faucet claim via the database RPC. */

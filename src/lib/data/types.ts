@@ -2,12 +2,30 @@
  * Shared types for the Data Access Layer.
  * Every service returns a ServiceResult<T>.
  */
+import type { Database } from "@/integrations/supabase/types";
 
 export interface ServiceResult<T> {
   data: T | null;
   error: string | null;
 }
 
+/* ── Row type aliases (from auto-generated Supabase types) ── */
+export type PortfolioHoldingRow = Database["public"]["Tables"]["portfolio_holdings"]["Row"];
+export type MarketPriceRow = Database["public"]["Tables"]["market_prices"]["Row"];
+export type PlatformTokenRow = Database["public"]["Tables"]["platform_tokens"]["Row"];
+export type TokenPriceFeedRow = Database["public"]["Tables"]["token_price_feeds"]["Row"];
+export type FaucetClaimRow = Database["public"]["Tables"]["faucet_claims"]["Row"];
+export type TradeLogRow = Database["public"]["Tables"]["trade_logs"]["Row"];
+export type FaucetScheduleRow = Database["public"]["Tables"]["faucet_schedules"]["Row"];
+export type CompoundSnapshotRow = Database["public"]["Tables"]["compound_snapshots"]["Row"];
+export type AutoInvestEngineRow = Database["public"]["Tables"]["auto_invest_engine"]["Row"];
+export type AutoInvestTransactionRow = Database["public"]["Tables"]["auto_invest_transactions"]["Row"];
+export type AutoInvestAllocationRow = Database["public"]["Tables"]["auto_invest_allocations"]["Row"];
+
+/* ── View row aliases ── */
+export type FaucetLeaderboardRow = Database["public"]["Tables"]["faucet_leaderboard"]["Row"];
+
+/* ── Domain models (camelCase, used by components) ── */
 export interface Holding {
   id: string;
   userId: string;
@@ -51,7 +69,7 @@ export interface TokenPriceFeed {
 export interface FaucetClaim {
   id: string;
   userId: string;
-  tokenSymbol: string;
+  tokenId: string | null;
   amount: number;
   chain: string;
   claimedAt: string;
@@ -62,7 +80,7 @@ export interface TradeLog {
   userId: string;
   symbol: string;
   side: string;
-  orderType: string;
+  action: string;
   price: number;
   quantity: number;
   status: string;

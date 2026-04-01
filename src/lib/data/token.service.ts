@@ -10,16 +10,16 @@ export async function getActivePlatformTokens(): Promise<ServiceResult<PlatformT
   const { data, error } = await supabase
     .from("platform_tokens")
     .select("id, symbol, name, is_active")
-    .eq("is_active", true) as any;
+    .eq("is_active", true);
 
   if (error) return { data: null, error: error.message };
 
   return {
-    data: (data ?? []).map((t: any) => ({
+    data: (data ?? []).map((t) => ({
       id: t.id,
       symbol: String(t.symbol).toUpperCase(),
       name: t.name,
-      isActive: t.is_active,
+      isActive: t.is_active ?? true,
     })),
     error: null,
   };
@@ -36,12 +36,12 @@ export async function getPlatformTokenPrices(): Promise<ServiceResult<Record<str
   if (feedsRes.error) return { data: null, error: feedsRes.error.message };
 
   const symbolById = new Map<string, string>(
-    (tokensRes.data ?? []).map((t: any) => [t.id, String(t.symbol).toUpperCase()])
+    (tokensRes.data ?? []).map((t) => [t.id, String(t.symbol).toUpperCase()])
   );
 
   const result: Record<string, TokenPriceFeed> = {};
 
-  for (const feed of (feedsRes.data ?? []) as any[]) {
+  for (const feed of feedsRes.data ?? []) {
     const symbol = symbolById.get(String(feed.token_id ?? ""));
     if (!symbol) continue;
 
