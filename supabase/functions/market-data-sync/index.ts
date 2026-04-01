@@ -217,7 +217,8 @@ serve(async (req) => {
           try {
             const response = await fetchWithRateLimit(url, headers);
             if (!response.ok) {
-              console.log(`Page ${page} failed: ${response.status}`);
+              const body = await response.text().catch(() => '');
+              console.error(`Page ${page} failed: ${response.status} - ${body}`);
               if (response.status === 429) {
                 lastPage = page;
                 break;
@@ -226,6 +227,7 @@ serve(async (req) => {
             }
             
             const markets = await response.json();
+            console.log(`Page ${page}: received ${markets.length} coins`);
             if (!markets.length) break;
 
             const priceData = markets.map((coin: any) => ({
