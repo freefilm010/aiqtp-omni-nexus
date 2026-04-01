@@ -55,6 +55,7 @@ const CryptoFaucet = () => {
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [lastClaimTimes, setLastClaimTimes] = useState<Record<string, Date>>({});
   const [streakCount, setStreakCount] = useState(0);
+  const [totalClaimCount, setTotalClaimCount] = useState(0);
   const [autoClaim, setAutoClaim] = useState(false);
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
   const [autoCompound, setAutoCompound] = useState(true);
