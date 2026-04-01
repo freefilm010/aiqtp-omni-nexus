@@ -1,5 +1,6 @@
 /**
  * React Query wrapper for faucet data.
+ * Namespaced keys, retry strategy.
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { faucetService } from "@/lib/data";
@@ -11,7 +12,7 @@ export function useFaucetClaimsQuery(limit = 50) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["faucetClaims", user?.id, limit],
+    queryKey: ["faucet", "claims", user?.id, limit],
     queryFn: async (): Promise<FaucetClaim[]> => {
       const result = await faucetService.getUserFaucetClaims(limit);
       if (result.error) throw new Error(result.error);
@@ -19,6 +20,8 @@ export function useFaucetClaimsQuery(limit = 50) {
     },
     enabled: !!user,
     staleTime: 30_000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
     refetchOnWindowFocus: false,
   });
 }
@@ -32,8 +35,8 @@ export function useClaimFaucetMutation() {
       if (result.error) throw new Error(result.error);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["faucetClaims"] });
-      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+      queryClient.invalidateQueries({ queryKey: ["faucet"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio", "holdings"] });
       toast.success("Faucet claim successful!");
     },
     onError: (err: Error) => {
