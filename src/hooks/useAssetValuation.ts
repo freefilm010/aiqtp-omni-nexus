@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
+import { tokenService } from "@/lib/data";
 
 const TESTNET_TOKENS = new Set([
   "TUSDC",
@@ -53,43 +54,17 @@ export function useAssetValuation() {
 
   const loadPlatformTokenPrices = useCallback(async () => {
     try {
-      const [tokensRes, feedsRes] = await Promise.all([
-        supabase.from("platform_tokens").select("id, symbol").eq("is_active", true),
-        supabase
-          .from("token_price_feeds")
-          .select("token_id, price, change_24h_percent, last_updated")
-          .eq("base_currency", "USD"),
-      ]);
-
-      if (tokensRes.error || feedsRes.error) return;
-
-      const symbolById = new Map<string, string>(
-        (tokensRes.data ?? []).map((token) => [token.id, token.symbol.toUpperCase()])
-      );
-
-      const latestBySymbol: Record<string, PlatformTokenFeed & { updatedAt: number }> = {};
-
-      for (const feed of feedsRes.data ?? []) {
-        const symbol = symbolById.get(String(feed.token_id ?? ""));
-        if (!symbol) continue;
-
-        const updatedAt = feed.last_updated ? new Date(feed.last_updated).getTime() : 0;
-        const current = latestBySymbol[symbol];
-
-        if (!current || updatedAt >= current.updatedAt) {
-          latestBySymbol[symbol] = {
-            price: Number(feed.price ?? 0),
-            change24h: feed.change_24h_percent == null ? null : Number(feed.change_24h_percent),
-            updatedAt,
-          };
-        }
+      const result = await tokenService.getPlatformTokenPrices();
+      if (result.error || !result.data) {
+        setPlatformTokenPrices({});
+        return;
       }
 
       setPlatformTokenPrices(
         Object.fromEntries(
-          Object.entries(latestBySymbol).map(([symbol, feed]) => [
+          Object.entries(result.data).map(([symbol, feed]) => [
             symbol,
-            { price: feed.price, change24h: feed.change24h },
+            { price: feed.price, change24h: feed.change24hPercent },
           ])
         )
       );

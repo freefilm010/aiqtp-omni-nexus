@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LayoutGrid, BarChart3, Wallet, Coins, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { portfolioService } from "@/lib/data";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssetValuation, type AssetValuation } from "@/hooks/useAssetValuation";
 
@@ -38,17 +38,13 @@ const PortfolioPage = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: holdings } = await supabase
-        .from("portfolio_holdings")
-        .select("symbol, quantity")
-        .eq("user_id", user.id) as any;
+      const result = await portfolioService.getUserHoldings();
+      if (result.error || !result.data) return;
 
-      const activeHoldings = (holdings || []).filter(
-        (h: { quantity: number | string }) => (Number(h.quantity) || 0) > 0,
-      );
+      const activeHoldings = result.data.filter((h) => h.quantity > 0);
 
-      const valuations = activeHoldings.map((h: { symbol: string; quantity: number | string }) =>
-        getValuation(h.symbol, Number(h.quantity) || 0)
+      const valuations = activeHoldings.map((h) =>
+        getValuation(h.symbol, h.quantity)
       );
 
       const real = valuations.filter((v: AssetValuation) => !v.isTestnet);
