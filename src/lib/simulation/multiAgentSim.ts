@@ -36,7 +36,7 @@ export const momentumAgent: SimAgent = {
   name: "Momentum Trader",
   act(state) {
     if (state.prices.length < 6) return [];
-    const trend = state.prices.at(-1)! - state.prices.at(-5)!;
+    const trend = state.prices[state.prices.length - 1] - state.prices[state.prices.length - 5];
     const side: "bid" | "ask" = trend > 0 ? "bid" : "ask";
     return [{ side, price: state.midPrice + (side === "bid" ? -0.5 : 0.5) * state.spread, size: 1 }];
   },
