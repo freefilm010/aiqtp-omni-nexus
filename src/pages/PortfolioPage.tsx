@@ -43,8 +43,8 @@ const PortfolioPage = () => {
 
       const activeHoldings = result.data.filter((h) => h.quantity > 0);
 
-      const valuations = activeHoldings.map((h: { symbol: string; quantity: number | string }) =>
-        getValuation(h.symbol, Number(h.quantity) || 0)
+      const valuations = activeHoldings.map((h) =>
+        getValuation(h.symbol, h.quantity)
       );
 
       const real = valuations.filter((v: AssetValuation) => !v.isTestnet);
