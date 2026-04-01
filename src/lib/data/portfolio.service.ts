@@ -34,6 +34,8 @@ function toTradeLog(row: TradeLogRow): TradeLog {
     action: row.action ?? "market",
     price: Number(row.price) || 0,
     quantity: Number(row.quantity) || 0,
+    fee: Number(row.fee) || 0,
+    slippagePct: Number(row.slippage_pct) || 0,
     status: row.status ?? "filled",
     createdAt: row.created_at,
   };

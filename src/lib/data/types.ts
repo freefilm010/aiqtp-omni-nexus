@@ -83,6 +83,8 @@ export interface TradeLog {
   action: string;
   price: number;
   quantity: number;
+  fee: number;
+  slippagePct: number;
   status: string;
   createdAt: string;
 }

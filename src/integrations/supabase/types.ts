@@ -8057,10 +8057,12 @@ export type Database = {
           error_message: string | null
           exchange_account_id: string | null
           exchange_order_id: string | null
+          fee: number
           id: string
           price: number | null
           quantity: number | null
           side: string | null
+          slippage_pct: number
           status: string
           symbol: string | null
           user_id: string
@@ -8071,10 +8073,12 @@ export type Database = {
           error_message?: string | null
           exchange_account_id?: string | null
           exchange_order_id?: string | null
+          fee?: number
           id?: string
           price?: number | null
           quantity?: number | null
           side?: string | null
+          slippage_pct?: number
           status: string
           symbol?: string | null
           user_id: string
@@ -8085,10 +8089,12 @@ export type Database = {
           error_message?: string | null
           exchange_account_id?: string | null
           exchange_order_id?: string | null
+          fee?: number
           id?: string
           price?: number | null
           quantity?: number | null
           side?: string | null
+          slippage_pct?: number
           status?: string
           symbol?: string | null
           user_id?: string
