@@ -86,15 +86,15 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
       }));
 
     if (inserts.length > 0) {
-      await supabase.from("faucet_schedules" as any).insert(inserts as any) as any;
+      await supabase.from("faucet_schedules").insert(inserts);
     }
 
-    await supabase.from("faucet_schedules" as any)
-      .update({ is_active: true } as any)
-      .eq("user_id", userId) as any;
+    await supabase.from("faucet_schedules")
+      .update({ is_active: true })
+      .eq("user_id", userId);
 
-    const { data } = await supabase.from("faucet_schedules" as any).select("*").eq("user_id", userId) as any;
-    setSchedules(data || []);
+    const { data } = await supabase.from("faucet_schedules").select("*").eq("user_id", userId);
+    setSchedules((data || []) as Schedule[]);
     toast.success("All schedules activated!");
   };
 
