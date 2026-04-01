@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { ExchangeAffiliateLinks } from "@/components/affiliate/ExchangeAffiliateLinks";
+import { PlatformStaking } from "@/components/staking/PlatformStaking";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -538,6 +540,16 @@ const PricingPage = () => {
             Full platform access is free. You only pay when your investments profit.
           </p>
           <Button variant="link">View Full FAQ →</Button>
+        </div>
+
+        {/* Exchange Affiliate Links */}
+        <div className="mb-16">
+          <ExchangeAffiliateLinks />
+        </div>
+
+        {/* Platform Staking */}
+        <div className="mb-16">
+          <PlatformStaking />
         </div>
       </main>
       <Footer />

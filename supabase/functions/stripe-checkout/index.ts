@@ -16,7 +16,10 @@ const ALLOWED_PLANS: Record<string, { amount: number; mode: "payment" | "subscri
   "deposit-500":    { amount: 500, mode: "payment" },
   "qaqi-monthly":   { amount: 12,  mode: "subscription", interval: "month" },
   "qaqi-annual":    { amount: 100, mode: "subscription", interval: "year" },
-  "pro-monthly":    { amount: 99,  mode: "subscription", interval: "month" },
+  "pro-monthly":    { amount: 19,  mode: "subscription", interval: "month" },
+  "pro-annual":     { amount: 190, mode: "subscription", interval: "year" },
+  "enterprise-monthly": { amount: 99, mode: "subscription", interval: "month" },
+  "enterprise-annual":  { amount: 990, mode: "subscription", interval: "year" },
   "elite-monthly":  { amount: 299, mode: "subscription", interval: "month" },
   "institutional":  { amount: 999, mode: "subscription", interval: "month" },
 };
@@ -90,12 +93,6 @@ serve(async (req) => {
         const parsed = new URL(url);
         return allowedOrigins.some(o => parsed.origin === o) ||
           parsed.origin.endsWith(".lovable.app");
-      } catch { return false; }
-    };
-    const isValidUrl = (url: string) => {
-      try {
-        const parsed = new URL(url);
-        return allowedOrigins.some(o => parsed.origin === o);
       } catch { return false; }
     };
     if (!isValidUrl(successUrl) || !isValidUrl(cancelUrl)) {
