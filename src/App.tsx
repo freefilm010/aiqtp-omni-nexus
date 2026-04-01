@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from "react";
 import { useRealtimePortfolio } from "@/hooks/useRealtimePortfolio";
+import { useRealtimeMarketPrices } from "@/hooks/useRealtimeMarketPrices";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
