@@ -63,10 +63,10 @@ const PortfolioPage = () => {
           <>
             {/* Data quality warnings */}
             {(hasStaleData || hasMissingPrices) && (
-              <Card className="mb-4 border-yellow-500/50 bg-yellow-500/5">
+              <Card className="mb-4 border-accent/50 bg-accent/5">
                 <CardContent className="p-3 text-xs space-y-1">
                   {hasStaleData && (
-                    <p className="flex items-center gap-1.5 text-yellow-600 dark:text-yellow-400">
+                    <p className="flex items-center gap-1.5 text-accent-foreground">
                       <AlertTriangle className="h-3.5 w-3.5" />
                       {staleAssetCount} asset{staleAssetCount > 1 ? "s have" : " has"} stale pricing — excluded from net worth
                     </p>
