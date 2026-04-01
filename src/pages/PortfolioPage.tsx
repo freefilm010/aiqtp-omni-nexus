@@ -4,10 +4,11 @@ import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, BarChart3, Wallet, Coins, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { LayoutGrid, BarChart3, Wallet, Coins, AlertTriangle, CheckCircle2, XCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { usePortfolioValuation } from "@/hooks/usePortfolioValuation";
 import type { AssetValuation } from "@/hooks/useAssetValuation";
 import { LoadingSkeleton, EmptyState, ErrorState } from "@/components/ui/data-states";
+import Sparkline from "@/components/portfolio/Sparkline";
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const PortfolioHistoryChart = lazy(() => import("@/components/portfolio/PortfolioHistoryChart"));
@@ -132,22 +133,32 @@ const PortfolioPage = () => {
                 <CardContent className="p-4">
                   <h3 className="text-sm font-semibold mb-3">Real Holdings</h3>
                   <div className="space-y-2">
-                    {realAssets.map(val => (
-                      <div key={val.symbol} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{val.symbol}</span>
-                          <PriceBadge val={val} />
+                    {realAssets.map(val => {
+                      const pnlPositive = val.valueUsd > 0 && !val.priceUnavailable;
+                      return (
+                        <div key={val.symbol} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium text-sm">{val.symbol}</span>
+                                <PriceBadge val={val} />
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">
+                                {val.quantity.toFixed(val.quantity < 1 ? 6 : 2)} × ${val.priceUsd.toFixed(val.priceUsd < 1 ? 4 : 2)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Sparkline symbol={val.symbol} className="w-16 h-8 hidden sm:block" />
+                            <div className="text-right">
+                              <p className={`text-sm font-semibold ${val.priceUnavailable ? "text-muted-foreground" : val.isStale ? "text-accent-foreground" : pnlPositive ? "text-primary" : "text-foreground"}`}>
+                                {val.priceUnavailable ? "—" : val.isStale ? `~$${val.valueUsd.toFixed(2)}` : `$${val.valueUsd.toFixed(2)}`}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium">
-                            {val.priceUnavailable ? "Price Unavailable" : val.isStale ? `~$${val.valueUsd.toFixed(2)}` : `$${val.valueUsd.toFixed(2)}`}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {val.quantity.toFixed(2)} × ${val.priceUsd.toFixed(val.priceUsd < 1 ? 4 : 2)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
