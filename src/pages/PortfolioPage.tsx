@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LayoutGrid, BarChart3, Wallet, Coins, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { portfolioService } from "@/lib/data";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssetValuation, type AssetValuation } from "@/hooks/useAssetValuation";
 
