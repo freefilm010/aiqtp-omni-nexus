@@ -9,7 +9,7 @@ const AdvancedTradingChart = ({ symbol = "BTC/USDT" }: AdvancedChartProps) => {
   return (
     <TradingViewChart
       height={580}
-      symbol={symbol as any}
+      symbol={symbol as "BTC/USDT"}
     />
   );
 };
