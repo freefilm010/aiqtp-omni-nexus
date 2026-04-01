@@ -67,10 +67,10 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
     }
 
     const { data } = await supabase
-      .from("faucet_schedules" as any)
+      .from("faucet_schedules")
       .select("*")
-      .eq("user_id", userId) as any;
-    setSchedules(data || []);
+      .eq("user_id", userId);
+    setSchedules((data || []) as Schedule[]);
     toast.success(isActive ? "Schedule activated" : "Schedule paused");
   };
 
