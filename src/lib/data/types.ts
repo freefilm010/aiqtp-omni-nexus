@@ -23,7 +23,7 @@ export type AutoInvestTransactionRow = Database["public"]["Tables"]["auto_invest
 export type AutoInvestAllocationRow = Database["public"]["Tables"]["auto_invest_allocations"]["Row"];
 
 /* ── View row aliases ── */
-export type FaucetLeaderboardRow = Database["public"]["Tables"]["faucet_leaderboard"]["Row"];
+export type FaucetLeaderboardRow = Database["public"]["Views"]["faucet_leaderboard"]["Row"];
 
 /* ── Domain models (camelCase, used by components) ── */
 export interface Holding {
