@@ -8,7 +8,7 @@ export interface FaucetToken {
   claimAmount: number;
   claimInterval: number; // hours
   available: boolean;
-  category: 'stablecoin' | 'platform' | 'testnet' | 'defi';
+  category: 'stablecoin' | 'platform' | 'testnet' | 'defi' | 'lightning' | 'l2' | 'privacy';
   description: string;
   chain: string;
   bonus?: string;

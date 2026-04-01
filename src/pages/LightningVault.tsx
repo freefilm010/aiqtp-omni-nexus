@@ -28,7 +28,10 @@ import {
   Loader2,
   FileText,
   Download,
-  DollarSign
+  DollarSign,
+  Bolt,
+  Plug,
+  RefreshCw
 } from "lucide-react";
 import { z } from "zod";
 
@@ -89,6 +92,66 @@ const LightningVault = () => {
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
   const [activeInvoice, setActiveInvoice] = useState<Invoice | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+
+  // ZBD state
+  const [zbdBalance, setZbdBalance] = useState<number | null>(null);
+  const [zbdLoading, setZbdLoading] = useState(false);
+  const [zbdConnected, setZbdConnected] = useState(false);
+  const [zbdDepositAmount, setZbdDepositAmount] = useState("");
+  const [zbdDepositLoading, setZbdDepositLoading] = useState(false);
+  const [zbdInvoice, setZbdInvoice] = useState<string | null>(null);
+  // ZBD methods
+  const fetchZbdBalance = async () => {
+    setZbdLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('zbd-wallet', {
+        body: { action: 'balance' },
+      });
+      if (error) throw error;
+      if (data?.data?.balance_msats !== undefined) {
+        setZbdBalance(data.data.balance_msats);
+        setZbdConnected(true);
+      }
+    } catch (err: any) {
+      console.error('ZBD balance error:', err);
+      setZbdConnected(false);
+      if (err?.message?.includes('not configured')) {
+        toast.error('ZBD API key not configured');
+      }
+    } finally {
+      setZbdLoading(false);
+    }
+  };
+
+  const handleZbdDeposit = async () => {
+    const amountSats = parseFloat(zbdDepositAmount);
+    if (!amountSats || amountSats <= 0) {
+      toast.error('Enter a valid amount in sats');
+      return;
+    }
+    setZbdDepositLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('zbd-wallet', {
+        body: {
+          action: 'create_charge',
+          amount_msats: amountSats * 1000, // sats to msats
+          description: `Vault deposit ${amountSats} sats`,
+        },
+      });
+      if (error) throw error;
+      if (data?.data?.invoice) {
+        setZbdInvoice(data.data.invoice);
+        toast.success('Invoice created! Pay from your ZBD app.');
+        await fetchVaultData();
+      } else {
+        toast.error('Failed to create charge');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'ZBD deposit failed');
+    } finally {
+      setZbdDepositLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -912,6 +975,80 @@ const LightningVault = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* ZBD Connection */}
+            <Card className="card-premium border-none border-l-4 border-l-amber-500">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Bolt className="w-5 h-5 text-amber-400" />
+                  ZBD Lightning
+                </CardTitle>
+                <CardDescription>Connect your ZBD wallet for real Lightning deposits</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {zbdConnected ? (
+                  <>
+                    <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-success" />
+                        <span className="text-sm font-medium">Connected</span>
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={fetchZbdBalance} disabled={zbdLoading}>
+                        <RefreshCw className={`w-3 h-3 ${zbdLoading ? 'animate-spin' : ''}`} />
+                      </Button>
+                    </div>
+                    {zbdBalance !== null && (
+                      <div className="text-center p-3 bg-secondary rounded-lg">
+                        <p className="text-xs text-muted-foreground">ZBD Balance</p>
+                        <p className="text-xl font-bold">{(zbdBalance / 1000).toLocaleString()} sats</p>
+                        <p className="text-xs text-muted-foreground">
+                          {zbdBalance.toLocaleString()} msats
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <Label htmlFor="zbdDeposit" className="text-sm">Deposit Amount (sats)</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          id="zbdDeposit"
+                          type="number"
+                          placeholder="10000"
+                          value={zbdDepositAmount}
+                          onChange={(e) => setZbdDepositAmount(e.target.value)}
+                          min="1000"
+                        />
+                        <Button
+                          onClick={handleZbdDeposit}
+                          disabled={zbdDepositLoading || !zbdDepositAmount}
+                          size="sm"
+                        >
+                          {zbdDepositLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                        </Button>
+                      </div>
+                    </div>
+                    {zbdInvoice && (
+                      <div className="space-y-2">
+                        <Label className="text-xs">Pay this invoice from ZBD:</Label>
+                        <div className="flex gap-2">
+                          <Input value={zbdInvoice} readOnly className="font-mono text-[10px]" />
+                          <Button variant="outline" size="sm" onClick={() => copyToClipboard(zbdInvoice)}>
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Button onClick={fetchZbdBalance} disabled={zbdLoading} className="w-full" variant="outline">
+                    {zbdLoading ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Connecting...</>
+                    ) : (
+                      <><Plug className="w-4 h-4 mr-2" /> Connect ZBD Wallet</>
+                    )}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Vault Assets */}
             <Card className="card-premium border-none">
               <CardHeader>

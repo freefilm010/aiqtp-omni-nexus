@@ -28,6 +28,9 @@ const CATEGORIES = [
   { value: "stablecoin", label: "Stables" },
   { value: "testnet", label: "Testnet" },
   { value: "defi", label: "DeFi" },
+  { value: "lightning", label: "⚡ Lightning" },
+  { value: "l2", label: "L2" },
+  { value: "privacy", label: "Privacy" },
 ];
 
 const FaucetTokenList = ({
