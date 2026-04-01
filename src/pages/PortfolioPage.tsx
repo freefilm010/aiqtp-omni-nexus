@@ -153,6 +153,13 @@ const PortfolioPage = () => {
               </Card>
             )}
 
+            {/* Portfolio History Chart */}
+            <Suspense fallback={<LoadingSkeleton rows={3} />}>
+              <div className="mb-6">
+                <PortfolioHistoryChart />
+              </div>
+            </Suspense>
+
             {/* Test Assets */}
             {testAssets.length > 0 && (
               <Card className="mb-6 border-dashed opacity-70">
