@@ -10,6 +10,7 @@ import type { AssetValuation } from "@/hooks/useAssetValuation";
 import { LoadingSkeleton, EmptyState, ErrorState } from "@/components/ui/data-states";
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
+const PortfolioHistoryChart = lazy(() => import("@/components/portfolio/PortfolioHistoryChart"));
 const MarketHeatmap = lazy(() => import("@/components/analytics/MarketHeatmap"));
 const FundamentalAnalysis = lazy(() => import("@/components/analytics/FundamentalAnalysis"));
 
@@ -151,6 +152,13 @@ const PortfolioPage = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Portfolio History Chart */}
+            <Suspense fallback={<LoadingSkeleton rows={3} />}>
+              <div className="mb-6">
+                <PortfolioHistoryChart />
+              </div>
+            </Suspense>
 
             {/* Test Assets */}
             {testAssets.length > 0 && (
