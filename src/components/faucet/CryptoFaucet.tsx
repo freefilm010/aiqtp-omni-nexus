@@ -44,7 +44,16 @@ const CryptoFaucet = () => {
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
   const [autoCompound, setAutoCompound] = useState(true);
   const [reinvestPercent, setReinvestPercent] = useState(100);
-  const [compoundEngine, setCompoundEngine] = useState<any>(null);
+  const [compoundEngine, setCompoundEngine] = useState<{
+    id: string;
+    total_capital: number;
+    total_profit: number;
+    total_deployed: number;
+    strategy: string;
+    status: string;
+    reinvest_percent: number;
+    cycle_count: number;
+  } | null>(null);
   const [compoundStats, setCompoundStats] = useState({ deployed: 0, transactions: 0, profit: 0 });
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
