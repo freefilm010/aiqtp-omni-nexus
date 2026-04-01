@@ -213,6 +213,7 @@ serve(async (req) => {
 
         for (let page = startPage; page <= pages; page++) {
           const url = `${baseUrl}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=false&price_change_percentage=24h,7d,30d`;
+          console.log(`Fetching page ${page}: ${url.substring(0, 80)}...`);
           
           try {
             const response = await fetchWithRateLimit(url, headers);
