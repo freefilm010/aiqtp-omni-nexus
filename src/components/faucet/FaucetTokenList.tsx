@@ -22,16 +22,23 @@ interface FaucetTokenListProps {
   onClaim: (token: FaucetToken) => void;
 }
 
-const CATEGORIES = [
-  { value: "all", label: "All" },
+const EARN_CATEGORIES = [
+  { value: "all-earn", label: "💰 All Earn" },
   { value: "platform", label: "Platform" },
   { value: "stablecoin", label: "Stables" },
-  { value: "testnet", label: "Testnet" },
   { value: "defi", label: "DeFi" },
   { value: "lightning", label: "⚡ Lightning" },
   { value: "l2", label: "L2" },
+];
+
+const TEST_CATEGORIES = [
+  { value: "all-test", label: "🧪 All Testnet" },
+  { value: "testnet", label: "Testnet" },
   { value: "privacy", label: "Privacy" },
 ];
+
+const isTestnetToken = (t: FaucetToken) =>
+  t.category === "testnet" || t.category === "privacy" || t.symbol.startsWith("t");
 
 const FaucetTokenList = ({
   tokens, balances, claiming, loading,
