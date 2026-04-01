@@ -1,0 +1,4 @@
+
+ALTER TABLE public.trade_logs
+  ADD COLUMN IF NOT EXISTS fee numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS slippage_pct numeric NOT NULL DEFAULT 0;
