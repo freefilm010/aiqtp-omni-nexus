@@ -124,7 +124,7 @@ const CryptoFaucet = () => {
       .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(1) as any;
+      .limit(1);
 
     if (data?.[0]) {
       setCompoundEngine(data[0]);
