@@ -135,7 +135,7 @@ const CryptoFaucet = () => {
       const { count } = await supabase
         .from("auto_invest_transactions")
         .select("id", { count: 'exact', head: true })
-        .eq("engine_id", data[0].id) as any;
+        .eq("engine_id", data[0].id);
 
       setCompoundStats({
         deployed: Number(data[0].total_deployed) || 0,
