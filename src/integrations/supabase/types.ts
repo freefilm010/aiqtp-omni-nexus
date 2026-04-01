@@ -5834,6 +5834,27 @@ export type Database = {
         }
         Relationships: []
       }
+      price_history: {
+        Row: {
+          created_at: string
+          id: string
+          price_usd: number
+          symbol: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price_usd: number
+          symbol: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price_usd?: number
+          symbol?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
