@@ -13,6 +13,7 @@ import FaucetSidebar from "./FaucetSidebar";
 import CompoundAnalytics from "./CompoundAnalytics";
 import FaucetScheduler from "./FaucetScheduler";
 import FaucetOrchestratorDashboard from "./FaucetOrchestratorDashboard";
+import FaucetCompetitionDashboard from "./FaucetCompetitionDashboard";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
 
 const FAUCET_TOKENS: FaucetToken[] = [
@@ -429,6 +430,9 @@ const CryptoFaucet = () => {
 
       {/* Faucet Orchestrator Dashboard */}
       <FaucetOrchestratorDashboard />
+
+      {/* Agent Competition Arena */}
+      <FaucetCompetitionDashboard />
 
       {/* Compound Analytics */}
       <CompoundAnalytics engineId={compoundEngine?.id || null} />
