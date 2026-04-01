@@ -219,7 +219,7 @@ const CryptoFaucet = () => {
         status: 'completed',
         ai_triggered: true,
         ai_reason: `Auto-compound ${tokenSymbol} → ${strat.name} (${strat.pct}%) | $${usdValue.toFixed(2)} total`,
-      } as any);
+      });
     }
 
     await supabase.from("auto_invest_engine").update({
