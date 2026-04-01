@@ -79,12 +79,13 @@ const HeatMap = () => {
       .channel('heatmap_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'heatmap_data' }, (payload) => {
         if (payload.eventType === 'UPDATE' && payload.new) {
+          const updated = payload.new as Record<string, unknown>;
           setData(prev => prev.map(cell => 
-            cell.symbol === (payload.new as any).symbol 
+            cell.symbol === (updated.symbol as string) 
               ? {
                   ...cell,
-                  price: Number((payload.new as any).price) || cell.price,
-                  change: Number((payload.new as any).change_24h) || cell.change
+                  price: Number(updated.price) || cell.price,
+                  change: Number(updated.change_24h) || cell.change
                 }
               : cell
           ));
