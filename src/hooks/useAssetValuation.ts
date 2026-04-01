@@ -123,7 +123,7 @@ export function useAssetValuation() {
       
       // Testnet tokens (t-prefixed) have $0 value — they are not real assets
       if (TESTNET_TOKENS.has(upper)) {
-        return { symbol: upper, quantity, priceUsd: 0, valueUsd: 0, valueUsdt: 0, change24h: null, isLive: false };
+        return { symbol: upper, quantity, priceUsd: 0, valueUsd: 0, valueUsdt: 0, change24h: null, isLive: false, isStale: false, priceUnavailable: false, isTestnet: true };
       }
 
       const marketPrice = getPrice(upper);
