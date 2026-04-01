@@ -123,7 +123,7 @@ const AuthDeepLinkHandler = () => {
   return null;
 };
 /** Mounts global realtime subscriptions inside provider tree */
-const RealtimeSync = () => { useRealtimePortfolio(); return null; };
+const RealtimeSync = () => { useRealtimePortfolio(); useRealtimeMarketPrices(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
