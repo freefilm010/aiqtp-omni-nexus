@@ -1,14 +1,15 @@
 /**
- * usePortfolioPnL — Weighted Average Cost (WAC) PnL engine.
- * Computes cost basis, unrealized PnL, and realized PnL from trade history.
- *
- * Trades are processed chronologically (oldest first).
- * Buy → increases position + adjusts WAC.
- * Sell → realizes PnL at (sell price − WAC) × qty.
+ * usePortfolioPnL — FIFO (First-In, First-Out) PnL engine.
+ * Tax-grade lot tracking with unrealized/realized PnL and % returns.
  */
 import { useMemo } from "react";
 import { useTradeHistoryQuery } from "@/hooks/usePortfolioQuery";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
+
+interface Lot {
+  qty: number;
+  price: number;
+}
 
 export interface PnLAsset {
   symbol: string;
@@ -20,6 +21,7 @@ export interface PnLAsset {
   unrealizedPnLPercent: number;
   realizedPnL: number;
   totalCostBasis: number;
+  totalReturnPercent: number;
 }
 
 export interface PnLTotals {
@@ -35,79 +37,82 @@ export function usePortfolioPnL() {
   const { getValuation } = useAssetValuation();
 
   return useMemo(() => {
-    const map = new Map<string, { quantity: number; avgCost: number; realizedPnL: number }>();
+    const lotsMap = new Map<string, Lot[]>();
+    const realizedMap = new Map<string, number>();
 
     // Process trades chronologically (oldest first — trades come desc, reverse)
     const chronological = [...trades].reverse();
 
     for (const t of chronological) {
-      const symbol = t.symbol.replace(/\/.*$/, "").toUpperCase(); // normalize "BTC/USDT" → "BTC"
+      const symbol = t.symbol.replace(/\/.*$/, "").toUpperCase();
       const qty = Math.abs(t.quantity);
       const price = t.price;
       const isBuy = t.side === "buy";
 
-      if (!map.has(symbol)) {
-        map.set(symbol, { quantity: 0, avgCost: 0, realizedPnL: 0 });
+      if (!lotsMap.has(symbol)) {
+        lotsMap.set(symbol, []);
+        realizedMap.set(symbol, 0);
       }
 
-      const pos = map.get(symbol)!;
+      const lots = lotsMap.get(symbol)!;
 
       if (isBuy) {
-        const totalCost = pos.avgCost * pos.quantity + price * qty;
-        pos.quantity += qty;
-        pos.avgCost = pos.quantity > 0 ? totalCost / pos.quantity : 0;
+        lots.push({ qty, price });
       } else {
-        const sellQty = Math.min(qty, pos.quantity);
-        if (sellQty > 0) {
-          pos.realizedPnL += (price - pos.avgCost) * sellQty;
-          pos.quantity -= sellQty;
-          // avgCost stays the same for WAC
+        // FIFO: consume oldest lots first
+        let sellQty = qty;
+        while (sellQty > 0 && lots.length > 0) {
+          const lot = lots[0];
+          const used = Math.min(lot.qty, sellQty);
+          const pnl = (price - lot.price) * used;
+          realizedMap.set(symbol, (realizedMap.get(symbol) ?? 0) + pnl);
+          lot.qty -= used;
+          sellQty -= used;
+          if (lot.qty <= 0) lots.shift();
         }
       }
     }
 
-    // Attach live prices and compute unrealized PnL
     const assets: PnLAsset[] = [];
 
-    for (const [symbol, pos] of map.entries()) {
-      if (pos.quantity <= 0) {
-        // Closed position — only realized PnL matters
-        if (Math.abs(pos.realizedPnL) > 0.01) {
+    for (const [symbol, lots] of lotsMap.entries()) {
+      const totalQty = lots.reduce((s, l) => s + l.qty, 0);
+      const totalCost = lots.reduce((s, l) => s + l.qty * l.price, 0);
+      const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+      const realizedPnL = realizedMap.get(symbol) ?? 0;
+
+      if (totalQty <= 0) {
+        if (Math.abs(realizedPnL) > 0.01) {
           assets.push({
-            symbol,
-            quantity: 0,
-            avgCost: pos.avgCost,
-            currentPrice: 0,
-            currentValue: 0,
-            unrealizedPnL: 0,
-            unrealizedPnLPercent: 0,
-            realizedPnL: Math.round(pos.realizedPnL * 100) / 100,
-            totalCostBasis: 0,
+            symbol, quantity: 0, avgCost, currentPrice: 0, currentValue: 0,
+            unrealizedPnL: 0, unrealizedPnLPercent: 0,
+            realizedPnL: Math.round(realizedPnL * 100) / 100,
+            totalCostBasis: 0, totalReturnPercent: 0,
           });
         }
         continue;
       }
 
-      const val = getValuation(symbol, pos.quantity);
-
-      const costBasis = pos.avgCost * pos.quantity;
-      const unrealized = val.priceUnavailable ? 0 : (val.priceUsd - pos.avgCost) * pos.quantity;
-      const unrealizedPercent = costBasis > 0 ? (unrealized / costBasis) * 100 : 0;
+      const val = getValuation(symbol, totalQty);
+      const costBasis = totalCost;
+      const unrealized = val.priceUnavailable ? 0 : (val.priceUsd - avgCost) * totalQty;
+      const unrealizedPct = costBasis > 0 ? (unrealized / costBasis) * 100 : 0;
+      const totalReturnPct = costBasis > 0 ? ((unrealized + realizedPnL) / costBasis) * 100 : 0;
 
       assets.push({
         symbol,
-        quantity: pos.quantity,
-        avgCost: Math.round(pos.avgCost * 100) / 100,
+        quantity: totalQty,
+        avgCost: Math.round(avgCost * 100) / 100,
         currentPrice: val.priceUsd,
         currentValue: Math.round(val.valueUsd * 100) / 100,
         unrealizedPnL: Math.round(unrealized * 100) / 100,
-        unrealizedPnLPercent: Math.round(unrealizedPercent * 100) / 100,
-        realizedPnL: Math.round(pos.realizedPnL * 100) / 100,
+        unrealizedPnLPercent: Math.round(unrealizedPct * 100) / 100,
+        realizedPnL: Math.round(realizedPnL * 100) / 100,
         totalCostBasis: Math.round(costBasis * 100) / 100,
+        totalReturnPercent: Math.round(totalReturnPct * 100) / 100,
       });
     }
 
-    // Sort by current value descending
     assets.sort((a, b) => b.currentValue - a.currentValue);
 
     const totalValue = assets.reduce((s, a) => s + a.currentValue, 0);
