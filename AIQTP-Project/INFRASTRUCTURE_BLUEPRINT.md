@@ -427,11 +427,67 @@ jobs:
 | Telemetry | `src/lib/infra/telemetry.ts` | ✅ |
 | Platform Orchestrator | `src/lib/infra/index.ts` | ✅ |
 
-**Total: 25 production-grade TypeScript engine modules.**
+| Circuit Breaker + Backpressure | `src/lib/resilience/circuitBreaker.ts` | ✅ |
+| Stale-While-Revalidate Cache | `src/lib/resilience/staleWhileRevalidate.ts` | ✅ |
+| Deterministic Replay Engine | `src/lib/backtest/replayEngine.ts` | ✅ |
+| Distributed Worker Pool + Chaos | `src/lib/engine/workerPool.ts` | ✅ |
+
+**Total: 29 production-grade TypeScript engine modules.**
 
 ---
 
-## 13. Migration Path
+## 13. Multi-Region Active-Active Architecture
+
+### 13.1 Regional Topology
+```
+GLOBAL LOAD BALANCER (latency + risk-aware routing)
+                              ↓
+     ┌──────────────────────────────────────────┐
+     ↓                  ↓                    ↓
+ US-EAST-1         US-WEST-2            EU-WEST-1
+ (primary)         (hot standby)        (analytics)
+     ↓                  ↓                    ↓
+ SERVICES          SERVICES             SERVICES
+ EVENT BUS         EVENT BUS            EVENT BUS
+     ↓                  ↓                    ↓
+ ───────── CROSS-REGION EVENT REPLICATION ─────────
+```
+
+### 13.2 Blast Radius Isolation
+Each failure domain owns:
+- Independent Kafka topic partitions
+- Separate database shards
+- Independent scaling policies
+
+Domains: `market-data`, `execution`, `risk`, `agent-clusters`, `consciousness-layer`
+
+### 13.3 Backpressure + Load Shedding
+- `ProductionCircuitBreaker` — three-state (closed/open/half-open) with auto-recovery
+- Priority-based shedding: critical requests (priority 0) never shed, background tasks shed first
+- Load ratio monitoring with configurable thresholds
+
+### 13.4 Disaster Recovery
+- **RPO:** 0 (event-sourced, no data loss)
+- **RTO:** < 5 min (replay from nearest checkpoint)
+- `DeterministicReplayEngine` — reconstructs full state from event log
+- Cross-region consistency verification via `verifyConsistency()`
+
+### 13.5 Chaos Engineering
+- `DistributedWorkerPool` with chaos injection hooks
+- Region disable (simulated outage)
+- Latency spike injection
+- Configurable per-region failure rates
+- Automated chaos schedule: every 6h in staging
+
+### 13.6 Zero-Trust Security
+- mTLS between all services (SPIFFE identity)
+- Per-request signed auth tokens
+- Encrypted Kafka topics
+- IAM-scoped service permissions
+
+---
+
+## 14. Migration Path
 
 To extract from in-app modules to distributed services:
 
