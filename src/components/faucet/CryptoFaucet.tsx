@@ -44,7 +44,16 @@ const CryptoFaucet = () => {
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
   const [autoCompound, setAutoCompound] = useState(true);
   const [reinvestPercent, setReinvestPercent] = useState(100);
-  const [compoundEngine, setCompoundEngine] = useState<any>(null);
+  const [compoundEngine, setCompoundEngine] = useState<{
+    id: string;
+    total_capital: number;
+    total_profit: number;
+    total_deployed: number;
+    strategy: string;
+    status: string;
+    reinvest_percent: number;
+    cycle_count: number;
+  } | null>(null);
   const [compoundStats, setCompoundStats] = useState({ deployed: 0, transactions: 0, profit: 0 });
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
@@ -115,7 +124,7 @@ const CryptoFaucet = () => {
       .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(1) as any;
+      .limit(1);
 
     if (data?.[0]) {
       setCompoundEngine(data[0]);
@@ -126,7 +135,7 @@ const CryptoFaucet = () => {
       const { count } = await supabase
         .from("auto_invest_transactions")
         .select("id", { count: 'exact', head: true })
-        .eq("engine_id", data[0].id) as any;
+        .eq("engine_id", data[0].id);
 
       setCompoundStats({
         deployed: Number(data[0].total_deployed) || 0,
@@ -149,7 +158,7 @@ const CryptoFaucet = () => {
         total_reinvested: 0,
         rebalance_threshold: 5,
         cycle_count: 0,
-      } as any).select('id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count').single() as any;
+      }).select('id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count').single();
 
       if (newEngine) {
         setCompoundEngine(newEngine);
@@ -196,7 +205,7 @@ const CryptoFaucet = () => {
         entry_price: valuation.priceUsd,
         current_price: valuation.priceUsd,
         is_active: true,
-      } as any);
+      });
       
       // Log transaction
       await supabase.from("auto_invest_transactions").insert({
@@ -210,14 +219,14 @@ const CryptoFaucet = () => {
         status: 'completed',
         ai_triggered: true,
         ai_reason: `Auto-compound ${tokenSymbol} → ${strat.name} (${strat.pct}%) | $${usdValue.toFixed(2)} total`,
-      } as any);
+      });
     }
 
     await supabase.from("auto_invest_engine").update({
       total_capital: (Number(compoundEngine.total_capital) || 0) + deployAmount,
       total_deployed: (Number(compoundEngine.total_deployed) || 0) + deployAmount,
       cycle_count: (compoundEngine.cycle_count || 0) + 1,
-    } as any).eq("id", compoundEngine.id) as any;
+    }).eq("id", compoundEngine.id);
 
     await loadCompoundEngine();
   }, [compoundEngine, reinvestPercent, loadCompoundEngine, getValuation]);
@@ -256,7 +265,7 @@ const CryptoFaucet = () => {
       chain: token.id,
       wallet_address: '',
       status: 'completed',
-    } as any);
+    });
     if (error) return error;
 
     // Credit portfolio_holdings via DB function

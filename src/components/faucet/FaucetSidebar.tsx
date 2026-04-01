@@ -35,10 +35,10 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
   useEffect(() => {
     const loadLeaderboard = async () => {
       const { data } = await supabase
-        .from("faucet_leaderboard" as any)
+        .from("faucet_leaderboard")
         .select("user_id, display_name, total_claims, active_days")
-        .limit(10) as any;
-      if (data) setLeaderboard(data);
+        .limit(10);
+      if (data) setLeaderboard(data as LeaderboardEntry[]);
     };
     loadLeaderboard();
 

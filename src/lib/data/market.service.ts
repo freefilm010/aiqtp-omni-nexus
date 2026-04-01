@@ -3,20 +3,12 @@
  * Central service for market_prices queries.
  */
 import { supabase } from "@/integrations/supabase/client";
-import type { ServiceResult, MarketPrice } from "./types";
+import type { ServiceResult, MarketPrice, MarketPriceRow } from "./types";
 
-/** Fetch all market prices (latest snapshot). */
-export async function getAllMarketPrices(): Promise<ServiceResult<MarketPrice[]>> {
-  const { data, error } = await supabase
-    .from("market_prices")
-    .select("*")
-    .order("market_cap", { ascending: false, nullsFirst: false }) as any;
-
-  if (error) return { data: null, error: error.message };
-
-  const prices: MarketPrice[] = (data ?? []).map((row: any) => ({
+function toMarketPrice(row: MarketPriceRow): MarketPrice {
+  return {
     coinId: row.coin_id,
-    symbol: row.symbol ?? null,
+    symbol: null, // market_prices table has no symbol column; use coin_id mapping
     priceUsd: Number(row.price_usd) || 0,
     marketCap: row.market_cap ? Number(row.market_cap) : null,
     volume: row.total_volume ? Number(row.total_volume) : null,
@@ -24,10 +16,19 @@ export async function getAllMarketPrices(): Promise<ServiceResult<MarketPrice[]>
     change7d: row.price_change_percentage_7d != null ? Number(row.price_change_percentage_7d) : null,
     high24h: row.high_24h ? Number(row.high_24h) : null,
     low24h: row.low_24h ? Number(row.low_24h) : null,
-    lastUpdated: row.last_updated ?? row.created_at,
-  }));
+    lastUpdated: row.last_updated ?? "",
+  };
+}
 
-  return { data: prices, error: null };
+/** Fetch all market prices (latest snapshot). */
+export async function getAllMarketPrices(): Promise<ServiceResult<MarketPrice[]>> {
+  const { data, error } = await supabase
+    .from("market_prices")
+    .select("*")
+    .order("market_cap", { ascending: false, nullsFirst: false });
+
+  if (error) return { data: null, error: error.message };
+  return { data: (data ?? []).map(toMarketPrice), error: null };
 }
 
 /** Fetch a single market price by coin_id (e.g. "bitcoin"). */
@@ -36,26 +37,11 @@ export async function getMarketPrice(coinId: string): Promise<ServiceResult<Mark
     .from("market_prices")
     .select("*")
     .eq("coin_id", coinId)
-    .maybeSingle() as any;
+    .maybeSingle();
 
   if (error) return { data: null, error: error.message };
   if (!data) return { data: null, error: null };
-
-  return {
-    data: {
-      coinId: data.coin_id,
-      symbol: data.symbol ?? null,
-      priceUsd: Number(data.price_usd) || 0,
-      marketCap: data.market_cap ? Number(data.market_cap) : null,
-      volume: data.total_volume ? Number(data.total_volume) : null,
-      change24h: data.price_change_percentage_24h != null ? Number(data.price_change_percentage_24h) : null,
-      change7d: data.price_change_percentage_7d != null ? Number(data.price_change_percentage_7d) : null,
-      high24h: data.high_24h ? Number(data.high_24h) : null,
-      low24h: data.low_24h ? Number(data.low_24h) : null,
-      lastUpdated: data.last_updated ?? data.created_at,
-    },
-    error: null,
-  };
+  return { data: toMarketPrice(data), error: null };
 }
 
 /** Check if market data is stale (older than threshold). */

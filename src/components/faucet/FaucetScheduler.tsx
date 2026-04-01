@@ -40,10 +40,10 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
     if (!userId) return;
     const load = async () => {
       const { data } = await supabase
-        .from("faucet_schedules" as any)
+        .from("faucet_schedules")
         .select("*")
-        .eq("user_id", userId) as any;
-      setSchedules(data || []);
+        .eq("user_id", userId);
+      setSchedules((data || []) as Schedule[]);
       setLoading(false);
     };
     load();
@@ -53,24 +53,24 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
     if (!userId) return;
     const existing = schedules.find(s => s.token_id === tokenId);
     if (existing) {
-      await supabase.from("faucet_schedules" as any).update({
+      await supabase.from("faucet_schedules").update({
         interval_hours: intervalHours,
         is_active: isActive,
-      } as any).eq("id", existing.id) as any;
+      }).eq("id", existing.id);
     } else {
-      await supabase.from("faucet_schedules" as any).insert({
+      await supabase.from("faucet_schedules").insert({
         user_id: userId,
         token_id: tokenId,
         interval_hours: intervalHours,
         is_active: isActive,
-      } as any) as any;
+      });
     }
 
     const { data } = await supabase
-      .from("faucet_schedules" as any)
+      .from("faucet_schedules")
       .select("*")
-      .eq("user_id", userId) as any;
-    setSchedules(data || []);
+      .eq("user_id", userId);
+    setSchedules((data || []) as Schedule[]);
     toast.success(isActive ? "Schedule activated" : "Schedule paused");
   };
 
@@ -86,15 +86,15 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
       }));
 
     if (inserts.length > 0) {
-      await supabase.from("faucet_schedules" as any).insert(inserts as any) as any;
+      await supabase.from("faucet_schedules").insert(inserts);
     }
 
-    await supabase.from("faucet_schedules" as any)
-      .update({ is_active: true } as any)
-      .eq("user_id", userId) as any;
+    await supabase.from("faucet_schedules")
+      .update({ is_active: true })
+      .eq("user_id", userId);
 
-    const { data } = await supabase.from("faucet_schedules" as any).select("*").eq("user_id", userId) as any;
-    setSchedules(data || []);
+    const { data } = await supabase.from("faucet_schedules").select("*").eq("user_id", userId);
+    setSchedules((data || []) as Schedule[]);
     toast.success("All schedules activated!");
   };
 
