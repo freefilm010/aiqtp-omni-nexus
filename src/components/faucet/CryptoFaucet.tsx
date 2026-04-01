@@ -379,7 +379,7 @@ const CryptoFaucet = () => {
       <FaucetStats
         totalTokens={FAUCET_TOKENS.length}
         ownedTokens={Object.keys(balances).length}
-        totalClaims={claims.length}
+        totalClaims={totalClaimCount}
         streakCount={streakCount}
         totalValue={totalUsd}
       />
