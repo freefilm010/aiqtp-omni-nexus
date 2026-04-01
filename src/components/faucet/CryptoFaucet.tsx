@@ -427,6 +427,9 @@ const CryptoFaucet = () => {
         />
       </div>
 
+      {/* Faucet Orchestrator Dashboard */}
+      <FaucetOrchestratorDashboard />
+
       {/* Compound Analytics */}
       <CompoundAnalytics engineId={compoundEngine?.id || null} />
 
