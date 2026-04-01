@@ -80,6 +80,7 @@ const CryptoFaucet = () => {
     if (!user) { setLoading(false); return; }
     setUserId(user.id);
 
+    // Fetch claims for history/cooldown (recent 200 for cooldown tracking)
     const { data } = await supabase
       .from("faucet_claims")
       .select("id, amount, chain, status, created_at")
@@ -90,16 +91,35 @@ const CryptoFaucet = () => {
     const records = data || [];
     setClaims(records);
 
+    // Get total claim count (not limited to 200)
+    const { count: totalClaimCount } = await supabase
+      .from("faucet_claims")
+      .select("id", { count: 'exact', head: true })
+      .eq("user_id", user.id);
+    
+    setTotalClaimCount(totalClaimCount || records.length);
+
+    // Use portfolio_holdings as source of truth for balances (set by credit_faucet_claim RPC)
+    const faucetSymbols = FAUCET_TOKENS.map(t => t.symbol);
+    const { data: holdings } = await supabase
+      .from("portfolio_holdings")
+      .select("symbol, quantity")
+      .eq("user_id", user.id)
+      .in("symbol", faucetSymbols);
+
     const bal: Record<string, number> = {};
+    for (const h of holdings || []) {
+      bal[h.symbol] = Number(h.quantity) || 0;
+    }
+    setBalances(bal);
+
+    // Cooldown tracking from recent claims
     const lastTimes: Record<string, Date> = {};
     for (const claim of records) {
       const token = FAUCET_TOKENS.find(t => t.chain === claim.chain || t.id === claim.chain);
-      const symbol = token?.symbol || claim.chain;
-      bal[symbol] = (bal[symbol] || 0) + Number(claim.amount);
       const tokenId = token?.id || claim.chain;
       if (!lastTimes[tokenId]) lastTimes[tokenId] = new Date(claim.created_at);
     }
-    setBalances(bal);
     setLastClaimTimes(lastTimes);
     lastClaimTimesRef.current = lastTimes;
 
