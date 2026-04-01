@@ -221,16 +221,40 @@ export function usePortfolioPnL(strategy: LotStrategy = DEFAULT_STRATEGY) {
       const tr = computed.reduce((s, a) => s + a.realizedPnL, 0);
       const tf = computed.reduce((s, a) => s + a.totalFeesPaid, 0);
 
+      // Emit per-asset events to PnL stream
+      for (const a of computed) {
+        if (a.quantity > 0) {
+          pnlStream.emitAssetUpdate({
+            symbol: a.symbol,
+            unrealizedPnL: a.unrealizedPnL,
+            realizedPnL: a.realizedPnL,
+            totalValue: a.currentValue,
+            timestamp: Date.now(),
+          });
+        }
+      }
+
       setAssets(computed);
       setRealizedEvents(events);
-      setTotals({
+      const newTotals = {
         totalValue: Math.round(tv * 100) / 100,
         totalCostBasis: Math.round(tcb * 100) / 100,
         totalUnrealized: Math.round(tu * 100) / 100,
         totalRealized: Math.round(tr * 100) / 100,
         totalUnrealizedPercent: tcb > 0 ? Math.round((tu / tcb) * 10000) / 100 : 0,
         totalFees: Math.round(tf * 100) / 100,
+      };
+      setTotals(newTotals);
+
+      // Emit totals event
+      pnlStream.emitTotalsUpdate({
+        totalValue: newTotals.totalValue,
+        totalUnrealized: newTotals.totalUnrealized,
+        totalRealized: newTotals.totalRealized,
+        totalFees: newTotals.totalFees,
+        timestamp: Date.now(),
       });
+
       setIsComputing(false);
     })();
   }, [trades, getValuation, strategy]);
