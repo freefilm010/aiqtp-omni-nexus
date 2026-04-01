@@ -100,8 +100,60 @@ const LightningVault = () => {
   const [zbdDepositAmount, setZbdDepositAmount] = useState("");
   const [zbdDepositLoading, setZbdDepositLoading] = useState(false);
   const [zbdInvoice, setZbdInvoice] = useState<string | null>(null);
+  // ZBD methods
+  const fetchZbdBalance = async () => {
+    setZbdLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('zbd-wallet', {
+        body: { action: 'balance' },
+      });
+      if (error) throw error;
+      if (data?.data?.balance_msats !== undefined) {
+        setZbdBalance(data.data.balance_msats);
+        setZbdConnected(true);
+      }
+    } catch (err: any) {
+      console.error('ZBD balance error:', err);
+      setZbdConnected(false);
+      if (err?.message?.includes('not configured')) {
+        toast.error('ZBD API key not configured');
+      }
+    } finally {
+      setZbdLoading(false);
+    }
+  };
 
-  useEffect(() => {
+  const handleZbdDeposit = async () => {
+    const amountSats = parseFloat(zbdDepositAmount);
+    if (!amountSats || amountSats <= 0) {
+      toast.error('Enter a valid amount in sats');
+      return;
+    }
+    setZbdDepositLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('zbd-wallet', {
+        body: {
+          action: 'create_charge',
+          amount_msats: amountSats * 1000, // sats to msats
+          description: `Vault deposit ${amountSats} sats`,
+        },
+      });
+      if (error) throw error;
+      if (data?.data?.invoice) {
+        setZbdInvoice(data.data.invoice);
+        toast.success('Invoice created! Pay from your ZBD app.');
+        await fetchVaultData();
+      } else {
+        toast.error('Failed to create charge');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'ZBD deposit failed');
+    } finally {
+      setZbdDepositLoading(false);
+    }
+  };
+
+
     if (!authLoading && !user) {
       navigate('/auth');
     } else if (user) {
