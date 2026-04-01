@@ -8050,6 +8050,48 @@ export type Database = {
           },
         ]
       }
+      trade_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          fee: number
+          fee_currency: string
+          id: string
+          price: number
+          quantity: number
+          side: string
+          slippage_pct: number
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string
+          fee?: number
+          fee_currency?: string
+          id?: string
+          price: number
+          quantity: number
+          side?: string
+          slippage_pct?: number
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          fee?: number
+          fee_currency?: string
+          id?: string
+          price?: number
+          quantity?: number
+          side?: string
+          slippage_pct?: number
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trade_logs: {
         Row: {
           action: string
