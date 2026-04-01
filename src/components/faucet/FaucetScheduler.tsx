@@ -53,17 +53,17 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
     if (!userId) return;
     const existing = schedules.find(s => s.token_id === tokenId);
     if (existing) {
-      await supabase.from("faucet_schedules" as any).update({
+      await supabase.from("faucet_schedules").update({
         interval_hours: intervalHours,
         is_active: isActive,
-      } as any).eq("id", existing.id) as any;
+      }).eq("id", existing.id);
     } else {
-      await supabase.from("faucet_schedules" as any).insert({
+      await supabase.from("faucet_schedules").insert({
         user_id: userId,
         token_id: tokenId,
         interval_hours: intervalHours,
         is_active: isActive,
-      } as any) as any;
+      });
     }
 
     const { data } = await supabase
