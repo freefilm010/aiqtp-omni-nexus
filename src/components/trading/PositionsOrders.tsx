@@ -12,7 +12,7 @@ import {
   TrendingUp, TrendingDown, X, Edit, Clock, CheckCircle, XCircle, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { portfolioService } from "@/lib/data";
 
 interface Position {
   id: string;
