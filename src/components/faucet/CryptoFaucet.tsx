@@ -226,7 +226,7 @@ const CryptoFaucet = () => {
       total_capital: (Number(compoundEngine.total_capital) || 0) + deployAmount,
       total_deployed: (Number(compoundEngine.total_deployed) || 0) + deployAmount,
       cycle_count: (compoundEngine.cycle_count || 0) + 1,
-    } as any).eq("id", compoundEngine.id) as any;
+    }).eq("id", compoundEngine.id);
 
     await loadCompoundEngine();
   }, [compoundEngine, reinvestPercent, loadCompoundEngine, getValuation]);
