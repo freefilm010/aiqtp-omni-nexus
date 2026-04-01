@@ -158,7 +158,7 @@ const CryptoFaucet = () => {
         total_reinvested: 0,
         rebalance_threshold: 5,
         cycle_count: 0,
-      } as any).select('id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count').single() as any;
+      }).select('id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count').single();
 
       if (newEngine) {
         setCompoundEngine(newEngine);
