@@ -507,6 +507,7 @@ const App = () => (
                 </FloatingWindowsProvider>
               </BrowserRouter>
             </TooltipProvider>
+          </BaseCurrencyProvider>
           </AccessibilityProvider>
         </LanguageProvider>
       </ThemeProvider>
