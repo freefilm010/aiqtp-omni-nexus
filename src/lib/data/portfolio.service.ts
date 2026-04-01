@@ -79,3 +79,27 @@ export async function getTradeHistory(limit = 50): Promise<ServiceResult<TradeLo
   if (error) return { data: null, error: error.message };
   return { data: (data ?? []).map(toTradeLog), error: null };
 }
+
+/** Execute a trade: insert into trade_logs via edge function. */
+export async function executeTrade(params: {
+  symbol: string;
+  side: "buy" | "sell";
+  quantity: number;
+  price: number;
+}): Promise<ServiceResult<null>> {
+  const userId = await currentUserId();
+  if (!userId) return { data: null, error: "Not authenticated" };
+
+  const { error } = await supabase.from("trade_logs").insert({
+    user_id: userId,
+    symbol: params.symbol,
+    side: params.side,
+    action: "market",
+    price: params.price,
+    quantity: params.quantity,
+    status: "filled",
+  });
+
+  if (error) return { data: null, error: error.message };
+  return { data: null, error: null };
+}
