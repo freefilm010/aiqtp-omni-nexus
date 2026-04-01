@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Zap, Crown, Rocket, TrendingUp, Loader2, CheckCircle, Gift, Atom } from "lucide-react";
+import { Zap, Crown, Rocket, TrendingUp, Loader2, CheckCircle, Gift, Atom, Building2 } from "lucide-react";
 
 interface PricingPlan {
   id: string;
@@ -23,15 +23,6 @@ interface PricingPlan {
 
 const PRICING_PLANS: PricingPlan[] = [
   {
-    id: "starter",
-    name: "Starter Pack",
-    description: "Get started with AI trading",
-    price: 49,
-    mode: "payment",
-    features: ["5 AI Strategy Generations", "Basic Backtesting", "Community Access", "Email Support"],
-    icon: <Zap className="h-6 w-6" />,
-  },
-  {
     id: "qaqi-monthly",
     name: "QAQI™ Monthly",
     description: "Month-to-month quantum AI access",
@@ -43,48 +34,60 @@ const PRICING_PLANS: PricingPlan[] = [
     monthlyEquivalent: 12,
   },
   {
-    id: "qaqi-annual",
-    name: "QAQI™ Annual",
-    description: "Best value - 2 months FREE",
-    price: 100,
-    mode: "subscription",
-    interval: "year",
-    features: ["Everything in Monthly", "2 Months FREE ($44 savings)", "Early Feature Access", "1-on-1 Onboarding Call", "Exclusive Discord Role"],
-    icon: <Crown className="h-6 w-6" />,
-    popular: true,
-    badge: "Best Value",
-    freeMonths: 2,
-    monthlyEquivalent: 8.33,
-  },
-  {
     id: "pro-monthly",
     name: "Pro Trader",
-    description: "For serious traders",
+    description: "For serious traders who want an edge",
+    price: 19,
+    mode: "subscription",
+    interval: "month",
+    features: ["Unlimited AI Strategies", "Advanced Backtesting", "Real-time Signals", "Strategy Marketplace Access", "Priority Support"],
+    icon: <TrendingUp className="h-6 w-6" />,
+    popular: true,
+    badge: "Most Popular",
+  },
+  {
+    id: "pro-annual",
+    name: "Pro Trader Annual",
+    description: "Best value — 2 months FREE",
+    price: 190,
+    mode: "subscription",
+    interval: "year",
+    features: ["Everything in Pro Monthly", "2 Months FREE ($38 savings)", "Early Feature Access", "1-on-1 Onboarding Call", "Exclusive Discord Role"],
+    icon: <Crown className="h-6 w-6" />,
+    badge: "Best Value",
+    freeMonths: 2,
+    monthlyEquivalent: 15.83,
+  },
+  {
+    id: "enterprise-monthly",
+    name: "Enterprise",
+    description: "Full power for funds & desks",
     price: 99,
     mode: "subscription",
     interval: "month",
-    features: ["Unlimited Strategies", "Advanced Backtesting", "Real-time Signals", "Priority Support", "Strategy Marketplace Access"],
-    icon: <TrendingUp className="h-6 w-6" />,
+    features: ["Everything in Pro", "Full Quantum Computing Access", "Custom Indicators & Models", "White-label Solutions", "API Access", "Dedicated Account Manager"],
+    icon: <Building2 className="h-6 w-6" />,
   },
   {
-    id: "elite-monthly",
-    name: "Elite Trader",
-    description: "Maximum alpha generation",
-    price: 299,
+    id: "enterprise-annual",
+    name: "Enterprise Annual",
+    description: "Save $198/year",
+    price: 990,
     mode: "subscription",
-    interval: "month",
-    features: ["Everything in Pro", "Full Quantum Computing Access", "1-on-1 Strategy Consulting", "Custom Indicators", "White-label Solutions", "API Access"],
-    icon: <Crown className="h-6 w-6" />,
-  },
-  {
-    id: "institutional",
-    name: "Institutional",
-    description: "Enterprise-grade solution",
-    price: 999,
-    mode: "subscription",
-    interval: "month",
-    features: ["Everything in Elite", "Dedicated Account Manager", "Custom Integrations", "SLA Guarantee", "Multi-user Access", "Audit Logs"],
+    interval: "year",
+    features: ["Everything in Enterprise", "2 Months FREE ($198 savings)", "SLA Guarantee", "Custom Integrations", "Audit Logs"],
     icon: <Rocket className="h-6 w-6" />,
+    freeMonths: 2,
+    monthlyEquivalent: 82.50,
+  },
+  {
+    id: "starter",
+    name: "Starter Pack",
+    description: "One-time purchase to get started",
+    price: 49,
+    mode: "payment",
+    features: ["5 AI Strategy Generations", "Basic Backtesting", "Community Access", "Email Support"],
+    icon: <Zap className="h-6 w-6" />,
   },
 ];
 
