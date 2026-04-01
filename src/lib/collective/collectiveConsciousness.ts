@@ -1,121 +1,81 @@
 /**
  * Collective Consciousness Engine
- * Belief fields, emergent clustering, and synchronization dynamics.
+ * Detects emergent collusion, belief-field alignment, and herd behavior
+ * among competing agents without explicit coordination.
  */
 
-// ── Belief Field ────────────────────────────────────────────
-
-export class BeliefField {
-  value = 0;
-  history: number[] = [];
-
-  update(agentBeliefs: number[], priceChange: number, decayRate = 0.05): number {
-    if (agentBeliefs.length === 0) return this.value;
-
-    const avg = agentBeliefs.reduce((a, b) => a + b, 0) / agentBeliefs.length;
-
-    this.value =
-      (1 - decayRate) * (0.6 * this.value + 0.3 * avg + 0.1 * Math.tanh(priceChange * 5));
-
-    this.history.push(this.value);
-    if (this.history.length > 500) this.history.shift();
-    return this.value;
-  }
-
-  get momentum(): number {
-    const h = this.history;
-    if (h.length < 5) return 0;
-    return h[h.length - 1] - h[h.length - 5];
-  }
+export interface AgentAction {
+  agentId: string;
+  action: "BUY" | "SELL" | "HOLD";
+  confidence: number;
 }
 
-// ── Agent Profile (for clustering) ──────────────────────────
-
-export interface ClusterableAgent {
-  id: string;
-  belief: number;
-  risk: number;
-  momentum: number;
+export interface CollusionCluster {
+  action: "BUY" | "SELL" | "HOLD";
+  agents: string[];
+  pressure: number;
 }
 
-export interface AgentCluster {
-  centroid: { belief: number; risk: number; momentum: number };
-  members: ClusterableAgent[];
-  narrative: string;
+export interface BeliefField {
+  bullish: number;     // 0-1
+  bearish: number;     // 0-1
+  consensus: number;   // 0-1 how aligned the population is
+  dominantSentiment: "BUY" | "SELL" | "NEUTRAL";
 }
 
-/** Greedy single-pass clustering by belief/risk/momentum similarity. */
-export function formClusters(
-  agents: ClusterableAgent[],
-  similarityThreshold = 0.65
-): AgentCluster[] {
-  const clusters: AgentCluster[] = [];
+export class CollectiveConsciousnessEngine {
+  private history: AgentAction[][] = [];
+  private maxHistory = 50;
 
-  for (const agent of agents) {
-    let placed = false;
-
-    for (const cluster of clusters) {
-      const c = cluster.centroid;
-      const dist =
-        Math.abs(agent.belief - c.belief) * 0.5 +
-        Math.abs(agent.risk - c.risk) * 0.3 +
-        Math.abs(agent.momentum - c.momentum) * 0.2;
-
-      if (1 - dist > similarityThreshold) {
-        cluster.members.push(agent);
-        // Update centroid incrementally
-        const n = cluster.members.length;
-        c.belief = c.belief + (agent.belief - c.belief) / n;
-        c.risk = c.risk + (agent.risk - c.risk) / n;
-        c.momentum = c.momentum + (agent.momentum - c.momentum) / n;
-        placed = true;
-        break;
-      }
+  /** Detect collusion clusters from a tick of agent actions */
+  detectClusters(actions: AgentAction[]): CollusionCluster[] {
+    const buckets: Record<string, AgentAction[]> = {};
+    for (const a of actions) {
+      if (!buckets[a.action]) buckets[a.action] = [];
+      buckets[a.action].push(a);
     }
 
-    if (!placed) {
-      clusters.push({
-        centroid: { belief: agent.belief, risk: agent.risk, momentum: agent.momentum },
-        members: [agent],
-        narrative: "",
-      });
+    return Object.entries(buckets)
+      .filter(([, agents]) => agents.length >= 2)
+      .map(([action, agents]) => ({
+        action: action as "BUY" | "SELL" | "HOLD",
+        agents: agents.map(a => a.agentId),
+        pressure: agents.reduce((s, a) => s + a.confidence, 0) / agents.length,
+      }));
+  }
+
+  /** Compute aggregate collusion pressure (0 = independent, 1 = total herding) */
+  getCollusionPressure(actions: AgentAction[]): number {
+    if (actions.length === 0) return 0;
+    const clusters = this.detectClusters(actions);
+    const maxCluster = Math.max(0, ...clusters.map(c => c.agents.length));
+    return maxCluster / actions.length;
+  }
+
+  /** Build a belief-field from recent action history */
+  computeBeliefField(actions: AgentAction[]): BeliefField {
+    this.history.push(actions);
+    if (this.history.length > this.maxHistory) this.history.shift();
+
+    let buys = 0, sells = 0, holds = 0;
+    for (const a of actions) {
+      if (a.action === "BUY") buys++;
+      else if (a.action === "SELL") sells++;
+      else holds++;
     }
+    const total = actions.length || 1;
+    const bullish = buys / total;
+    const bearish = sells / total;
+    const consensus = Math.max(bullish, bearish, holds / total);
+    const dominantSentiment = bullish > bearish
+      ? (bullish > holds / total ? "BUY" : "NEUTRAL")
+      : (bearish > holds / total ? "SELL" : "NEUTRAL");
+
+    return { bullish, bearish, consensus, dominantSentiment };
   }
 
-  // Assign narratives
-  for (const cluster of clusters) {
-    cluster.narrative = classifyCluster(cluster);
+  /** Measure herding tendency over time (moving alignment score) */
+  getHerdingTrend(): number[] {
+    return this.history.map(actions => this.getCollusionPressure(actions));
   }
-
-  return clusters;
-}
-
-function classifyCluster(c: AgentCluster): string {
-  const { belief, risk } = c.centroid;
-  if (belief > 0.4 && risk > 0.5) return "aggressive_bulls";
-  if (belief > 0.3 && risk <= 0.5) return "cautious_optimists";
-  if (belief < -0.4 && risk > 0.5) return "panic_sellers";
-  if (belief < -0.3 && risk <= 0.5) return "defensive_bears";
-  if (Math.abs(belief) < 0.15) return "neutral_liquidity";
-  return "mixed";
-}
-
-// ── Synchronization Dynamics ────────────────────────────────
-
-/** Kuramoto-inspired belief synchronization. Agents pull toward mean. */
-export function synchronizeBeliefs(
-  beliefs: number[],
-  coupling = 0.1
-): number[] {
-  if (beliefs.length === 0) return [];
-  const avg = beliefs.reduce((a, b) => a + b, 0) / beliefs.length;
-  return beliefs.map((b) => b + coupling * (avg - b));
-}
-
-/** Detect phase-lock: all agents nearly synchronized. */
-export function phaseLockScore(beliefs: number[]): number {
-  if (beliefs.length < 2) return 1;
-  const avg = beliefs.reduce((a, b) => a + b, 0) / beliefs.length;
-  const variance = beliefs.reduce((s, b) => s + (b - avg) ** 2, 0) / beliefs.length;
-  return 1 / (1 + variance * 20);
 }
