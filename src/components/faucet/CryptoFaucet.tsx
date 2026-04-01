@@ -13,6 +13,7 @@ import FaucetSidebar from "./FaucetSidebar";
 import CompoundAnalytics from "./CompoundAnalytics";
 import FaucetScheduler from "./FaucetScheduler";
 import FaucetOrchestratorDashboard from "./FaucetOrchestratorDashboard";
+import FaucetCompetitionDashboard from "./FaucetCompetitionDashboard";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
 
 const FAUCET_TOKENS: FaucetToken[] = [
