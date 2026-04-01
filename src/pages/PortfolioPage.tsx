@@ -38,14 +38,10 @@ const PortfolioPage = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: holdings } = await supabase
-        .from("portfolio_holdings")
-        .select("symbol, quantity")
-        .eq("user_id", user.id) as any;
+      const result = await portfolioService.getUserHoldings();
+      if (result.error || !result.data) return;
 
-      const activeHoldings = (holdings || []).filter(
-        (h: { quantity: number | string }) => (Number(h.quantity) || 0) > 0,
-      );
+      const activeHoldings = result.data.filter((h) => h.quantity > 0);
 
       const valuations = activeHoldings.map((h: { symbol: string; quantity: number | string }) =>
         getValuation(h.symbol, Number(h.quantity) || 0)
