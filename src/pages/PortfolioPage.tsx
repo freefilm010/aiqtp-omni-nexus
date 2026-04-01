@@ -3,33 +3,15 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { LayoutGrid, BarChart3, Wallet, TrendingUp, Coins } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LayoutGrid, BarChart3, Wallet, Coins, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useAssetValuation } from "@/hooks/useAssetValuation";
+import { useAssetValuation, type AssetValuation } from "@/hooks/useAssetValuation";
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const MarketHeatmap = lazy(() => import("@/components/analytics/MarketHeatmap"));
 const FundamentalAnalysis = lazy(() => import("@/components/analytics/FundamentalAnalysis"));
-
-
-const FAUCET_CHAIN_TO_SYMBOL: Record<string, string> = {
-  "usdc-test": "tUSDC",
-  "usdt-test": "tUSDT",
-  "dai-test": "tDAI",
-  "busd-test": "tBUSD",
-  qtc: "QTC",
-  aiq: "AIQ",
-  nxs: "NXS",
-  "eth-test": "tETH",
-  "btc-test": "tBTC",
-  "sol-test": "tSOL",
-  "matic-test": "tMATIC",
-  "avax-test": "tAVAX",
-  "uni-test": "tUNI",
-  "aave-test": "tAAVE",
-  "link-test": "tLINK",
-};
 
 const TabLoader = () => (
   <div className="flex items-center justify-center h-[400px]">
@@ -37,51 +19,49 @@ const TabLoader = () => (
   </div>
 );
 
+/** Data quality badge for an asset valuation */
+const PriceBadge = ({ val }: { val: AssetValuation }) => {
+  if (val.isTestnet) return <Badge variant="outline" className="text-[10px] px-1.5 py-0">Test</Badge>;
+  if (val.priceUnavailable) return <Badge variant="destructive" className="text-[10px] px-1.5 py-0 gap-0.5"><XCircle className="h-2.5 w-2.5" /> No Price</Badge>;
+  if (val.isStale) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-accent-foreground"><AlertTriangle className="h-2.5 w-2.5" /> Stale</Badge>;
+  if (val.isLive) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-primary"><CheckCircle2 className="h-2.5 w-2.5" /> Live</Badge>;
+  return null;
+};
+
 const PortfolioPage = () => {
   const { user } = useAuth();
   const { getValuation } = useAssetValuation();
-  const [netWorth, setNetWorth] = useState({ portfolio: 0, faucetLifetime: 0, assetCount: 0 });
+  const [realAssets, setRealAssets] = useState<AssetValuation[]>([]);
+  const [testAssets, setTestAssets] = useState<AssetValuation[]>([]);
+  const [netWorth, setNetWorth] = useState({ portfolio: 0, realAssetCount: 0, testAssetCount: 0 });
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      // Portfolio holdings = the single source of truth for current balances
       const { data: holdings } = await supabase
         .from("portfolio_holdings")
         .select("symbol, quantity")
         .eq("user_id", user.id) as any;
 
       const activeHoldings = (holdings || []).filter(
-        (holding: { quantity: number | string }) => (Number(holding.quantity) || 0) > 0,
+        (h: { quantity: number | string }) => (Number(h.quantity) || 0) > 0,
       );
 
-      const portfolioVal = activeHoldings.reduce(
-        (sum: number, h: { symbol: string; quantity: number | string }) =>
-          sum + getValuation(h.symbol, Number(h.quantity) || 0).valueUsd,
-        0,
+      const valuations = activeHoldings.map((h: { symbol: string; quantity: number | string }) =>
+        getValuation(h.symbol, Number(h.quantity) || 0)
       );
 
-      // Faucet lifetime: informational only (already included in portfolio_holdings)
-      const { data: claims } = await supabase
-        .from("faucet_claims")
-        .select("amount, chain")
-        .eq("user_id", user.id) as any;
+      const real = valuations.filter((v: AssetValuation) => !v.isTestnet);
+      const test = valuations.filter((v: AssetValuation) => v.isTestnet);
 
-      const faucetLifetime = (claims || []).reduce(
-        (sum: number, c: { amount: number | string; chain: string }) => {
-          const symbol = FAUCET_CHAIN_TO_SYMBOL[c.chain] ?? c.chain.toUpperCase();
-          return sum + getValuation(symbol, Number(c.amount) || 0).valueUsd;
-        },
-        0,
-      );
+      const portfolioVal = real.reduce((s: number, v: AssetValuation) => s + v.valueUsd, 0);
 
-      setNetWorth({ portfolio: portfolioVal, faucetLifetime, assetCount: activeHoldings.length });
+      setRealAssets(real);
+      setTestAssets(test);
+      setNetWorth({ portfolio: portfolioVal, realAssetCount: real.length, testAssetCount: test.length });
     };
     load();
   }, [user, getValuation]);
-
-  // Net Worth = portfolio holdings only (no double-counting)
-  const total = netWorth.portfolio;
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,33 +70,88 @@ const PortfolioPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Portfolio Command Center</h1>
           <p className="text-muted-foreground mt-1">
-            Current holdings • claim history • live market valuation
+            Real asset holdings • live market valuation
           </p>
         </div>
 
-        {/* Net Worth Summary */}
+        {/* Net Worth Summary — real assets only */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-          {[
-            { label: "Current Net Worth", value: total, icon: <Wallet className="h-4 w-4" />, color: "text-primary", format: "currency" },
-            { label: "Held Assets", value: netWorth.assetCount, icon: <LayoutGrid className="h-4 w-4" />, color: "text-muted-foreground", format: "count" },
-            { label: "Claim History Value", value: netWorth.faucetLifetime, icon: <Coins className="h-4 w-4" />, color: "text-primary", subtitle: "historical claim valuation • not cash", format: "currency" },
-          ].map(item => (
-            <Card key={item.label}>
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={item.color}>{item.icon}</span>
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
-                </div>
-                <p className="text-lg font-bold">
-                  {item.format === "count" ? String(item.value) : `$${Number(item.value).toFixed(2)}`}
-                </p>
-                {"subtitle" in item && item.subtitle && (
-                  <p className="text-[10px] text-muted-foreground">{item.subtitle}</p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-primary"><Wallet className="h-4 w-4" /></span>
+                <span className="text-xs text-muted-foreground">Net Worth (Real Assets)</span>
+              </div>
+              <p className="text-lg font-bold">${netWorth.portfolio.toFixed(2)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-muted-foreground"><LayoutGrid className="h-4 w-4" /></span>
+                <span className="text-xs text-muted-foreground">Real Assets</span>
+              </div>
+              <p className="text-lg font-bold">{netWorth.realAssetCount}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-muted-foreground"><Coins className="h-4 w-4" /></span>
+                <span className="text-xs text-muted-foreground">Test Assets</span>
+              </div>
+              <p className="text-lg font-bold">{netWorth.testAssetCount}</p>
+              <p className="text-[10px] text-muted-foreground">not included in net worth</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Real Assets Table */}
+        {realAssets.length > 0 && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold mb-3">Real Holdings</h3>
+              <div className="space-y-2">
+                {realAssets.map(val => (
+                  <div key={val.symbol} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{val.symbol}</span>
+                      <PriceBadge val={val} />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {val.priceUnavailable ? "Price Unavailable" : `$${val.valueUsd.toFixed(2)}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {val.quantity.toFixed(2)} × ${val.priceUsd.toFixed(val.priceUsd < 1 ? 4 : 2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Test Assets — collapsed section */}
+        {testAssets.length > 0 && (
+          <Card className="mb-6 border-dashed opacity-70">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
+                Test Assets
+                <Badge variant="outline" className="text-[10px]">$0 value — not real</Badge>
+              </h3>
+              <div className="space-y-1">
+                {testAssets.map(val => (
+                  <div key={val.symbol} className="flex items-center justify-between py-1 text-xs text-muted-foreground">
+                    <span>{val.symbol}</span>
+                    <span>{val.quantity.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="portfolio" className="space-y-6">
           <TabsList className="grid w-full max-w-xl grid-cols-3">

@@ -35,6 +35,12 @@ export interface AssetValuation {
   valueUsdt: number;
   change24h: number | null;
   isLive: boolean;
+  /** true when price feed exists but data is older than 5 minutes */
+  isStale: boolean;
+  /** true when no price data exists at all (not testnet, not stablecoin fallback) */
+  priceUnavailable: boolean;
+  /** true when this is a testnet/faucet token with $0 value */
+  isTestnet: boolean;
 }
 
 /**
@@ -117,7 +123,7 @@ export function useAssetValuation() {
       
       // Testnet tokens (t-prefixed) have $0 value — they are not real assets
       if (TESTNET_TOKENS.has(upper)) {
-        return { symbol: upper, quantity, priceUsd: 0, valueUsd: 0, valueUsdt: 0, change24h: null, isLive: false };
+        return { symbol: upper, quantity, priceUsd: 0, valueUsd: 0, valueUsdt: 0, change24h: null, isLive: false, isStale: false, priceUnavailable: false, isTestnet: true };
       }
 
       const marketPrice = getPrice(upper);
@@ -144,8 +150,18 @@ export function useAssetValuation() {
 
       const valueUsd = quantity * priceUsd;
       const valueUsdt = valueUsd / USDT_USD_RATIO;
+      const priceUnavailable = priceUsd === 0 && !STABLECOINS.has(upper);
 
-      return { symbol: upper, quantity, priceUsd, valueUsd, valueUsdt, change24h, isLive: live };
+      // Detect staleness: if last market price update is older than 5 minutes
+      let isStale = false;
+      if (marketPrice) {
+        const lastUpdate = marketPrice.lastUpdate;
+        if (lastUpdate && (Date.now() - new Date(lastUpdate).getTime()) > 5 * 60 * 1000) {
+          isStale = true;
+        }
+      }
+
+      return { symbol: upper, quantity, priceUsd, valueUsd, valueUsdt, change24h, isLive: live, isStale, priceUnavailable, isTestnet: false };
     },
     [getPrice, isLive, platformTokenPrices]
   );

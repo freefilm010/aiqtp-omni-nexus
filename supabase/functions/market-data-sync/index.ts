@@ -205,19 +205,23 @@ serve(async (req) => {
 
       case 'sync_market_prices': {
         const perPage = params?.perPage || 250;
-        const pages = params?.pages || 40; // 40 pages × 250 = 10,000 coins
+        const pages = params?.pages || 40;
         const startPage = params?.startPage || 1;
+        
+        console.log(`sync_market_prices: perPage=${perPage}, pages=${pages}, startPage=${startPage}, baseUrl=${baseUrl}`);
         
         let synced = 0;
         let lastPage = startPage;
 
         for (let page = startPage; page <= pages; page++) {
           const url = `${baseUrl}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=false&price_change_percentage=24h,7d,30d`;
+          console.log(`Fetching page ${page}: ${url.substring(0, 80)}...`);
           
           try {
             const response = await fetchWithRateLimit(url, headers);
             if (!response.ok) {
-              console.log(`Page ${page} failed: ${response.status}`);
+              const body = await response.text().catch(() => '');
+              console.error(`Page ${page} failed: ${response.status} - ${body}`);
               if (response.status === 429) {
                 lastPage = page;
                 break;
@@ -226,6 +230,7 @@ serve(async (req) => {
             }
             
             const markets = await response.json();
+            console.log(`Page ${page}: received ${markets.length} coins`);
             if (!markets.length) break;
 
             const priceData = markets.map((coin: any) => ({
@@ -264,13 +269,18 @@ serve(async (req) => {
               updated_at: new Date().toISOString()
             }));
 
-            await supabase.from('market_coins').upsert(coinInserts, { onConflict: 'id' });
+            const { error: coinError } = await supabase.from('market_coins').upsert(coinInserts, { onConflict: 'id' });
+            if (coinError) console.error(`market_coins upsert error page ${page}:`, JSON.stringify(coinError));
             
             const { error } = await supabase.from('market_prices').upsert(priceData, {
               onConflict: 'coin_id'
             });
             
-            if (!error) synced += priceData.length;
+            if (error) {
+              console.error(`market_prices upsert error page ${page}:`, JSON.stringify(error));
+            } else {
+              synced += priceData.length;
+            }
             lastPage = page;
             
             // Delay between pages to respect rate limits
