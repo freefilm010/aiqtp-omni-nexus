@@ -258,11 +258,11 @@ const CryptoFaucet = () => {
       });
     }
 
-    await supabase.from("auto_invest_engine").update({
-      total_capital: (Number(compoundEngine.total_capital) || 0) + deployAmount,
-      total_deployed: (Number(compoundEngine.total_deployed) || 0) + deployAmount,
-      cycle_count: (compoundEngine.cycle_count || 0) + 1,
-    }).eq("id", compoundEngine.id);
+    await supabase.rpc('increment_engine_totals', {
+      p_engine_id: compoundEngine.id,
+      p_capital_delta: deployAmount,
+      p_deployed_delta: deployAmount,
+    });
 
     await loadCompoundEngine();
   }, [compoundEngine, reinvestPercent, loadCompoundEngine, getValuation]);
