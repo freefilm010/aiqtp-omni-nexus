@@ -4,10 +4,11 @@ import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, BarChart3, Wallet, Coins, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { LayoutGrid, BarChart3, Wallet, Coins, AlertTriangle, CheckCircle2, XCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { usePortfolioValuation } from "@/hooks/usePortfolioValuation";
 import type { AssetValuation } from "@/hooks/useAssetValuation";
 import { LoadingSkeleton, EmptyState, ErrorState } from "@/components/ui/data-states";
+import Sparkline from "@/components/portfolio/Sparkline";
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const PortfolioHistoryChart = lazy(() => import("@/components/portfolio/PortfolioHistoryChart"));
