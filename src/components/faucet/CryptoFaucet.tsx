@@ -209,10 +209,15 @@ const CryptoFaucet = () => {
     // Always compound — if engine doesn't exist yet, skip silently
     if (!compoundEngine) return;
     
+    // CRITICAL: Testnet tokens (t-prefixed) have $0 value — never deploy them
+    if (tokenSymbol.startsWith('t') && tokenSymbol.length > 1 && tokenSymbol[1] === tokenSymbol[1].toUpperCase()) {
+      return; // Skip testnet tokens entirely
+    }
+    
     // Convert token amount to USD value using configured live price sources only
     const valuation = getValuation(tokenSymbol, amount);
     const usdValue = valuation.valueUsd;
-    if (usdValue <= 0) return;
+    if (usdValue <= 0 || valuation.isTestnet || valuation.priceUnavailable) return;
     
     const deployAmount = usdValue * (reinvestPercent / 100);
     if (deployAmount <= 0) return;
