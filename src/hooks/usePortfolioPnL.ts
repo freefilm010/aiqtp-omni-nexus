@@ -14,6 +14,7 @@ import { useTradeHistoryQuery } from "@/hooks/usePortfolioQuery";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
 import { normalizeFeeToUsd } from "@/lib/normalizeFee";
 import { orderLotsByStrategy } from "@/lib/lotStrategy";
+import { pnlStream } from "@/lib/pnlStream";
 import type { TaxLot, RealizedEvent, LotStrategy } from "@/lib/taxLots";
 
 interface InternalLot {
