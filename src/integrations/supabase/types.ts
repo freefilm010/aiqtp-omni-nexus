@@ -9370,6 +9370,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_engine_totals: {
+        Args: {
+          p_capital_delta: number
+          p_deployed_delta: number
+          p_engine_id: string
+        }
+        Returns: undefined
+      }
       increment_wallet_balance: {
         Args: { p_amount: number; p_currency: string }
         Returns: undefined
