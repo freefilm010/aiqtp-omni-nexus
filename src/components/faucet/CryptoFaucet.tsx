@@ -30,6 +30,21 @@ const FAUCET_TOKENS: FaucetToken[] = [
   { id: 'uni-test', symbol: 'tUNI', name: 'Uniswap (Test)', icon: <RefreshCw className="h-5 w-5 text-pink-500" />, claimAmount: 10, claimInterval: 24, available: true, category: 'defi', description: 'Test UNI', chain: 'ethereum' },
   { id: 'aave-test', symbol: 'tAAVE', name: 'Aave (Test)', icon: <Shield className="h-5 w-5 text-sky-400" />, claimAmount: 2, claimInterval: 24, available: true, category: 'defi', description: 'Test AAVE', chain: 'ethereum' },
   { id: 'link-test', symbol: 'tLINK', name: 'Chainlink (Test)', icon: <Zap className="h-5 w-5 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'defi', description: 'Test LINK', chain: 'ethereum' },
+  // DeFi expanded
+  { id: 'sushi-test', symbol: 'tSUSHI', name: 'SushiSwap (Test)', icon: <RefreshCw className="h-5 w-5 text-pink-400" />, claimAmount: 20, claimInterval: 24, available: true, category: 'defi', description: 'Test SUSHI', chain: 'ethereum' },
+  { id: 'comp-test', symbol: 'tCOMP', name: 'Compound (Test)', icon: <TrendingUp className="h-5 w-5 text-green-400" />, claimAmount: 1, claimInterval: 24, available: true, category: 'defi', description: 'Test COMP', chain: 'ethereum' },
+  { id: 'mkr-test', symbol: 'tMKR', name: 'Maker (Test)', icon: <Hexagon className="h-5 w-5 text-teal-500" />, claimAmount: 0.1, claimInterval: 48, available: true, category: 'defi', description: 'Test MKR', chain: 'ethereum' },
+  { id: 'crv-test', symbol: 'tCRV', name: 'Curve (Test)', icon: <TrendingUp className="h-5 w-5 text-yellow-400" />, claimAmount: 50, claimInterval: 24, available: true, category: 'defi', description: 'Test CRV', chain: 'ethereum' },
+  // Lightning tokens
+  { id: 'sats-test', symbol: 'tSATS', name: 'Satoshis (Testnet)', icon: <Bolt className="h-5 w-5 text-amber-400" />, claimAmount: 100000, claimInterval: 6, available: true, category: 'lightning', description: 'Testnet Lightning sats', chain: 'lightning-testnet', bonus: '⚡ Instant' },
+  { id: 'lnbtc-test', symbol: 'tLNBTC', name: 'Lightning BTC (Test)', icon: <Bolt className="h-5 w-5 text-orange-400" />, claimAmount: 0.001, claimInterval: 12, available: true, category: 'lightning', description: 'Lightning Network BTC', chain: 'lightning-testnet' },
+  // L2 tokens
+  { id: 'arb-test', symbol: 'tARB', name: 'Arbitrum (Test)', icon: <Layers className="h-5 w-5 text-blue-500" />, claimAmount: 25, claimInterval: 24, available: true, category: 'l2', description: 'Arbitrum testnet', chain: 'arbitrum-sepolia' },
+  { id: 'op-test', symbol: 'tOP', name: 'Optimism (Test)', icon: <Layers className="h-5 w-5 text-red-400" />, claimAmount: 20, claimInterval: 24, available: true, category: 'l2', description: 'Optimism testnet', chain: 'optimism-sepolia' },
+  { id: 'base-test', symbol: 'tBASE', name: 'Base (Test)', icon: <Layers className="h-5 w-5 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'l2', description: 'Base testnet ETH', chain: 'base-sepolia' },
+  // Privacy tokens
+  { id: 'xmr-test', symbol: 'tXMR', name: 'Monero (Test)', icon: <Lock className="h-5 w-5 text-orange-500" />, claimAmount: 1, claimInterval: 48, available: true, category: 'privacy', description: 'Testnet Monero', chain: 'monero-stagenet' },
+  { id: 'zec-test', symbol: 'tZEC', name: 'Zcash (Test)', icon: <Lock className="h-5 w-5 text-yellow-500" />, claimAmount: 5, claimInterval: 48, available: true, category: 'privacy', description: 'Testnet Zcash', chain: 'zcash-testnet' },
 ];
 
 const CryptoFaucet = () => {
