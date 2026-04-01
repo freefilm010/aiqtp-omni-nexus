@@ -35,6 +35,12 @@ export interface AssetValuation {
   valueUsdt: number;
   change24h: number | null;
   isLive: boolean;
+  /** true when price feed exists but data is older than 5 minutes */
+  isStale: boolean;
+  /** true when no price data exists at all (not testnet, not stablecoin fallback) */
+  priceUnavailable: boolean;
+  /** true when this is a testnet/faucet token with $0 value */
+  isTestnet: boolean;
 }
 
 /**
