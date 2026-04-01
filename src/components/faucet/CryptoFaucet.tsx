@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Gem, Zap, Star, Flame, Shield, TrendingUp, RefreshCw,
-  CircleDollarSign, Coins, Bot
+  CircleDollarSign, Coins, Bot, Layers, Lock, Bolt, Hexagon
 } from "lucide-react";
 import type { FaucetToken, ClaimRecord } from "./faucetTypes";
 import FaucetStats from "./FaucetStats";
