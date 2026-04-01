@@ -266,13 +266,18 @@ serve(async (req) => {
               updated_at: new Date().toISOString()
             }));
 
-            await supabase.from('market_coins').upsert(coinInserts, { onConflict: 'id' });
+            const { error: coinError } = await supabase.from('market_coins').upsert(coinInserts, { onConflict: 'id' });
+            if (coinError) console.error(`market_coins upsert error page ${page}:`, JSON.stringify(coinError));
             
             const { error } = await supabase.from('market_prices').upsert(priceData, {
               onConflict: 'coin_id'
             });
             
-            if (!error) synced += priceData.length;
+            if (error) {
+              console.error(`market_prices upsert error page ${page}:`, JSON.stringify(error));
+            } else {
+              synced += priceData.length;
+            }
             lastPage = page;
             
             // Delay between pages to respect rate limits
