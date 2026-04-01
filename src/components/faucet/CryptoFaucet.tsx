@@ -265,7 +265,7 @@ const CryptoFaucet = () => {
       chain: token.id,
       wallet_address: '',
       status: 'completed',
-    } as any);
+    });
     if (error) return error;
 
     // Credit portfolio_holdings via DB function
