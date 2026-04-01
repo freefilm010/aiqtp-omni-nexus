@@ -205,8 +205,10 @@ serve(async (req) => {
 
       case 'sync_market_prices': {
         const perPage = params?.perPage || 250;
-        const pages = params?.pages || 40; // 40 pages × 250 = 10,000 coins
+        const pages = params?.pages || 40;
         const startPage = params?.startPage || 1;
+        
+        console.log(`sync_market_prices: perPage=${perPage}, pages=${pages}, startPage=${startPage}, baseUrl=${baseUrl}`);
         
         let synced = 0;
         let lastPage = startPage;
