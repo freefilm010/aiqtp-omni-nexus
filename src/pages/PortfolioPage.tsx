@@ -10,6 +10,7 @@ import type { AssetValuation } from "@/hooks/useAssetValuation";
 import { LoadingSkeleton, EmptyState, ErrorState } from "@/components/ui/data-states";
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
+const PortfolioHistoryChart = lazy(() => import("@/components/portfolio/PortfolioHistoryChart"));
 const MarketHeatmap = lazy(() => import("@/components/analytics/MarketHeatmap"));
 const FundamentalAnalysis = lazy(() => import("@/components/analytics/FundamentalAnalysis"));
 
