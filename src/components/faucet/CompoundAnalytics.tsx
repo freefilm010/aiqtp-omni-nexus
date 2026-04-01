@@ -23,7 +23,7 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
       .select("amount_usd, asset_symbol, ai_reason, created_at, status")
       .eq("engine_id", engineId)
       .order("created_at", { ascending: true })
-      .limit(500) as any;
+      .limit(500);
 
     if (!data?.length) return;
     setTransactions(data);
