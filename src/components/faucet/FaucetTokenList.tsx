@@ -192,7 +192,6 @@ const FaucetTokenList = ({
       </Card>
     </div>
   );
-  );
 };
 
 export default FaucetTokenList;
