@@ -4442,7 +4442,7 @@ export type Database = {
           source: string
           symbol: string | null
           title: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           actionable?: boolean
@@ -4458,7 +4458,7 @@ export type Database = {
           source?: string
           symbol?: string | null
           title: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           actionable?: boolean
@@ -4474,7 +4474,7 @@ export type Database = {
           source?: string
           symbol?: string | null
           title?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -7498,6 +7498,38 @@ export type Database = {
           },
         ]
       }
+      supported_chain_rpc_endpoints: {
+        Row: {
+          chain_id: string
+          created_at: string
+          id: string
+          rpc_url: string
+          updated_at: string
+        }
+        Insert: {
+          chain_id: string
+          created_at?: string
+          id?: string
+          rpc_url: string
+          updated_at?: string
+        }
+        Update: {
+          chain_id?: string
+          created_at?: string
+          id?: string
+          rpc_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supported_chain_rpc_endpoints_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: true
+            referencedRelation: "supported_chains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supported_chains: {
         Row: {
           chain_type: string
@@ -7539,6 +7571,48 @@ export type Database = {
           name?: string
           native_token_coingecko_id?: string | null
           rpc_url?: string | null
+          symbol?: string
+        }
+        Relationships: []
+      }
+      supported_chains_public: {
+        Row: {
+          chain_type: string
+          created_at: string | null
+          explorer_url: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_evm_compatible: boolean | null
+          logo_url: string | null
+          name: string
+          native_token_coingecko_id: string | null
+          symbol: string
+        }
+        Insert: {
+          chain_type: string
+          created_at?: string | null
+          explorer_url?: string | null
+          features?: Json | null
+          id: string
+          is_active?: boolean | null
+          is_evm_compatible?: boolean | null
+          logo_url?: string | null
+          name: string
+          native_token_coingecko_id?: string | null
+          symbol: string
+        }
+        Update: {
+          chain_type?: string
+          created_at?: string | null
+          explorer_url?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_evm_compatible?: boolean | null
+          logo_url?: string | null
+          name?: string
+          native_token_coingecko_id?: string | null
           symbol?: string
         }
         Relationships: []
