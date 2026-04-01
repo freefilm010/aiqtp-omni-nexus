@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
+import { tokenService } from "@/lib/data";
 
 const TESTNET_TOKENS = new Set([
   "TUSDC",
