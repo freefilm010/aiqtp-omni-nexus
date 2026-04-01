@@ -205,7 +205,7 @@ const CryptoFaucet = () => {
         entry_price: valuation.priceUsd,
         current_price: valuation.priceUsd,
         is_active: true,
-      } as any);
+      });
       
       // Log transaction
       await supabase.from("auto_invest_transactions").insert({
