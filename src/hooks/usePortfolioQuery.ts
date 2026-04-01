@@ -1,6 +1,6 @@
 /**
  * React Query wrapper for portfolio data.
- * Provides caching, background refetch, and loading/error states.
+ * Namespaced keys, retry strategy, proper error propagation.
  */
 import { useQuery } from "@tanstack/react-query";
 import { portfolioService } from "@/lib/data";
@@ -11,7 +11,7 @@ export function useHoldingsQuery() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["holdings", user?.id],
+    queryKey: ["portfolio", "holdings", user?.id],
     queryFn: async (): Promise<Holding[]> => {
       const result = await portfolioService.getUserHoldings();
       if (result.error) throw new Error(result.error);
@@ -19,6 +19,8 @@ export function useHoldingsQuery() {
     },
     enabled: !!user,
     staleTime: 60_000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
     refetchOnWindowFocus: false,
   });
 }
@@ -27,7 +29,7 @@ export function useActiveHoldingsQuery() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["holdings", "active", user?.id],
+    queryKey: ["portfolio", "holdings", "active", user?.id],
     queryFn: async (): Promise<Holding[]> => {
       const result = await portfolioService.getActiveRealHoldings();
       if (result.error) throw new Error(result.error);
@@ -35,6 +37,8 @@ export function useActiveHoldingsQuery() {
     },
     enabled: !!user,
     staleTime: 60_000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
     refetchOnWindowFocus: false,
   });
 }
@@ -43,7 +47,7 @@ export function useTradeHistoryQuery(limit = 50) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["tradeHistory", user?.id, limit],
+    queryKey: ["portfolio", "tradeHistory", user?.id, limit],
     queryFn: async (): Promise<TradeLog[]> => {
       const result = await portfolioService.getTradeHistory(limit);
       if (result.error) throw new Error(result.error);
@@ -51,6 +55,8 @@ export function useTradeHistoryQuery(limit = 50) {
     },
     enabled: !!user,
     staleTime: 30_000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
     refetchOnWindowFocus: false,
   });
 }
