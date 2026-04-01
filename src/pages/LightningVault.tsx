@@ -153,7 +153,7 @@ const LightningVault = () => {
     }
   };
 
-
+  useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     } else if (user) {
