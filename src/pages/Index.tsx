@@ -20,6 +20,7 @@ const DynamicIslandNotifications = lazy(() => import("@/components/home/DynamicI
 const MarketplaceCategories = lazy(() => import("@/components/MarketplaceCategories"));
 const Features = lazy(() => import("@/components/Features"));
 const Security = lazy(() => import("@/components/Security"));
+const PlatformHealthMonitor = lazy(() => import("@/components/self-help/PlatformHealthMonitor"));
 
 const SectionLoader = () => (
   <div className="flex items-center justify-center py-12">
