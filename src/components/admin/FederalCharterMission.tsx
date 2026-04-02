@@ -150,7 +150,7 @@ const FederalCharterMission = () => {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="fundraising" className="space-y-4">
+      <Tabs defaultValue="capital-sprint" className="space-y-4">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="capital-sprint" className="text-xs gap-1"><Zap className="h-3.5 w-3.5" />Day Zero Sprint</TabsTrigger>
           <TabsTrigger value="fundraising" className="text-xs gap-1"><DollarSign className="h-3.5 w-3.5" />Fundraising ($255M)</TabsTrigger>
