@@ -60,7 +60,7 @@ const RevenueCommandCenter = () => {
   });
   const [loading, setLoading] = useState(true);
   const [isAgentActive, setIsAgentActive] = useState(true);
-  const [reinvestPercent, setReinvestPercent] = useState([85]);
+  const [reinvestPercent, setReinvestPercent] = useState([100]);
   const [riskTolerance, setRiskTolerance] = useState([60]);
   const [agentResponse, setAgentResponse] = useState<string>("");
   const [isCallingAgent, setIsCallingAgent] = useState(false);
