@@ -39,7 +39,11 @@ async function getTokenInfo(tokenAddress: string) {
   
   // Fallback to DEXScreener
   const dexResponse = await fetch(`${DEXSCREENER_API}/dex/tokens/${tokenAddress}`);
-  const dexData = await dexResponse.json();
+  const dexText = await dexResponse.text();
+  if (dexText.trim().startsWith('<')) {
+    throw new Error(`DEXScreener returned HTML instead of JSON for token: ${tokenAddress}`);
+  }
+  const dexData = JSON.parse(dexText);
   
   if (!dexResponse.ok || !dexData.pairs?.length) {
     throw new Error(`Token not found: ${tokenAddress}`);
@@ -69,11 +73,11 @@ async function getTokenInfo(tokenAddress: string) {
 async function getTrendingTokens() {
   // Get trending from DEXScreener
   const response = await fetch(`${DEXSCREENER_API}/dex/search/?q=solana`);
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error("Failed to fetch trending tokens");
+  const text = await response.text();
+  if (!response.ok || text.trim().startsWith('<')) {
+    throw new Error("Failed to fetch trending tokens (non-JSON response)");
   }
+  const data = JSON.parse(text);
   
   // Filter for Solana tokens and sort by volume
   const solanaPairs = (data.pairs || [])
@@ -154,11 +158,11 @@ async function getReferralStats(supabase: any) {
 async function getLaunchData() {
   // Get newly launched tokens (last 24h) on Solana
   const response = await fetch(`${DEXSCREENER_API}/dex/pairs/solana`);
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error("Failed to fetch launch data");
+  const text = await response.text();
+  if (!response.ok || text.trim().startsWith('<')) {
+    throw new Error("Failed to fetch launch data (non-JSON response)");
   }
+  const data = JSON.parse(text);
   
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
