@@ -101,6 +101,7 @@ const AdminDashboard = () => {
               <Route path="logs" element={<AdminReportsCenter />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="apex" element={<ApexDashboard />} />
+              <Route path="charter-mission" element={<FederalCharterMission />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </Suspense>
