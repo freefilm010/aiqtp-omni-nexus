@@ -506,6 +506,9 @@ const App = () => (
                         }
                       />
                       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                      <Route path="/launch" element={<MemeCoinLaunch />} />
+                      <Route path="/nft-drop" element={<NFTDrop />} />
+                      <Route path="/go" element={<ViralLanding />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
