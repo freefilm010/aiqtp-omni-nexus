@@ -314,4 +314,39 @@ const StatBox = ({ label, value, good }: { label: string; value: string; good: b
   </div>
 );
 
+// Singleton checkpoint for display
+const globalCheckpoint = new TradeCheckpointSystem();
+
+const HealthCycleDisplay = () => {
+  const stats = globalCheckpoint.stats;
+  const history = globalCheckpoint.history;
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Cycles Completed</p>
+        <p className="text-sm font-bold text-foreground">{stats.checkpointsCompleted}</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Lifetime Trades</p>
+        <p className="text-sm font-bold text-foreground">{stats.lifetimeTradeCount.toLocaleString()}</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Since Checkpoint</p>
+        <p className="text-sm font-bold text-foreground">{stats.tradesSinceCheckpoint} / 200</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Next In</p>
+        <p className="text-sm font-bold text-primary">{stats.nextCheckpointIn} trades</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Status</p>
+        <p className={`text-sm font-bold ${stats.isPaused ? 'text-yellow-500' : 'text-green-500'}`}>
+          {stats.isPaused ? '⏸ Paused' : '▶ Active'}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export default StrategyBacktest;
