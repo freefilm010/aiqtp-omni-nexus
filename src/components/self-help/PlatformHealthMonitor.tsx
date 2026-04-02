@@ -88,7 +88,7 @@ const PlatformHealthMonitor = () => {
             ...(mins > 30 ? {
               fixLabel: "Refresh Data",
               fix: async () => {
-                await supabase.functions.invoke("market-data-sync");
+                await supabase.functions.invoke("market-data-sync", { body: { action: "sync_market_prices", params: { pages: 1, perPage: 250 } } });
                 toast.success("Market data refresh triggered");
               },
             } : {}),
