@@ -291,7 +291,7 @@ const BTCCTrading = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1, 2, 5, 10, 20, 50, 100].map((lev) => (
+                      {[1, 2, 5, 10, 20, 50, 100, 125, 250, 500].map((lev) => (
                         <SelectItem key={lev} value={lev.toString()}>{lev}x</SelectItem>
                       ))}
                     </SelectContent>
