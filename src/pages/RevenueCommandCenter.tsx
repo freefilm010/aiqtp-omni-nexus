@@ -397,7 +397,6 @@ const RevenueCommandCenter = () => {
                     100% reinvested into top strategies — full compound mode
                   </p>
                 </div>
-                </div>
 
                 <div className="space-y-3">
                   <div className="flex justify-between">
