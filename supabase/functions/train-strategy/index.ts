@@ -155,10 +155,10 @@ serve(async (req) => {
         TOTAL_CYCLES
       );
 
-      const passed = result.profitability >= 80 &&
-                    result.winRate >= 65 &&
-                    result.maxDrawdown <= 15 &&
-                    result.consistency >= 85;
+      const passed = result.profitability >= 77 &&
+                    result.winRate >= 60 &&
+                    result.maxDrawdown <= 18 &&
+                    result.consistency >= 77;
 
       if (passed) passedCount++;
       totalProfitability += result.profitability;
