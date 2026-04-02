@@ -244,7 +244,7 @@ const QAQIAgent = () => {
   }
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] min-h-[500px] gap-4">
+    <div className="flex h-[calc(100vh-16rem)] md:h-[calc(100vh-14rem)] min-h-[400px] gap-4">
       {/* Chat History Sidebar */}
       {showHistory && (
         <div className="w-64 shrink-0 hidden md:block">
@@ -259,9 +259,9 @@ const QAQIAgent = () => {
         </div>
       )}
       
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-4 gap-4 min-h-0 overflow-hidden">
         {/* Main Chat Interface */}
-        <Card className="lg:col-span-3 flex flex-col">
+        <Card className="lg:col-span-3 flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="border-b pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -430,8 +430,8 @@ const QAQIAgent = () => {
         </CardContent>
       </Card>
 
-      {/* Status Panel */}
-      <Card className="flex flex-col">
+      {/* Status Panel - hidden on mobile to prevent overlap */}
+      <Card className="hidden lg:flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Settings className="h-4 w-4" />
