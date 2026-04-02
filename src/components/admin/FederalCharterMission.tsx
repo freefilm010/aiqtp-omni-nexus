@@ -5,7 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Landmark, Shield, FileText, Building2, Clock, Target,
-  Crown, Rocket, Scale, BookOpen, Gavel, AlertCircle, ExternalLink
+  Crown, Rocket, Scale, BookOpen, Gavel, AlertCircle, ExternalLink,
+  DollarSign, Bot, Settings
 } from "lucide-react";
 
 import CharterChecklist, { milestones } from "./charter/CharterChecklist";
@@ -14,6 +15,9 @@ import CharterReadiness from "./charter/CharterReadiness";
 import CharterStructure from "./charter/CharterStructure";
 import CharterPenalties from "./charter/CharterPenalties";
 import CharterResources from "./charter/CharterResources";
+import CharterFundraising from "./charter/CharterFundraising";
+import CharterAIPresidents from "./charter/CharterAIPresidents";
+import CharterEntityManager from "./charter/CharterEntityManager";
 
 /* ─── QIP-001: GENIUS Act Federal Charter Application ─── */
 /* ─── MOST IMPORTANT 83 DAYS ─── */
