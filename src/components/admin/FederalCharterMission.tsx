@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Landmark, Shield, FileText, Building2, Clock, Target,
   Crown, Rocket, Scale, BookOpen, Gavel, AlertCircle, ExternalLink,
-  DollarSign, Bot, Settings
+  DollarSign, Bot, Settings, Zap
 } from "lucide-react";
 
 import CharterChecklist, { milestones } from "./charter/CharterChecklist";
