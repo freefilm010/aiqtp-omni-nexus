@@ -284,6 +284,23 @@ const StrategyBacktest = () => {
           })}
         </div>
       )}
+
+      {/* Health Cycle Stats */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Activity className="h-4 w-4 text-primary" />
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">200-Trade Health Checkpoint Tracker</h4>
+              <p className="text-[10px] text-muted-foreground">Indefinite cycle — audits stale, stuck, underwater & illiquid positions every 200 trades</p>
+            </div>
+          </div>
+          <HealthCycleDisplay />
+        </CardContent>
+      </Card>
+
+      {/* Interactive Historical Events Chart */}
+      <HistoricalEventsChart />
     </div>
   );
 };
