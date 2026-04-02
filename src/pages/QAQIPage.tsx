@@ -3,9 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import QAQIAgent from "@/components/qaqi/QAQIAgent";
 import AIQTPAgent from "@/components/qaqi/AIQTPAgent";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Atom, Bot, Zap, Cpu } from "lucide-react";
+import { Atom, Bot } from "lucide-react";
 
 const QAQIPage = () => {
   const [activeAgent, setActiveAgent] = useState<"qaqi" | "aiqtp">("qaqi");
