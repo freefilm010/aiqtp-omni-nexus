@@ -259,9 +259,9 @@ const QAQIAgent = () => {
         </div>
       )}
       
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="flex-1 flex flex-col lg:grid lg:grid-cols-4 gap-4 min-h-0 overflow-hidden">
         {/* Main Chat Interface */}
-        <Card className="lg:col-span-3 flex flex-col">
+        <Card className="lg:col-span-3 flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="border-b pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
