@@ -1,50 +1,42 @@
 
+## 51-Entity Enterprise Fundraising & Management System
 
-## Plan: Expand Faucet Assets + ZBD Wallet Integration
+### Phase 1: Database Schema
+Create `charter_entities` table to track all 51 LLCs:
+- **Fields**: state, entity_name, entity_type (parent/subsidiary), ein, filing_status, formation_date, fundraising_target ($5M default), funds_raised, linked_user_id, ai_president_name, ai_president_status, annual_revenue_cap, compliance_status, notes
+- **RLS**: Admin-only access
+- **Seed data**: 50 state LLCs + 1 parent (TAH Wyoming)
 
-### Current State
-- **Faucet**: 15 tokens across 4 categories (stablecoin, platform, testnet, defi) — all hardcoded in `CryptoFaucet.tsx`
-- **Lightning Vault**: Database-backed (lightning_channels, lightning_transactions), supports BTC/ETH/USDC send/receive/swap with generated BOLT11 invoices, but no real Lightning Network connection
-- **ZBD**: You have ZBD docs forked (`zbd-docs`), but no ZBD integration exists yet
+### Phase 2: Fundraising Dashboard (Charter Mission Control tab)
+New "Fundraising" tab in Charter Mission Control:
+- **Summary cards**: Total capacity ($255M), total raised, entities active, compliance rate
+- **Per-entity progress bars** with state, filing status, and funds raised vs target
+- **Fundraising timeline** showing formation priority order
+- **Revenue projections** chart
 
-### What We Can Build
+### Phase 3: AI Presidents Module
+New "AI Presidents" tab in Charter Mission Control:
+- **50 AI President profiles** (one per state LLC) with name, role, status
+- **Enterprise management capabilities** placeholder (social media, account management)
+- **Status tracking**: Active / Training / Pending Formation
 
-#### 1. Expand Faucet with More Assets
-Add new tokens to the hardcoded list and optionally a new "lightning" category:
-- **Lightning tokens**: tSATS (testnet sats), tLNBTC (Lightning BTC)
-- **More DeFi**: tSUSHI, tCOMP, tMKR, tCRV
-- **L2 tokens**: tARB (Arbitrum), tOP (Optimism), tBASE
-- **Privacy**: tXMR, tZEC testnet tokens
-- **New category tab** "Lightning" in the faucet UI
+### Phase 4: Entity Management CRUD
+- Add/edit/remove entities
+- Link platform user accounts to each entity
+- Track formation documents, EIN applications, bank accounts
+- Export entity registry for legal filings
 
-#### 2. ZBD Wallet Connection to Lightning Vault
-ZBD provides a real Lightning Network API for sending/receiving sats. Integration would:
-- Add a **"Connect ZBD"** button in Lightning Vault
-- Create an edge function `zbd-wallet` that proxies ZBD API calls (send, receive, wallet balance)
-- Store the user's ZBD API key securely via the secrets system
-- Enable **real Lightning deposits** by generating ZBD payment requests
-- Show ZBD balance alongside vault balance
+### Data Model
+```
+charter_entities (51 records)
+├── TAH (Wyoming - Parent)
+├── ATE (New Jersey - Primary Operating)
+├── ATE-AL (Alabama)
+├── ATE-AK (Alaska)
+├── ... (48 more state subsidiaries)
+```
 
-**Requires**: A ZBD API key (from https://dashboard.zebedee.io). Do you have one, or should we set up the integration flow to request it?
-
-#### 3. Test Deposit from ZBD
-Once connected, the flow would be:
-- User clicks "Deposit from ZBD" in Lightning Vault
-- Edge function calls ZBD API to create a withdrawal (ZBD → Vault)
-- Transaction recorded in `lightning_transactions`
-- Vault balance updated in `lightning_channels`
-
-### Files to Change
-| File | Change |
-|------|--------|
-| `src/components/faucet/CryptoFaucet.tsx` | Add ~12 new tokens + "lightning" category |
-| `src/components/faucet/FaucetTokenList.tsx` | Add "Lightning" tab to categories |
-| `src/pages/LightningVault.tsx` | Add ZBD connection UI + deposit flow |
-| `supabase/functions/zbd-wallet/index.ts` | New edge function for ZBD API proxy |
-| Migration | Add `zbd_api_key_encrypted` column or use secrets |
-
-### Technical Details
-- ZBD REST API endpoints: `POST /v0/charges` (receive), `POST /v0/payments` (send), `GET /v0/wallet` (balance)
-- Edge function handles auth + proxies to ZBD with server-side API key
-- Faucet expansion is purely frontend — no DB changes needed (uses existing `credit_faucet_claim` RPC)
-
+### Fundraising Math
+- 51 entities × $5M/year = **$255M annual fundraising capacity**
+- Each entity independently raises up to $5M under state regs
+- Parent entity (TAH) consolidates and governs
