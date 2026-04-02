@@ -7,6 +7,7 @@ import { Play, Square, BarChart3, TrendingUp, TrendingDown, Activity, Zap, Refre
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import BacktestHistoricalInsights from "./BacktestHistoricalInsights";
 
 interface StrategyRow {
   id: string;
@@ -259,6 +260,21 @@ const StrategyBacktest = () => {
                         good={(st?.avgConsistency ?? s.consistency_score ?? 0) >= 85}
                       />
                     </div>
+                  )}
+
+                  {/* Historical Insights Panel */}
+                  {(st || pct > 0) && (
+                    <BacktestHistoricalInsights
+                      strategyId={s.id}
+                      strategyName={s.name}
+                      trainingStats={st ? {
+                        avgProfitability: st.avgProfitability,
+                        avgWinRate: st.avgWinRate,
+                        avgDrawdown: st.avgDrawdown,
+                        avgConsistency: st.avgConsistency,
+                        passRate: st.passRate,
+                      } : null}
+                    />
                   )}
                 </CardContent>
               </Card>
