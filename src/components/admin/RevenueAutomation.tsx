@@ -65,7 +65,7 @@ const RevenueAutomation = () => {
   const [selectedGenerator, setSelectedGenerator] = useState<RevenueGenerator | null>(null);
   const [riskTolerance, setRiskTolerance] = useState([50]);
   const [autoReinvest, setAutoReinvest] = useState(true);
-  const [reinvestPercent, setReinvestPercent] = useState([90]);
+  const [reinvestPercent, setReinvestPercent] = useState([100]);
   const [topStrategiesCount, setTopStrategiesCount] = useState([3]);
 
   // Load generators from admin_settings, seed if empty
