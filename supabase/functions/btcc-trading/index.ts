@@ -1,349 +1,221 @@
+/**
+ * BTCC Trading Edge Function — WebSocket API
+ * BTCC uses a WS-only API at wss://kapi1.btloginc.com:9082/v2/quot/
+ * All actions (Login, PlaceOrder, GetAccountInfo, etc.) go through WS JSON messages.
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface BTCCRequest {
-  action: "fetch_ticker" | "fetch_ohlcv" | "fetch_balance" | "create_order" | "fetch_orders" | "cancel_order" | "fetch_positions";
-  market: "spot" | "futures";
-  symbol?: string;
-  orderType?: "market" | "limit";
-  side?: "buy" | "sell";
-  amount?: number;
-  price?: number;
-  orderId?: string;
-  timeframe?: string;
-  limit?: number;
-  leverage?: number;
+const BTCC_WS_URL = "wss://kapi1.btloginc.com:9082/v2/quot/";
+
+// ── Signature ───────────────────────────────────────────────────
+function sortObj(obj: Record<string, unknown>): Record<string, unknown> {
+  const res: Record<string, unknown> = {};
+  Object.keys(obj)
+    .sort()
+    .forEach((k) => {
+      res[k] = obj[k];
+    });
+  return res;
 }
 
-const BTCC_API_BASE = "https://api.btcc.com";
+function stringify(obj: Record<string, unknown>): string {
+  return Object.entries(obj)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+    .join("&");
+}
 
-// Generate HMAC-SHA256 signature for BTCC API
-async function generateSignature(secret: string, message: string): Promise<string> {
+async function signPayload(
+  payload: Record<string, unknown>,
+  secret: string
+): Promise<string> {
+  const sorted = sortObj(payload);
+  const content = stringify(sorted);
   const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const messageData = encoder.encode(message);
-  
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
   );
-  const signature = await crypto.subtle.sign("HMAC", cryptoKey, messageData);
-  return Array.from(new Uint8Array(signature))
-    .map(b => b.toString(16).padStart(2, "0"))
+  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(content));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
-// Build safe headers to avoid ByteString issues with non-ASCII chars
-function safeHeaders(apiKey: string, extra?: Record<string, string>): Headers {
-  const h = new Headers();
-  h.set("X-API-KEY", apiKey.replace(/[^\x20-\x7E]/g, ""));
-  if (extra) {
-    for (const [k, v] of Object.entries(extra)) {
-      h.set(k, v);
+// ── WS helper: send message and wait for response ───────────────
+function wsSendAndReceive(
+  message: Record<string, unknown>,
+  timeoutMs = 10000
+): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    let ws: WebSocket;
+    const timer = setTimeout(() => {
+      try { ws?.close(); } catch (_) { /* noop */ }
+      reject(new Error(`BTCC WS timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    try {
+      ws = new WebSocket(BTCC_WS_URL);
+    } catch (err) {
+      clearTimeout(timer);
+      reject(new Error(`Failed to connect to BTCC WS: ${err}`));
+      return;
     }
-  }
-  return h;
+
+    ws.onopen = () => {
+      console.log("BTCC WS connected, sending:", JSON.stringify(message).slice(0, 200));
+      ws.send(JSON.stringify(message));
+    };
+
+    ws.onmessage = (event) => {
+      clearTimeout(timer);
+      try {
+        const data = JSON.parse(String(event.data));
+        ws.close();
+        resolve(data);
+      } catch (e) {
+        ws.close();
+        reject(new Error(`BTCC WS invalid response: ${event.data}`));
+      }
+    };
+
+    ws.onerror = (event) => {
+      clearTimeout(timer);
+      reject(new Error(`BTCC WS error: ${JSON.stringify(event)}`));
+    };
+
+    ws.onclose = (event) => {
+      if (!event.wasClean) {
+        clearTimeout(timer);
+        // Only reject if not already resolved
+      }
+    };
+  });
 }
 
-// Fetch with timeout to prevent hanging on unresponsive BTCC servers
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 8000): Promise<Response> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { ...init, signal: controller.signal });
-    return res;
-  } catch (err) {
-    if (err.name === "AbortError") {
-      throw new Error(`BTCC request timed out after ${timeoutMs}ms`);
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// BTCC Spot API Functions
-async function btccSpotFetchTicker(apiKey: string, secret: string, symbol: string) {
+// ── Build authenticated message ─────────────────────────────────
+async function buildAuthMessage(
+  action: string,
+  publicKey: string,
+  secretKey: string,
+  extra: Record<string, unknown> = {}
+): Promise<Record<string, unknown>> {
   const timestamp = Date.now();
-  const params = `symbol=${symbol}&timestamp=${timestamp}`;
-  const signature = await generateSignature(secret, params);
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/spot/ticker?${params}&signature=${signature}`,
-    { headers: safeHeaders(apiKey) }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC Spot ticker error [${response.status}]`);
-  }
-  
-  return {
-    symbol,
-    last: parseFloat(data.data?.lastPrice || "0"),
-    bid: parseFloat(data.data?.bidPrice || "0"),
-    ask: parseFloat(data.data?.askPrice || "0"),
-    high: parseFloat(data.data?.highPrice || "0"),
-    low: parseFloat(data.data?.lowPrice || "0"),
-    volume: parseFloat(data.data?.volume || "0"),
-    quoteVolume: parseFloat(data.data?.quoteVolume || "0"),
-    changePercent: parseFloat(data.data?.priceChangePercent || "0"),
-    timestamp: Date.now(),
-    exchange: "btcc",
-    market: "spot",
+  const nonce = Math.floor(10000000 + Math.random() * 90000000).toString();
+
+  const payload: Record<string, unknown> = {
+    action,
+    timestamp,
+    nonce,
+    public_key: publicKey,
+    ...extra,
   };
+
+  const sign = await signPayload(payload, secretKey);
+
+  return { ...payload, sign };
 }
 
-async function btccSpotFetchBalance(apiKey: string, secret: string) {
-  const timestamp = Date.now();
-  const params = `timestamp=${timestamp}`;
-  const signature = await generateSignature(secret, params);
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/spot/account?${params}&signature=${signature}`,
-    { headers: safeHeaders(apiKey) }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC Spot balance error [${response.status}]`);
+// ── Public actions (no auth required) ───────────────────────────
+async function getActiveContracts(): Promise<Record<string, unknown>> {
+  return wsSendAndReceive({ action: "GetActiveContracts" });
+}
+
+async function getTrades(symbol: string, count = 50): Promise<Record<string, unknown>> {
+  return wsSendAndReceive({ action: "GetTrades", symbol, count });
+}
+
+async function subscribeTicker(symbol: string): Promise<Record<string, unknown>> {
+  return wsSendAndReceive({ action: "Subscribe", symbol });
+}
+
+// ── Private actions (auth required) ─────────────────────────────
+async function login(publicKey: string, secretKey: string): Promise<Record<string, unknown>> {
+  const msg = await buildAuthMessage("Login", publicKey, secretKey);
+  return wsSendAndReceive(msg);
+}
+
+async function getAccountInfo(publicKey: string, secretKey: string): Promise<Record<string, unknown>> {
+  const msg = await buildAuthMessage("GetAccountInfo", publicKey, secretKey);
+  return wsSendAndReceive(msg);
+}
+
+async function placeOrder(
+  publicKey: string,
+  secretKey: string,
+  params: {
+    symbol: string;
+    side: "BUY" | "SELL";
+    order_type: "MARKET" | "LIMIT" | "STOP";
+    price: number;
+    quantity: number;
+    stop_price?: number;
   }
-  
-  const balances = (data.data?.balances || []).map((b: any) => ({
-    asset: b.asset,
-    free: parseFloat(b.free || "0"),
-    locked: parseFloat(b.locked || "0"),
-    total: parseFloat(b.free || "0") + parseFloat(b.locked || "0"),
-  })).filter((b: any) => b.total > 0);
-  
-  return { balances, updateTime: Date.now(), market: "spot" };
+): Promise<Record<string, unknown>> {
+  const msg = await buildAuthMessage("PlaceOrder", publicKey, secretKey, params);
+  return wsSendAndReceive(msg);
 }
 
-async function btccSpotCreateOrder(
-  apiKey: string,
-  secret: string,
+async function getOpenOrders(
+  publicKey: string,
+  secretKey: string,
+  symbol?: string
+): Promise<Record<string, unknown>> {
+  const extra: Record<string, unknown> = {};
+  if (symbol) extra.symbol = symbol;
+  const msg = await buildAuthMessage("GetOpenOrders", publicKey, secretKey, extra);
+  return wsSendAndReceive(msg);
+}
+
+async function cancelOrder(
+  publicKey: string,
+  secretKey: string,
   symbol: string,
-  side: "buy" | "sell",
-  orderType: "market" | "limit",
-  amount: number,
-  price?: number
-) {
-  const timestamp = Date.now();
-  let params = `symbol=${symbol}&side=${side.toUpperCase()}&type=${orderType.toUpperCase()}&quantity=${amount}&timestamp=${timestamp}`;
-  
-  if (orderType === "limit" && price) {
-    params += `&price=${price}`;
-  }
-  
-  const signature = await generateSignature(secret, params);
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/spot/order`,
-    {
-      method: "POST",
-      headers: safeHeaders(apiKey, { "Content-Type": "application/x-www-form-urlencoded" }),
-      body: `${params}&signature=${signature}`,
-    }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC Spot order error [${response.status}]`);
-  }
-  
-  return {
-    orderId: data.data?.orderId,
+  orderId: string
+): Promise<Record<string, unknown>> {
+  const msg = await buildAuthMessage("CancelOrder", publicKey, secretKey, {
     symbol,
-    side,
-    type: orderType,
-    status: data.data?.status || "NEW",
-    price: price || 0,
-    amount,
-    filled: parseFloat(data.data?.executedQty || "0"),
-    remaining: amount - parseFloat(data.data?.executedQty || "0"),
-    timestamp: Date.now(),
-    market: "spot",
-  };
+    order_id: orderId,
+  });
+  return wsSendAndReceive(msg);
 }
 
-// BTCC Futures Pro API Functions
-async function btccFuturesFetchTicker(apiKey: string, secret: string, symbol: string) {
-  const timestamp = Date.now();
-  const params = `symbol=${symbol}&timestamp=${timestamp}`;
-  const signature = await generateSignature(secret, params);
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/futures/ticker?${params}&signature=${signature}`,
-    { headers: safeHeaders(apiKey) }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC Futures ticker error [${response.status}]`);
-  }
-  
-  return {
-    symbol,
-    last: parseFloat(data.data?.lastPrice || "0"),
-    markPrice: parseFloat(data.data?.markPrice || "0"),
-    indexPrice: parseFloat(data.data?.indexPrice || "0"),
-    fundingRate: parseFloat(data.data?.fundingRate || "0"),
-    high: parseFloat(data.data?.highPrice || "0"),
-    low: parseFloat(data.data?.lowPrice || "0"),
-    volume: parseFloat(data.data?.volume || "0"),
-    openInterest: parseFloat(data.data?.openInterest || "0"),
-    timestamp: Date.now(),
-    exchange: "btcc",
-    market: "futures",
-  };
+async function cancelAllOrders(
+  publicKey: string,
+  secretKey: string
+): Promise<Record<string, unknown>> {
+  const msg = await buildAuthMessage("CancelAllOrders", publicKey, secretKey);
+  return wsSendAndReceive(msg);
 }
 
-async function btccFuturesFetchPositions(apiKey: string, secret: string) {
-  const timestamp = Date.now();
-  const params = `timestamp=${timestamp}`;
-  const signature = await generateSignature(secret, params);
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/futures/positions?${params}&signature=${signature}`,
-    { headers: safeHeaders(apiKey) }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC Futures positions error [${response.status}]`);
-  }
-  
-  return (data.data || []).map((p: any) => ({
-    symbol: p.symbol,
-    side: p.positionSide?.toLowerCase() || "long",
-    size: parseFloat(p.positionAmt || "0"),
-    entryPrice: parseFloat(p.entryPrice || "0"),
-    markPrice: parseFloat(p.markPrice || "0"),
-    unrealizedPnl: parseFloat(p.unrealizedProfit || "0"),
-    leverage: parseInt(p.leverage || "1"),
-    marginType: p.marginType || "cross",
-    liquidationPrice: parseFloat(p.liquidationPrice || "0"),
-  }));
-}
-
-async function btccFuturesCreateOrder(
-  apiKey: string,
-  secret: string,
-  symbol: string,
-  side: "buy" | "sell",
-  orderType: "market" | "limit",
-  amount: number,
-  price?: number,
-  leverage?: number
-) {
-  const timestamp = Date.now();
-  let params = `symbol=${symbol}&side=${side.toUpperCase()}&type=${orderType.toUpperCase()}&quantity=${amount}&timestamp=${timestamp}`;
-  
-  if (orderType === "limit" && price) {
-    params += `&price=${price}`;
-  }
-  if (leverage) {
-    params += `&leverage=${leverage}`;
-  }
-  
-  const signature = await generateSignature(secret, params);
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/futures/order`,
-    {
-      method: "POST",
-      headers: safeHeaders(apiKey, { "Content-Type": "application/x-www-form-urlencoded" }),
-      body: `${params}&signature=${signature}`,
-    }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC Futures order error [${response.status}]`);
-  }
-  
-  return {
-    orderId: data.data?.orderId,
-    symbol,
-    side,
-    type: orderType,
-    status: data.data?.status || "NEW",
-    price: price || 0,
-    amount,
-    filled: parseFloat(data.data?.executedQty || "0"),
-    remaining: amount - parseFloat(data.data?.executedQty || "0"),
-    leverage: leverage || 1,
-    timestamp: Date.now(),
-    market: "futures",
-  };
-}
-
-async function btccFetchOrders(apiKey: string, secret: string, market: "spot" | "futures", symbol?: string) {
-  const timestamp = Date.now();
-  let params = `timestamp=${timestamp}`;
-  if (symbol) {
-    params += `&symbol=${symbol}`;
-  }
-  const signature = await generateSignature(secret, params);
-  
-  const endpoint = market === "spot" ? "spot" : "futures";
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/${endpoint}/openOrders?${params}&signature=${signature}`,
-    { headers: safeHeaders(apiKey) }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC ${market} orders error [${response.status}]`);
-  }
-  
-  return (data.data || []).map((o: any) => ({
-    orderId: o.orderId,
-    symbol: o.symbol,
-    side: o.side?.toLowerCase(),
-    type: o.type?.toLowerCase(),
-    status: o.status,
-    price: parseFloat(o.price || "0"),
-    amount: parseFloat(o.origQty || "0"),
-    filled: parseFloat(o.executedQty || "0"),
-    timestamp: o.time || Date.now(),
-    market,
-  }));
-}
-
-async function btccCancelOrder(apiKey: string, secret: string, market: "spot" | "futures", symbol: string, orderId: string) {
-  const timestamp = Date.now();
-  const params = `symbol=${symbol}&orderId=${orderId}&timestamp=${timestamp}`;
-  const signature = await generateSignature(secret, params);
-  
-  const endpoint = market === "spot" ? "spot" : "futures";
-  
-  const response = await fetchWithTimeout(
-    `${BTCC_API_BASE}/api/v1/${endpoint}/order?${params}&signature=${signature}`,
-    {
-      method: "DELETE",
-      headers: safeHeaders(apiKey),
-    }
-  );
-  
-  const data = await response.json();
-  
-  if (!response.ok || data.code !== 0) {
-    throw new Error(data.message || `BTCC ${market} cancel error [${response.status}]`);
-  }
-  
-  return { orderId, status: "cancelled", market };
+// ── Request interface ───────────────────────────────────────────
+interface BTCCRequest {
+  action:
+    | "get_contracts"
+    | "get_trades"
+    | "subscribe_ticker"
+    | "login"
+    | "get_account"
+    | "place_order"
+    | "get_open_orders"
+    | "cancel_order"
+    | "cancel_all";
+  symbol?: string;
+  side?: "BUY" | "SELL";
+  order_type?: "MARKET" | "LIMIT" | "STOP";
+  price?: number;
+  quantity?: number;
+  stop_price?: number;
+  order_id?: string;
+  count?: number;
 }
 
 serve(async (req) => {
@@ -352,64 +224,78 @@ serve(async (req) => {
   }
 
   try {
-    // Get BTCC credentials from environment (stored via Lovable secrets)
-    const BTCC_API_KEY = (Deno.env.get("BTCC_API_KEY") || "").replace(/[^\x20-\x7E]/g, "").trim();
-    const BTCC_API_SECRET = (Deno.env.get("BTCC_API_SECRET") || "").replace(/[^\x20-\x7E]/g, "").trim();
-    
+    const BTCC_API_KEY = (Deno.env.get("BTCC_API_KEY") || "").trim();
+    const BTCC_API_SECRET = (Deno.env.get("BTCC_API_SECRET") || "").trim();
+
     if (!BTCC_API_KEY || !BTCC_API_SECRET) {
-      throw new Error("BTCC API credentials not configured. Please add BTCC_API_KEY and BTCC_API_SECRET.");
+      throw new Error("BTCC API credentials not configured.");
     }
-    
+
     const body: BTCCRequest = await req.json();
-    const { action, market, symbol, orderType, side, amount, price, orderId, leverage } = body;
-    
-    console.log(`BTCC Trading: ${action} on ${market}${symbol ? ` for ${symbol}` : ""}`);
-    
-    let result: any;
-    
-    switch (action) {
-      case "fetch_ticker":
-        if (!symbol) throw new Error("Symbol required for fetch_ticker");
-        result = market === "spot" 
-          ? await btccSpotFetchTicker(BTCC_API_KEY, BTCC_API_SECRET, symbol)
-          : await btccFuturesFetchTicker(BTCC_API_KEY, BTCC_API_SECRET, symbol);
+    console.log(`BTCC WS Action: ${body.action}${body.symbol ? ` [${body.symbol}]` : ""}`);
+
+    let result: Record<string, unknown>;
+
+    switch (body.action) {
+      // ── Public ──
+      case "get_contracts":
+        result = await getActiveContracts();
         break;
-        
-      case "fetch_balance":
-        if (market !== "spot") throw new Error("fetch_balance only supported for spot market");
-        result = await btccSpotFetchBalance(BTCC_API_KEY, BTCC_API_SECRET);
+
+      case "get_trades":
+        if (!body.symbol) throw new Error("symbol required");
+        result = await getTrades(body.symbol, body.count || 50);
         break;
-        
-      case "fetch_positions":
-        if (market !== "futures") throw new Error("fetch_positions only supported for futures market");
-        result = await btccFuturesFetchPositions(BTCC_API_KEY, BTCC_API_SECRET);
+
+      case "subscribe_ticker":
+        if (!body.symbol) throw new Error("symbol required");
+        result = await subscribeTicker(body.symbol);
         break;
-        
-      case "create_order":
-        if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
-        result = market === "spot"
-          ? await btccSpotCreateOrder(BTCC_API_KEY, BTCC_API_SECRET, symbol, side, orderType || "market", amount, price)
-          : await btccFuturesCreateOrder(BTCC_API_KEY, BTCC_API_SECRET, symbol, side, orderType || "market", amount, price, leverage);
+
+      // ── Private ──
+      case "login":
+        result = await login(BTCC_API_KEY, BTCC_API_SECRET);
         break;
-        
-      case "fetch_orders":
-        result = await btccFetchOrders(BTCC_API_KEY, BTCC_API_SECRET, market, symbol);
+
+      case "get_account":
+        result = await getAccountInfo(BTCC_API_KEY, BTCC_API_SECRET);
         break;
-        
+
+      case "place_order":
+        if (!body.symbol || !body.side || !body.quantity)
+          throw new Error("symbol, side, and quantity required");
+        result = await placeOrder(BTCC_API_KEY, BTCC_API_SECRET, {
+          symbol: body.symbol,
+          side: body.side,
+          order_type: body.order_type || "MARKET",
+          price: body.price || 0,
+          quantity: body.quantity,
+          stop_price: body.stop_price,
+        });
+        break;
+
+      case "get_open_orders":
+        result = await getOpenOrders(BTCC_API_KEY, BTCC_API_SECRET, body.symbol);
+        break;
+
       case "cancel_order":
-        if (!symbol || !orderId) throw new Error("Symbol and orderId required for cancel_order");
-        result = await btccCancelOrder(BTCC_API_KEY, BTCC_API_SECRET, market, symbol, orderId);
+        if (!body.symbol || !body.order_id)
+          throw new Error("symbol and order_id required");
+        result = await cancelOrder(BTCC_API_KEY, BTCC_API_SECRET, body.symbol, body.order_id);
         break;
-        
+
+      case "cancel_all":
+        result = await cancelAllOrders(BTCC_API_KEY, BTCC_API_SECRET);
+        break;
+
       default:
-        throw new Error(`Unknown action: ${action}`);
+        throw new Error(`Unknown action: ${body.action}`);
     }
-    
+
     return new Response(
-      JSON.stringify({ success: true, data: result, exchange: "btcc", market, action }),
+      JSON.stringify({ success: true, data: result, action: body.action }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-    
   } catch (error) {
     console.error("BTCC Trading error:", error);
     return new Response(
