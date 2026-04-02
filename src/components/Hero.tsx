@@ -317,6 +317,14 @@ const Hero = () => {
           </div>
 
           <div className="mb-8 flex flex-col items-stretch justify-center gap-3 animate-slide-up stagger-3 sm:flex-row sm:flex-wrap">
+            <Button
+              size="lg"
+              onClick={() => setQuickStartOpen(true)}
+              className="w-full gap-2 bg-gradient-to-r from-[hsl(162,91%,32%)] to-[hsl(162,80%,40%)] text-white font-semibold shadow-lg shadow-[hsl(162,91%,32%,0.3)] hover:shadow-[hsl(162,91%,32%,0.5)] hover:scale-[1.02] transition-all sm:w-auto"
+            >
+              <Rocket className="w-4 h-4" />
+              Start Earning Now
+            </Button>
             <Link to="/auth" className="w-full sm:w-auto">
               <Button size="lg" className="w-full gap-2 border-[hsl(222,14%,25%)] text-foreground glass-morphism micro-hover hover:border-[hsl(224,100%,58%,0.5)] sm:w-auto">
                 <Terminal className="w-4 h-4" />
