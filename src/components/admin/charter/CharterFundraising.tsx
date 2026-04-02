@@ -99,15 +99,29 @@ const CharterFundraising = () => {
         </Card>
       </div>
 
-      {/* Overall Fundraising Progress */}
-      <Card>
+      {/* Capital Funnel */}
+      <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
         <CardContent className="p-4">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Total Fundraising Progress</span>
+            <span className="font-medium text-foreground">💰 Capital Funnel</span>
             <span className="font-bold">{fmt(totalRaised)} / {fmt(totalCapacity)}</span>
           </div>
           <Progress value={totalCapacity > 0 ? (totalRaised / totalCapacity) * 100 : 0} className="h-3" />
-          <p className="text-xs text-muted-foreground mt-2">51 entities × $5M/yr = $255M annual fundraising capacity</p>
+          <div className="grid grid-cols-3 gap-2 mt-3 text-xs text-center">
+            <div className="p-2 rounded bg-muted/30">
+              <p className="font-bold text-foreground">Step 1</p>
+              <p className="text-muted-foreground">EIN (free, instant)</p>
+            </div>
+            <div className="p-2 rounded bg-muted/30">
+              <p className="font-bold text-foreground">Step 2</p>
+              <p className="text-muted-foreground">Biz bank + DUNS</p>
+            </div>
+            <div className="p-2 rounded bg-muted/30">
+              <p className="font-bold text-foreground">Step 3</p>
+              <p className="text-muted-foreground">Credit line $50K+</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 text-center">51 × $5M/yr = $255M capacity • First $50K unlocks the entire system</p>
         </CardContent>
       </Card>
 
