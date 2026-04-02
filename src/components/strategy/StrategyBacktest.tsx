@@ -7,6 +7,7 @@ import { Play, Square, BarChart3, TrendingUp, TrendingDown, Activity, Zap, Refre
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import BacktestHistoricalInsights from "./BacktestHistoricalInsights";
 
 interface StrategyRow {
   id: string;
