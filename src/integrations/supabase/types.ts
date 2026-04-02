@@ -7418,6 +7418,78 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_historical_analysis: {
+        Row: {
+          alpha_generated: number | null
+          analysis_date: string
+          benchmark_performance: number | null
+          causal_factors: Json | null
+          created_at: string
+          event_category: string | null
+          id: string
+          market_event: string | null
+          max_drawdown: number | null
+          pattern_tags: string[] | null
+          regime_detected: string | null
+          strategy_id: string
+          strategy_performance: number | null
+          user_id: string
+          volatility: number | null
+          win_rate: number | null
+        }
+        Insert: {
+          alpha_generated?: number | null
+          analysis_date: string
+          benchmark_performance?: number | null
+          causal_factors?: Json | null
+          created_at?: string
+          event_category?: string | null
+          id?: string
+          market_event?: string | null
+          max_drawdown?: number | null
+          pattern_tags?: string[] | null
+          regime_detected?: string | null
+          strategy_id: string
+          strategy_performance?: number | null
+          user_id: string
+          volatility?: number | null
+          win_rate?: number | null
+        }
+        Update: {
+          alpha_generated?: number | null
+          analysis_date?: string
+          benchmark_performance?: number | null
+          causal_factors?: Json | null
+          created_at?: string
+          event_category?: string | null
+          id?: string
+          market_event?: string | null
+          max_drawdown?: number | null
+          pattern_tags?: string[] | null
+          regime_detected?: string | null
+          strategy_id?: string
+          strategy_performance?: number | null
+          user_id?: string
+          volatility?: number | null
+          win_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_historical_analysis_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_historical_analysis_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strategy_performance: {
         Row: {
           created_at: string
@@ -7487,6 +7559,90 @@ export type Database = {
           },
         ]
       }
+      strategy_predictions: {
+        Row: {
+          actual_direction: string | null
+          actual_value: number | null
+          analysis_window_end: string
+          analysis_window_start: string
+          causal_reasoning: string | null
+          created_at: string
+          feedback_applied: boolean | null
+          id: string
+          model_version: string | null
+          predicted_confidence: number
+          predicted_direction: string
+          predicted_value: number | null
+          prediction_type: string
+          resolved_at: string | null
+          strategy_id: string
+          user_accepted: boolean | null
+          user_action_irrelevant: boolean | null
+          user_id: string
+          was_correct: boolean | null
+          weight_adjustments: Json | null
+        }
+        Insert: {
+          actual_direction?: string | null
+          actual_value?: number | null
+          analysis_window_end: string
+          analysis_window_start: string
+          causal_reasoning?: string | null
+          created_at?: string
+          feedback_applied?: boolean | null
+          id?: string
+          model_version?: string | null
+          predicted_confidence?: number
+          predicted_direction: string
+          predicted_value?: number | null
+          prediction_type?: string
+          resolved_at?: string | null
+          strategy_id: string
+          user_accepted?: boolean | null
+          user_action_irrelevant?: boolean | null
+          user_id: string
+          was_correct?: boolean | null
+          weight_adjustments?: Json | null
+        }
+        Update: {
+          actual_direction?: string | null
+          actual_value?: number | null
+          analysis_window_end?: string
+          analysis_window_start?: string
+          causal_reasoning?: string | null
+          created_at?: string
+          feedback_applied?: boolean | null
+          id?: string
+          model_version?: string | null
+          predicted_confidence?: number
+          predicted_direction?: string
+          predicted_value?: number | null
+          prediction_type?: string
+          resolved_at?: string | null
+          strategy_id?: string
+          user_accepted?: boolean | null
+          user_action_irrelevant?: boolean | null
+          user_id?: string
+          was_correct?: boolean | null
+          weight_adjustments?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_predictions_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_predictions_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strategy_rentals: {
         Row: {
           created_at: string | null
@@ -7534,6 +7690,69 @@ export type Database = {
           },
           {
             foreignKeyName: "strategy_rentals_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      strategy_self_training_log: {
+        Row: {
+          accuracy_after: number | null
+          accuracy_before: number | null
+          correct_predictions: number | null
+          created_at: string
+          epoch: number
+          id: string
+          notes: string | null
+          patterns_discovered: string[] | null
+          predictions_evaluated: number | null
+          regime_transitions: Json | null
+          strategy_id: string
+          user_id: string
+          weight_deltas: Json | null
+        }
+        Insert: {
+          accuracy_after?: number | null
+          accuracy_before?: number | null
+          correct_predictions?: number | null
+          created_at?: string
+          epoch?: number
+          id?: string
+          notes?: string | null
+          patterns_discovered?: string[] | null
+          predictions_evaluated?: number | null
+          regime_transitions?: Json | null
+          strategy_id: string
+          user_id: string
+          weight_deltas?: Json | null
+        }
+        Update: {
+          accuracy_after?: number | null
+          accuracy_before?: number | null
+          correct_predictions?: number | null
+          created_at?: string
+          epoch?: number
+          id?: string
+          notes?: string | null
+          patterns_discovered?: string[] | null
+          predictions_evaluated?: number | null
+          regime_transitions?: Json | null
+          strategy_id?: string
+          user_id?: string
+          weight_deltas?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_self_training_log_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_self_training_log_strategy_id_fkey"
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "ai_strategies_public"
