@@ -47,6 +47,15 @@ const Index = () => {
       <main>
         <Hero />
 
+        {/* Platform Health — self-service diagnostics */}
+        {user && (
+          <section className="max-w-7xl mx-auto px-4 -mt-4 mb-6">
+            <Suspense fallback={null}>
+              <PlatformHealthMonitor />
+            </Suspense>
+          </section>
+        )}
+
         {/* ===== AI COMMAND CENTER ===== */}
         <LazySection minHeight="600px" rootMargin={heroSectionRootMargin}>
           <Suspense fallback={<SectionLoader />}>
