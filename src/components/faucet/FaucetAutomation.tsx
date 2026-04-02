@@ -105,7 +105,7 @@ const FaucetAutomation = ({
               className="mt-3 space-y-2"
             >
               <div className="flex gap-1">
-                {[85, 90, 95, 100].map(pct => (
+                {[90, 95, 100].map(pct => (
                   <Button
                     key={pct}
                     size="sm"

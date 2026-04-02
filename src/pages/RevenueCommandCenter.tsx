@@ -60,7 +60,7 @@ const RevenueCommandCenter = () => {
   });
   const [loading, setLoading] = useState(true);
   const [isAgentActive, setIsAgentActive] = useState(true);
-  const [reinvestPercent, setReinvestPercent] = useState([85]);
+  const [reinvestPercent, setReinvestPercent] = useState([100]);
   const [riskTolerance, setRiskTolerance] = useState([60]);
   const [agentResponse, setAgentResponse] = useState<string>("");
   const [isCallingAgent, setIsCallingAgent] = useState(false);
@@ -393,9 +393,9 @@ const RevenueCommandCenter = () => {
                     <Label>Reinvestment Rate</Label>
                     <span className="text-sm font-medium text-green-500">{reinvestPercent[0]}%</span>
                   </div>
-                  <Slider value={reinvestPercent} onValueChange={setReinvestPercent} max={95} min={50} step={5} />
+                  <Slider value={reinvestPercent} onValueChange={setReinvestPercent} max={100} min={50} step={5} />
                   <p className="text-xs text-muted-foreground">
-                    {reinvestPercent[0]}% reinvested into top strategies • {100 - reinvestPercent[0]}% to treasury
+                    {reinvestPercent[0]}% reinvested into top strategies{reinvestPercent[0] < 100 ? ` • ${100 - reinvestPercent[0]}% to treasury` : ""}
                   </p>
                 </div>
 
