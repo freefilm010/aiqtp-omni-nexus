@@ -20,6 +20,7 @@ const DynamicIslandNotifications = lazy(() => import("@/components/home/DynamicI
 const MarketplaceCategories = lazy(() => import("@/components/MarketplaceCategories"));
 const Features = lazy(() => import("@/components/Features"));
 const Security = lazy(() => import("@/components/Security"));
+const PlatformHealthMonitor = lazy(() => import("@/components/self-help/PlatformHealthMonitor"));
 
 const SectionLoader = () => (
   <div className="flex items-center justify-center py-12">
@@ -45,6 +46,15 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
+
+        {/* Platform Health — self-service diagnostics */}
+        {user && (
+          <section className="max-w-7xl mx-auto px-4 -mt-4 mb-6">
+            <Suspense fallback={null}>
+              <PlatformHealthMonitor />
+            </Suspense>
+          </section>
+        )}
 
         {/* ===== AI COMMAND CENTER ===== */}
         <LazySection minHeight="600px" rootMargin={heroSectionRootMargin}>
