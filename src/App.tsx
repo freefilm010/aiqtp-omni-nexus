@@ -79,6 +79,9 @@ const RewardsStorePage = lazy(() => import("./pages/RewardsStorePage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SimulationDashboard = lazy(() => import("./pages/SimulationDashboard"));
+const MemeCoinLaunch = lazy(() => import("./pages/Launch"));
+const NFTDrop = lazy(() => import("./pages/NFTDrop"));
+const ViralLanding = lazy(() => import("./pages/ViralLanding"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -503,6 +506,9 @@ const App = () => (
                         }
                       />
                       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                      <Route path="/launch" element={<MemeCoinLaunch />} />
+                      <Route path="/nft-drop" element={<NFTDrop />} />
+                      <Route path="/go" element={<ViralLanding />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>
