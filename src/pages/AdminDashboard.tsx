@@ -33,6 +33,7 @@ const AdminReportsCenter = lazy(() => import("@/components/admin/AdminReportsCen
 const AdminUsersManagement = lazy(() => import("@/components/admin/AdminUsersManagement"));
 const AdminSettingsPage = lazy(() => import("@/components/admin/AdminSettingsPage"));
 const ApexDashboard = lazy(() => import("@/components/admin/ApexDashboard"));
+const FederalCharterMission = lazy(() => import("@/components/admin/FederalCharterMission"));
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
@@ -100,6 +101,7 @@ const AdminDashboard = () => {
               <Route path="logs" element={<AdminReportsCenter />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="apex" element={<ApexDashboard />} />
+              <Route path="charter-mission" element={<FederalCharterMission />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </Suspense>
