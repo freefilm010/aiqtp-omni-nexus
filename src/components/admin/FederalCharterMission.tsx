@@ -18,6 +18,7 @@ import CharterResources from "./charter/CharterResources";
 import CharterFundraising from "./charter/CharterFundraising";
 import CharterAIPresidents from "./charter/CharterAIPresidents";
 import CharterEntityManager from "./charter/CharterEntityManager";
+import CapitalSprint from "@/components/charter/CapitalSprint";
 
 /* ─── QIP-001: GENIUS Act Federal Charter Application ─── */
 /* ─── MOST IMPORTANT 83 DAYS ─── */
