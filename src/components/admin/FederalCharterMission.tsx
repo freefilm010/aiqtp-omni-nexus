@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Landmark, Shield, FileText, Building2, Clock, Target,
   Crown, Rocket, Scale, BookOpen, Gavel, AlertCircle, ExternalLink,
-  DollarSign, Bot, Settings
+  DollarSign, Bot, Settings, Zap
 } from "lucide-react";
 
 import CharterChecklist, { milestones } from "./charter/CharterChecklist";
@@ -18,6 +18,7 @@ import CharterResources from "./charter/CharterResources";
 import CharterFundraising from "./charter/CharterFundraising";
 import CharterAIPresidents from "./charter/CharterAIPresidents";
 import CharterEntityManager from "./charter/CharterEntityManager";
+import CapitalSprint from "@/components/charter/CapitalSprint";
 
 /* ─── QIP-001: GENIUS Act Federal Charter Application ─── */
 /* ─── MOST IMPORTANT 83 DAYS ─── */
@@ -149,8 +150,9 @@ const FederalCharterMission = () => {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="fundraising" className="space-y-4">
+      <Tabs defaultValue="capital-sprint" className="space-y-4">
         <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="capital-sprint" className="text-xs gap-1"><Zap className="h-3.5 w-3.5" />Day Zero Sprint</TabsTrigger>
           <TabsTrigger value="fundraising" className="text-xs gap-1"><DollarSign className="h-3.5 w-3.5" />Fundraising ($255M)</TabsTrigger>
           <TabsTrigger value="entities" className="text-xs gap-1"><Building2 className="h-3.5 w-3.5" />Entities (51)</TabsTrigger>
           <TabsTrigger value="presidents" className="text-xs gap-1"><Bot className="h-3.5 w-3.5" />AI Presidents</TabsTrigger>
@@ -161,6 +163,10 @@ const FederalCharterMission = () => {
           <TabsTrigger value="penalties" className="text-xs gap-1"><AlertCircle className="h-3.5 w-3.5" />Penalties</TabsTrigger>
           <TabsTrigger value="resources" className="text-xs gap-1"><BookOpen className="h-3.5 w-3.5" />Resources</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="capital-sprint">
+          <CapitalSprint />
+        </TabsContent>
 
         <TabsContent value="fundraising">
           <CharterFundraising />
