@@ -39,7 +39,11 @@ async function getTokenInfo(tokenAddress: string) {
   
   // Fallback to DEXScreener
   const dexResponse = await fetch(`${DEXSCREENER_API}/dex/tokens/${tokenAddress}`);
-  const dexData = await dexResponse.json();
+  const dexText = await dexResponse.text();
+  if (dexText.trim().startsWith('<')) {
+    throw new Error(`DEXScreener returned HTML instead of JSON for token: ${tokenAddress}`);
+  }
+  const dexData = JSON.parse(dexText);
   
   if (!dexResponse.ok || !dexData.pairs?.length) {
     throw new Error(`Token not found: ${tokenAddress}`);
