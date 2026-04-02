@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Zap, Globe, Bot, TrendingUp, ChevronDown, Wifi, BarChart2, Crosshair, Minus, Square, Circle, PenTool, Search, FileCode, FlaskConical, Terminal, Cpu, LineChart } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Shield, Zap, Globe, Bot, TrendingUp, ChevronDown, Wifi, BarChart2, Crosshair, Minus, Square, Circle, PenTool, Search, FileCode, FlaskConical, Terminal, Cpu, LineChart, Rocket } from "lucide-react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+
+const QuickStartStrategy = lazy(() => import("@/components/strategy/QuickStartStrategy"));
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 import { useIsMobile } from "@/hooks/use-mobile";
 
