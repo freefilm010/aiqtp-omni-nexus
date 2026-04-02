@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Zap, Globe, Bot, TrendingUp, ChevronDown, Wifi, BarChart2, Crosshair, Minus, Square, Circle, PenTool, Search, FileCode, FlaskConical, Terminal, Cpu, LineChart } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Shield, Zap, Globe, Bot, TrendingUp, ChevronDown, Wifi, BarChart2, Crosshair, Minus, Square, Circle, PenTool, Search, FileCode, FlaskConical, Terminal, Cpu, LineChart, Rocket } from "lucide-react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+
+const QuickStartStrategy = lazy(() => import("@/components/strategy/QuickStartStrategy"));
 import { useKrakenTickers } from "@/hooks/useKrakenTickers";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -258,6 +260,7 @@ const TerminalGridBackground = () => (
 const Hero = () => {
   const isMobile = useIsMobile();
   const [tickerReady, setTickerReady] = useState(false);
+  const [quickStartOpen, setQuickStartOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setTickerReady(true), 2000);
@@ -314,6 +317,14 @@ const Hero = () => {
           </div>
 
           <div className="mb-8 flex flex-col items-stretch justify-center gap-3 animate-slide-up stagger-3 sm:flex-row sm:flex-wrap">
+            <Button
+              size="lg"
+              onClick={() => setQuickStartOpen(true)}
+              className="w-full gap-2 bg-gradient-to-r from-[hsl(162,91%,32%)] to-[hsl(162,80%,40%)] text-white font-semibold shadow-lg shadow-[hsl(162,91%,32%,0.3)] hover:shadow-[hsl(162,91%,32%,0.5)] hover:scale-[1.02] transition-all sm:w-auto"
+            >
+              <Rocket className="w-4 h-4" />
+              Start Earning Now
+            </Button>
             <Link to="/auth" className="w-full sm:w-auto">
               <Button size="lg" className="w-full gap-2 border-[hsl(222,14%,25%)] text-foreground glass-morphism micro-hover hover:border-[hsl(224,100%,58%,0.5)] sm:w-auto">
                 <Terminal className="w-4 h-4" />
@@ -379,6 +390,10 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      <Suspense fallback={null}>
+        <QuickStartStrategy open={quickStartOpen} onOpenChange={setQuickStartOpen} />
+      </Suspense>
     </section>
   );
 };
