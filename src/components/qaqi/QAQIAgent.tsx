@@ -244,7 +244,7 @@ const QAQIAgent = () => {
   }
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] min-h-[500px] gap-4">
+    <div className="flex h-[calc(100vh-16rem)] md:h-[calc(100vh-14rem)] min-h-[400px] gap-4">
       {/* Chat History Sidebar */}
       {showHistory && (
         <div className="w-64 shrink-0 hidden md:block">
