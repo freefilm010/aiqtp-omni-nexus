@@ -164,6 +164,10 @@ const FederalCharterMission = () => {
           <TabsTrigger value="resources" className="text-xs gap-1"><BookOpen className="h-3.5 w-3.5" />Resources</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="capital-sprint">
+          <CapitalSprint />
+        </TabsContent>
+
         <TabsContent value="fundraising">
           <CharterFundraising />
         </TabsContent>
