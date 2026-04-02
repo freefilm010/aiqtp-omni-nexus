@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import BacktestHistoricalInsights from "./BacktestHistoricalInsights";
+import HistoricalEventsChart from "./HistoricalEventsChart";
+import { TradeCheckpointSystem } from "@/lib/infra/tradeCheckpoint";
 
 interface StrategyRow {
   id: string;
@@ -282,6 +284,23 @@ const StrategyBacktest = () => {
           })}
         </div>
       )}
+
+      {/* Health Cycle Stats */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Activity className="h-4 w-4 text-primary" />
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">200-Trade Health Checkpoint Tracker</h4>
+              <p className="text-[10px] text-muted-foreground">Indefinite cycle — audits stale, stuck, underwater & illiquid positions every 200 trades</p>
+            </div>
+          </div>
+          <HealthCycleDisplay />
+        </CardContent>
+      </Card>
+
+      {/* Interactive Historical Events Chart */}
+      <HistoricalEventsChart />
     </div>
   );
 };
@@ -294,5 +313,40 @@ const StatBox = ({ label, value, good }: { label: string; value: string; good: b
     </p>
   </div>
 );
+
+// Singleton checkpoint for display
+const globalCheckpoint = new TradeCheckpointSystem();
+
+const HealthCycleDisplay = () => {
+  const stats = globalCheckpoint.stats;
+  const history = globalCheckpoint.history;
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Cycles Completed</p>
+        <p className="text-sm font-bold text-foreground">{stats.checkpointsCompleted}</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Lifetime Trades</p>
+        <p className="text-sm font-bold text-foreground">{stats.lifetimeTradeCount.toLocaleString()}</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Since Checkpoint</p>
+        <p className="text-sm font-bold text-foreground">{stats.tradesSinceCheckpoint} / 200</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Next In</p>
+        <p className="text-sm font-bold text-primary">{stats.nextCheckpointIn} trades</p>
+      </div>
+      <div className="rounded-md bg-muted/50 p-2">
+        <p className="text-[10px] text-muted-foreground">Status</p>
+        <p className={`text-sm font-bold ${stats.isPaused ? 'text-yellow-500' : 'text-green-500'}`}>
+          {stats.isPaused ? '⏸ Paused' : '▶ Active'}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 export default StrategyBacktest;
