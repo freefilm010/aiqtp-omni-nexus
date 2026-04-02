@@ -64,7 +64,7 @@ const PlatformHealthMonitor = () => {
 
     // 3. Edge functions
     try {
-      const { error } = await supabase.functions.invoke("market-data-sync", { body: { test: true } });
+      const { error } = await supabase.functions.invoke("market-data-sync", { body: { action: "get_global" } });
       results.push({
         name: "Edge Functions",
         status: error ? "warning" : "ok",
