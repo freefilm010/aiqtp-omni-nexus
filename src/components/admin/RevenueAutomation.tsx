@@ -438,12 +438,12 @@ const RevenueAutomation = () => {
                     <Slider
                       value={reinvestPercent}
                       onValueChange={setReinvestPercent}
-                      max={95}
+                      max={100}
                       min={50}
                       step={5}
                     />
                     <p className="text-xs text-muted-foreground">
-                      {reinvestPercent[0]}% reinvested • {100 - reinvestPercent[0]}% to admin wallet
+                      {reinvestPercent[0]}% reinvested{reinvestPercent[0] < 100 ? ` • ${100 - reinvestPercent[0]}% to admin wallet` : ""}
                     </p>
                   </div>
                   
