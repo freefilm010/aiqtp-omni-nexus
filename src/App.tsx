@@ -79,6 +79,9 @@ const RewardsStorePage = lazy(() => import("./pages/RewardsStorePage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const SimulationDashboard = lazy(() => import("./pages/SimulationDashboard"));
+const MemeCoinLaunch = lazy(() => import("./pages/Launch"));
+const NFTDrop = lazy(() => import("./pages/NFTDrop"));
+const ViralLanding = lazy(() => import("./pages/ViralLanding"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
