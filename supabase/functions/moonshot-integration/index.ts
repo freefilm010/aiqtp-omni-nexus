@@ -158,11 +158,11 @@ async function getReferralStats(supabase: any) {
 async function getLaunchData() {
   // Get newly launched tokens (last 24h) on Solana
   const response = await fetch(`${DEXSCREENER_API}/dex/pairs/solana`);
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error("Failed to fetch launch data");
+  const text = await response.text();
+  if (!response.ok || text.trim().startsWith('<')) {
+    throw new Error("Failed to fetch launch data (non-JSON response)");
   }
+  const data = JSON.parse(text);
   
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
