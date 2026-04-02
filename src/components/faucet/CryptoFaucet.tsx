@@ -239,9 +239,9 @@ const CryptoFaucet = () => {
     // Always compound — if engine doesn't exist yet, skip silently
     if (!compoundEngine) return;
     
-    // CRITICAL: Testnet tokens (t-prefixed) have $0 value — never deploy them
+    // CRITICAL: Testnet tokens have $0 value — never deploy them
     if (tokenSymbol.startsWith('t') && tokenSymbol.length > 1 && tokenSymbol[1] === tokenSymbol[1].toUpperCase()) {
-      return; // Skip testnet tokens entirely
+      return;
     }
     
     // Convert token amount to USD value using configured live price sources only
