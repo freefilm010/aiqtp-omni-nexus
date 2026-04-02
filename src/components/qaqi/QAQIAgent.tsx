@@ -430,8 +430,8 @@ const QAQIAgent = () => {
         </CardContent>
       </Card>
 
-      {/* Status Panel */}
-      <Card className="flex flex-col">
+      {/* Status Panel - hidden on mobile to prevent overlap */}
+      <Card className="hidden lg:flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Settings className="h-4 w-4" />
