@@ -24,21 +24,23 @@ interface FaucetTokenListProps {
 
 const EARN_CATEGORIES = [
   { value: "all-earn", label: "💰 All Earn" },
-  { value: "platform", label: "Platform" },
-  { value: "stablecoin", label: "Stables" },
-  { value: "defi", label: "DeFi" },
-  { value: "lightning", label: "⚡ Lightning" },
-  { value: "l2", label: "L2" },
+  { value: "platform", label: "🔮 Platform" },
+  { value: "mining", label: "⛏️ Mining" },
+  { value: "staking", label: "📈 Staking" },
+  { value: "referral", label: "🤝 Referral" },
+  { value: "micro-earn", label: "🪙 Micro-Earn" },
 ];
 
 const TEST_CATEGORIES = [
   { value: "all-test", label: "🧪 All Testnet" },
-  { value: "testnet", label: "Testnet" },
-  { value: "privacy", label: "Privacy" },
+  { value: "testnet", label: "L1 Testnet" },
+  { value: "testnet-l2", label: "L2 Testnet" },
+  { value: "testnet-defi", label: "DeFi Test" },
+  { value: "testnet-privacy", label: "Privacy" },
 ];
 
 const isTestnetToken = (t: FaucetToken) =>
-  t.category === "testnet" || t.category === "privacy" || t.symbol.startsWith("t");
+  t.category.startsWith("testnet") || t.category === "testnet-privacy" || t.symbol.startsWith("t");
 
 const FaucetTokenList = ({
   tokens, balances, claiming, loading,

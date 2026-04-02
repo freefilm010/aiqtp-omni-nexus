@@ -17,36 +17,64 @@ import FaucetCompetitionDashboard from "./FaucetCompetitionDashboard";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
 
 const FAUCET_TOKENS: FaucetToken[] = [
-  { id: 'usdc-test', symbol: 'tUSDC', name: 'USD Coin (Test)', icon: <CircleDollarSign className="h-5 w-5 text-blue-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Testnet USDC', chain: 'ethereum' },
-  { id: 'usdt-test', symbol: 'tUSDT', name: 'Tether (Test)', icon: <CircleDollarSign className="h-5 w-5 text-green-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Testnet USDT', chain: 'ethereum' },
-  { id: 'dai-test', symbol: 'tDAI', name: 'DAI (Test)', icon: <CircleDollarSign className="h-5 w-5 text-amber-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'Decentralized stablecoin', chain: 'ethereum' },
-  { id: 'busd-test', symbol: 'tBUSD', name: 'Binance USD (Test)', icon: <CircleDollarSign className="h-5 w-5 text-yellow-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'stablecoin', description: 'BSC stablecoin', chain: 'bsc' },
-  { id: 'qtc', symbol: 'QTC', name: 'Quantum Time Crystal', icon: <Gem className="h-5 w-5 text-purple-500" />, claimAmount: 5, claimInterval: 8, available: true, category: 'platform', description: 'Native platform token', chain: 'platform', bonus: '2x weekends' },
-  { id: 'aiq', symbol: 'AIQ', name: 'AI Quant Token', icon: <Zap className="h-5 w-5 text-cyan-500" />, claimAmount: 25, claimInterval: 6, available: true, category: 'platform', description: 'Governance & AI access', chain: 'platform', bonus: 'Streak bonus' },
-  { id: 'nxs', symbol: 'NXS', name: 'Nexus Points', icon: <Star className="h-5 w-5 text-amber-400" />, claimAmount: 50, claimInterval: 4, available: true, category: 'platform', description: 'Loyalty points', chain: 'platform' },
-  { id: 'eth-test', symbol: 'tETH', name: 'Ethereum (Sepolia)', icon: <Flame className="h-5 w-5 text-indigo-400" />, claimAmount: 0.5, claimInterval: 24, available: true, category: 'testnet', description: 'Sepolia testnet ETH', chain: 'ethereum-sepolia' },
-  { id: 'btc-test', symbol: 'tBTC', name: 'Bitcoin (Testnet)', icon: <Coins className="h-5 w-5 text-orange-500" />, claimAmount: 0.01, claimInterval: 48, available: true, category: 'testnet', description: 'Bitcoin testnet', chain: 'bitcoin-testnet' },
+  // ═══ REAL EARNING TOKENS (have value, count toward portfolio) ═══
+
+  // Platform tokens
+  { id: 'qtc', symbol: 'QTC', name: 'Quantum Time Crystal', icon: <Gem className="h-5 w-5 text-purple-500" />, claimAmount: 5, claimInterval: 8, available: true, category: 'platform', description: 'Native platform token', chain: 'platform', bonus: '2x weekends', hasValue: true },
+  { id: 'aiq', symbol: 'AIQ', name: 'AI Quant Token', icon: <Zap className="h-5 w-5 text-cyan-500" />, claimAmount: 25, claimInterval: 6, available: true, category: 'platform', description: 'Governance & AI access', chain: 'platform', bonus: 'Streak bonus', hasValue: true },
+  { id: 'nxs', symbol: 'NXS', name: 'Nexus Points', icon: <Star className="h-5 w-5 text-amber-400" />, claimAmount: 50, claimInterval: 4, available: true, category: 'platform', description: 'Loyalty & rewards points', chain: 'platform', hasValue: true },
+
+  // Mining rewards
+  { id: 'qtc-mine', symbol: 'QTC', name: 'QTC Mining Pool', icon: <Gem className="h-5 w-5 text-purple-400" />, claimAmount: 3, claimInterval: 12, available: true, category: 'mining', description: 'PoW mining simulation rewards', chain: 'platform', hasValue: true },
+  { id: 'aiq-mine', symbol: 'AIQ', name: 'AIQ Compute Mining', icon: <Zap className="h-5 w-5 text-cyan-400" />, claimAmount: 10, claimInterval: 8, available: true, category: 'mining', description: 'AI compute contribution rewards', chain: 'platform', hasValue: true },
+
+  // Staking yields
+  { id: 'qtc-stake', symbol: 'QTC', name: 'QTC Staking Yield', icon: <TrendingUp className="h-5 w-5 text-purple-500" />, claimAmount: 8, claimInterval: 24, available: true, category: 'staking', description: '12% APY staking yield', chain: 'platform', bonus: '12% APY', hasValue: true },
+  { id: 'aiq-stake', symbol: 'AIQ', name: 'AIQ Staking Yield', icon: <TrendingUp className="h-5 w-5 text-cyan-500" />, claimAmount: 40, claimInterval: 24, available: true, category: 'staking', description: '18% APY staking yield', chain: 'platform', bonus: '18% APY', hasValue: true },
+  { id: 'nxs-stake', symbol: 'NXS', name: 'NXS LP Staking', icon: <TrendingUp className="h-5 w-5 text-amber-500" />, claimAmount: 75, claimInterval: 24, available: true, category: 'staking', description: 'Liquidity pool rewards', chain: 'platform', bonus: '24% APY', hasValue: true },
+
+  // Referral / affiliate rewards
+  { id: 'ref-qtc', symbol: 'QTC', name: 'Referral Bonus', icon: <Coins className="h-5 w-5 text-purple-300" />, claimAmount: 2, claimInterval: 48, available: true, category: 'referral', description: 'Referral program rewards', chain: 'platform', hasValue: true },
+  { id: 'ref-nxs', symbol: 'NXS', name: 'Community Bounty', icon: <Star className="h-5 w-5 text-amber-300" />, claimAmount: 100, claimInterval: 72, available: true, category: 'referral', description: 'Community engagement bounty', chain: 'platform', hasValue: true },
+
+  // Micro-earn (FaucetPay-style task rewards)
+  { id: 'micro-qtc', symbol: 'QTC', name: 'Task Reward', icon: <CircleDollarSign className="h-5 w-5 text-green-500" />, claimAmount: 1, claimInterval: 2, available: true, category: 'micro-earn', description: 'Complete tasks for QTC', chain: 'platform', hasValue: true },
+  { id: 'micro-aiq', symbol: 'AIQ', name: 'Survey Reward', icon: <CircleDollarSign className="h-5 w-5 text-blue-400" />, claimAmount: 5, claimInterval: 4, available: true, category: 'micro-earn', description: 'Survey & ad completion', chain: 'platform', hasValue: true },
+  { id: 'micro-nxs', symbol: 'NXS', name: 'Daily Roll', icon: <CircleDollarSign className="h-5 w-5 text-amber-400" />, claimAmount: 25, claimInterval: 1, available: true, category: 'micro-earn', description: 'Daily faucet roll (like FreeBitco.in)', chain: 'platform', bonus: '🎲 Random 1-100x', hasValue: true },
+
+  // ═══ TESTNET TOKENS ($0 value — for development only) ═══
+
+  // L1 Testnets
+  { id: 'eth-test', symbol: 'tETH', name: 'Ethereum (Sepolia)', icon: <Flame className="h-5 w-5 text-indigo-400" />, claimAmount: 0.5, claimInterval: 24, available: true, category: 'testnet', description: 'Sepolia testnet ETH via Alchemy/Infura', chain: 'ethereum-sepolia' },
+  { id: 'btc-test', symbol: 'tBTC', name: 'Bitcoin (Testnet)', icon: <Coins className="h-5 w-5 text-orange-500" />, claimAmount: 0.01, claimInterval: 48, available: true, category: 'testnet', description: 'Bitcoin testnet3', chain: 'bitcoin-testnet' },
   { id: 'sol-test', symbol: 'tSOL', name: 'Solana (Devnet)', icon: <Zap className="h-5 w-5 text-emerald-400" />, claimAmount: 5, claimInterval: 12, available: true, category: 'testnet', description: 'Solana devnet', chain: 'solana-devnet' },
-  { id: 'matic-test', symbol: 'tMATIC', name: 'Polygon (Mumbai)', icon: <Shield className="h-5 w-5 text-violet-500" />, claimAmount: 10, claimInterval: 12, available: true, category: 'testnet', description: 'Polygon testnet', chain: 'polygon-mumbai' },
-  { id: 'avax-test', symbol: 'tAVAX', name: 'Avalanche (Fuji)', icon: <TrendingUp className="h-5 w-5 text-red-500" />, claimAmount: 2, claimInterval: 24, available: true, category: 'testnet', description: 'Avalanche testnet', chain: 'avalanche-fuji' },
-  { id: 'uni-test', symbol: 'tUNI', name: 'Uniswap (Test)', icon: <RefreshCw className="h-5 w-5 text-pink-500" />, claimAmount: 10, claimInterval: 24, available: true, category: 'defi', description: 'Test UNI', chain: 'ethereum' },
-  { id: 'aave-test', symbol: 'tAAVE', name: 'Aave (Test)', icon: <Shield className="h-5 w-5 text-sky-400" />, claimAmount: 2, claimInterval: 24, available: true, category: 'defi', description: 'Test AAVE', chain: 'ethereum' },
-  { id: 'link-test', symbol: 'tLINK', name: 'Chainlink (Test)', icon: <Zap className="h-5 w-5 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'defi', description: 'Test LINK', chain: 'ethereum' },
-  // DeFi expanded
-  { id: 'sushi-test', symbol: 'tSUSHI', name: 'SushiSwap (Test)', icon: <RefreshCw className="h-5 w-5 text-pink-400" />, claimAmount: 20, claimInterval: 24, available: true, category: 'defi', description: 'Test SUSHI', chain: 'ethereum' },
-  { id: 'comp-test', symbol: 'tCOMP', name: 'Compound (Test)', icon: <TrendingUp className="h-5 w-5 text-green-400" />, claimAmount: 1, claimInterval: 24, available: true, category: 'defi', description: 'Test COMP', chain: 'ethereum' },
-  { id: 'mkr-test', symbol: 'tMKR', name: 'Maker (Test)', icon: <Hexagon className="h-5 w-5 text-teal-500" />, claimAmount: 0.1, claimInterval: 48, available: true, category: 'defi', description: 'Test MKR', chain: 'ethereum' },
-  { id: 'crv-test', symbol: 'tCRV', name: 'Curve (Test)', icon: <TrendingUp className="h-5 w-5 text-yellow-400" />, claimAmount: 50, claimInterval: 24, available: true, category: 'defi', description: 'Test CRV', chain: 'ethereum' },
-  // Lightning tokens
-  { id: 'sats-test', symbol: 'tSATS', name: 'Satoshis (Testnet)', icon: <Bolt className="h-5 w-5 text-amber-400" />, claimAmount: 100000, claimInterval: 6, available: true, category: 'lightning', description: 'Testnet Lightning sats', chain: 'lightning-testnet', bonus: '⚡ Instant' },
-  { id: 'lnbtc-test', symbol: 'tLNBTC', name: 'Lightning BTC (Test)', icon: <Bolt className="h-5 w-5 text-orange-400" />, claimAmount: 0.001, claimInterval: 12, available: true, category: 'lightning', description: 'Lightning Network BTC', chain: 'lightning-testnet' },
-  // L2 tokens
-  { id: 'arb-test', symbol: 'tARB', name: 'Arbitrum (Test)', icon: <Layers className="h-5 w-5 text-blue-500" />, claimAmount: 25, claimInterval: 24, available: true, category: 'l2', description: 'Arbitrum testnet', chain: 'arbitrum-sepolia' },
-  { id: 'op-test', symbol: 'tOP', name: 'Optimism (Test)', icon: <Layers className="h-5 w-5 text-red-400" />, claimAmount: 20, claimInterval: 24, available: true, category: 'l2', description: 'Optimism testnet', chain: 'optimism-sepolia' },
-  { id: 'base-test', symbol: 'tBASE', name: 'Base (Test)', icon: <Layers className="h-5 w-5 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'l2', description: 'Base testnet ETH', chain: 'base-sepolia' },
-  // Privacy tokens
-  { id: 'xmr-test', symbol: 'tXMR', name: 'Monero (Test)', icon: <Lock className="h-5 w-5 text-orange-500" />, claimAmount: 1, claimInterval: 48, available: true, category: 'privacy', description: 'Testnet Monero', chain: 'monero-stagenet' },
-  { id: 'zec-test', symbol: 'tZEC', name: 'Zcash (Test)', icon: <Lock className="h-5 w-5 text-yellow-500" />, claimAmount: 5, claimInterval: 48, available: true, category: 'privacy', description: 'Testnet Zcash', chain: 'zcash-testnet' },
+  { id: 'matic-test', symbol: 'tMATIC', name: 'Polygon (Amoy)', icon: <Shield className="h-5 w-5 text-violet-500" />, claimAmount: 10, claimInterval: 12, available: true, category: 'testnet', description: 'Polygon Amoy testnet', chain: 'polygon-amoy' },
+  { id: 'avax-test', symbol: 'tAVAX', name: 'Avalanche (Fuji)', icon: <TrendingUp className="h-5 w-5 text-red-500" />, claimAmount: 2, claimInterval: 24, available: true, category: 'testnet', description: 'Avalanche Fuji testnet', chain: 'avalanche-fuji' },
+  { id: 'link-test', symbol: 'tLINK', name: 'Chainlink (Testnet)', icon: <Zap className="h-5 w-5 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'testnet', description: 'Chainlink faucet (multi-chain)', chain: 'chainlink-testnet' },
+
+  // L2 Testnets
+  { id: 'arb-test', symbol: 'tARB', name: 'Arbitrum Sepolia', icon: <Layers className="h-5 w-5 text-blue-500" />, claimAmount: 25, claimInterval: 24, available: true, category: 'testnet-l2', description: 'Arbitrum L2 testnet', chain: 'arbitrum-sepolia' },
+  { id: 'op-test', symbol: 'tOP', name: 'Optimism Sepolia', icon: <Layers className="h-5 w-5 text-red-400" />, claimAmount: 20, claimInterval: 24, available: true, category: 'testnet-l2', description: 'Optimism L2 testnet', chain: 'optimism-sepolia' },
+  { id: 'base-test', symbol: 'tBASE', name: 'Base Sepolia', icon: <Layers className="h-5 w-5 text-blue-400" />, claimAmount: 15, claimInterval: 24, available: true, category: 'testnet-l2', description: 'Base L2 testnet', chain: 'base-sepolia' },
+
+  // DeFi test tokens
+  { id: 'uni-test', symbol: 'tUNI', name: 'Uniswap (Test)', icon: <RefreshCw className="h-5 w-5 text-pink-500" />, claimAmount: 10, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Test UNI', chain: 'ethereum-sepolia' },
+  { id: 'aave-test', symbol: 'tAAVE', name: 'Aave (Test)', icon: <Shield className="h-5 w-5 text-sky-400" />, claimAmount: 2, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Test AAVE', chain: 'ethereum-sepolia' },
+  { id: 'sushi-test', symbol: 'tSUSHI', name: 'SushiSwap (Test)', icon: <RefreshCw className="h-5 w-5 text-pink-400" />, claimAmount: 20, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Test SUSHI', chain: 'ethereum-sepolia' },
+  { id: 'comp-test', symbol: 'tCOMP', name: 'Compound (Test)', icon: <TrendingUp className="h-5 w-5 text-green-400" />, claimAmount: 1, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Test COMP', chain: 'ethereum-sepolia' },
+  { id: 'mkr-test', symbol: 'tMKR', name: 'Maker (Test)', icon: <Hexagon className="h-5 w-5 text-teal-500" />, claimAmount: 0.1, claimInterval: 48, available: true, category: 'testnet-defi', description: 'Test MKR', chain: 'ethereum-sepolia' },
+  { id: 'crv-test', symbol: 'tCRV', name: 'Curve (Test)', icon: <TrendingUp className="h-5 w-5 text-yellow-400" />, claimAmount: 50, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Test CRV', chain: 'ethereum-sepolia' },
+  { id: 'usdc-test', symbol: 'tUSDC', name: 'USDC (Test)', icon: <CircleDollarSign className="h-5 w-5 text-blue-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Testnet USDC', chain: 'ethereum-sepolia' },
+  { id: 'usdt-test', symbol: 'tUSDT', name: 'USDT (Test)', icon: <CircleDollarSign className="h-5 w-5 text-green-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Testnet USDT', chain: 'ethereum-sepolia' },
+  { id: 'dai-test', symbol: 'tDAI', name: 'DAI (Test)', icon: <CircleDollarSign className="h-5 w-5 text-amber-500" />, claimAmount: 100, claimInterval: 24, available: true, category: 'testnet-defi', description: 'Testnet DAI', chain: 'ethereum-sepolia' },
+
+  // Privacy testnets
+  { id: 'xmr-test', symbol: 'tXMR', name: 'Monero (Stagenet)', icon: <Lock className="h-5 w-5 text-orange-500" />, claimAmount: 1, claimInterval: 48, available: true, category: 'testnet-privacy', description: 'Monero stagenet', chain: 'monero-stagenet' },
+  { id: 'zec-test', symbol: 'tZEC', name: 'Zcash (Testnet)', icon: <Lock className="h-5 w-5 text-yellow-500" />, claimAmount: 5, claimInterval: 48, available: true, category: 'testnet-privacy', description: 'Zcash testnet', chain: 'zcash-testnet' },
+
+  // Lightning testnets
+  { id: 'sats-test', symbol: 'tSATS', name: 'Lightning Sats (Test)', icon: <Bolt className="h-5 w-5 text-amber-400" />, claimAmount: 100000, claimInterval: 6, available: true, category: 'testnet', description: 'Lightning testnet sats', chain: 'lightning-testnet', bonus: '⚡ Instant' },
+  { id: 'lnbtc-test', symbol: 'tLNBTC', name: 'Lightning BTC (Test)', icon: <Bolt className="h-5 w-5 text-orange-400" />, claimAmount: 0.001, claimInterval: 12, available: true, category: 'testnet', description: 'Lightning testnet BTC', chain: 'lightning-testnet' },
 ];
 
 const CryptoFaucet = () => {
@@ -211,9 +239,9 @@ const CryptoFaucet = () => {
     // Always compound — if engine doesn't exist yet, skip silently
     if (!compoundEngine) return;
     
-    // CRITICAL: Testnet tokens (t-prefixed) have $0 value — never deploy them
+    // CRITICAL: Testnet tokens have $0 value — never deploy them
     if (tokenSymbol.startsWith('t') && tokenSymbol.length > 1 && tokenSymbol[1] === tokenSymbol[1].toUpperCase()) {
-      return; // Skip testnet tokens entirely
+      return;
     }
     
     // Convert token amount to USD value using configured live price sources only
