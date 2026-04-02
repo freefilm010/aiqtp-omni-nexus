@@ -1379,6 +1379,78 @@ export type Database = {
         }
         Relationships: []
       }
+      charter_entities: {
+        Row: {
+          ai_president_name: string | null
+          ai_president_status: string
+          annual_revenue_cap: number
+          bank_account_status: string
+          compliance_status: string
+          created_at: string
+          ein: string | null
+          entity_name: string
+          entity_type: string
+          filing_status: string
+          formation_date: string | null
+          fundraising_target: number
+          funds_raised: number
+          id: string
+          linked_user_id: string | null
+          notes: string | null
+          priority_order: number
+          social_media_status: string
+          state: string
+          state_name: string
+          updated_at: string
+        }
+        Insert: {
+          ai_president_name?: string | null
+          ai_president_status?: string
+          annual_revenue_cap?: number
+          bank_account_status?: string
+          compliance_status?: string
+          created_at?: string
+          ein?: string | null
+          entity_name: string
+          entity_type?: string
+          filing_status?: string
+          formation_date?: string | null
+          fundraising_target?: number
+          funds_raised?: number
+          id?: string
+          linked_user_id?: string | null
+          notes?: string | null
+          priority_order?: number
+          social_media_status?: string
+          state: string
+          state_name: string
+          updated_at?: string
+        }
+        Update: {
+          ai_president_name?: string | null
+          ai_president_status?: string
+          annual_revenue_cap?: number
+          bank_account_status?: string
+          compliance_status?: string
+          created_at?: string
+          ein?: string | null
+          entity_name?: string
+          entity_type?: string
+          filing_status?: string
+          formation_date?: string | null
+          fundraising_target?: number
+          funds_raised?: number
+          id?: string
+          linked_user_id?: string | null
+          notes?: string | null
+          priority_order?: number
+          social_media_status?: string
+          state?: string
+          state_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           agent_type: string
