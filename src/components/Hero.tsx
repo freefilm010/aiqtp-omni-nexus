@@ -260,6 +260,7 @@ const TerminalGridBackground = () => (
 const Hero = () => {
   const isMobile = useIsMobile();
   const [tickerReady, setTickerReady] = useState(false);
+  const [quickStartOpen, setQuickStartOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setTickerReady(true), 2000);
