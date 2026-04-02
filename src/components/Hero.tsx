@@ -390,6 +390,10 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      <Suspense fallback={null}>
+        <QuickStartStrategy open={quickStartOpen} onOpenChange={setQuickStartOpen} />
+      </Suspense>
     </section>
   );
 };
