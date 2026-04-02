@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import BacktestHistoricalInsights from "./BacktestHistoricalInsights";
+import HistoricalEventsChart from "./HistoricalEventsChart";
+import { TradeCheckpointSystem } from "@/lib/infra/tradeCheckpoint";
 
 interface StrategyRow {
   id: string;
