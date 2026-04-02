@@ -261,6 +261,21 @@ const StrategyBacktest = () => {
                       />
                     </div>
                   )}
+
+                  {/* Historical Insights Panel */}
+                  {(st || pct > 0) && (
+                    <BacktestHistoricalInsights
+                      strategyId={s.id}
+                      strategyName={s.name}
+                      trainingStats={st ? {
+                        avgProfitability: st.avgProfitability,
+                        avgWinRate: st.avgWinRate,
+                        avgDrawdown: st.avgDrawdown,
+                        avgConsistency: st.avgConsistency,
+                        passRate: st.passRate,
+                      } : null}
+                    />
+                  )}
                 </CardContent>
               </Card>
             );
