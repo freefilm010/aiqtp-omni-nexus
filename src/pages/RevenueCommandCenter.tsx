@@ -391,12 +391,12 @@ const RevenueCommandCenter = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <Label>Reinvestment Rate</Label>
-                    <span className="text-sm font-medium text-green-500">{reinvestPercent[0]}%</span>
+                    <span className="text-sm font-bold text-green-500">100% — Locked</span>
                   </div>
-                  <Slider value={reinvestPercent} onValueChange={setReinvestPercent} max={100} min={50} step={5} />
                   <p className="text-xs text-muted-foreground">
-                    {reinvestPercent[0]}% reinvested into top strategies{reinvestPercent[0] < 100 ? ` • ${100 - reinvestPercent[0]}% to treasury` : ""}
+                    100% reinvested into top strategies — full compound mode
                   </p>
+                </div>
                 </div>
 
                 <div className="space-y-3">

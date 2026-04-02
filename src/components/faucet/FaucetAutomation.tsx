@@ -104,18 +104,10 @@ const FaucetAutomation = ({
               animate={{ opacity: 1, height: "auto" }}
               className="mt-3 space-y-2"
             >
-              <div className="flex gap-1">
-                {[90, 95, 100].map(pct => (
-                  <Button
-                    key={pct}
-                    size="sm"
-                    variant={reinvestPercent === pct ? "default" : "ghost"}
-                    className="h-7 px-2 text-[10px] flex-1"
-                    onClick={() => setReinvestPercent(pct)}
-                  >
-                    {pct}%
-                  </Button>
-                ))}
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5">
+                  <Zap className="h-3 w-3 mr-1" />100% Reinvestment — Locked
+                </Badge>
               </div>
               <div className="grid grid-cols-3 gap-1.5 text-center">
                 {[

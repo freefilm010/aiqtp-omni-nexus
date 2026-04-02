@@ -433,17 +433,10 @@ const RevenueAutomation = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <Label>Reinvestment Percentage</Label>
-                      <span className="text-sm font-medium text-green-500">{reinvestPercent[0]}%</span>
+                      <span className="text-sm font-bold text-green-500">100% — Locked</span>
                     </div>
-                    <Slider
-                      value={reinvestPercent}
-                      onValueChange={setReinvestPercent}
-                      max={100}
-                      min={50}
-                      step={5}
-                    />
                     <p className="text-xs text-muted-foreground">
-                      {reinvestPercent[0]}% reinvested{reinvestPercent[0] < 100 ? ` • ${100 - reinvestPercent[0]}% to admin wallet` : ""}
+                      100% reinvested — full compound mode, no holdback
                     </p>
                   </div>
                   
