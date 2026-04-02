@@ -73,11 +73,11 @@ async function getTokenInfo(tokenAddress: string) {
 async function getTrendingTokens() {
   // Get trending from DEXScreener
   const response = await fetch(`${DEXSCREENER_API}/dex/search/?q=solana`);
-  const data = await response.json();
-  
-  if (!response.ok) {
-    throw new Error("Failed to fetch trending tokens");
+  const text = await response.text();
+  if (!response.ok || text.trim().startsWith('<')) {
+    throw new Error("Failed to fetch trending tokens (non-JSON response)");
   }
+  const data = JSON.parse(text);
   
   // Filter for Solana tokens and sort by volume
   const solanaPairs = (data.pairs || [])
