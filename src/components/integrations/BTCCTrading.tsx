@@ -16,300 +16,301 @@ import {
   Activity, 
   Loader2,
   DollarSign,
-  Percent,
-  BarChart3
+  BarChart3,
+  XCircle,
+  Zap
 } from 'lucide-react';
 
-interface Position {
-  symbol: string;
-  side: string;
-  size: number;
-  entryPrice: number;
-  markPrice: number;
-  unrealizedPnl: number;
-  leverage: number;
-  liquidationPrice: number;
+interface AccountBalance {
+  currency: string;
+  balance: number;
+  available: number;
+  frozen: number;
 }
 
-interface Balance {
-  asset: string;
-  free: number;
-  locked: number;
-  total: number;
+interface OpenOrder {
+  orderId: string;
+  symbol: string;
+  side: string;
+  price: number;
+  quantity: number;
+  filledQty: number;
+  status: string;
 }
+
+const SYMBOLS = [
+  { value: 'BTC_USD', label: 'BTC/USD' },
+  { value: 'ETH_USD', label: 'ETH/USD' },
+  { value: 'XRP_USD', label: 'XRP/USD' },
+  { value: 'SOL_USD', label: 'SOL/USD' },
+];
 
 const BTCCTrading = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('spot');
   const [isLoading, setIsLoading] = useState(false);
-  const [balances, setBalances] = useState<Balance[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [ticker, setTicker] = useState<any>(null);
-  
-  // Order form
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'error'>('disconnected');
+  const [accountData, setAccountData] = useState<any>(null);
+  const [openOrders, setOpenOrders] = useState<any[]>([]);
+  const [contracts, setContracts] = useState<any>(null);
+  const [recentTrades, setRecentTrades] = useState<any[]>([]);
+
   const [orderForm, setOrderForm] = useState({
-    symbol: 'BTCUSDT',
-    side: 'buy' as 'buy' | 'sell',
-    orderType: 'market' as 'market' | 'limit',
-    amount: '',
+    symbol: 'XRP_USD',
+    side: 'BUY' as 'BUY' | 'SELL',
+    order_type: 'MARKET' as 'MARKET' | 'LIMIT',
+    quantity: '',
     price: '',
-    leverage: '10',
   });
 
-  useEffect(() => {
-    fetchTicker();
-  }, [orderForm.symbol, activeTab]);
-
-  const fetchTicker = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('btcc-trading', {
-        body: {
-          action: 'fetch_ticker',
-          market: activeTab as 'spot' | 'futures',
-          symbol: orderForm.symbol,
-        },
-      });
-      
-      if (error) throw error;
-      setTicker(data?.data);
-    } catch (error) {
-      console.error('Failed to fetch ticker:', error);
-    }
+  const callBTCC = async (action: string, extra: Record<string, unknown> = {}) => {
+    const { data, error } = await supabase.functions.invoke('btcc-trading', {
+      body: { action, ...extra },
+    });
+    if (error) throw new Error(error.message || 'BTCC request failed');
+    if (data && !data.success) throw new Error(data.error || 'BTCC returned error');
+    return data?.data;
   };
 
-  const fetchBalance = async () => {
+  // Connect & login
+  const connectExchange = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('btcc-trading', {
-        body: { action: 'fetch_balance', market: 'spot' },
-      });
-      
-      if (error) throw error;
-      setBalances(data?.data?.balances || []);
+      const loginResult = await callBTCC('login');
+      console.log('BTCC Login:', loginResult);
+      setConnectionStatus('connected');
+      toast({ title: 'BTCC Connected', description: 'Authenticated with BTCC exchange' });
+
+      // Fetch account + contracts in parallel
+      const [account, contractsData] = await Promise.all([
+        callBTCC('get_account'),
+        callBTCC('get_contracts'),
+      ]);
+      setAccountData(account);
+      setContracts(contractsData);
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to fetch balance',
-        variant: 'destructive',
-      });
+      setConnectionStatus('error');
+      toast({ title: 'Connection Failed', description: error.message, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchPositions = async () => {
+  const refreshAccount = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('btcc-trading', {
-        body: { action: 'fetch_positions', market: 'futures' },
-      });
-      
-      if (error) throw error;
-      setPositions(data?.data || []);
+      const account = await callBTCC('get_account');
+      setAccountData(account);
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to fetch positions',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchOpenOrders = async () => {
+    setIsLoading(true);
+    try {
+      const orders = await callBTCC('get_open_orders', { symbol: orderForm.symbol });
+      setOpenOrders(orders?.data || []);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTrades = async () => {
+    try {
+      const trades = await callBTCC('get_trades', { symbol: orderForm.symbol, count: 20 });
+      setRecentTrades(trades?.data || []);
+    } catch (error: any) {
+      console.error('Failed to fetch trades:', error);
     }
   };
 
   const submitOrder = async () => {
-    if (!orderForm.amount || parseFloat(orderForm.amount) <= 0) {
-      toast({ title: 'Error', description: 'Please enter a valid amount', variant: 'destructive' });
+    if (!orderForm.quantity || parseFloat(orderForm.quantity) <= 0) {
+      toast({ title: 'Error', description: 'Enter a valid quantity', variant: 'destructive' });
       return;
     }
-    
+
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('btcc-trading', {
-        body: {
-          action: 'create_order',
-          market: activeTab as 'spot' | 'futures',
-          symbol: orderForm.symbol,
-          side: orderForm.side,
-          orderType: orderForm.orderType,
-          amount: parseFloat(orderForm.amount),
-          price: orderForm.orderType === 'limit' ? parseFloat(orderForm.price) : undefined,
-          leverage: activeTab === 'futures' ? parseInt(orderForm.leverage) : undefined,
-        },
+      const result = await callBTCC('place_order', {
+        symbol: orderForm.symbol,
+        side: orderForm.side,
+        order_type: orderForm.order_type,
+        quantity: parseFloat(orderForm.quantity),
+        price: orderForm.order_type === 'LIMIT' ? parseFloat(orderForm.price) : 0,
       });
-      
-      if (error) throw error;
-      
+
       toast({
-        title: 'Order Submitted',
-        description: `${orderForm.side.toUpperCase()} ${orderForm.amount} ${orderForm.symbol} on BTCC ${activeTab}`,
+        title: 'Order Placed',
+        description: `${orderForm.side} ${orderForm.quantity} ${orderForm.symbol} — ${orderForm.order_type}`,
       });
-      
-      setOrderForm({ ...orderForm, amount: '', price: '' });
-      if (activeTab === 'spot') fetchBalance();
-      else fetchPositions();
+
+      setOrderForm({ ...orderForm, quantity: '', price: '' });
+      refreshAccount();
+      fetchOpenOrders();
     } catch (error: any) {
-      toast({
-        title: 'Order Failed',
-        description: error.message || 'Failed to submit order',
-        variant: 'destructive',
-      });
+      toast({ title: 'Order Failed', description: error.message, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleCancelOrder = async (symbol: string, orderId: string) => {
+    try {
+      await callBTCC('cancel_order', { symbol, order_id: orderId });
+      toast({ title: 'Order Cancelled' });
+      fetchOpenOrders();
+    } catch (error: any) {
+      toast({ title: 'Cancel Failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleCancelAll = async () => {
+    try {
+      await callBTCC('cancel_all');
+      toast({ title: 'All Orders Cancelled' });
+      setOpenOrders([]);
+      refreshAccount();
+    } catch (error: any) {
+      toast({ title: 'Cancel All Failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  useEffect(() => {
+    if (connectionStatus === 'connected') {
+      fetchTrades();
+    }
+  }, [orderForm.symbol, connectionStatus]);
 
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/10">
-              <BarChart3 className="h-5 w-5 text-blue-400" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div>
               <CardTitle className="text-xl">BTCC Exchange</CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Spot & Futures Pro Trading
+                Live Futures Trading — WebSocket API
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
-              <Activity className="h-3 w-3 mr-1" />
-              Connected
-            </Badge>
+            {connectionStatus === 'connected' ? (
+              <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
+                <Activity className="h-3 w-3 mr-1" />
+                Live
+              </Badge>
+            ) : connectionStatus === 'error' ? (
+              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
+                Error
+              </Badge>
+            ) : (
+              <Button size="sm" onClick={connectExchange} disabled={isLoading}>
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4 mr-1" />}
+                Connect
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="spot" className="flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
-              Spot Trading
-            </TabsTrigger>
-            <TabsTrigger value="futures" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Futures Pro
-            </TabsTrigger>
-          </TabsList>
+      <CardContent className="space-y-4">
+        {connectionStatus !== 'connected' && (
+          <div className="text-center py-8 text-muted-foreground">
+            <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="font-medium">Click Connect to authenticate with BTCC</p>
+            <p className="text-xs mt-1">Uses your stored API keys via secure WebSocket</p>
+          </div>
+        )}
 
-          {/* Ticker Display */}
-          {ticker && (
-            <div className="mb-4 p-3 rounded-lg bg-muted/50 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Last Price</p>
-                  <p className="font-bold text-lg">${ticker.last?.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">24h Change</p>
-                  <p className={`font-medium ${ticker.changePercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {ticker.changePercent >= 0 ? '+' : ''}{ticker.changePercent?.toFixed(2)}%
-                  </p>
-                </div>
-                {activeTab === 'futures' && ticker.fundingRate && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Funding Rate</p>
-                    <p className="font-medium">{(ticker.fundingRate * 100).toFixed(4)}%</p>
-                  </div>
-                )}
+        {connectionStatus === 'connected' && (
+          <>
+            {/* Account Info */}
+            <div className="p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium flex items-center gap-2">
+                  <Wallet className="h-4 w-4" /> Account
+                </h3>
+                <Button variant="ghost" size="sm" onClick={refreshAccount} disabled={isLoading}>
+                  <Activity className="h-4 w-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={fetchTicker}>
-                <Activity className="h-4 w-4" />
-              </Button>
+              {accountData ? (
+                <pre className="text-xs overflow-auto max-h-32 bg-background/50 p-2 rounded">
+                  {JSON.stringify(accountData, null, 2)}
+                </pre>
+              ) : (
+                <p className="text-xs text-muted-foreground">Loading account data...</p>
+              )}
             </div>
-          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Order Form */}
-            <div className="space-y-4 p-4 rounded-lg border border-border/50">
+            <div className="space-y-3 p-4 rounded-lg border border-border/50">
               <h3 className="font-medium">Place Order</h3>
-              
+
               <div className="space-y-2">
                 <Label>Symbol</Label>
                 <Select
                   value={orderForm.symbol}
                   onValueChange={(v) => setOrderForm({ ...orderForm, symbol: v })}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="BTCUSDT">BTC/USDT</SelectItem>
-                    <SelectItem value="ETHUSDT">ETH/USDT</SelectItem>
-                    <SelectItem value="SOLUSDT">SOL/USDT</SelectItem>
-                    <SelectItem value="XRPUSDT">XRP/USDT</SelectItem>
+                    {SYMBOLS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <Button
-                  variant={orderForm.side === 'buy' ? 'default' : 'outline'}
-                  className={orderForm.side === 'buy' ? 'bg-green-600 hover:bg-green-700' : ''}
-                  onClick={() => setOrderForm({ ...orderForm, side: 'buy' })}
+                  variant={orderForm.side === 'BUY' ? 'default' : 'outline'}
+                  className={orderForm.side === 'BUY' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  onClick={() => setOrderForm({ ...orderForm, side: 'BUY' })}
                 >
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  Buy
+                  <TrendingUp className="h-4 w-4 mr-1" /> Buy Long
                 </Button>
                 <Button
-                  variant={orderForm.side === 'sell' ? 'default' : 'outline'}
-                  className={orderForm.side === 'sell' ? 'bg-red-600 hover:bg-red-700' : ''}
-                  onClick={() => setOrderForm({ ...orderForm, side: 'sell' })}
+                  variant={orderForm.side === 'SELL' ? 'default' : 'outline'}
+                  className={orderForm.side === 'SELL' ? 'bg-red-600 hover:bg-red-700' : ''}
+                  onClick={() => setOrderForm({ ...orderForm, side: 'SELL' })}
                 >
-                  <TrendingDown className="h-4 w-4 mr-1" />
-                  Sell
+                  <TrendingDown className="h-4 w-4 mr-1" /> Sell Short
                 </Button>
               </div>
 
               <div className="space-y-2">
                 <Label>Order Type</Label>
                 <Select
-                  value={orderForm.orderType}
-                  onValueChange={(v) => setOrderForm({ ...orderForm, orderType: v as 'market' | 'limit' })}
+                  value={orderForm.order_type}
+                  onValueChange={(v) => setOrderForm({ ...orderForm, order_type: v as 'MARKET' | 'LIMIT' })}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="market">Market</SelectItem>
-                    <SelectItem value="limit">Limit</SelectItem>
+                    <SelectItem value="MARKET">Market</SelectItem>
+                    <SelectItem value="LIMIT">Limit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {activeTab === 'futures' && (
-                <div className="space-y-2">
-                  <Label>Leverage</Label>
-                  <Select
-                    value={orderForm.leverage}
-                    onValueChange={(v) => setOrderForm({ ...orderForm, leverage: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 5, 10, 20, 50, 100, 125, 250, 500].map((lev) => (
-                        <SelectItem key={lev} value={lev.toString()}>{lev}x</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
               <div className="space-y-2">
-                <Label>Amount</Label>
+                <Label>Quantity</Label>
                 <Input
                   type="number"
                   placeholder="0.00"
-                  value={orderForm.amount}
-                  onChange={(e) => setOrderForm({ ...orderForm, amount: e.target.value })}
+                  value={orderForm.quantity}
+                  onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value })}
                 />
               </div>
 
-              {orderForm.orderType === 'limit' && (
+              {orderForm.order_type === 'LIMIT' && (
                 <div className="space-y-2">
                   <Label>Price</Label>
                   <Input
@@ -324,107 +325,83 @@ const BTCCTrading = () => {
               <Button
                 onClick={submitOrder}
                 disabled={isLoading}
-                className={`w-full ${orderForm.side === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                className={`w-full ${orderForm.side === 'BUY' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
                     <ArrowUpDown className="h-4 w-4 mr-2" />
-                    {orderForm.side === 'buy' ? 'Buy' : 'Sell'} {orderForm.symbol}
+                    {orderForm.side === 'BUY' ? 'Buy Long' : 'Sell Short'} {orderForm.symbol.replace('_', '/')}
                   </>
                 )}
               </Button>
             </div>
 
-            {/* Balance/Positions Display */}
-            <div className="space-y-4 p-4 rounded-lg border border-border/50">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">
-                  {activeTab === 'spot' ? 'Wallet Balances' : 'Open Positions'}
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={activeTab === 'spot' ? fetchBalance : fetchPositions}
-                  disabled={isLoading}
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
-                </Button>
-              </div>
-
-              {activeTab === 'spot' ? (
-                <div className="space-y-2">
-                  {balances.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Click refresh to load balances
-                    </p>
-                  ) : (
-                    balances.map((balance) => (
-                      <div
-                        key={balance.asset}
-                        className="flex items-center justify-between p-2 rounded bg-muted/30"
-                      >
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{balance.asset}</span>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{balance.free.toFixed(8)}</p>
-                          {balance.locked > 0 && (
-                            <p className="text-xs text-muted-foreground">Locked: {balance.locked.toFixed(8)}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))
+            {/* Open Orders */}
+            <div className="p-4 rounded-lg border border-border/50">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium">Open Orders</h3>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={fetchOpenOrders} disabled={isLoading}>
+                    <Activity className="h-4 w-4" />
+                  </Button>
+                  {openOrders.length > 0 && (
+                    <Button variant="destructive" size="sm" onClick={handleCancelAll}>
+                      <XCircle className="h-4 w-4 mr-1" /> Cancel All
+                    </Button>
                   )}
                 </div>
+              </div>
+              {openOrders.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-3">
+                  No open orders — click refresh to check
+                </p>
               ) : (
                 <div className="space-y-2">
-                  {positions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No open positions
-                    </p>
-                  ) : (
-                    positions.map((position, i) => (
-                      <div
-                        key={i}
-                        className="p-3 rounded bg-muted/30 space-y-2"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={position.side === 'long' ? 'default' : 'destructive'}>
-                              {position.side.toUpperCase()}
-                            </Badge>
-                            <span className="font-medium">{position.symbol}</span>
-                            <span className="text-xs text-muted-foreground">{position.leverage}x</span>
-                          </div>
-                          <p className={`font-bold ${position.unrealizedPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {position.unrealizedPnl >= 0 ? '+' : ''}${position.unrealizedPnl.toFixed(2)}
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-xs">
-                          <div>
-                            <p className="text-muted-foreground">Size</p>
-                            <p>{position.size}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Entry</p>
-                            <p>${position.entryPrice.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Liq. Price</p>
-                            <p className="text-red-400">${position.liquidationPrice.toLocaleString()}</p>
-                          </div>
-                        </div>
+                  {openOrders.map((order: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded bg-muted/30 text-sm">
+                      <div>
+                        <Badge variant={order.Side === 'BUY' ? 'default' : 'destructive'} className="mr-2">
+                          {order.Side}
+                        </Badge>
+                        <span>{order.Symbol}</span>
+                        <span className="ml-2 text-muted-foreground">
+                          {order.Quantity} @ ${order.Price}
+                        </span>
                       </div>
-                    ))
-                  )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCancelOrder(order.Symbol, order.OID)}
+                      >
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          </div>
-        </Tabs>
+
+            {/* Recent Market Trades */}
+            {recentTrades.length > 0 && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <h3 className="font-medium mb-2 text-sm">Recent Trades — {orderForm.symbol.replace('_', '/')}</h3>
+                <div className="space-y-1 max-h-40 overflow-auto">
+                  {recentTrades.slice(0, 10).map((t: any, i: number) => (
+                    <div key={i} className="flex justify-between text-xs">
+                      <span className={t.side === 'BUY' ? 'text-green-400' : 'text-red-400'}>
+                        {t.side || 'TRADE'}
+                      </span>
+                      <span>${t.Price || t.price}</span>
+                      <span className="text-muted-foreground">{t.Quantity || t.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   );
