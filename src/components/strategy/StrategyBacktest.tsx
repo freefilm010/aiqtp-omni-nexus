@@ -151,7 +151,7 @@ const StrategyBacktest = () => {
             <div>
               <h3 className="font-semibold text-foreground">Auto-Backtest Engine</h3>
               <p className="text-xs text-muted-foreground">
-                10,000 training cycles per strategy • 500/batch • Auto-graduate at ≥80% pass rate
+                10,000 cycles • 500/batch • Graduate at ≥77% profitability & consistency • Rent-to-earn
               </p>
             </div>
           </div>
