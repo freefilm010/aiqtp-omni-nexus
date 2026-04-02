@@ -149,15 +149,30 @@ const FederalCharterMission = () => {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="checklist" className="space-y-4">
+      <Tabs defaultValue="fundraising" className="space-y-4">
         <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="fundraising" className="text-xs gap-1"><DollarSign className="h-3.5 w-3.5" />Fundraising ($255M)</TabsTrigger>
+          <TabsTrigger value="entities" className="text-xs gap-1"><Building2 className="h-3.5 w-3.5" />Entities (51)</TabsTrigger>
+          <TabsTrigger value="presidents" className="text-xs gap-1"><Bot className="h-3.5 w-3.5" />AI Presidents</TabsTrigger>
           <TabsTrigger value="checklist" className="text-xs gap-1"><Target className="h-3.5 w-3.5" />Checklist ({completedCount}/{totalItems})</TabsTrigger>
           <TabsTrigger value="requirements" className="text-xs gap-1"><Gavel className="h-3.5 w-3.5" />Requirements</TabsTrigger>
           <TabsTrigger value="readiness" className="text-xs gap-1"><Scale className="h-3.5 w-3.5" />Readiness</TabsTrigger>
-          <TabsTrigger value="structure" className="text-xs gap-1"><Building2 className="h-3.5 w-3.5" />Structure</TabsTrigger>
+          <TabsTrigger value="structure" className="text-xs gap-1"><Settings className="h-3.5 w-3.5" />Structure</TabsTrigger>
           <TabsTrigger value="penalties" className="text-xs gap-1"><AlertCircle className="h-3.5 w-3.5" />Penalties</TabsTrigger>
           <TabsTrigger value="resources" className="text-xs gap-1"><BookOpen className="h-3.5 w-3.5" />Resources</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="fundraising">
+          <CharterFundraising />
+        </TabsContent>
+
+        <TabsContent value="entities">
+          <CharterEntityManager />
+        </TabsContent>
+
+        <TabsContent value="presidents">
+          <CharterAIPresidents />
+        </TabsContent>
 
         <TabsContent value="checklist">
           <CharterChecklist checkedItems={checkedItems} toggle={toggle} />
