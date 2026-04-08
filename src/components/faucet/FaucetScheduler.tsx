@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Clock, Bell, Calendar, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import type { FaucetToken } from "./faucetTypes";
 
 interface FaucetSchedulerProps {
@@ -19,8 +20,8 @@ interface Schedule {
   token_id: string;
   interval_hours: number;
   is_active: boolean;
-  next_claim_at: string;
-  total_auto_claims: number;
+  next_claim_at: string | null;
+  total_auto_claims: number | null;
 }
 
 const INTERVAL_OPTIONS = [
@@ -34,43 +35,86 @@ const INTERVAL_OPTIONS = [
 const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notifyOnClaim, setNotifyOnClaim] = useState(true);
+  const [notifyOnClaim, setNotifyOnClaim] = usePersistentState<boolean>(
+    userId ? `faucet:notify-on-claim:${userId}` : null,
+    true
+  );
 
-  useEffect(() => {
+  const loadSchedules = useCallback(async () => {
     if (!userId) return;
-    const load = async () => {
-      const { data } = await supabase
-        .from("faucet_schedules")
-        .select("*")
-        .eq("user_id", userId);
-      setSchedules((data || []) as Schedule[]);
-      setLoading(false);
-    };
-    load();
-  }, [userId]);
 
-  const upsertSchedule = async (tokenId: string, intervalHours: number, isActive: boolean) => {
-    if (!userId) return;
-    const existing = schedules.find(s => s.token_id === tokenId);
-    if (existing) {
-      await supabase.from("faucet_schedules").update({
-        interval_hours: intervalHours,
-        is_active: isActive,
-      }).eq("id", existing.id);
-    } else {
-      await supabase.from("faucet_schedules").insert({
-        user_id: userId,
-        token_id: tokenId,
-        interval_hours: intervalHours,
-        is_active: isActive,
-      });
-    }
-
-    const { data } = await supabase
+    setLoading(true);
+    const { data, error } = await supabase
       .from("faucet_schedules")
       .select("*")
       .eq("user_id", userId);
+
+    if (error) {
+      toast.error("Failed to load schedules");
+      setLoading(false);
+      return;
+    }
+
     setSchedules((data || []) as Schedule[]);
+    setLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    void loadSchedules();
+  }, [userId, loadSchedules]);
+
+  const upsertSchedule = async (tokenId: string, intervalHours: number, isActive: boolean) => {
+    if (!userId) return;
+
+    const existing = schedules.find(s => s.token_id === tokenId);
+    const previousSchedules = schedules;
+
+    const optimisticSchedule: Schedule = existing
+      ? { ...existing, interval_hours: intervalHours, is_active: isActive }
+      : {
+          id: `temp-${tokenId}`,
+          token_id: tokenId,
+          interval_hours: intervalHours,
+          is_active: isActive,
+          next_claim_at: null,
+          total_auto_claims: 0,
+        };
+
+    setSchedules(prev => {
+      if (existing) {
+        return prev.map(schedule =>
+          schedule.token_id === tokenId
+            ? { ...schedule, interval_hours: intervalHours, is_active: isActive }
+            : schedule
+        );
+      }
+
+      return [...prev, optimisticSchedule];
+    });
+
+    const { error } = existing
+      ? await supabase
+          .from("faucet_schedules")
+          .update({
+            interval_hours: intervalHours,
+            is_active: isActive,
+          })
+          .eq("id", existing.id)
+      : await supabase.from("faucet_schedules").insert({
+          user_id: userId,
+          token_id: tokenId,
+          interval_hours: intervalHours,
+          is_active: isActive,
+        });
+
+    if (error) {
+      setSchedules(previousSchedules);
+      toast.error("Failed to save schedule");
+      return;
+    }
+
+    await loadSchedules();
     toast.success(isActive ? "Schedule activated" : "Schedule paused");
   };
 
@@ -86,15 +130,23 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
       }));
 
     if (inserts.length > 0) {
-      await supabase.from("faucet_schedules").insert(inserts);
+      const { error } = await supabase.from("faucet_schedules").insert(inserts);
+      if (error) {
+        toast.error("Failed to create schedules");
+        return;
+      }
     }
 
-    await supabase.from("faucet_schedules")
+    const { error } = await supabase.from("faucet_schedules")
       .update({ is_active: true })
       .eq("user_id", userId);
 
-    const { data } = await supabase.from("faucet_schedules").select("*").eq("user_id", userId);
-    setSchedules((data || []) as Schedule[]);
+    if (error) {
+      toast.error("Failed to enable schedules");
+      return;
+    }
+
+    await loadSchedules();
     toast.success("All schedules activated!");
   };
 
@@ -138,12 +190,12 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{token.symbol}</p>
                   {schedule && (
-                    <p className="text-[9px] text-muted-foreground">{schedule.total_auto_claims} auto-claims</p>
+                    <p className="text-[9px] text-muted-foreground">{schedule.total_auto_claims ?? 0} auto-claims</p>
                   )}
                 </div>
                 <Select
                   value={String(interval)}
-                  onValueChange={v => upsertSchedule(token.id, Number(v), isActive || true)}
+                  onValueChange={v => upsertSchedule(token.id, Number(v), isActive)}
                 >
                   <SelectTrigger className="h-7 w-[90px] text-[10px]">
                     <SelectValue />

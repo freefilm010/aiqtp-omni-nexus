@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import {
   Wallet,
   Building2,
@@ -29,6 +31,11 @@ interface Connection {
   accounts?: string[];
 }
 
+interface StoredConnectionState {
+  connected: boolean;
+  accounts?: string[];
+}
+
 const availableConnections: Connection[] = [
   { id: 'coinbase', name: 'Coinbase', type: 'exchange', icon: '🟡', connected: false },
   { id: 'binance', name: 'Binance', type: 'exchange', icon: '🟡', connected: false },
@@ -45,10 +52,20 @@ const availableConnections: Connection[] = [
 ];
 
 const AccountConnections = () => {
-  const [connections, setConnections] = useState<Connection[]>(availableConnections);
+  const { user } = useAuth();
+  const [storedConnections, setStoredConnections] = usePersistentState<Record<string, StoredConnectionState>>(
+    `account-connections:${user?.id ?? "guest"}`,
+    {}
+  );
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [showAccountSelector, setShowAccountSelector] = useState(false);
+
+  const connections = availableConnections.map((connection) => ({
+    ...connection,
+    connected: storedConnections[connection.id]?.connected ?? false,
+    accounts: storedConnections[connection.id]?.accounts,
+  }));
 
   const mockAccounts = [
     { id: 'acc1', name: '*****cdfc', type: 'Trading Account' },
@@ -57,18 +74,19 @@ const AccountConnections = () => {
 
   const handleConnect = (connectionId: string) => {
     setConnectingId(connectionId);
+    setSelectedAccounts(storedConnections[connectionId]?.accounts ?? []);
     setShowAccountSelector(true);
   };
 
   const confirmConnection = () => {
     if (connectingId && selectedAccounts.length > 0) {
-      setConnections(prev => 
-        prev.map(c => 
-          c.id === connectingId 
-            ? { ...c, connected: true, accounts: selectedAccounts }
-            : c
-        )
-      );
+      setStoredConnections(prev => ({
+        ...prev,
+        [connectingId]: {
+          connected: true,
+          accounts: selectedAccounts,
+        },
+      }));
       toast.success(`Connected to ${connections.find(c => c.id === connectingId)?.name}`);
       setShowAccountSelector(false);
       setConnectingId(null);
@@ -77,14 +95,21 @@ const AccountConnections = () => {
   };
 
   const handleDisconnect = (connectionId: string) => {
-    setConnections(prev =>
-      prev.map(c =>
-        c.id === connectionId
-          ? { ...c, connected: false, accounts: undefined }
-          : c
-      )
-    );
+    setStoredConnections(prev => {
+      const next = { ...prev };
+      delete next[connectionId];
+      return next;
+    });
     toast.success('Account disconnected');
+  };
+
+  const handleAccountSelectorOpenChange = (open: boolean) => {
+    setShowAccountSelector(open);
+
+    if (!open) {
+      setConnectingId(null);
+      setSelectedAccounts([]);
+    }
   };
 
   const connectedCount = connections.filter(c => c.connected).length;
@@ -216,7 +241,7 @@ const AccountConnections = () => {
       </div>
 
       {/* Account Selector Dialog */}
-      <Dialog open={showAccountSelector} onOpenChange={setShowAccountSelector}>
+      <Dialog open={showAccountSelector} onOpenChange={handleAccountSelectorOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex justify-center items-center gap-4 mb-4">

@@ -15,6 +15,7 @@ import FaucetScheduler from "./FaucetScheduler";
 import FaucetOrchestratorDashboard from "./FaucetOrchestratorDashboard";
 import FaucetCompetitionDashboard from "./FaucetCompetitionDashboard";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
+import { usePersistentState } from "@/hooks/usePersistentState";
 
 const FAUCET_TOKENS: FaucetToken[] = [
   // ═══ REAL EARNING TOKENS (have value, count toward portfolio) ═══
@@ -86,10 +87,19 @@ const CryptoFaucet = () => {
   const [lastClaimTimes, setLastClaimTimes] = useState<Record<string, Date>>({});
   const [streakCount, setStreakCount] = useState(0);
   const [totalClaimCount, setTotalClaimCount] = useState(0);
-  const [autoClaim, setAutoClaim] = useState(false);
+  const [autoClaim, setAutoClaim] = usePersistentState<boolean>(
+    userId ? `faucet:auto-claim:${userId}` : null,
+    false
+  );
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
-  const [autoCompound, setAutoCompound] = useState(true);
-  const [reinvestPercent, setReinvestPercent] = useState(100);
+  const [autoCompound, setAutoCompound] = usePersistentState<boolean>(
+    userId ? `faucet:auto-compound:${userId}` : null,
+    true
+  );
+  const [reinvestPercent, setReinvestPercent] = usePersistentState<number>(
+    userId ? `faucet:reinvest-percent:${userId}` : null,
+    100
+  );
   const [compoundEngine, setCompoundEngine] = useState<{
     id: string;
     total_capital: number;
@@ -195,8 +205,6 @@ const CryptoFaucet = () => {
     if (data?.[0]) {
       setCompoundEngine(data[0]);
       setReinvestPercent(Number(data[0].reinvest_percent) || 100);
-      // Always keep compound active — only read UI toggle state, don't override to false
-      if (data[0].status === 'active') setAutoCompound(true);
 
       const { count } = await supabase
         .from("auto_invest_transactions")
@@ -228,7 +236,6 @@ const CryptoFaucet = () => {
 
       if (newEngine) {
         setCompoundEngine(newEngine);
-        setAutoCompound(true);
       }
     }
   }, [userId]);
@@ -236,8 +243,7 @@ const CryptoFaucet = () => {
   useEffect(() => { if (userId) loadCompoundEngine(); }, [userId, loadCompoundEngine]);
 
   const routeToCompound = useCallback(async (tokenSymbol: string, amount: number) => {
-    // Always compound — if engine doesn't exist yet, skip silently
-    if (!compoundEngine) return;
+    if (!autoCompoundRef.current || !compoundEngine) return;
     
     // CRITICAL: Testnet tokens have $0 value — never deploy them
     if (tokenSymbol.startsWith('t') && tokenSymbol.length > 1 && tokenSymbol[1] === tokenSymbol[1].toUpperCase()) {

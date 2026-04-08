@@ -24,7 +24,7 @@ interface ModelSelectorProps {
   disabled?: boolean;
 }
 
-const AI_MODELS: { 
+export const AI_MODELS: { 
   id: AIModel; 
   name: string; 
   provider: string; 
@@ -97,6 +97,8 @@ const AI_MODELS: {
     description: "Fast Claude for quick tasks"
   },
 ];
+
+export const AI_MODEL_COUNT = AI_MODELS.length;
 
 export const ModelSelector = ({ value, onChange, disabled }: ModelSelectorProps) => {
   const selectedModel = AI_MODELS.find(m => m.id === value);
