@@ -412,6 +412,12 @@ const QAQIAgent = () => {
 
           {/* Input */}
           <form onSubmit={handleSubmit} className="p-4 border-t bg-background sticky bottom-0 z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isProcessing} />
+              <span className="text-[10px] text-muted-foreground">
+                {selectedModel.startsWith("claude") ? "Anthropic" : selectedModel.startsWith("openai") ? "OpenAI" : "Google"}
+              </span>
+            </div>
             <div className="flex gap-2">
               <Input
                 ref={inputRef}
