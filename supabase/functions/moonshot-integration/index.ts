@@ -156,19 +156,26 @@ async function getReferralStats(supabase: any) {
 }
 
 async function getLaunchData() {
-  // Get newly launched tokens (last 24h) on Solana
-  const response = await fetch(`${DEXSCREENER_API}/dex/pairs/solana`);
+  // Use DEXScreener search endpoint filtered to Solana (the /dex/pairs/solana endpoint doesn't exist)
+  const response = await fetch(`${DEXSCREENER_API}/dex/search/?q=solana`);
   const text = await response.text();
   if (!response.ok || text.trim().startsWith('<')) {
-    throw new Error("Failed to fetch launch data (non-JSON response)");
+    // Return empty data instead of throwing
+    return { launches: [], stats: { totalLaunches: 0, avgLiquidity: 0, avgVolume: 0 } };
   }
-  const data = JSON.parse(text);
+  
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return { launches: [], stats: { totalLaunches: 0, avgLiquidity: 0, avgVolume: 0 } };
+  }
   
   const now = Date.now();
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   
   const newLaunches = (data.pairs || [])
-    .filter((p: any) => (p.pairCreatedAt || 0) > oneDayAgo)
+    .filter((p: any) => p.chainId === "solana" && (p.pairCreatedAt || 0) > oneDayAgo)
     .sort((a: any, b: any) => (b.pairCreatedAt || 0) - (a.pairCreatedAt || 0))
     .slice(0, 100);
   
