@@ -161,6 +161,7 @@ const QAQIAgent = () => {
       const { data, error } = await supabase.functions.invoke("qaqi-agent", {
         body: {
           action: "chat",
+          model: selectedModel,
           messages: messages
             .filter((m) => m.role !== "system")
             .map((m) => ({ role: m.role, content: m.content }))
