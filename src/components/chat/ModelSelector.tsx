@@ -12,8 +12,11 @@ export type AIModel =
   | "google/gemini-2.5-flash" 
   | "google/gemini-2.5-pro" 
   | "google/gemini-3-flash-preview"
+  | "google/gemini-3.1-pro-preview"
+  | "google/gemini-2.5-flash-lite"
   | "openai/gpt-5" 
   | "openai/gpt-5-mini"
+  | "openai/gpt-5-nano"
   | "openai/gpt-5.2"
   | "claude-sonnet-4-5"
   | "claude-haiku-4";
@@ -32,6 +35,14 @@ export const AI_MODELS: {
   icon: typeof Sparkles;
   description: string;
 }[] = [
+  { 
+    id: "google/gemini-2.5-flash-lite", 
+    name: "Gemini 2.5 Flash Lite", 
+    provider: "Google",
+    badge: "Ultra-Fast",
+    icon: Zap,
+    description: "Fastest, cheapest Gemini for simple tasks"
+  },
   { 
     id: "google/gemini-2.5-flash", 
     name: "Gemini 2.5 Flash", 
@@ -57,6 +68,14 @@ export const AI_MODELS: {
     description: "Next-gen speed & capability"
   },
   { 
+    id: "google/gemini-3.1-pro-preview", 
+    name: "Gemini 3.1 Pro", 
+    provider: "Google",
+    badge: "Cutting Edge",
+    icon: Brain,
+    description: "Latest next-gen reasoning model"
+  },
+  { 
     id: "openai/gpt-5", 
     name: "GPT-5", 
     provider: "OpenAI",
@@ -71,6 +90,14 @@ export const AI_MODELS: {
     badge: "Balanced",
     icon: Cpu,
     description: "Good balance of speed & quality"
+  },
+  { 
+    id: "openai/gpt-5-nano", 
+    name: "GPT-5 Nano", 
+    provider: "OpenAI",
+    badge: "Economy",
+    icon: Cpu,
+    description: "Fast & cheap for high-volume tasks"
   },
   { 
     id: "openai/gpt-5.2", 

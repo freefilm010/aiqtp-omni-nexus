@@ -139,7 +139,7 @@ const QAQIAgent = () => {
   );
   const [armyMode, setArmyMode] = usePersistentState<boolean>(
     user ? `qaqi:army-mode:${user.id}` : null,
-    false
+    true
   );
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -478,7 +478,7 @@ const QAQIAgent = () => {
               )}
               {armyMode && (
                 <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse">
-                  {AI_MODEL_COUNT} Agents • All available models
+                  {AI_MODEL_COUNT} Agents • GPT-5.2 + Gemini 3.1 + Claude
                 </Badge>
               )}
             </div>
