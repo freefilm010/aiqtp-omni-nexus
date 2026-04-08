@@ -13,6 +13,24 @@ const ActionSchema = z.object({
   ln_address: z.string().max(200).optional(),
 });
 
+async function readZbdResponse(resp: Response) {
+  const text = await resp.text();
+  let data: any = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+
+  if (!resp.ok) {
+    const message = data?.message || data?.error || text || `ZBD request failed (${resp.status})`;
+    throw new Error(message);
+  }
+
+  return data;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -43,10 +61,9 @@ Deno.serve(async (req: Request) => {
 
     const zbdApiKey = Deno.env.get("ZBD_API_KEY");
     if (!zbdApiKey) {
-      // Graceful fallback — return simulated data so the UI doesn't break
       return new Response(
-        JSON.stringify({ data: { balance_msats: 0, note: "ZBD integration pending configuration" } }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "ZBD API key not configured" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -70,8 +87,11 @@ Deno.serve(async (req: Request) => {
 
     if (action === "balance") {
       const resp = await fetch(`${zbdBase}/wallet`, { headers: zbdHeaders });
-      const data = await resp.json();
-      result = { balance_msats: data?.data?.balance ?? 0 };
+      const data = await readZbdResponse(resp);
+      result = {
+        connected: true,
+        balance_msats: Number(data?.data?.balance ?? 0),
+      };
     } else if (action === "create_charge") {
       if (!amount_msats) {
         return new Response(
@@ -88,7 +108,7 @@ Deno.serve(async (req: Request) => {
           expiresIn: 3600,
         }),
       });
-      const data = await resp.json();
+      const data = await readZbdResponse(resp);
       if (data?.data?.invoice) {
         const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
         await serviceClient.from("lightning_transactions").insert({
@@ -122,7 +142,7 @@ Deno.serve(async (req: Request) => {
           comment: description || "AIQTP payment",
         }),
       });
-      const data = await resp.json();
+      const data = await readZbdResponse(resp);
       const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       await serviceClient.from("lightning_transactions").insert({
         user_id: user.id,

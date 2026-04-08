@@ -108,16 +108,17 @@ const LightningVault = () => {
         body: { action: 'balance' },
       });
       if (error) throw error;
-      if (data?.data?.balance_msats !== undefined) {
+      if (typeof data?.data?.balance_msats === 'number' && data?.data?.connected === true) {
         setZbdBalance(data.data.balance_msats);
         setZbdConnected(true);
+      } else {
+        throw new Error(data?.error || 'Unable to fetch live ZBD balance');
       }
     } catch (err: any) {
       console.error('ZBD balance error:', err);
+      setZbdBalance(null);
       setZbdConnected(false);
-      if (err?.message?.includes('not configured')) {
-        toast.error('ZBD API key not configured');
-      }
+      toast.error(err?.message || 'Failed to fetch ZBD balance');
     } finally {
       setZbdLoading(false);
     }

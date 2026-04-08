@@ -27,9 +27,11 @@ interface LeaderboardEntry {
 }
 
 const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
-  const totalTokenTypes = Object.keys(balances).length;
   const { getPortfolioValuation } = useAssetValuation();
-  const { items: valuedItems, totalUsd } = getPortfolioValuation(balances);
+  const { items: valuedItems } = getPortfolioValuation(balances);
+  const realValuedItems = valuedItems.filter((item) => item.quantity > 0 && !item.isTestnet);
+  const totalTokenTypes = realValuedItems.length;
+  const totalUsd = realValuedItems.reduce((sum, item) => sum + item.valueUsd, 0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
@@ -98,16 +100,16 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
               <div className="mt-1 space-y-0.5">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-3 w-3 text-primary" />
-                  <span className="text-[10px] text-muted-foreground">Claim history value</span>
+                  <span className="text-[10px] text-muted-foreground">Current claimed value</span>
                   <span className="text-xs font-bold text-primary">{formatUsdValue(totalUsd)}</span>
                 </div>
-                <p className="text-[9px] text-muted-foreground">Historical claim valuation • not a cash balance</p>
+                <p className="text-[9px] text-muted-foreground">Live value of claimed real assets • excludes test assets</p>
               </div>
             )}
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <ScrollArea className="h-[200px]">
-              {valuedItems.length > 0 ? (
+              {realValuedItems.length > 0 ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[9px] text-muted-foreground px-2 pb-1 border-b border-border/30">
                     <span className="w-14">Asset</span>
@@ -116,7 +118,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                     <span className="text-right w-14">USD</span>
                     <span className="text-right w-14">USDT</span>
                   </div>
-                  {valuedItems
+                  {realValuedItems
                     .sort((a, b) => b.valueUsd - a.valueUsd)
                     .map((item) => {
                       const token = tokens.find(t => t.symbol === item.symbol);
@@ -145,7 +147,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                 </div>
               ) : (
                   <p className="text-muted-foreground text-center py-6 text-xs">
-                    {loading ? "Loading..." : "No claimed assets yet"}
+                    {loading ? "Loading..." : "No claimed real assets yet"}
                 </p>
               )}
             </ScrollArea>
