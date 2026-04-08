@@ -906,9 +906,17 @@ serve(async (req) => {
       );
     }
 
+    const requestedModel = request.model || "google/gemini-2.5-pro";
+    const isClaudeModel = requestedModel.startsWith("claude-");
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+
+    if (!isClaudeModel && !LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY not configured");
+    }
+    if (isClaudeModel && !ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY not configured for Claude models");
     }
 
     // Log call
@@ -941,27 +949,58 @@ serve(async (req) => {
       });
     }
 
-    // Call Lovable AI with tool definitions — use Pro for deep reasoning
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages,
-        tools: QAQI_TOOLS.map(tool => ({
-          type: "function",
-          function: {
-            name: tool.name,
-            description: tool.description,
-            parameters: tool.parameters
-          }
-        })),
-        tool_choice: "auto"
-      }),
-    });
+    let aiResponse: Response;
+
+    if (isClaudeModel) {
+      // Route to Anthropic API directly
+      const anthropicMessages = messages
+        .filter(m => m.role !== "system")
+        .map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+      const anthropicTools = QAQI_TOOLS.map(tool => ({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.parameters
+      }));
+
+      aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY!,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: requestedModel,
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: anthropicMessages,
+          tools: anthropicTools,
+        }),
+      });
+    } else {
+      // Route to Lovable AI Gateway (OpenAI-compatible)
+      aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: requestedModel,
+          messages,
+          tools: QAQI_TOOLS.map(tool => ({
+            type: "function",
+            function: {
+              name: tool.name,
+              description: tool.description,
+              parameters: tool.parameters
+            }
+          })),
+          tool_choice: "auto"
+        }),
+      });
+    }
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
