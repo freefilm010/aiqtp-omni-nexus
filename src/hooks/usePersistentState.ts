@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const readStoredValue = <T,>(key: string | null, fallback: T): T => {
   if (!key || typeof window === "undefined") return fallback;
@@ -13,13 +13,20 @@ const readStoredValue = <T,>(key: string | null, fallback: T): T => {
 
 export const usePersistentState = <T,>(key: string | null, fallback: T) => {
   const [value, setValue] = useState<T>(() => readStoredValue(key, fallback));
+  const skipNextWriteRef = useRef(true);
 
   useEffect(() => {
+    skipNextWriteRef.current = true;
     setValue(readStoredValue(key, fallback));
   }, [key]);
 
   useEffect(() => {
     if (!key || typeof window === "undefined") return;
+
+    if (skipNextWriteRef.current) {
+      skipNextWriteRef.current = false;
+      return;
+    }
 
     try {
       window.localStorage.setItem(key, JSON.stringify(value));
