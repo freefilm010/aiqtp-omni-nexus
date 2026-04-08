@@ -1030,7 +1030,46 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    const choice = aiData.choices?.[0];
+    
+    // Normalize response format: Anthropic vs OpenAI-compatible
+    let choice: any;
+    let normalizedModel = requestedModel;
+    let normalizedUsage = aiData.usage;
+
+    if (isClaudeModel) {
+      // Anthropic format: { content: [{type, text}], model, usage: {input_tokens, output_tokens} }
+      const textContent = aiData.content?.find((c: any) => c.type === "text");
+      const toolUseBlocks = aiData.content?.filter((c: any) => c.type === "tool_use") || [];
+      
+      normalizedModel = aiData.model || requestedModel;
+      
+      if (toolUseBlocks.length > 0) {
+        choice = {
+          message: {
+            content: textContent?.text || "",
+            tool_calls: toolUseBlocks.map((tb: any) => ({
+              id: tb.id,
+              type: "function",
+              function: {
+                name: tb.name,
+                arguments: JSON.stringify(tb.input)
+              }
+            }))
+          }
+        };
+      } else {
+        choice = {
+          message: {
+            content: textContent?.text || "",
+            tool_calls: null
+          }
+        };
+      }
+    } else {
+      // OpenAI-compatible format
+      choice = aiData.choices?.[0];
+      normalizedModel = aiData.model;
+    }
     
     // Handle tool calls and feed results back for a synthesized response
     let toolResults: any[] = [];
@@ -1068,33 +1107,71 @@ serve(async (req) => {
         }
       }
       
-      // Feed tool results back to the model for a synthesized, actionable response
-      const followUpMessages = [
-        ...messages,
-        choice.message,
-        ...toolCallMessages
-      ];
-      
-      try {
-        const followUpResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-pro",
-            messages: followUpMessages,
-          }),
-        });
-        
-        if (followUpResponse.ok) {
-          const followUpData = await followUpResponse.json();
-          finalContent = followUpData.choices?.[0]?.message?.content || finalContent;
+      // Feed tool results back to the model for a synthesized response
+      if (isClaudeModel) {
+        // Anthropic follow-up: send tool results back
+        const anthropicFollowUp = messages
+          .filter(m => m.role !== "system")
+          .concat([
+            { role: "assistant", content: JSON.stringify(aiData.content) },
+            ...toolCallMessages.map(tm => ({
+              role: "user",
+              content: `Tool result for ${tm.tool_call_id}: ${tm.content}`
+            }))
+          ]);
+
+        try {
+          const followUpResponse = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "x-api-key": ANTHROPIC_API_KEY!,
+              "anthropic-version": "2023-06-01",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: requestedModel,
+              max_tokens: 4096,
+              system: systemPrompt,
+              messages: anthropicFollowUp,
+            }),
+          });
+          
+          if (followUpResponse.ok) {
+            const followUpData = await followUpResponse.json();
+            const followUpText = followUpData.content?.find((c: any) => c.type === "text");
+            finalContent = followUpText?.text || finalContent;
+          }
+        } catch (e) {
+          console.error("Claude follow-up call failed:", e);
         }
-      } catch (e) {
-        console.error("Follow-up call failed:", e);
-        // Keep original content if follow-up fails
+      } else {
+        // Lovable AI Gateway follow-up
+        const followUpMessages = [
+          ...messages,
+          choice.message,
+          ...toolCallMessages
+        ];
+        
+        try {
+          const followUpResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: requestedModel,
+              messages: followUpMessages,
+            }),
+          });
+          
+          if (followUpResponse.ok) {
+            const followUpData = await followUpResponse.json();
+            finalContent = followUpData.choices?.[0]?.message?.content || finalContent;
+          }
+        } catch (e) {
+          console.error("Follow-up call failed:", e);
+        }
       }
     }
 
