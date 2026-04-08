@@ -113,7 +113,7 @@ const FaucetAutomation = ({
                 {[
                   { label: "Deployed", value: `$${compoundStats.deployed.toFixed(2)}`, color: "text-green-500" },
                   { label: "Txns", value: compoundStats.transactions, color: "text-foreground" },
-                  { label: "Recorded P/L", value: `$${compoundStats.profit.toFixed(2)}`, color: "text-green-500" },
+                  { label: "Realized P/L", value: `$${compoundStats.profit.toFixed(2)}`, color: "text-green-500" },
                 ].map(s => (
                   <div key={s.label} className="p-1.5 rounded-md bg-muted/30">
                     <p className="text-[9px] text-muted-foreground">{s.label}</p>

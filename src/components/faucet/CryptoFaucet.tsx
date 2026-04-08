@@ -413,16 +413,20 @@ const CryptoFaucet = () => {
   }, [autoClaim, userId, loadClaims, routeToCompound]);
 
   const availableCount = FAUCET_TOKENS.filter(t => !isOnCooldown(t) && t.available).length;
-  const { totalUsd } = getPortfolioValuation(balances);
+  const { items: claimedAssetItems } = getPortfolioValuation(balances);
+  const ownedRealTokens = claimedAssetItems.filter(item => item.quantity > 0 && !item.isTestnet).length;
+  const currentClaimedValue = claimedAssetItems
+    .filter(item => item.quantity > 0 && !item.isTestnet)
+    .reduce((sum, item) => sum + item.valueUsd, 0);
 
   return (
     <div className="space-y-4">
       <FaucetStats
         totalTokens={FAUCET_TOKENS.length}
-        ownedTokens={Object.keys(balances).length}
+        ownedTokens={ownedRealTokens}
         totalClaims={totalClaimCount}
         streakCount={streakCount}
-        totalValue={totalUsd}
+        totalValue={currentClaimedValue}
       />
 
       <FaucetAutomation

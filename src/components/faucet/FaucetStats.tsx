@@ -15,7 +15,7 @@ const stats = [
   { key: "ownedTokens", icon: Wallet, label: "Your Tokens", color: "text-green-500" },
   { key: "totalClaims", icon: Gift, label: "Total Claims", color: "text-purple-500" },
   { key: "streak", icon: Flame, label: "Day Streak", color: "text-orange-500" },
-  { key: "totalValue", icon: TrendingUp, label: "Claim History Value", color: "text-cyan-500" },
+  { key: "totalValue", icon: TrendingUp, label: "Current Claimed Value", color: "text-cyan-500" },
 ] as const;
 
 const FaucetStats = ({ totalTokens, ownedTokens, totalClaims, streakCount, totalValue }: FaucetStatsProps) => {
