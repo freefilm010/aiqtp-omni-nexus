@@ -22,6 +22,7 @@ const corsHeaders = {
 
 interface QAQIRequest {
   action: "chat" | "analyze" | "execute" | "predict" | "automate" | "learn" | "create" | "manage";
+  model?: string;
   messages?: Array<{ role: string; content: string }>;
   conversationId?: string;
   context?: {
