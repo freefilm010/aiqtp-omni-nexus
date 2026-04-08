@@ -161,35 +161,65 @@ const QAQIAgent = () => {
     setIsProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("qaqi-agent", {
-        body: {
-          action: "chat",
-          model: selectedModel,
-          messages: messages
-            .filter((m) => m.role !== "system")
-            .map((m) => ({ role: m.role, content: m.content }))
-            .concat([{ role: "user", content: content.trim() }]),
-          context: {
-            module: "qaqi_autonomous",
-            permissions: ["read", "write", "execute", "admin", "automate"],
-            adminApproval: true,
-          },
-        },
-      });
+      let responseData: any;
 
-      if (error) {
-        // Preserve existing UX for common HTTP failures
-        const msg = (error as any)?.message?.toString?.() ?? "";
-        if (msg.includes("429")) {
-          toast.error("Rate limit exceeded. Please wait a moment.");
+      if (armyMode) {
+        // ARMY MODE: Fan out to ALL models via orchestrator
+        const { data, error } = await supabase.functions.invoke("multi-agent-orchestrator", {
+          body: {
+            messages: messages
+              .filter((m) => m.role !== "system")
+              .map((m) => ({ role: m.role, content: m.content }))
+              .concat([{ role: "user", content: content.trim() }]),
+            taskContext: "qaqi_autonomous_multi_agent",
+          },
+        });
+
+        if (error) {
+          const msg = (error as any)?.message?.toString?.() ?? "";
+          if (msg.includes("429")) toast.error("Orchestrator rate limit exceeded. Please wait.");
+          if (msg.includes("402")) toast.error("Credits exhausted. Please add funds.");
+          throw error;
         }
-        if (msg.includes("402")) {
-          toast.error("Credits exhausted. Please add funds.");
+
+        responseData = data;
+
+        // Show army stats
+        const orch = data?.orchestrator;
+        if (orch) {
+          toast.success(`🪖 Army Mode: ${orch.agents_succeeded}/${orch.agents_queried} agents responded`, {
+            description: `Fan-out: ${orch.fan_out_ms}ms | Synthesis: ${orch.synthesis_ms}ms | Total: ${orch.total_ms}ms`
+          });
         }
-        throw error;
+      } else {
+        // SINGLE MODEL MODE
+        const { data, error } = await supabase.functions.invoke("qaqi-agent", {
+          body: {
+            action: "chat",
+            model: selectedModel,
+            messages: messages
+              .filter((m) => m.role !== "system")
+              .map((m) => ({ role: m.role, content: m.content }))
+              .concat([{ role: "user", content: content.trim() }]),
+            context: {
+              module: "qaqi_autonomous",
+              permissions: ["read", "write", "execute", "admin", "automate"],
+              adminApproval: true,
+            },
+          },
+        });
+
+        if (error) {
+          const msg = (error as any)?.message?.toString?.() ?? "";
+          if (msg.includes("429")) toast.error("Rate limit exceeded. Please wait a moment.");
+          if (msg.includes("402")) toast.error("Credits exhausted. Please add funds.");
+          throw error;
+        }
+
+        responseData = data;
       }
 
-      const response = (data ?? {}) as any;
+      const response = (responseData ?? {}) as any;
 
       const assistantMessage: Message = {
         id: `msg_${Date.now()}_resp`,
@@ -199,7 +229,11 @@ const QAQIAgent = () => {
         toolExecutions: response.tool_executions,
       };
 
-      addMessage(assistantMessage, response.model_used);
+      const modelUsed = armyMode 
+        ? `Army (${response.orchestrator?.agents_succeeded || 0} agents)` 
+        : response.model_used;
+
+      addMessage(assistantMessage, modelUsed);
 
       setStatus((prev) => ({
         ...prev,
@@ -209,9 +243,9 @@ const QAQIAgent = () => {
         version: response.qaqi_version || prev.version,
       }));
 
-      if (data.tool_executions?.length > 0) {
-        toast.success(`✨ Executed ${data.tool_executions.length} tool(s)`, {
-          description: data.tool_executions.map((t: any) => t.tool).join(", ")
+      if (responseData?.tool_executions?.length > 0) {
+        toast.success(`✨ Executed ${responseData.tool_executions.length} tool(s)`, {
+          description: responseData.tool_executions.map((t: any) => t.tool).join(", ")
         });
       }
 
