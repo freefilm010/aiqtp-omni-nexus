@@ -130,6 +130,7 @@ const QAQIAgent = () => {
     toolsExecuted: 0,
   });
   const [activeTab, setActiveTab] = useState("chat");
+  const [selectedModel, setSelectedModel] = useState<AIModel>("google/gemini-2.5-pro");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
