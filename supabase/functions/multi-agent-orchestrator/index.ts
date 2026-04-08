@@ -31,6 +31,14 @@ interface AgentConfig {
 
 const AGENTS: AgentConfig[] = [
   {
+    id: "gemini-25-flash",
+    name: "Gemini 2.5 Flash",
+    model: "google/gemini-2.5-flash",
+    provider: "lovable",
+    specialty: "Fast reasoning, efficient drafting, quick synthesis",
+    systemPrompt: "You are a high-speed analyst. Prioritize the strongest answer quickly without losing key details."
+  },
+  {
     id: "gemini-pro",
     name: "Gemini Pro",
     model: "google/gemini-2.5-pro",
@@ -53,6 +61,14 @@ const AGENTS: AgentConfig[] = [
     provider: "lovable",
     specialty: "Nuanced reasoning, accuracy, broad knowledge",
     systemPrompt: "You are a precision analyst. Provide accurate, nuanced analysis. Identify edge cases and risks others might miss."
+  },
+  {
+    id: "gpt5-mini",
+    name: "GPT-5 Mini",
+    model: "openai/gpt-5-mini",
+    provider: "lovable",
+    specialty: "Balanced speed and quality, efficient second-pass analysis",
+    systemPrompt: "You are a balanced analyst. Deliver a sharp, reliable answer with strong practical judgment and minimal waste."
   },
   {
     id: "gpt52",

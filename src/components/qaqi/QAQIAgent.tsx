@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import ModelSelector, { type AIModel } from "@/components/chat/ModelSelector";
+import ModelSelector, { AI_MODEL_COUNT, type AIModel } from "@/components/chat/ModelSelector";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatHistory } from "@/components/chat/ChatHistory";
 import { useChatPersistence } from "@/hooks/useChatPersistence";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
@@ -132,8 +133,14 @@ const QAQIAgent = () => {
     toolsExecuted: 0,
   });
   const [activeTab, setActiveTab] = useState("chat");
-  const [selectedModel, setSelectedModel] = useState<AIModel>("google/gemini-2.5-pro");
-  const [armyMode, setArmyMode] = useState(false);
+  const [selectedModel, setSelectedModel] = usePersistentState<AIModel>(
+    user ? `qaqi:selected-model:${user.id}` : null,
+    "google/gemini-2.5-pro"
+  );
+  const [armyMode, setArmyMode] = usePersistentState<boolean>(
+    user ? `qaqi:army-mode:${user.id}` : null,
+    false
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -266,7 +273,7 @@ const QAQIAgent = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [messages, isProcessing, addMessage, ensureConversation]);
+  }, [messages, isProcessing, addMessage, ensureConversation, armyMode, selectedModel]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -471,7 +478,7 @@ const QAQIAgent = () => {
               )}
               {armyMode && (
                 <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse">
-                  6 Agents • GPT-5 + Gemini + Claude
+                  {AI_MODEL_COUNT} Agents • All available models
                 </Badge>
               )}
             </div>
@@ -481,7 +488,7 @@ const QAQIAgent = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={armyMode 
-                  ? "All 6 agents will analyze this concurrently..."
+                  ? `All ${AI_MODEL_COUNT} agents will analyze this concurrently...`
                   : "Command QAQI... (e.g., 'Create QuWallet', 'Mine QTC block')"
                 }
                 disabled={isProcessing}
