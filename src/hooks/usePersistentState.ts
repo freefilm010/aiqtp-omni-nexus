@@ -16,7 +16,7 @@ export const usePersistentState = <T,>(key: string | null, fallback: T) => {
 
   useEffect(() => {
     setValue(readStoredValue(key, fallback));
-  }, [key, fallback]);
+  }, [key]);
 
   useEffect(() => {
     if (!key || typeof window === "undefined") return;
