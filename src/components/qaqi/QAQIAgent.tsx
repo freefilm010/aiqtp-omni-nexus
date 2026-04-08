@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ModelSelector, { type AIModel } from "@/components/chat/ModelSelector";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,6 +133,7 @@ const QAQIAgent = () => {
   });
   const [activeTab, setActiveTab] = useState("chat");
   const [selectedModel, setSelectedModel] = useState<AIModel>("google/gemini-2.5-pro");
+  const [armyMode, setArmyMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -158,35 +161,65 @@ const QAQIAgent = () => {
     setIsProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("qaqi-agent", {
-        body: {
-          action: "chat",
-          model: selectedModel,
-          messages: messages
-            .filter((m) => m.role !== "system")
-            .map((m) => ({ role: m.role, content: m.content }))
-            .concat([{ role: "user", content: content.trim() }]),
-          context: {
-            module: "qaqi_autonomous",
-            permissions: ["read", "write", "execute", "admin", "automate"],
-            adminApproval: true,
-          },
-        },
-      });
+      let responseData: any;
 
-      if (error) {
-        // Preserve existing UX for common HTTP failures
-        const msg = (error as any)?.message?.toString?.() ?? "";
-        if (msg.includes("429")) {
-          toast.error("Rate limit exceeded. Please wait a moment.");
+      if (armyMode) {
+        // ARMY MODE: Fan out to ALL models via orchestrator
+        const { data, error } = await supabase.functions.invoke("multi-agent-orchestrator", {
+          body: {
+            messages: messages
+              .filter((m) => m.role !== "system")
+              .map((m) => ({ role: m.role, content: m.content }))
+              .concat([{ role: "user", content: content.trim() }]),
+            taskContext: "qaqi_autonomous_multi_agent",
+          },
+        });
+
+        if (error) {
+          const msg = (error as any)?.message?.toString?.() ?? "";
+          if (msg.includes("429")) toast.error("Orchestrator rate limit exceeded. Please wait.");
+          if (msg.includes("402")) toast.error("Credits exhausted. Please add funds.");
+          throw error;
         }
-        if (msg.includes("402")) {
-          toast.error("Credits exhausted. Please add funds.");
+
+        responseData = data;
+
+        // Show army stats
+        const orch = data?.orchestrator;
+        if (orch) {
+          toast.success(`🪖 Army Mode: ${orch.agents_succeeded}/${orch.agents_queried} agents responded`, {
+            description: `Fan-out: ${orch.fan_out_ms}ms | Synthesis: ${orch.synthesis_ms}ms | Total: ${orch.total_ms}ms`
+          });
         }
-        throw error;
+      } else {
+        // SINGLE MODEL MODE
+        const { data, error } = await supabase.functions.invoke("qaqi-agent", {
+          body: {
+            action: "chat",
+            model: selectedModel,
+            messages: messages
+              .filter((m) => m.role !== "system")
+              .map((m) => ({ role: m.role, content: m.content }))
+              .concat([{ role: "user", content: content.trim() }]),
+            context: {
+              module: "qaqi_autonomous",
+              permissions: ["read", "write", "execute", "admin", "automate"],
+              adminApproval: true,
+            },
+          },
+        });
+
+        if (error) {
+          const msg = (error as any)?.message?.toString?.() ?? "";
+          if (msg.includes("429")) toast.error("Rate limit exceeded. Please wait a moment.");
+          if (msg.includes("402")) toast.error("Credits exhausted. Please add funds.");
+          throw error;
+        }
+
+        responseData = data;
       }
 
-      const response = (data ?? {}) as any;
+      const response = (responseData ?? {}) as any;
 
       const assistantMessage: Message = {
         id: `msg_${Date.now()}_resp`,
@@ -196,7 +229,11 @@ const QAQIAgent = () => {
         toolExecutions: response.tool_executions,
       };
 
-      addMessage(assistantMessage, response.model_used);
+      const modelUsed = armyMode 
+        ? `Army (${response.orchestrator?.agents_succeeded || 0} agents)` 
+        : response.model_used;
+
+      addMessage(assistantMessage, modelUsed);
 
       setStatus((prev) => ({
         ...prev,
@@ -206,9 +243,9 @@ const QAQIAgent = () => {
         version: response.qaqi_version || prev.version,
       }));
 
-      if (data.tool_executions?.length > 0) {
-        toast.success(`✨ Executed ${data.tool_executions.length} tool(s)`, {
-          description: data.tool_executions.map((t: any) => t.tool).join(", ")
+      if (responseData?.tool_executions?.length > 0) {
+        toast.success(`✨ Executed ${responseData.tool_executions.length} tool(s)`, {
+          description: responseData.tool_executions.map((t: any) => t.tool).join(", ")
         });
       }
 
@@ -413,17 +450,40 @@ const QAQIAgent = () => {
           {/* Input */}
           <form onSubmit={handleSubmit} className="p-4 border-t bg-background sticky bottom-0 z-10">
             <div className="flex items-center gap-2 mb-2">
-              <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isProcessing} />
-              <span className="text-[10px] text-muted-foreground">
-                {selectedModel.startsWith("claude") ? "Anthropic" : selectedModel.startsWith("openai") ? "OpenAI" : "Google"}
-              </span>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="army-mode"
+                  checked={armyMode}
+                  onCheckedChange={setArmyMode}
+                  disabled={isProcessing}
+                />
+                <Label htmlFor="army-mode" className="text-xs font-medium cursor-pointer">
+                  {armyMode ? "🪖 Army Mode" : "Single Agent"}
+                </Label>
+              </div>
+              {!armyMode && (
+                <>
+                  <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isProcessing} />
+                  <span className="text-[10px] text-muted-foreground">
+                    {selectedModel.startsWith("claude") ? "Anthropic" : selectedModel.startsWith("openai") ? "OpenAI" : "Google"}
+                  </span>
+                </>
+              )}
+              {armyMode && (
+                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse">
+                  6 Agents • GPT-5 + Gemini + Claude
+                </Badge>
+              )}
             </div>
             <div className="flex gap-2">
               <Input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Command QAQI... (e.g., 'Create QuWallet', 'Mine QTC block', 'Register trademark')"
+                placeholder={armyMode 
+                  ? "All 6 agents will analyze this concurrently..."
+                  : "Command QAQI... (e.g., 'Create QuWallet', 'Mine QTC block')"
+                }
                 disabled={isProcessing}
                 className="flex-1"
               />
