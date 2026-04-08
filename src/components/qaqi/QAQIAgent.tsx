@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ModelSelector, { type AIModel } from "@/components/chat/ModelSelector";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
