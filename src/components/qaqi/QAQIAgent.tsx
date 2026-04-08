@@ -450,17 +450,40 @@ const QAQIAgent = () => {
           {/* Input */}
           <form onSubmit={handleSubmit} className="p-4 border-t bg-background sticky bottom-0 z-10">
             <div className="flex items-center gap-2 mb-2">
-              <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isProcessing} />
-              <span className="text-[10px] text-muted-foreground">
-                {selectedModel.startsWith("claude") ? "Anthropic" : selectedModel.startsWith("openai") ? "OpenAI" : "Google"}
-              </span>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="army-mode"
+                  checked={armyMode}
+                  onCheckedChange={setArmyMode}
+                  disabled={isProcessing}
+                />
+                <Label htmlFor="army-mode" className="text-xs font-medium cursor-pointer">
+                  {armyMode ? "🪖 Army Mode" : "Single Agent"}
+                </Label>
+              </div>
+              {!armyMode && (
+                <>
+                  <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isProcessing} />
+                  <span className="text-[10px] text-muted-foreground">
+                    {selectedModel.startsWith("claude") ? "Anthropic" : selectedModel.startsWith("openai") ? "OpenAI" : "Google"}
+                  </span>
+                </>
+              )}
+              {armyMode && (
+                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse">
+                  6 Agents • GPT-5 + Gemini + Claude
+                </Badge>
+              )}
             </div>
             <div className="flex gap-2">
               <Input
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Command QAQI... (e.g., 'Create QuWallet', 'Mine QTC block', 'Register trademark')"
+                placeholder={armyMode 
+                  ? "All 6 agents will analyze this concurrently..."
+                  : "Command QAQI... (e.g., 'Create QuWallet', 'Mine QTC block')"
+                }
                 disabled={isProcessing}
                 className="flex-1"
               />
