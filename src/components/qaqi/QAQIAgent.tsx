@@ -139,7 +139,7 @@ const QAQIAgent = () => {
   );
   const [armyMode, setArmyMode] = usePersistentState<boolean>(
     user ? `qaqi:army-mode:${user.id}` : null,
-    false
+    true
   );
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

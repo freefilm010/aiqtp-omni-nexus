@@ -64,6 +64,13 @@ const FaucetScheduler = ({ tokens, userId }: FaucetSchedulerProps) => {
     void loadSchedules();
   }, [userId, loadSchedules]);
 
+  // Auto-enable all schedules on first load if none exist
+  useEffect(() => {
+    if (!userId || loading || schedules.length > 0) return;
+    void enableAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, loading, schedules.length]);
+
   const upsertSchedule = async (tokenId: string, intervalHours: number, isActive: boolean) => {
     if (!userId) return;
 

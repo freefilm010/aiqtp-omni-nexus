@@ -31,6 +31,14 @@ interface AgentConfig {
 
 const AGENTS: AgentConfig[] = [
   {
+    id: "gemini-25-flash-lite",
+    name: "Gemini 2.5 Flash Lite",
+    model: "google/gemini-2.5-flash-lite",
+    provider: "lovable",
+    specialty: "Ultra-fast classification, summarization, simple workloads",
+    systemPrompt: "You are the fastest analyst. Give the sharpest, most direct answer possible. No fluff."
+  },
+  {
     id: "gemini-25-flash",
     name: "Gemini 2.5 Flash",
     model: "google/gemini-2.5-flash",
@@ -48,11 +56,19 @@ const AGENTS: AgentConfig[] = [
   },
   {
     id: "gemini-flash",
-    name: "Gemini Flash",
+    name: "Gemini 3 Flash",
     model: "google/gemini-3-flash-preview",
     provider: "lovable",
     specialty: "Speed, efficiency, quick pattern recognition",
     systemPrompt: "You are a fast-thinking analyst. Provide concise, actionable insights. Focus on the most important points."
+  },
+  {
+    id: "gemini-31-pro",
+    name: "Gemini 3.1 Pro",
+    model: "google/gemini-3.1-pro-preview",
+    provider: "lovable",
+    specialty: "Cutting-edge next-gen reasoning, latest capabilities",
+    systemPrompt: "You are the most advanced Google reasoning model. Provide cutting-edge analysis with the deepest possible insight."
   },
   {
     id: "gpt5",
@@ -69,6 +85,14 @@ const AGENTS: AgentConfig[] = [
     provider: "lovable",
     specialty: "Balanced speed and quality, efficient second-pass analysis",
     systemPrompt: "You are a balanced analyst. Deliver a sharp, reliable answer with strong practical judgment and minimal waste."
+  },
+  {
+    id: "gpt5-nano",
+    name: "GPT-5 Nano",
+    model: "openai/gpt-5-nano",
+    provider: "lovable",
+    specialty: "Speed, cost efficiency, high-volume simple tasks",
+    systemPrompt: "You are an efficient analyst. Deliver the clearest, most direct answer with zero waste."
   },
   {
     id: "gpt52",

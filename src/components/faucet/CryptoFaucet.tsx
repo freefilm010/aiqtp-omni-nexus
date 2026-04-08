@@ -89,7 +89,7 @@ const CryptoFaucet = () => {
   const [totalClaimCount, setTotalClaimCount] = useState(0);
   const [autoClaim, setAutoClaim] = usePersistentState<boolean>(
     userId ? `faucet:auto-claim:${userId}` : null,
-    false
+    true
   );
   const [autoClaimRunning, setAutoClaimRunning] = useState(false);
   const [autoCompound, setAutoCompound] = usePersistentState<boolean>(
