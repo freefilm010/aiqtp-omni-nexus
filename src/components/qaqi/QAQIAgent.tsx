@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import ModelSelector, { type AIModel } from "@/components/chat/ModelSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,6 +130,7 @@ const QAQIAgent = () => {
     toolsExecuted: 0,
   });
   const [activeTab, setActiveTab] = useState("chat");
+  const [selectedModel, setSelectedModel] = useState<AIModel>("google/gemini-2.5-pro");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -159,6 +161,7 @@ const QAQIAgent = () => {
       const { data, error } = await supabase.functions.invoke("qaqi-agent", {
         body: {
           action: "chat",
+          model: selectedModel,
           messages: messages
             .filter((m) => m.role !== "system")
             .map((m) => ({ role: m.role, content: m.content }))
@@ -409,6 +412,12 @@ const QAQIAgent = () => {
 
           {/* Input */}
           <form onSubmit={handleSubmit} className="p-4 border-t bg-background sticky bottom-0 z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <ModelSelector value={selectedModel} onChange={setSelectedModel} disabled={isProcessing} />
+              <span className="text-[10px] text-muted-foreground">
+                {selectedModel.startsWith("claude") ? "Anthropic" : selectedModel.startsWith("openai") ? "OpenAI" : "Google"}
+              </span>
+            </div>
             <div className="flex gap-2">
               <Input
                 ref={inputRef}
