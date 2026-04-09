@@ -16,6 +16,11 @@ import FaucetOrchestratorDashboard from "./FaucetOrchestratorDashboard";
 import FaucetCompetitionDashboard from "./FaucetCompetitionDashboard";
 import { useAssetValuation } from "@/hooks/useAssetValuation";
 import { usePersistentState } from "@/hooks/usePersistentState";
+import {
+  buildEngineDeploymentPlan,
+  formatEngineMix,
+  formatEngineStrategy,
+} from "@/lib/autoInvest/deploymentPlan";
 
 const FAUCET_TOKENS: FaucetToken[] = [
   // ═══ REAL EARNING TOKENS (have value, count toward portfolio) ═══
@@ -78,6 +83,19 @@ const FAUCET_TOKENS: FaucetToken[] = [
   { id: 'lnbtc-test', symbol: 'tLNBTC', name: 'Lightning BTC (Test)', icon: <Bolt className="h-5 w-5 text-orange-400" />, claimAmount: 0.001, claimInterval: 12, available: true, category: 'testnet', description: 'Lightning testnet BTC', chain: 'lightning-testnet' },
 ];
 
+interface CompoundEngineState {
+  id: string;
+  total_capital: number;
+  total_profit: number;
+  total_deployed: number;
+  strategy: string;
+  status: string;
+  reinvest_percent: number;
+  growth_target_percent: number;
+  stable_target_percent: number;
+  cycle_count: number;
+}
+
 const CryptoFaucet = () => {
   const [claiming, setClaiming] = useState<string | null>(null);
   const [claims, setClaims] = useState<ClaimRecord[]>([]);
@@ -100,21 +118,18 @@ const CryptoFaucet = () => {
     userId ? `faucet:reinvest-percent:${userId}` : null,
     100
   );
-  const [compoundEngine, setCompoundEngine] = useState<{
-    id: string;
-    total_capital: number;
-    total_profit: number;
-    total_deployed: number;
-    strategy: string;
-    status: string;
-    reinvest_percent: number;
-    cycle_count: number;
-  } | null>(null);
+  const [compoundEngine, setCompoundEngine] = useState<CompoundEngineState | null>(null);
   const [compoundStats, setCompoundStats] = useState({ deployed: 0, transactions: 0, profit: 0 });
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
   const lastClaimTimesRef = useRef<Record<string, Date>>({});
   const { getValuation, getPortfolioValuation } = useAssetValuation();
+  const compoundStrategyLabel = formatEngineStrategy(compoundEngine?.strategy);
+  const compoundMixLabel = formatEngineMix({
+    strategy: compoundEngine?.strategy,
+    growthTargetPercent: compoundEngine?.growth_target_percent,
+    stableTargetPercent: compoundEngine?.stable_target_percent,
+  });
 
   const loadClaims = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -197,7 +212,7 @@ const CryptoFaucet = () => {
     if (!userId) return;
     const { data } = await supabase
       .from("auto_invest_engine")
-      .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count")
+      .select("id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, growth_target_percent, stable_target_percent, cycle_count")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -232,7 +247,7 @@ const CryptoFaucet = () => {
         total_reinvested: 0,
         rebalance_threshold: 5,
         cycle_count: 0,
-      }).select('id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, cycle_count').single();
+      }).select('id, total_capital, total_profit, total_deployed, strategy, status, reinvest_percent, growth_target_percent, stable_target_percent, cycle_count').single();
 
       if (newEngine) {
         setCompoundEngine(newEngine);
@@ -241,6 +256,21 @@ const CryptoFaucet = () => {
   }, [userId]);
 
   useEffect(() => { if (userId) loadCompoundEngine(); }, [userId, loadCompoundEngine]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`compound-engine-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'auto_invest_engine', filter: `user_id=eq.${userId}` },
+        () => { void loadCompoundEngine(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, loadCompoundEngine]);
 
   const routeToCompound = useCallback(async (tokenSymbol: string, amount: number) => {
     if (!autoCompoundRef.current || !compoundEngine) return;
@@ -258,27 +288,27 @@ const CryptoFaucet = () => {
     const deployAmount = usdValue * (reinvestPercent / 100);
     if (deployAmount <= 0) return;
 
-    const strategies = [
-      { name: 'AI Momentum Alpha', pct: 50 },
-      { name: 'Quantum Mean Reversion', pct: 30 },
-      { name: 'DeFi Yield Optimizer', pct: 20 },
-    ];
+    const deploymentPlan = buildEngineDeploymentPlan({
+      strategy: compoundEngine.strategy,
+      growthTargetPercent: compoundEngine.growth_target_percent,
+      stableTargetPercent: compoundEngine.stable_target_percent,
+    });
 
-    for (const strat of strategies) {
-      const stratAmount = deployAmount * (strat.pct / 100);
+    for (const slice of deploymentPlan) {
+      const stratAmount = deployAmount * (slice.pct / 100);
       if (stratAmount <= 0) continue;
       
       // Create allocation record for tracking
       await supabase.from("auto_invest_allocations").insert({
         engine_id: compoundEngine.id,
         asset_symbol: tokenSymbol,
-        asset_name: strat.name,
-        asset_class: 'strategy',
-        allocation_type: 'growth',
-        target_percent: strat.pct,
-        current_percent: strat.pct,
+        asset_name: slice.name,
+        asset_class: slice.allocationType === 'stable' ? 'stable' : 'strategy',
+        allocation_type: slice.allocationType,
+        target_percent: slice.pct,
+        current_percent: slice.pct,
         value_usd: stratAmount,
-        quantity: amount * (strat.pct / 100),
+        quantity: amount * (slice.pct / 100),
         entry_price: valuation.priceUsd,
         current_price: valuation.priceUsd,
         is_active: true,
@@ -292,10 +322,10 @@ const CryptoFaucet = () => {
         asset_symbol: tokenSymbol,
         side: 'buy',
         price: valuation.priceUsd,
-        quantity: amount * (strat.pct / 100),
+        quantity: amount * (slice.pct / 100),
         status: 'completed',
         ai_triggered: true,
-        ai_reason: `Auto-compound ${tokenSymbol} → ${strat.name} (${strat.pct}%) | $${usdValue.toFixed(2)} total`,
+        ai_reason: `Auto-compound ${tokenSymbol} → ${slice.name} (${slice.pct}%) | $${usdValue.toFixed(2)} total`,
       });
     }
 
@@ -364,7 +394,7 @@ const CryptoFaucet = () => {
     if (error) { toast.error("Claim failed: " + error.message); setClaiming(null); return; }
     await routeToCompound(token.symbol, token.claimAmount);
     toast.success(`Claimed ${token.claimAmount} ${token.symbol}!`, {
-      description: autoCompound ? `${reinvestPercent}% → top strategies` : streakCount > 0 ? `🔥 ${streakCount + 1}-day streak!` : undefined,
+      description: autoCompound ? `${reinvestPercent}% → ${compoundStrategyLabel} • ${compoundMixLabel}` : streakCount > 0 ? `🔥 ${streakCount + 1}-day streak!` : undefined,
     });
     await loadClaims();
     setClaiming(null);
@@ -437,6 +467,8 @@ const CryptoFaucet = () => {
         setAutoCompound={setAutoCompound}
         reinvestPercent={reinvestPercent}
         setReinvestPercent={setReinvestPercent}
+        compoundStrategyLabel={compoundStrategyLabel}
+        compoundMixLabel={compoundMixLabel}
         availableCount={availableCount}
         claiming={claiming}
         loading={loading}
