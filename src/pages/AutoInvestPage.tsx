@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { formatEngineMix, formatEngineStrategy } from "@/lib/autoInvest/deploymentPlan";
 import {
   Brain,
   TrendingUp,
@@ -61,6 +62,8 @@ interface EngineState {
   total_profit: number;
   total_reinvested: number;
   reinvest_percent: number;
+  growth_target_percent: number;
+  stable_target_percent: number;
   ai_confidence_score: number | null;
   ai_market_regime: string | null;
   cycle_count: number;
@@ -200,6 +203,12 @@ const AutoInvestPage = () => {
 
   const pieData = allocations.map((a) => ({ name: a.asset_symbol, value: a.value_usd }));
   const totalPnl = allocations.reduce((acc, a) => acc + (a.pnl_usd || 0), 0);
+  const strategyLabel = formatEngineStrategy(engine?.strategy);
+  const targetMixLabel = formatEngineMix({
+    strategy: engine?.strategy,
+    growthTargetPercent: engine?.growth_target_percent,
+    stableTargetPercent: engine?.stable_target_percent,
+  });
 
   if (loading) {
     return (
@@ -559,7 +568,11 @@ const AutoInvestPage = () => {
               </div>
               <div className="flex items-center gap-1">
                 <Shield className="h-3 w-3" />
-                Strategy: {engine?.strategy}
+                Strategy: {strategyLabel}
+              </div>
+              <div className="flex items-center gap-1">
+                <Target className="h-3 w-3" />
+                Target Mix: {targetMixLabel}
               </div>
               <div className="flex items-center gap-1">
                 <Activity className="h-3 w-3" />

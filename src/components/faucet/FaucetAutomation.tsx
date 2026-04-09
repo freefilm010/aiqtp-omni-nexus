@@ -14,6 +14,8 @@ interface FaucetAutomationProps {
   setAutoCompound: (v: boolean) => void;
   reinvestPercent: number;
   setReinvestPercent: (v: number) => void;
+  compoundStrategyLabel: string;
+  compoundMixLabel: string;
   availableCount: number;
   claiming: string | null;
   loading: boolean;
@@ -25,6 +27,7 @@ const FaucetAutomation = ({
   autoClaim, setAutoClaim, autoClaimRunning,
   autoCompound, setAutoCompound,
   reinvestPercent, setReinvestPercent,
+  compoundStrategyLabel, compoundMixLabel,
   availableCount, claiming, loading, onClaimAll,
   compoundStats,
 }: FaucetAutomationProps) => {
@@ -91,7 +94,7 @@ const FaucetAutomation = ({
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Routes eligible priced claims into configured strategies
+                  Routes eligible priced claims using {compoundStrategyLabel}
                 </p>
               </div>
             </div>
@@ -104,9 +107,12 @@ const FaucetAutomation = ({
               animate={{ opacity: 1, height: "auto" }}
               className="mt-3 space-y-2"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5">
-                  <Zap className="h-3 w-3 mr-1" />100% Reinvestment — Locked
+                  <Zap className="h-3 w-3 mr-1" />{reinvestPercent}% Reinvestment • Synced
+                </Badge>
+                <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                  {compoundMixLabel}
                 </Badge>
               </div>
               <div className="grid grid-cols-3 gap-1.5 text-center">
