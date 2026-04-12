@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Clock, CheckCircle, Coins, Flame, Trophy, Users, Share2, DollarSign } from "lucide-react";
+import { Wallet, Clock, CheckCircle, Coins, Flame, Trophy, Users, Share2, DollarSign, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,8 @@ interface LeaderboardEntry {
   display_name: string;
   total_claims: number;
   active_days: number;
+  arb_profit: number;
+  arb_trades: number;
 }
 
 const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
@@ -38,7 +40,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
     const loadLeaderboard = async () => {
       const { data } = await supabase
         .from("faucet_leaderboard")
-        .select("user_id, display_name, total_claims, active_days")
+        .select("user_id, display_name, total_claims, active_days, arb_profit, arb_trades")
         .limit(10);
       if (data) setLeaderboard(data as LeaderboardEntry[]);
     };
@@ -167,18 +169,27 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
           <CardContent className="px-3 pb-3">
             <div className="space-y-1.5">
               {leaderboard.length > 0 ? leaderboard.map((entry, i) => (
-                <div key={entry.user_id} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className={`font-bold w-4 text-center ${i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-orange-600" : "text-muted-foreground"}`}>
-                      {i + 1}
-                    </span>
-                    <Users className="h-3 w-3 text-muted-foreground" />
-                    <span className="font-medium">{entry.display_name}</span>
+                <div key={entry.user_id} className="p-2 rounded-lg bg-muted/20 text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold w-4 text-center ${i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-orange-600" : "text-muted-foreground"}`}>
+                        {i + 1}
+                      </span>
+                      <Users className="h-3 w-3 text-muted-foreground" />
+                      <span className="font-medium">{entry.display_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">{entry.total_claims}</span>
+                      <span className="text-orange-500 text-[10px]">📅{entry.active_days}d</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">{entry.total_claims}</span>
-                    <span className="text-orange-500 text-[10px]">📅{entry.active_days}d</span>
-                  </div>
+                  {entry.arb_profit > 0 && (
+                    <div className="flex items-center gap-1.5 pl-6 text-[10px]">
+                      <ArrowRightLeft className="h-2.5 w-2.5 text-green-500" />
+                      <span className="text-green-500 font-mono">${Number(entry.arb_profit).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                      <span className="text-muted-foreground">arb ({entry.arb_trades} trades)</span>
+                    </div>
+                  )}
                 </div>
               )) : (
                 <p className="text-muted-foreground text-center py-4 text-xs">No claims yet</p>
