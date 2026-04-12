@@ -9457,7 +9457,13 @@ export type Database = {
           active_days: number | null
           arb_profit: number | null
           arb_trades: number | null
+          composite_score: number | null
           display_name: string | null
+          factors_created: number | null
+          invest_total: number | null
+          invest_txns: number | null
+          strategies_created: number | null
+          strategies_graduated: number | null
           total_claims: number | null
           user_id: string | null
         }
