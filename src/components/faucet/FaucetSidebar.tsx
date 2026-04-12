@@ -166,12 +166,13 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
 
       {/* Leaderboard — from DB */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-        <Card>
+      <Card>
           <CardHeader className="pb-2 px-3 pt-3">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Trophy className="h-4 w-4 text-amber-500" />
-              Claim Leaderboard
+              Platform Leaderboard
             </CardTitle>
+            <p className="text-[9px] text-muted-foreground">Composite score across all activity</p>
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="space-y-1.5">
@@ -185,21 +186,38 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                       <Users className="h-3 w-3 text-muted-foreground" />
                       <span className="font-medium">{entry.display_name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">{entry.total_claims}</span>
-                      <span className="text-orange-500 text-[10px]">📅{entry.active_days}d</span>
-                    </div>
+                    <Badge variant="secondary" className="text-[9px] h-4 px-1.5">{entry.composite_score.toLocaleString()} pts</Badge>
                   </div>
-                  {entry.arb_profit > 0 && (
-                    <div className="flex items-center gap-1.5 pl-6 text-[10px]">
-                      <ArrowRightLeft className="h-2.5 w-2.5 text-green-500" />
-                      <span className="text-green-500 font-mono">${Number(entry.arb_profit).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-                      <span className="text-muted-foreground">arb ({entry.arb_trades} trades)</span>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 pl-6 text-[10px] text-muted-foreground">
+                    {entry.total_claims > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <Coins className="h-2.5 w-2.5" /> {entry.total_claims} claims
+                      </span>
+                    )}
+                    {entry.arb_profit > 0 && (
+                      <span className="flex items-center gap-0.5 text-green-500">
+                        <ArrowRightLeft className="h-2.5 w-2.5" /> ${Number(entry.arb_profit).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                    )}
+                    {entry.invest_txns > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <TrendingUp className="h-2.5 w-2.5" /> {entry.invest_txns} invest
+                      </span>
+                    )}
+                    {entry.strategies_created > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <Bot className="h-2.5 w-2.5" /> {entry.strategies_created} strats
+                      </span>
+                    )}
+                    {entry.factors_created > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <Sparkles className="h-2.5 w-2.5" /> {entry.factors_created} factors
+                      </span>
+                    )}
+                  </div>
                 </div>
               )) : (
-                <p className="text-muted-foreground text-center py-4 text-xs">No claims yet</p>
+                <p className="text-muted-foreground text-center py-4 text-xs">No activity yet</p>
               )}
             </div>
           </CardContent>
