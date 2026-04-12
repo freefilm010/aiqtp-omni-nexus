@@ -26,6 +26,12 @@ interface LeaderboardEntry {
   active_days: number;
   arb_profit: number;
   arb_trades: number;
+  invest_total: number;
+  invest_txns: number;
+  strategies_created: number;
+  strategies_graduated: number;
+  factors_created: number;
+  composite_score: number;
 }
 
 const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
