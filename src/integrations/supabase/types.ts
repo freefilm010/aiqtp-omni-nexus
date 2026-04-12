@@ -9455,6 +9455,8 @@ export type Database = {
       faucet_leaderboard: {
         Row: {
           active_days: number | null
+          arb_profit: number | null
+          arb_trades: number | null
           display_name: string | null
           total_claims: number | null
           user_id: string | null
