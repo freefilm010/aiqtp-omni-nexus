@@ -46,7 +46,8 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
     const loadLeaderboard = async () => {
       const { data } = await supabase
         .from("faucet_leaderboard")
-        .select("user_id, display_name, total_claims, active_days, arb_profit, arb_trades")
+        .select("user_id, display_name, total_claims, active_days, arb_profit, arb_trades, invest_total, invest_txns, strategies_created, strategies_graduated, factors_created, composite_score")
+        .order("composite_score", { ascending: false })
         .limit(10);
       if (data) setLeaderboard(data as LeaderboardEntry[]);
     };
