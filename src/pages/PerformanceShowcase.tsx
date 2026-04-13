@@ -30,7 +30,7 @@ const PerformanceShowcase = () => {
   const fetchPerformance = async () => {
     setLoading(true);
     try {
-      // Fetch engine stats
+      // Fetch engine stats — scoped via RLS (user_id = auth.uid())
       const { data: engines } = await supabase
         .from("auto_invest_engine")
         .select("*")
@@ -38,20 +38,28 @@ const PerformanceShowcase = () => {
         .limit(1);
 
       const engine = engines?.[0];
+      if (!engine) {
+        setData(null);
+        setLoading(false);
+        return;
+      }
 
-      // Fetch allocations
+      // Fetch allocations scoped to this engine
       const { data: allocations } = await supabase
         .from("auto_invest_allocations")
         .select("*")
+        .eq("engine_id", engine.id)
         .eq("is_active", true)
         .order("pnl_percent", { ascending: false })
         .limit(10);
 
-      // Fetch transactions for trade count
+      // Fetch transactions scoped to this engine with limit
       const { data: transactions } = await supabase
         .from("auto_invest_transactions")
         .select("id, transaction_type, pnl_usd, created_at")
-        .order("created_at", { ascending: false });
+        .eq("engine_id", engine.id)
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       // Fetch strategies count
       const { data: strategies } = await supabase

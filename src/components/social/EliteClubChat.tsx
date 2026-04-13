@@ -54,10 +54,11 @@ const EliteClubChat = () => {
   }, [user]);
 
   useEffect(() => {
-    if (isEliteMember) {
-      fetchMessages();
-      subscribeToMessages();
-    }
+    if (!isEliteMember) return;
+    fetchMessages();
+    // Poll every 10s instead of realtime (table removed from publication)
+    const interval = setInterval(fetchMessages, 10000);
+    return () => clearInterval(interval);
   }, [isEliteMember]);
 
   useEffect(() => {
@@ -103,22 +104,7 @@ const EliteClubChat = () => {
     }
   };
 
-  const subscribeToMessages = () => {
-    const channel = supabase
-      .channel("elite-chat")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "elite_club_messages" },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as EliteMessage]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+  // Realtime removed for security — polling used instead (see useEffect above)
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
