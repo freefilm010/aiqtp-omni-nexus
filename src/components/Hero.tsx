@@ -118,7 +118,7 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
         <span className="font-mono text-[9px] text-muted-foreground">C <span className="text-foreground/80">{price}</span></span>
       </div>
 
-      <div className="relative h-32 p-2">
+      <div className="relative h-20 p-2 sm:h-32">
         <svg className="absolute inset-0 w-full h-full opacity-20">
           <defs>
             <pattern id={`miniGrid-${symbol}`} width="30" height="20" patternUnits="userSpaceOnUse">
