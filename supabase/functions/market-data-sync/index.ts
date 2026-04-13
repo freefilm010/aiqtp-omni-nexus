@@ -370,7 +370,12 @@ serve(async (req) => {
             });
           }
 
-          const prices = await response.json();
+          const rawPrices = await response.json();
+          const prices = Object.fromEntries(
+            Object.entries(rawPrices ?? {}).filter(([, data]: [string, any]) => {
+              return typeof data?.usd === 'number' && Number.isFinite(data.usd);
+            })
+          );
 
           // Update database with fresh prices (safe for public data)
           if (canWrite) {

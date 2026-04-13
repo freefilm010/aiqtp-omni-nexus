@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,7 +30,7 @@ const COINGECKO_IDS: Record<string, string> = {
   AVAX: "avalanche-2",
   DOT: "polkadot",
   LINK: "chainlink",
-  MATIC: "matic-network",
+  MATIC: "polygon-ecosystem-token",
   UNI: "uniswap",
   AAVE: "aave",
   ARB: "arbitrum",
@@ -53,6 +53,11 @@ const COINGECKO_IDS: Record<string, string> = {
 
 const MIN_POLL_MS = 30_000;
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
+const MARKET_PRICE_STALE_MS = 5 * 60 * 1000;
+
+const COINGECKO_SYMBOL_BY_ID = Object.fromEntries(
+  Object.entries(COINGECKO_IDS).map(([symbol, id]) => [id, symbol])
+) as Record<string, string>;
 
 // Cross-hook memory to prevent spamming the provider when multiple widgets mount.
 let lastGoodPriceMap: Record<string, MarketPrice> = {};
@@ -84,14 +89,47 @@ type MarketPricesResult = {
 const titleizeCoinId = (coinId: string) =>
   coinId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+const setPriceAliases = (
+  priceMap: Record<string, MarketPrice>,
+  symbol: string,
+  entry: MarketPrice,
+  aliases: string[] = []
+) => {
+  priceMap[symbol] = entry;
+  priceMap[`${symbol}/USD`] = entry;
+
+  for (const alias of aliases) {
+    const normalizedAlias = alias.toUpperCase();
+    if (!normalizedAlias || normalizedAlias === symbol) continue;
+    priceMap[normalizedAlias] = entry;
+    priceMap[`${normalizedAlias}/USD`] = entry;
+  }
+};
+
+const hasCoverageGaps = (priceMap: Record<string, MarketPrice>) =>
+  Object.keys(COINGECKO_IDS).some((symbol) => !priceMap[symbol]);
+
+const hasStaleConfiguredPrices = (priceMap: Record<string, MarketPrice>) => {
+  const now = Date.now();
+
+  return Object.keys(COINGECKO_IDS).some((symbol) => {
+    const price = priceMap[symbol];
+    if (!price) return true;
+
+    const ts = price.lastUpdate ? new Date(price.lastUpdate).getTime() : 0;
+    return ts <= 0 || now - ts > MARKET_PRICE_STALE_MS;
+  });
+};
+
 const buildPriceMapFromDbRows = (rows: any[]): Record<string, MarketPrice> => {
   const priceMap: Record<string, MarketPrice> = {};
 
   for (const row of rows) {
     const coinId = String(row.coin_id ?? "");
-    const mappedSymbol = Object.entries(COINGECKO_IDS).find(([, id]) => id === coinId)?.[0];
+    const mappedSymbol = COINGECKO_SYMBOL_BY_ID[coinId];
+    const dbSymbol = String(row.market_coins?.symbol ?? "").toUpperCase();
 
-    const symbol = String((row.market_coins?.symbol ?? mappedSymbol ?? "UNKNOWN")).toUpperCase();
+    const symbol = mappedSymbol || dbSymbol || "UNKNOWN";
     const name = String(row.market_coins?.name ?? (coinId ? titleizeCoinId(coinId) : symbol));
 
     const priceUsd = Number(row.price_usd ?? 0);
@@ -99,7 +137,7 @@ const buildPriceMapFromDbRows = (rows: any[]): Record<string, MarketPrice> => {
     const vol = Number(row.total_volume ?? 0);
     const marketCap = Number(row.market_cap ?? 0);
 
-    priceMap[symbol] = {
+    const entry: MarketPrice = {
       symbol,
       name,
       price: formatPrice(priceUsd),
@@ -113,8 +151,7 @@ const buildPriceMapFromDbRows = (rows: any[]): Record<string, MarketPrice> => {
       lastUpdate: new Date(row.last_updated || Date.now()),
     };
 
-    // Compatibility key used across the app
-    priceMap[`${symbol}/USD`] = priceMap[symbol];
+    setPriceAliases(priceMap, symbol, entry, dbSymbol ? [dbSymbol] : []);
   }
 
   return priceMap;
@@ -153,7 +190,7 @@ const fetchFromAPI = async (): Promise<
   | { ok: false; error: string; rateLimited: boolean; retryAfterMs?: number }
 > => {
   try {
-    const coinIds = Object.values(COINGECKO_IDS).slice(0, 20);
+    const coinIds = Object.values(COINGECKO_IDS);
 
     const { data, error } = await supabase.functions.invoke("market-data-sync", {
       body: {
@@ -179,15 +216,15 @@ const fetchFromAPI = async (): Promise<
     const priceMap: Record<string, MarketPrice> = {};
 
     for (const [coinId, priceData] of Object.entries(data.prices) as [string, any][]) {
-      const symbol = Object.entries(COINGECKO_IDS).find(([, id]) => id === coinId)?.[0];
-      if (!symbol) continue;
+      const symbol = COINGECKO_SYMBOL_BY_ID[coinId];
+      if (!symbol || typeof priceData?.usd !== "number" || Number.isNaN(priceData.usd)) continue;
 
       const change = Number(priceData.usd_24h_change ?? 0);
       const priceUsd = Number(priceData.usd ?? 0);
       const vol = Number(priceData.usd_24h_vol ?? 0);
       const marketCap = Number(priceData.usd_market_cap ?? 0);
 
-      priceMap[symbol] = {
+      const entry: MarketPrice = {
         symbol,
         name: titleizeCoinId(coinId),
         price: formatPrice(priceUsd),
@@ -201,7 +238,7 @@ const fetchFromAPI = async (): Promise<
         lastUpdate: new Date(),
       };
 
-      priceMap[`${symbol}/USD`] = priceMap[symbol];
+      setPriceAliases(priceMap, symbol, entry);
     }
 
     return { ok: true, priceMap };
@@ -214,17 +251,25 @@ const fetchFromAPI = async (): Promise<
 
 const loadMarketPrices = async (): Promise<MarketPricesResult> => {
   const dbMap = await fetchFromDatabase();
-  if (dbMap && Object.keys(dbMap).length > 0) {
+  const hasUsableDbCoverage =
+    Boolean(dbMap) &&
+    Object.keys(dbMap ?? {}).length > 0 &&
+    !hasCoverageGaps(dbMap ?? {}) &&
+    !hasStaleConfiguredPrices(dbMap ?? {});
+
+  if (hasUsableDbCoverage && dbMap) {
     lastGoodPriceMap = dbMap;
     cooldownUntilTs = 0;
     return { priceMap: dbMap, lastSyncError: null };
   }
 
+  const basePriceMap = dbMap && Object.keys(dbMap).length > 0 ? dbMap : lastGoodPriceMap;
+
   const now = Date.now();
   if (now < cooldownUntilTs) {
     const seconds = Math.max(1, Math.ceil((cooldownUntilTs - now) / 1000));
     return {
-      priceMap: lastGoodPriceMap,
+      priceMap: basePriceMap,
       lastSyncError: `Rate limited — retrying in ${seconds}s`,
     };
   }
@@ -232,7 +277,12 @@ const loadMarketPrices = async (): Promise<MarketPricesResult> => {
   const api = await fetchFromAPI();
 
   if (api.ok) {
-    if (Object.keys(api.priceMap).length > 0) lastGoodPriceMap = api.priceMap;
+    const mergedPriceMap = {
+      ...basePriceMap,
+      ...api.priceMap,
+    };
+
+    if (Object.keys(mergedPriceMap).length > 0) lastGoodPriceMap = mergedPriceMap;
     cooldownUntilTs = 0;
     return { priceMap: lastGoodPriceMap, lastSyncError: null };
   } else {
@@ -248,7 +298,7 @@ const loadMarketPrices = async (): Promise<MarketPricesResult> => {
     }
 
     return {
-      priceMap: lastGoodPriceMap,
+      priceMap: basePriceMap,
       lastSyncError: failure.error,
     };
   }
@@ -284,7 +334,6 @@ export const useMarketPrices = (pollIntervalMs: number = 30000) => {
     const entries = Object.values(prices);
     if (entries.length === 0) return false;
     const now = Date.now();
-    const FRESHNESS_THRESHOLD_MS = 5 * 60 * 1000;
     // Find newest lastUpdate across all prices
     let newestTs = 0;
     for (const p of entries) {
@@ -292,7 +341,7 @@ export const useMarketPrices = (pollIntervalMs: number = 30000) => {
       const ts = p.lastUpdate ? new Date(p.lastUpdate).getTime() : 0;
       if (ts > newestTs) newestTs = ts;
     }
-    return newestTs > 0 && (now - newestTs) < FRESHNESS_THRESHOLD_MS;
+    return newestTs > 0 && (now - newestTs) < MARKET_PRICE_STALE_MS;
   }, [prices]);
 
   const getPrice = useCallback(
