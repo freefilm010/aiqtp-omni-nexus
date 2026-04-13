@@ -143,104 +143,63 @@ const Footer = () => {
     <footer className="bg-gradient-hero text-white">
       <div className="max-w-7xl mx-auto px-4">
         {/* Risk Warning Banner */}
-        <div className="py-4 border-b border-white/10">
-          <div className="flex items-start gap-3 text-xs text-white/70 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+        <div className="py-3 border-b border-white/10">
+          <div className="flex items-start gap-2 text-[11px] text-white/70 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-2.5 md:p-3">
             <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
             <p>
-              <strong className="text-yellow-400">RISK WARNING:</strong> Trading cryptocurrencies, digital assets, and other financial instruments involves substantial risk. 
-              Past performance is not indicative of future results. Not financial advice. Never invest more than you can afford to lose.
+              <strong className="text-yellow-400">RISK WARNING:</strong> Trading cryptocurrencies and digital assets involves substantial risk. 
+              Past performance is not indicative of future results. Not financial advice.
             </p>
           </div>
         </div>
 
-        {/* Main Footer Navigation - Matches Header */}
-        <div className="py-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-          {/* Trading */}
+        {/* Main Footer Navigation — collapsible on mobile */}
+        <div className="py-6 md:py-12 grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8">
           <div>
-            <h3 className="text-sm font-semibold mb-4 text-gold">Trading</h3>
-            <ul className="space-y-2 text-xs text-white/70">
-              {tradingLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1.5">
-                    <link.icon className="h-3 w-3" />
-                    {link.label}
-                  </Link>
-                </li>
+            <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-gold">Trading</h3>
+            <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
+              {tradingLinks.slice(0, 6).map((link) => (
+                <li key={link.to}><Link to={link.to} className="hover:text-gold transition-smooth">{link.label}</Link></li>
               ))}
             </ul>
           </div>
-
-          {/* AI & Quantum */}
           <div>
-            <h3 className="text-sm font-semibold mb-4 text-gold">AI & Quantum</h3>
-            <ul className="space-y-2 text-xs text-white/70">
+            <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-gold">AI & Quantum</h3>
+            <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
               {aiQuantumLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1.5">
-                    <link.icon className="h-3 w-3" />
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.to}><Link to={link.to} className="hover:text-gold transition-smooth">{link.label}</Link></li>
               ))}
             </ul>
           </div>
-
-          {/* Strategies */}
           <div>
-            <h3 className="text-sm font-semibold mb-4 text-gold">Strategies</h3>
-            <ul className="space-y-2 text-xs text-white/70">
+            <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-gold">Strategies</h3>
+            <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
               {strategyLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1.5">
-                    <link.icon className="h-3 w-3" />
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.to}><Link to={link.to} className="hover:text-gold transition-smooth">{link.label}</Link></li>
               ))}
             </ul>
           </div>
-
-          {/* Assets */}
           <div>
-            <h3 className="text-sm font-semibold mb-4 text-gold">Assets</h3>
-            <ul className="space-y-2 text-xs text-white/70">
+            <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-gold">Assets</h3>
+            <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
               {assetLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1.5">
-                    <link.icon className="h-3 w-3" />
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.to}><Link to={link.to} className="hover:text-gold transition-smooth">{link.label}</Link></li>
               ))}
             </ul>
           </div>
-
-          {/* Info */}
           <div>
-            <h3 className="text-sm font-semibold mb-4 text-gold">Information</h3>
-            <ul className="space-y-2 text-xs text-white/70">
+            <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-gold">Information</h3>
+            <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
               {infoLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1.5">
-                    <link.icon className="h-3 w-3" />
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.to}><Link to={link.to} className="hover:text-gold transition-smooth">{link.label}</Link></li>
               ))}
             </ul>
           </div>
-
-          {/* More */}
           <div>
-            <h3 className="text-sm font-semibold mb-4 text-gold">More</h3>
-            <ul className="space-y-2 text-xs text-white/70">
+            <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-gold">More</h3>
+            <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
               {moreLinks.map((link) => (
-                <li key={link.to}>
-                  <Link to={link.to} className="hover:text-gold transition-smooth flex items-center gap-1.5">
-                    <link.icon className="h-3 w-3" />
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.to}><Link to={link.to} className="hover:text-gold transition-smooth">{link.label}</Link></li>
               ))}
               {user ? <AdminFooterLink /> : null}
             </ul>
@@ -385,8 +344,8 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Sitemap */}
-        <div className="py-4 border-t border-white/10">
+        {/* Sitemap — hidden on mobile since nav grid is already visible */}
+        <div className="hidden md:block py-4 border-t border-white/10">
           <h4 className="text-xs font-semibold text-white/50 mb-3">SITEMAP</h4>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-white/40">
             <Link to="/" className="hover:text-gold">Home</Link>
