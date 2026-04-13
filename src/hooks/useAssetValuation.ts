@@ -60,6 +60,10 @@ export interface AssetValuation {
 }
 
 const STALE_THRESHOLD_MS = 5 * 60 * 1000;
+/** Platform tokens are manually priced — use a much longer staleness window */
+const PLATFORM_STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
 
 /**
  * Converts any asset quantity to USD and USDT values using real-time market prices.
@@ -139,9 +143,10 @@ export function useAssetValuation() {
         marketPrice?.lastUpdate &&
           Date.now() - new Date(marketPrice.lastUpdate).getTime() > STALE_THRESHOLD_MS
       );
+      const platformStaleMs = PLATFORM_TOKENS.has(upper) ? PLATFORM_STALE_THRESHOLD_MS : STALE_THRESHOLD_MS;
       const platformPriceIsStale = Boolean(
         platformTokenPrice?.lastUpdated &&
-          Date.now() - new Date(platformTokenPrice.lastUpdated).getTime() > STALE_THRESHOLD_MS
+          Date.now() - new Date(platformTokenPrice.lastUpdated).getTime() > platformStaleMs
       );
 
       let priceUsd = 0;
