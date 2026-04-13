@@ -279,6 +279,22 @@ export const useMarketPrices = (pollIntervalMs: number = 30000) => {
   const lastSyncError = query.data?.lastSyncError ?? null;
   const loading = query.isLoading;
 
+  // Compute whether data is actually fresh (newest price < 5 min old)
+  const isFresh = useMemo(() => {
+    const entries = Object.values(prices);
+    if (entries.length === 0) return false;
+    const now = Date.now();
+    const FRESHNESS_THRESHOLD_MS = 5 * 60 * 1000;
+    // Find newest lastUpdate across all prices
+    let newestTs = 0;
+    for (const p of entries) {
+      if (p.symbol.includes("/")) continue; // skip duplicate keys
+      const ts = p.lastUpdate ? new Date(p.lastUpdate).getTime() : 0;
+      if (ts > newestTs) newestTs = ts;
+    }
+    return newestTs > 0 && (now - newestTs) < FRESHNESS_THRESHOLD_MS;
+  }, [prices]);
+
   const getPrice = useCallback(
     (symbol: string): MarketPrice | undefined => {
       const normalizedSymbol = symbol.toUpperCase().replace("/USD", "");
