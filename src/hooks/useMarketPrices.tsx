@@ -256,7 +256,7 @@ const loadMarketPrices = async (): Promise<MarketPricesResult> => {
 
 export const useMarketPrices = (pollIntervalMs: number = 30000) => {
   const [isLive, setIsLive] = useState(true);
-  const [dataFresh, setDataFresh] = useState(false);
+  
   const queryClient = useQueryClient();
 
   const effectivePollInterval = useMemo(
