@@ -312,10 +312,11 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
 
-        // Always try cache first
+        // Try cache first — only use if data is fresh (< CACHE_TTL_SECONDS)
         const cached = await getCachedPrices(ids);
-        if (cached && Object.keys(cached).length >= ids.length * 0.5) {
-          console.log('Returning cached prices');
+        const allFresh = cached && Object.values(cached).every((p: any) => p._age !== null && p._age < CACHE_TTL_SECONDS);
+        if (cached && allFresh && Object.keys(cached).length >= ids.length * 0.5) {
+          console.log('Returning fresh cached prices');
           return respond({ success: true, prices: cached, cached: true });
         }
 
