@@ -194,10 +194,17 @@ const CryptoFaucet = () => {
 
   useEffect(() => { loadClaims(); }, [loadClaims]);
 
-  // Poll for faucet claims (table removed from realtime publication for security)
+  // Realtime subscription for instant faucet claim updates
   useEffect(() => {
     if (!userId) return;
-    const interval = setInterval(loadClaims, 15000);
+    const channel = supabase
+      .channel("faucet-claims-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "faucet_claims", filter: `user_id=eq.${userId}` },
+        () => { loadClaims(); }
+      )
+      .subscribe();
     return () => clearInterval(interval);
   }, [userId, loadClaims]);
 
