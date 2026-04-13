@@ -101,28 +101,36 @@ export function useAssetValuation() {
   useEffect(() => {
     loadPlatformTokenPrices();
 
-    // Keep platform token feeds alive by calling the refresh endpoint every 45s
+    // Refresh platform token timestamps every 30s (edge function updates last_updated)
     const refreshInterval = setInterval(async () => {
       try {
         await supabase.functions.invoke("platform-token-refresh", { body: {} });
       } catch {
-        // silent — realtime will still pick up changes
+        // silent
       }
-    }, 10_000); // every 10 seconds for true real-time
+    }, 30_000);
+
+    // Debounced reload — prevents storm when multiple rows update at once
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedReload = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadPlatformTokenPrices();
+      }, 2000); // wait 2s after last change before refetching
+    };
 
     const channel = supabase
       .channel("platform-token-prices-live")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "token_price_feeds" },
-        () => {
-          loadPlatformTokenPrices();
-        }
+        debouncedReload
       )
       .subscribe();
 
     return () => {
       clearInterval(refreshInterval);
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [loadPlatformTokenPrices]);
