@@ -10,58 +10,62 @@ const BINANCE_SYMBOLS = [
   "APTUSDT","RNDRUSDT","FETUSDT","GRTUSDT","FILUSDT","PEPEUSDT","BONKUSDT","WIFUSDT"
 ];
 
+const SYMBOL_SET = new Set(BINANCE_SYMBOLS);
+
+async function fetchWithTimeout(url: string, ms = 5000): Promise<Response> {
+  return fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(ms) });
+}
+
+function toArray(data: unknown): any[] {
+  if (Array.isArray(data)) return data;
+  return [];
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Binance ticker/price endpoint - returns all prices in ~100ms
-    const symbols = JSON.stringify(BINANCE_SYMBOLS);
-    const url = `https://api.binance.com/api/v3/ticker/price?symbols=${encodeURIComponent(symbols)}`;
-    
-    const resp = await fetch(url, { 
-      headers: { "Accept": "application/json" },
-      signal: AbortSignal.timeout(5000),
-    });
+    // Strategy 1: fetch 24hr ticker (has price + change + volume in one call)
+    const url24hr = `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(BINANCE_SYMBOLS))}`;
+    const resp = await fetchWithTimeout(url24hr);
+    const raw = await resp.json();
+    const tickers = toArray(raw);
 
-    if (!resp.ok) {
-      // Fallback to individual ticker
-      const fallbackUrl = `https://api.binance.com/api/v3/ticker/price`;
-      const fallbackResp = await fetch(fallbackUrl, { signal: AbortSignal.timeout(5000) });
-      const allTickers = await fallbackResp.json();
-      const filtered = allTickers.filter((t: any) => BINANCE_SYMBOLS.includes(t.symbol));
-      
-      return new Response(JSON.stringify({ prices: filtered, ts: Date.now() }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (tickers.length > 0) {
+      const prices = tickers
+        .filter((t: any) => SYMBOL_SET.has(t.symbol))
+        .map((t: any) => ({
+          symbol: t.symbol,
+          price: parseFloat(t.lastPrice || t.price || "0"),
+          change24h: parseFloat(t.priceChangePercent || "0"),
+          volume: parseFloat(t.quoteVolume || "0"),
+          high24h: parseFloat(t.highPrice || "0"),
+          low24h: parseFloat(t.lowPrice || "0"),
+        }));
+
+      return new Response(JSON.stringify({ prices, ts: Date.now() }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-cache" },
       });
     }
 
-    const data = await resp.json();
-    
-    // Also fetch 24h change data
-    const changeUrl = `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(symbols)}`;
-    let changeData: any[] = [];
-    try {
-      const changeResp = await fetch(changeUrl, { signal: AbortSignal.timeout(5000) });
-      if (changeResp.ok) changeData = await changeResp.json();
-    } catch { /* non-critical */ }
-
-    const changeMap = new Map(changeData.map((c: any) => [c.symbol, c]));
-
-    const prices = data.map((t: any) => {
-      const change = changeMap.get(t.symbol);
-      return {
+    // Strategy 2: fallback to all tickers price-only endpoint
+    const fallbackResp = await fetchWithTimeout("https://api.binance.com/api/v3/ticker/price");
+    const fallbackRaw = await fallbackResp.json();
+    const allTickers = toArray(fallbackRaw);
+    const filtered = allTickers
+      .filter((t: any) => SYMBOL_SET.has(t.symbol))
+      .map((t: any) => ({
         symbol: t.symbol,
-        price: parseFloat(t.price),
-        change24h: change ? parseFloat(change.priceChangePercent) : 0,
-        volume: change ? parseFloat(change.quoteVolume) : 0,
-        high24h: change ? parseFloat(change.highPrice) : 0,
-        low24h: change ? parseFloat(change.lowPrice) : 0,
-      };
-    });
+        price: parseFloat(t.price || "0"),
+        change24h: 0,
+        volume: 0,
+        high24h: 0,
+        low24h: 0,
+      }));
 
-    return new Response(JSON.stringify({ prices, ts: Date.now() }), {
+    return new Response(JSON.stringify({ prices: filtered, ts: Date.now() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-cache" },
     });
   } catch (err) {
