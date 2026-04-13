@@ -113,7 +113,7 @@ export function useWebSocketPrices() {
 
             updated[symbol] = entry;
             updated[`${symbol}/USD`] = entry;
-          }
+          });
 
           return { priceMap: updated, lastSyncError: null };
         }
