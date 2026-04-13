@@ -38,81 +38,26 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
   const { getPortfolioValuation } = useAssetValuation();
   const { items: valuedItems } = getPortfolioValuation(balances);
   const realValuedItems = valuedItems.filter((item) => item.quantity > 0 && !item.isTestnet);
+  const freshValuedItems = realValuedItems.filter((item) => !item.isStale && !item.priceUnavailable);
+  const staleOrMissingCount = realValuedItems.filter((item) => item.isStale || item.priceUnavailable).length;
   const totalTokenTypes = realValuedItems.length;
-  const totalUsd = realValuedItems.reduce((sum, item) => sum + item.valueUsd, 0);
+  const totalUsd = freshValuedItems.reduce((sum, item) => sum + item.valueUsd, 0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-
-  useEffect(() => {
-    const loadLeaderboard = async () => {
-      const { data } = await supabase
-        .from("faucet_leaderboard")
-        .select("user_id, display_name, total_claims, active_days, arb_profit, arb_trades, invest_total, invest_txns, strategies_created, strategies_graduated, factors_created, composite_score")
-        .order("composite_score", { ascending: false })
-        .limit(10);
-      if (data) setLeaderboard(data as LeaderboardEntry[]);
-    };
-    loadLeaderboard();
-
-    // Realtime subscription for leaderboard updates
-    const channel = supabase
-      .channel("faucet-leaderboard-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "faucet_claims" },
-        () => { loadLeaderboard(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
-
-  const handleReferral = () => {
-    if (!userId) { toast.error("Sign in first"); return; }
-    const link = `${window.location.origin}/faucet?ref=${userId.slice(0, 8)}`;
-    navigator.clipboard.writeText(link);
-    toast.success("Referral link copied!", { description: "Friends get 2x first claim bonus" });
-  };
-
-  return (
-    <div className="space-y-3">
-      {/* Referral Card */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 to-transparent">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Share2 className="h-4 w-4 text-cyan-500" />
-                <div>
-                  <p className="font-semibold text-xs">Refer & Earn</p>
-                  <p className="text-[9px] text-muted-foreground">2x bonus for friends</p>
-                </div>
-              </div>
-              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={handleReferral}>
-                Copy Link
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Balances with USD/USDT */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-        <Card>
-          <CardHeader className="pb-2 px-3 pt-3">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Wallet className="h-4 w-4 text-primary" />
-              Claimed Assets
+...
               {totalTokenTypes > 0 && (
                 <Badge variant="secondary" className="text-[9px] ml-auto">{totalTokenTypes}</Badge>
               )}
             </CardTitle>
-            {totalUsd > 0 && (
+            {realValuedItems.length > 0 && (
               <div className="mt-1 space-y-0.5">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-3 w-3 text-primary" />
                   <span className="text-[10px] text-muted-foreground">Current claimed value</span>
                   <span className="text-xs font-bold text-primary">{formatUsdValue(totalUsd)}</span>
                 </div>
-                <p className="text-[9px] text-muted-foreground">Live value of claimed real assets • excludes test assets</p>
+                <p className="text-[9px] text-muted-foreground">
+                  Fresh value only • excludes test assets{staleOrMissingCount > 0 ? ` • ${staleOrMissingCount} stale/unpriced` : ""}
+                </p>
               </div>
             )}
           </CardHeader>
@@ -131,7 +76,8 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                     .sort((a, b) => b.valueUsd - a.valueUsd)
                     .map((item) => {
                       const token = tokens.find(t => t.symbol === item.symbol);
-                      const unitPrice = item.quantity > 0 ? item.valueUsd / item.quantity : 0;
+                      const hasFreshPrice = !item.isStale && !item.priceUnavailable;
+                      const unitPrice = item.priceUsd;
                       return (
                         <div key={item.symbol} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
                           <div className="flex items-center gap-1 w-14">
@@ -141,14 +87,14 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                           <span className="font-mono text-[10px] text-right w-12">
                             {formatQuantity(item.quantity)}
                           </span>
-                          <span className="font-mono text-[10px] text-primary text-right w-14">
-                            {formatUsdValue(unitPrice)}
+                          <span className="font-mono text-[10px] text-right w-14 text-muted-foreground">
+                            {item.priceUnavailable ? "No data" : item.isStale ? "Stale" : formatUsdValue(unitPrice)}
                           </span>
-                          <span className="font-mono text-[10px] text-green-500 text-right w-14">
-                            {formatUsdValue(item.valueUsd)}
+                          <span className={`font-mono text-[10px] text-right w-14 ${hasFreshPrice ? "text-green-500" : "text-muted-foreground"}`}>
+                            {item.priceUnavailable ? "—" : item.isStale ? "Stale" : formatUsdValue(item.valueUsd)}
                           </span>
                           <span className="font-mono text-[10px] text-muted-foreground text-right w-14">
-                            {formatUsdValue(item.valueUsdt)}
+                            {item.priceUnavailable ? "—" : item.isStale ? "Stale" : formatUsdValue(item.valueUsdt)}
                           </span>
                         </div>
                       );

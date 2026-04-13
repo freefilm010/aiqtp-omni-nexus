@@ -117,12 +117,18 @@ const FaucetTokenList = ({
                                 <Timer className="h-2.5 w-2.5" />
                                 {token.claimInterval}h
                               </span>
-                              <span className="text-[10px] text-muted-foreground">
-                                @ {formatUsdValue(valuation.priceUsd)}
-                              </span>
+                              {valuation.priceUnavailable ? (
+                                <span className="text-[10px] text-muted-foreground">No live price</span>
+                              ) : valuation.isStale ? (
+                                <span className="text-[10px] text-muted-foreground">Stale price</span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">
+                                  @ {formatUsdValue(valuation.priceUsd)}
+                                </span>
+                              )}
                               {balance > 0 && (
                                 <span className="text-[10px] text-primary font-medium">
-                                  {formatQuantity(balance)} · {formatUsdValue(valuation.priceUsd * balance)}
+                                  {formatQuantity(balance)} · {valuation.priceUnavailable ? "No live value" : valuation.isStale ? "Stale value" : formatUsdValue(valuation.priceUsd * balance)}
                                 </span>
                               )}
                             </div>
