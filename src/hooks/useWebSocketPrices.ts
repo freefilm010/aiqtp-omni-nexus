@@ -90,9 +90,9 @@ export function useWebSocketPrices() {
 
           const updated = { ...old.priceMap };
 
-          for (const [binanceSymbol, tick] of ticks) {
+          ticks.forEach((tick, binanceSymbol) => {
             const symbol = BINANCE_TO_SYMBOL[binanceSymbol];
-            if (!symbol) continue;
+            if (!symbol) return;
 
             const existing = updated[symbol];
             const now = new Date();
