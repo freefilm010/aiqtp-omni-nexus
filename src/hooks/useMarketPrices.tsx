@@ -322,7 +322,12 @@ export const useMarketPrices = (pollIntervalMs: number = 30000) => {
     prices,
     getPrice,
     getAllPrices,
-    isLive,
+    /** true when polling is active AND data is fresh (< 5 min old) */
+    isLive: isLive && isFresh,
+    /** true when polling is active (user hasn't paused) */
+    isPolling: isLive,
+    /** true when newest price data is < 5 min old */
+    isFresh,
     toggleLive,
     lastSyncError,
     loading,
