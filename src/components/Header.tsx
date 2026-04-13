@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import MobileMenu from "@/components/MobileMenu";
 import { 
   Menu, 
   X, 
@@ -491,182 +492,20 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-white/20 max-h-[80vh] overflow-y-auto">
-            <nav className="space-y-1">
-              {/* Home */}
-              <Link 
-                to="/" 
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Home className="h-4 w-4" />
-                Home
-              </Link>
-
-              {/* Assets & Wallets */}
-              <Link 
-                to="/wallet-assets" 
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Wallet className="h-4 w-4" />
-                Assets & Wallets
-              </Link>
-              <AdminMobileMenuItems onClose={() => setIsMenuOpen(false)} />
-
-              {/* Trading Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Trading</div>
-                {tradingLinks.map((link) => (
-                  <Link 
-                    key={link.to}
-                    to={link.to} 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* Agents Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Agents</div>
-                {agentLinks.map((link) => (
-                  <Link 
-                    key={link.to}
-                    to={link.to} 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* AI & Quantum Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">AI & Quantum</div>
-                {aiQuantumLinks.map((link) => (
-                  <Link 
-                    key={link.to}
-                    to={link.to} 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* Strategies Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Strategies</div>
-                {strategyLinks.map((link) => (
-                  <Link 
-                    key={link.to}
-                    to={link.to} 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* Assets Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Assets</div>
-                {assetLinks.map((link) => (
-                  <Link 
-                    key={link.to}
-                    to={link.to} 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* Info Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Information</div>
-                {infoLinks.map((link) => (
-                  <Link 
-                    key={link.to}
-                    to={link.to} 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* More Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">More</div>
-                {moreLinks.map((link) => (
-                  <Link 
-                    key={link.to}
-                    to={link.to} 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* Popouts Section */}
-              <div className="pt-2">
-                <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">Multi-Monitor</div>
-                {popoutLinks.map((link) => (
-                  <button 
-                    key={link.tool}
-                    onClick={() => { openPopout(link.tool); setIsMenuOpen(false); }}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm w-full text-left"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    {link.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* User Actions */}
-              <div className="pt-4 border-t border-white/20 mt-4">
-                {user ? (
-                  <div className="space-y-1">
-                    <div className="px-3 py-2 text-sm text-muted-foreground">{user.email}</div>
-                    <button 
-                      onClick={() => { signOut(); setIsMenuOpen(false); }}
-                      className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground text-sm w-full text-left"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Log Out
-                    </button>
-                  </div>
-                ) : (
-                  <Link 
-                    to="/auth" 
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent text-foreground"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <User className="h-4 w-4" />
-                    Sign In / Get Started
-                  </Link>
-                )}
-              </div>
-            </nav>
-          </div>
+          <MobileMenu 
+            user={user}
+            signOut={signOut}
+            onClose={() => setIsMenuOpen(false)}
+            openPopout={openPopout}
+            tradingLinks={tradingLinks}
+            agentLinks={agentLinks}
+            aiQuantumLinks={aiQuantumLinks}
+            strategyLinks={strategyLinks}
+            assetLinks={assetLinks}
+            infoLinks={infoLinks}
+            moreLinks={moreLinks}
+            popoutLinks={popoutLinks}
+          />
         )}
       </div>
     </header>
