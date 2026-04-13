@@ -17,6 +17,7 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import MobileMenu from "@/components/MobileMenu";
 import { 
   Menu, 
   X, 
