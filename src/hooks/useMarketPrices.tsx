@@ -53,7 +53,7 @@ const COINGECKO_IDS: Record<string, string> = {
 
 const MIN_POLL_MS = 30_000;
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
-const MARKET_PRICE_STALE_MS = 5 * 60 * 1000;
+const MARKET_PRICE_STALE_MS = 60 * 1000; // 1 minute
 
 const COINGECKO_SYMBOL_BY_ID = Object.fromEntries(
   Object.entries(COINGECKO_IDS).map(([symbol, id]) => [id, symbol])

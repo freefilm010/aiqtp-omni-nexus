@@ -59,9 +59,9 @@ export interface AssetValuation {
   isTestnet: boolean;
 }
 
-const STALE_THRESHOLD_MS = 5 * 60 * 1000;
-/** Platform tokens are manually priced — use a much longer staleness window */
-const PLATFORM_STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const STALE_THRESHOLD_MS = 60 * 1000; // 1 minute
+/** Platform tokens use same staleness window — they have real-time feeds */
+const PLATFORM_STALE_THRESHOLD_MS = 60 * 1000; // 1 minute
 
 const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
 
