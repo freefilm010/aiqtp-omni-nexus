@@ -26,6 +26,7 @@ const USDT_USD_RATIO = 1.0;
 interface PlatformTokenFeed {
   price: number;
   change24h: number | null;
+  lastUpdated: string | null;
 }
 
 export interface AssetValuation {
