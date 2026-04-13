@@ -1,0 +1,1 @@
+ALTER PUBLICATION supabase_realtime DROP TABLE public.auto_invest_engine;
