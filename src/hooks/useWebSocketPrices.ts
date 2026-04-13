@@ -1,54 +1,25 @@
 /**
- * useWebSocketPrices — Binance WebSocket for sub-second price updates.
+ * useWebSocketPrices — Polls Binance via edge function every 2s for near-real-time prices.
+ * Direct WebSocket to Binance is blocked by browser CSP, so we proxy through edge functions.
  * Patches React Query cache directly for instant UI updates.
  */
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { connectBinanceStream, type MarketTick } from "@/lib/market/marketStream";
+import { supabase } from "@/integrations/supabase/client";
 
-// Map Binance symbols to our internal symbols
 const BINANCE_TO_SYMBOL: Record<string, string> = {
-  BTCUSDT: "BTC",
-  ETHUSDT: "ETH",
-  SOLUSDT: "SOL",
-  BNBUSDT: "BNB",
-  XRPUSDT: "XRP",
-  ADAUSDT: "ADA",
-  DOGEUSDT: "DOGE",
-  AVAXUSDT: "AVAX",
-  DOTUSDT: "DOT",
-  LINKUSDT: "LINK",
-  MATICUSDT: "MATIC",
-  UNIUSDT: "UNI",
-  AAVEUSDT: "AAVE",
-  ARBUSDT: "ARB",
-  OPUSDT: "OP",
-  LTCUSDT: "LTC",
-  NEARUSDT: "NEAR",
-  ATOMUSDT: "ATOM",
-  FTMUSDT: "FTM",
-  INJUSDT: "INJ",
-  SUIUSDT: "SUI",
-  APTUSDT: "APT",
-  RNDRUSDT: "RNDR",
-  FETUSDT: "FET",
-  GRTUSDT: "GRT",
-  FILUSDT: "FIL",
-  PEPEUSDT: "PEPE",
-  BONKUSDT: "BONK",
+  BTCUSDT: "BTC", ETHUSDT: "ETH", SOLUSDT: "SOL", BNBUSDT: "BNB",
+  XRPUSDT: "XRP", ADAUSDT: "ADA", DOGEUSDT: "DOGE", AVAXUSDT: "AVAX",
+  DOTUSDT: "DOT", LINKUSDT: "LINK", MATICUSDT: "MATIC", UNIUSDT: "UNI",
+  AAVEUSDT: "AAVE", ARBUSDT: "ARB", OPUSDT: "OP", LTCUSDT: "LTC",
+  NEARUSDT: "NEAR", ATOMUSDT: "ATOM", FTMUSDT: "FTM", INJUSDT: "INJ",
+  SUIUSDT: "SUI", APTUSDT: "APT", RNDRUSDT: "RNDR", FETUSDT: "FET",
+  GRTUSDT: "GRT", FILUSDT: "FIL", PEPEUSDT: "PEPE", BONKUSDT: "BONK",
   WIFUSDT: "WIF",
 };
 
-const STREAMS = Object.keys(BINANCE_TO_SYMBOL).map(
-  (s) => `${s.toLowerCase()}@trade`
-);
-
 const formatPrice = (price: number): string => {
-  if (price >= 1000)
-    return price.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (price >= 1) return price.toFixed(2);
   if (price >= 0.01) return price.toFixed(4);
   return price.toFixed(8);
@@ -61,89 +32,83 @@ const formatVolume = (vol: number): string => {
   return `$${vol.toFixed(0)}`;
 };
 
-/**
- * Connects to Binance WebSocket and patches the marketPrices cache
- * in real-time. Batches updates every 250ms to prevent render thrash
- * while maintaining sub-second freshness.
- */
+const POLL_INTERVAL = 2000; // 2 seconds
+
 export function useWebSocketPrices() {
   const queryClient = useQueryClient();
-  const bufferRef = useRef<Map<string, MarketTick>>(new Map());
-  const rafRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeRef = useRef(true);
 
   useEffect(() => {
-    const flush = () => {
-      if (bufferRef.current.size === 0) {
-        rafRef.current = null;
-        return;
-      }
+    activeRef.current = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-      const ticks = new Map(bufferRef.current);
-      bufferRef.current.clear();
-      rafRef.current = null;
+    const fetchPrices = async () => {
+      if (!activeRef.current) return;
 
-      // Patch the React Query cache directly — no refetch needed
-      queryClient.setQueryData(
-        ["marketPrices"],
-        (old: { priceMap: Record<string, any>; lastSyncError: string | null } | undefined) => {
-          if (!old) return old;
+      try {
+        const { data, error } = await supabase.functions.invoke("binance-prices", {
+          body: {},
+        });
 
-          const updated = { ...old.priceMap };
-
-          ticks.forEach((tick, binanceSymbol) => {
-            const symbol = BINANCE_TO_SYMBOL[binanceSymbol];
-            if (!symbol) return;
-
-            const existing = updated[symbol];
-            const now = new Date();
-
-            const entry = {
-              symbol,
-              name: existing?.name ?? symbol,
-              price: formatPrice(tick.price),
-              priceNumeric: tick.price,
-              change: existing?.change ?? "+0.00%",
-              changePercent: existing?.changePercent ?? 0,
-              volume: existing?.volume ?? formatVolume(0),
-              volumeNumeric: existing?.volumeNumeric ?? 0,
-              marketCap: existing?.marketCap ?? 0,
-              trend: existing?.trend ?? ("up" as const),
-              lastUpdate: now,
-            };
-
-            updated[symbol] = entry;
-            updated[`${symbol}/USD`] = entry;
-          });
-
-          return { priceMap: updated, lastSyncError: null };
+        if (error || !data?.prices) {
+          console.warn("[PriceFeed] Edge function error:", error);
+          return;
         }
-      );
-    };
 
-    const scheduleFlush = () => {
-      if (!rafRef.current) {
-        rafRef.current = setTimeout(flush, 250); // 250ms batching — 4 updates/sec
+        const now = new Date();
+
+        queryClient.setQueryData(
+          ["marketPrices"],
+          (old: { priceMap: Record<string, any>; lastSyncError: string | null } | undefined) => {
+            if (!old) return old;
+            const updated = { ...old.priceMap };
+
+            for (const tick of data.prices) {
+              const symbol = BINANCE_TO_SYMBOL[tick.symbol];
+              if (!symbol) continue;
+
+              const existing = updated[symbol];
+              const changePercent = tick.change24h ?? existing?.changePercent ?? 0;
+              const changeStr = changePercent >= 0 ? `+${changePercent.toFixed(2)}%` : `${changePercent.toFixed(2)}%`;
+
+              const entry = {
+                symbol,
+                name: existing?.name ?? symbol,
+                price: formatPrice(tick.price),
+                priceNumeric: tick.price,
+                change: changeStr,
+                changePercent,
+                volume: tick.volume ? formatVolume(tick.volume) : existing?.volume ?? "$0",
+                volumeNumeric: tick.volume ?? existing?.volumeNumeric ?? 0,
+                marketCap: existing?.marketCap ?? 0,
+                trend: changePercent >= 0 ? "up" as const : "down" as const,
+                lastUpdate: now,
+                high24h: tick.high24h ?? existing?.high24h,
+                low24h: tick.low24h ?? existing?.low24h,
+              };
+
+              updated[symbol] = entry;
+              updated[`${symbol}/USD`] = entry;
+            }
+
+            return { priceMap: updated, lastSyncError: null };
+          }
+        );
+      } catch (err) {
+        console.warn("[PriceFeed] Fetch error:", err);
+      }
+
+      if (activeRef.current) {
+        timer = setTimeout(fetchPrices, POLL_INTERVAL);
       }
     };
 
-    const cleanup = connectBinanceStream({
-      streams: STREAMS,
-      onTick: (tick) => {
-        bufferRef.current.set(tick.symbol, tick);
-        scheduleFlush();
-      },
-      onError: (err) => {
-        console.warn("[WebSocket] Binance stream error:", err);
-      },
-      onReconnect: () => {
-        console.info("[WebSocket] Reconnecting to Binance...");
-      },
-      maxRetries: 20,
-    });
+    // Start after a brief delay to let initial data load
+    timer = setTimeout(fetchPrices, 1000);
 
     return () => {
-      if (rafRef.current) clearTimeout(rafRef.current);
-      cleanup();
+      activeRef.current = false;
+      if (timer) clearTimeout(timer);
     };
   }, [queryClient]);
 }
