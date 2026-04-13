@@ -51,7 +51,7 @@ const COINGECKO_IDS: Record<string, string> = {
   FIL: "filecoin",
 };
 
-const MIN_POLL_MS = 30_000;
+const MIN_POLL_MS = 10_000; // 10s fallback polling — WebSocket is primary
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
 const MARKET_PRICE_STALE_MS = 5 * 1000; // 5 seconds — real-time standard
 
