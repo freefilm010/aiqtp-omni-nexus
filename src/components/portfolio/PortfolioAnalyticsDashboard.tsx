@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,6 +72,8 @@ const PortfolioAnalyticsDashboard = () => {
   const [portfolio, setPortfolio] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const { getValuation } = useAssetValuation();
+  const getValuationRef = useRef(getValuation);
+  getValuationRef.current = getValuation;
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -87,9 +89,8 @@ const PortfolioAnalyticsDashboard = () => {
 
       if (holdings && holdings.length > 0) {
         const positions: Position[] = holdings.map(h => {
-          const val = getValuation(h.symbol, Number(h.quantity));
+          const val = getValuationRef.current(h.symbol, Number(h.quantity));
           const meta = ASSET_META[h.symbol] || { sector: 'Other', assetClass: 'crypto' as const, region: 'Global' };
-          // Use stored value_usd / quantity as cost basis if available, otherwise use current price (no fake P&L)
           const storedValuePerUnit = Number(h.quantity) > 0 && Number(h.value_usd) > 0
             ? Number(h.value_usd) / Number(h.quantity)
             : val.priceUsd;
@@ -109,7 +110,7 @@ const PortfolioAnalyticsDashboard = () => {
       setLoading(false);
     };
     fetchPortfolio();
-  }, [getValuation]);
+  }, []); // Only fetch once on mount — prices update via live feeds
 
   if (loading) {
     return (
