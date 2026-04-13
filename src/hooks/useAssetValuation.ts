@@ -26,6 +26,7 @@ const USDT_USD_RATIO = 1.0;
 interface PlatformTokenFeed {
   price: number;
   change24h: number | null;
+  lastUpdated: string | null;
 }
 
 export interface AssetValuation {
@@ -43,6 +44,8 @@ export interface AssetValuation {
   /** true when this is a testnet/faucet token with $0 value */
   isTestnet: boolean;
 }
+
+const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 /**
  * Converts any asset quantity to USD and USDT values using real-time market prices.
@@ -64,7 +67,11 @@ export function useAssetValuation() {
         Object.fromEntries(
           Object.entries(result.data).map(([symbol, feed]) => [
             symbol,
-            { price: feed.price, change24h: feed.change24hPercent },
+            {
+              price: feed.price,
+              change24h: feed.change24hPercent,
+              lastUpdated: feed.lastUpdated,
+            },
           ])
         )
       );
@@ -95,14 +102,33 @@ export function useAssetValuation() {
   const getValuation = useCallback(
     (symbol: string, quantity: number): AssetValuation => {
       const upper = symbol.toUpperCase();
-      
-      // Testnet tokens (t-prefixed) have $0 value — they are not real assets
+
       if (TESTNET_TOKENS.has(upper)) {
-        return { symbol: upper, quantity, priceUsd: 0, valueUsd: 0, valueUsdt: 0, change24h: null, isLive: false, isStale: false, priceUnavailable: false, isTestnet: true };
+        return {
+          symbol: upper,
+          quantity,
+          priceUsd: 0,
+          valueUsd: 0,
+          valueUsdt: 0,
+          change24h: null,
+          isLive: false,
+          isStale: false,
+          priceUnavailable: false,
+          isTestnet: true,
+        };
       }
 
       const marketPrice = getPrice(upper);
       const platformTokenPrice = platformTokenPrices[upper];
+
+      const marketPriceIsStale = Boolean(
+        marketPrice?.lastUpdate &&
+          Date.now() - new Date(marketPrice.lastUpdate).getTime() > STALE_THRESHOLD_MS
+      );
+      const platformPriceIsStale = Boolean(
+        platformTokenPrice?.lastUpdated &&
+          Date.now() - new Date(platformTokenPrice.lastUpdated).getTime() > STALE_THRESHOLD_MS
+      );
 
       let priceUsd = 0;
       let change24h: number | null = null;
@@ -111,14 +137,13 @@ export function useAssetValuation() {
       if (marketPrice) {
         priceUsd = marketPrice.priceNumeric;
         change24h = marketPrice.changePercent;
-        live = isLive;
+        live = isLive && !marketPriceIsStale;
       } else if (platformTokenPrice) {
         priceUsd = platformTokenPrice.price;
         change24h = platformTokenPrice.change24h;
-        live = true;
+        live = !platformPriceIsStale;
       }
 
-      // Stablecoins default to $1
       if (STABLECOINS.has(upper) && priceUsd === 0) {
         priceUsd = 1;
       }
@@ -126,17 +151,20 @@ export function useAssetValuation() {
       const valueUsd = quantity * priceUsd;
       const valueUsdt = valueUsd / USDT_USD_RATIO;
       const priceUnavailable = priceUsd === 0 && !STABLECOINS.has(upper);
+      const isStale = marketPrice ? marketPriceIsStale : platformPriceIsStale;
 
-      // Detect staleness: if last market price update is older than 5 minutes
-      let isStale = false;
-      if (marketPrice) {
-        const lastUpdate = marketPrice.lastUpdate;
-        if (lastUpdate && (Date.now() - new Date(lastUpdate).getTime()) > 5 * 60 * 1000) {
-          isStale = true;
-        }
-      }
-
-      return { symbol: upper, quantity, priceUsd, valueUsd, valueUsdt, change24h, isLive: live, isStale, priceUnavailable, isTestnet: false };
+      return {
+        symbol: upper,
+        quantity,
+        priceUsd,
+        valueUsd,
+        valueUsdt,
+        change24h,
+        isLive: live,
+        isStale,
+        priceUnavailable,
+        isTestnet: false,
+      };
     },
     [getPrice, isLive, platformTokenPrices]
   );

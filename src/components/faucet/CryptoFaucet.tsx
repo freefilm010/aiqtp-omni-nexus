@@ -283,7 +283,13 @@ const CryptoFaucet = () => {
     // Convert token amount to USD value using configured live price sources only
     const valuation = getValuation(tokenSymbol, amount);
     const usdValue = valuation.valueUsd;
-    if (usdValue <= 0 || valuation.isTestnet || valuation.priceUnavailable) return;
+    if (
+      usdValue <= 0 ||
+      valuation.isTestnet ||
+      valuation.priceUnavailable ||
+      valuation.isStale ||
+      !valuation.isLive
+    ) return;
     
     const deployAmount = usdValue * (reinvestPercent / 100);
     if (deployAmount <= 0) return;
@@ -446,7 +452,7 @@ const CryptoFaucet = () => {
   const { items: claimedAssetItems } = getPortfolioValuation(balances);
   const ownedRealTokens = claimedAssetItems.filter(item => item.quantity > 0 && !item.isTestnet).length;
   const currentClaimedValue = claimedAssetItems
-    .filter(item => item.quantity > 0 && !item.isTestnet)
+    .filter(item => item.quantity > 0 && !item.isTestnet && !item.isStale && !item.priceUnavailable && item.isLive)
     .reduce((sum, item) => sum + item.valueUsd, 0);
 
   return (
