@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from "react";
 import { useRealtimePortfolio } from "@/hooks/useRealtimePortfolio";
 import { useRealtimeMarketPrices } from "@/hooks/useRealtimeMarketPrices";
+import { useWebSocketPrices } from "@/hooks/useWebSocketPrices";
 import { usePortfolioSnapshot } from "@/hooks/usePortfolioSnapshot";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -129,7 +130,7 @@ const AuthDeepLinkHandler = () => {
   return null;
 };
 /** Mounts global realtime subscriptions inside provider tree */
-const RealtimeSync = () => { useRealtimePortfolio(); useRealtimeMarketPrices(); usePortfolioSnapshot(); return null; };
+const RealtimeSync = () => { useRealtimePortfolio(); useRealtimeMarketPrices(); useWebSocketPrices(); usePortfolioSnapshot(); return null; };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
