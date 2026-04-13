@@ -754,7 +754,7 @@ export type Database = {
           total_profit?: number
           total_reinvested?: number
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           ai_confidence_score?: number | null
