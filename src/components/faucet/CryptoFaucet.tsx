@@ -283,12 +283,170 @@ const CryptoFaucet = () => {
     // Convert token amount to USD value using configured live price sources only
     const valuation = getValuation(tokenSymbol, amount);
     const usdValue = valuation.valueUsd;
-    if (usdValue <= 0 || valuation.isTestnet || valuation.priceUnavailable || valuation.isStale || !valuation.isLive) return;
-...
+    if (usdValue <= 0 || valuation.isTestnet || valuation.priceUnavailable) return;
+    
+    const deployAmount = usdValue * (reinvestPercent / 100);
+    if (deployAmount <= 0) return;
+
+    const deploymentPlan = buildEngineDeploymentPlan({
+      strategy: compoundEngine.strategy,
+      growthTargetPercent: compoundEngine.growth_target_percent,
+      stableTargetPercent: compoundEngine.stable_target_percent,
+    });
+
+    for (const slice of deploymentPlan) {
+      const stratAmount = deployAmount * (slice.pct / 100);
+      if (stratAmount <= 0) continue;
+      
+      // Create allocation record for tracking
+      await supabase.from("auto_invest_allocations").insert({
+        engine_id: compoundEngine.id,
+        asset_symbol: tokenSymbol,
+        asset_name: slice.name,
+        asset_class: slice.allocationType === 'stable' ? 'stable' : 'strategy',
+        allocation_type: slice.allocationType,
+        target_percent: slice.pct,
+        current_percent: slice.pct,
+        value_usd: stratAmount,
+        quantity: amount * (slice.pct / 100),
+        entry_price: valuation.priceUsd,
+        current_price: valuation.priceUsd,
+        is_active: true,
+      });
+      
+      // Log transaction
+      await supabase.from("auto_invest_transactions").insert({
+        engine_id: compoundEngine.id,
+        transaction_type: 'reinvest',
+        amount_usd: stratAmount,
+        asset_symbol: tokenSymbol,
+        side: 'buy',
+        price: valuation.priceUsd,
+        quantity: amount * (slice.pct / 100),
+        status: 'completed',
+        ai_triggered: true,
+        ai_reason: `Auto-compound ${tokenSymbol} → ${slice.name} (${slice.pct}%) | $${usdValue.toFixed(2)} total`,
+      });
+    }
+
+    await supabase.rpc('increment_engine_totals', {
+      p_engine_id: compoundEngine.id,
+      p_capital_delta: deployAmount,
+      p_deployed_delta: deployAmount,
+    });
+
+    await loadCompoundEngine();
+  }, [compoundEngine, reinvestPercent, loadCompoundEngine, getValuation]);
+
+  useEffect(() => { autoCompoundRef.current = autoCompound; }, [autoCompound]);
+  useEffect(() => { autoClaimRef.current = autoClaim; }, [autoClaim]);
+
+  const isOnCooldown = useCallback((token: FaucetToken): boolean => {
+    const last = lastClaimTimes[token.id];
+    if (!last) return false;
+    return (Date.now() - last.getTime()) < (token.claimInterval * 3600000);
+  }, [lastClaimTimes]);
+
+  const getCooldownRemaining = useCallback((token: FaucetToken): string => {
+    const last = lastClaimTimes[token.id];
+    if (!last) return 'Ready!';
+    const remaining = (token.claimInterval * 3600000) - (Date.now() - last.getTime());
+    if (remaining <= 0) return 'Ready!';
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    return `${h}h ${m}m`;
+  }, [lastClaimTimes]);
+
+  const getCooldownProgress = useCallback((token: FaucetToken): number => {
+    const last = lastClaimTimes[token.id];
+    if (!last) return 100;
+    const total = token.claimInterval * 3600000;
+    const elapsed = Date.now() - last.getTime();
+    return Math.min(100, (elapsed / total) * 100);
+  }, [lastClaimTimes]);
+
+  const insertClaim = async (token: FaucetToken) => {
+    const { error } = await supabase.from("faucet_claims").insert({
+      user_id: userId,
+      amount: token.claimAmount,
+      chain: token.id,
+      wallet_address: '',
+      status: 'completed',
+    });
+    if (error) return error;
+
+    // Credit portfolio_holdings via DB function
+    const { error: creditError } = await supabase.rpc('credit_faucet_claim', {
+      p_user_id: userId,
+      p_symbol: token.symbol,
+      p_amount: token.claimAmount,
+      p_chain: token.id,
+    });
+    if (creditError) console.error('Credit error:', creditError);
+    return null;
+  };
+
+  const handleClaim = async (token: FaucetToken) => {
+    if (!userId) { toast.error("Please sign in to claim tokens"); return; }
+    if (isOnCooldown(token)) { toast.error(`Wait ${getCooldownRemaining(token)}`); return; }
+    setClaiming(token.id);
+    const error = await insertClaim(token);
+    if (error) { toast.error("Claim failed: " + error.message); setClaiming(null); return; }
+    await routeToCompound(token.symbol, token.claimAmount);
+    toast.success(`Claimed ${token.claimAmount} ${token.symbol}!`, {
+      description: autoCompound ? `${reinvestPercent}% → ${compoundStrategyLabel} • ${compoundMixLabel}` : streakCount > 0 ? `🔥 ${streakCount + 1}-day streak!` : undefined,
+    });
+    await loadClaims();
+    setClaiming(null);
+  };
+
+  const handleClaimAll = async () => {
+    if (!userId) { toast.error("Please sign in"); return; }
+    setClaiming('all');
+    let count = 0;
+    for (const token of FAUCET_TOKENS) {
+      if (!isOnCooldown(token) && token.available) {
+        const error = await insertClaim(token);
+        if (!error) { count++; await routeToCompound(token.symbol, token.claimAmount); }
+      }
+    }
+    if (count > 0) { toast.success(`Claimed ${count} tokens!`); await loadClaims(); }
+    else toast.info("All on cooldown");
+    setClaiming(null);
+  };
+
+  // Auto-claim loop
+  useEffect(() => {
+    if (!autoClaim || !userId) return;
+    const run = async () => {
+      if (!autoClaimRef.current) return;
+      setAutoClaimRunning(true);
+      let count = 0;
+      for (const token of FAUCET_TOKENS) {
+        if (!autoClaimRef.current) break;
+        const last = lastClaimTimesRef.current[token.id];
+        const onCd = last && (Date.now() - last.getTime()) < (token.claimInterval * 3600000);
+        if (!onCd && token.available) {
+          const error = await insertClaim(token);
+          if (!error) { count++; await routeToCompound(token.symbol, token.claimAmount); }
+        }
+      }
+      if (count > 0) {
+        toast.success(`Auto-claimed ${count} token${count > 1 ? 's' : ''}!`, { icon: <Bot className="h-4 w-4" /> });
+        await loadClaims();
+      }
+      setAutoClaimRunning(false);
+    };
+    run();
+    const interval = setInterval(run, 30000);
+    return () => clearInterval(interval);
+  }, [autoClaim, userId, loadClaims, routeToCompound]);
+
+  const availableCount = FAUCET_TOKENS.filter(t => !isOnCooldown(t) && t.available).length;
   const { items: claimedAssetItems } = getPortfolioValuation(balances);
   const ownedRealTokens = claimedAssetItems.filter(item => item.quantity > 0 && !item.isTestnet).length;
   const currentClaimedValue = claimedAssetItems
-    .filter(item => item.quantity > 0 && !item.isTestnet && !item.isStale && !item.priceUnavailable)
+    .filter(item => item.quantity > 0 && !item.isTestnet)
     .reduce((sum, item) => sum + item.valueUsd, 0);
 
   return (
