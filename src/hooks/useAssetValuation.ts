@@ -3,20 +3,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
 import { tokenService } from "@/lib/data";
 
-const TESTNET_TOKENS = new Set([
-  "TUSDC",
-  "TUSDT",
-  "TDAI",
-  "TBUSD",
-  "TETH",
-  "TBTC",
-  "TSOL",
-  "TMATIC",
-  "TAVAX",
-  "TUNI",
-  "TAAVE",
-  "TLINK",
+const EXPLICIT_TESTNET = new Set([
+  "TUSDC", "TUSDT", "TDAI", "TBUSD", "TETH", "TBTC", "TSOL",
+  "TMATIC", "TAVAX", "TUNI", "TAAVE", "TLINK",
+  "TCRV", "TARB", "TOP", "TBASE", "TSUSHI", "TZEC", "TXMR",
+  "TCOMP", "TMKR", "TLNBTC", "TSATS", "TDOT", "TBNB", "TXRP",
+  "TADA", "TDOGE", "TNEAR", "TATOM", "TFTM", "TINJ", "TSUI",
+  "TAPT", "TRNDR", "TFET", "TGRT", "TFIL", "TLTC", "TPEPE",
+  "TBONK", "TWIF", "TSHIB", "TTON", "THBAR", "TOPI",
 ]);
+
+/** Detect testnet tokens: explicit set OR pattern "T" + known real symbol */
+const KNOWN_REAL_SYMBOLS = new Set([
+  "BTC", "ETH", "SOL", "USDC", "USDT", "BNB", "XRP", "ADA", "DOGE",
+  "AVAX", "DOT", "LINK", "MATIC", "UNI", "AAVE", "ARB", "OP", "LTC",
+  "NEAR", "ATOM", "FTM", "INJ", "SUI", "APT", "RNDR", "FET", "GRT",
+  "FIL", "PEPE", "BONK", "WIF", "SHIB", "TON", "HBAR", "CRV", "COMP",
+  "MKR", "ZEC", "XMR", "SUSHI", "BASE", "LNBTC", "SATS",
+]);
+
+const isTestnetToken = (symbol: string): boolean => {
+  if (EXPLICIT_TESTNET.has(symbol)) return true;
+  // Pattern: starts with T, rest matches a known symbol
+  if (symbol.length > 1 && symbol.startsWith("T")) {
+    const rest = symbol.slice(1);
+    if (KNOWN_REAL_SYMBOLS.has(rest)) return true;
+  }
+  return false;
+};
 
 const STABLECOINS = new Set(["USDC", "USDT", "DAI", "BUSD"]);
 
@@ -103,7 +117,7 @@ export function useAssetValuation() {
     (symbol: string, quantity: number): AssetValuation => {
       const upper = symbol.toUpperCase();
 
-      if (TESTNET_TOKENS.has(upper)) {
+      if (isTestnetToken(upper)) {
         return {
           symbol: upper,
           quantity,
