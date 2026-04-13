@@ -27,9 +27,14 @@ export async function getActivePlatformTokens(): Promise<ServiceResult<PlatformT
 
 /** Fetch USD price feeds for all platform tokens. Returns a map of SYMBOL → feed. */
 export async function getPlatformTokenPrices(): Promise<ServiceResult<Record<string, TokenPriceFeed>>> {
-  const [tokensRes, feedsRes] = await Promise.all([
+  const [tokensRes, feedsRes, pairsRes] = await Promise.all([
     supabase.from("platform_tokens").select("id, symbol").eq("is_active", true),
     supabase.from("token_price_feeds").select("token_id, price, change_24h_percent, last_updated").eq("base_currency", "USD"),
+    supabase
+      .from("exchange_pairs")
+      .select("base_token_id, last_price, updated_at")
+      .eq("quote_currency", "USD")
+      .not("last_price", "is", null),
   ]);
 
   if (tokensRes.error) return { data: null, error: tokensRes.error.message };
@@ -55,6 +60,25 @@ export async function getPlatformTokenPrices(): Promise<ServiceResult<Record<str
         price: Number(feed.price ?? 0),
         change24hPercent: feed.change_24h_percent != null ? Number(feed.change_24h_percent) : null,
         lastUpdated: feed.last_updated ?? new Date().toISOString(),
+      };
+    }
+  }
+
+  for (const pair of pairsRes.error ? [] : pairsRes.data ?? []) {
+    const tokenId = String(pair.base_token_id ?? "");
+    const symbol = symbolById.get(tokenId);
+    if (!symbol || pair.last_price == null) continue;
+
+    const updatedAt = pair.updated_at ? new Date(pair.updated_at).getTime() : 0;
+    const existing = result[symbol];
+
+    if (!existing || updatedAt >= new Date(existing.lastUpdated).getTime()) {
+      result[symbol] = {
+        tokenId,
+        symbol,
+        price: Number(pair.last_price ?? 0),
+        change24hPercent: existing?.change24hPercent ?? null,
+        lastUpdated: pair.updated_at ?? new Date().toISOString(),
       };
     }
   }
