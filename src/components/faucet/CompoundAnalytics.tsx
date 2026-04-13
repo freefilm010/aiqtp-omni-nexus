@@ -54,11 +54,18 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
 
   useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
 
-  // Poll for new transactions (table removed from realtime publication for security)
+  // Realtime subscription for instant auto-invest transaction updates
   useEffect(() => {
     if (!engineId) return;
-    const interval = setInterval(loadAnalytics, 15000);
-    return () => clearInterval(interval);
+    const channel = supabase
+      .channel(`compound-analytics-${engineId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "auto_invest_transactions", filter: `engine_id=eq.${engineId}` },
+        () => { loadAnalytics(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [engineId, loadAnalytics]);
 
   if (!engineId || transactions.length === 0) {
