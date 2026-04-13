@@ -101,6 +101,15 @@ export function useAssetValuation() {
   useEffect(() => {
     loadPlatformTokenPrices();
 
+    // Keep platform token feeds alive by calling the refresh endpoint every 45s
+    const refreshInterval = setInterval(async () => {
+      try {
+        await supabase.functions.invoke("platform-token-refresh", { body: {} });
+      } catch {
+        // silent — realtime will still pick up changes
+      }
+    }, 45_000);
+
     const channel = supabase
       .channel("platform-token-prices-live")
       .on(
@@ -113,6 +122,7 @@ export function useAssetValuation() {
       .subscribe();
 
     return () => {
+      clearInterval(refreshInterval);
       supabase.removeChannel(channel);
     };
   }, [loadPlatformTokenPrices]);
