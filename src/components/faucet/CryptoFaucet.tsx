@@ -205,7 +205,7 @@ const CryptoFaucet = () => {
         () => { loadClaims(); }
       )
       .subscribe();
-    return () => clearInterval(interval);
+    return () => { supabase.removeChannel(channel); };
   }, [userId, loadClaims]);
 
   const loadCompoundEngine = useCallback(async () => {
