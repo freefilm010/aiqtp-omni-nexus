@@ -344,8 +344,8 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Sitemap */}
-        <div className="py-4 border-t border-white/10">
+        {/* Sitemap — hidden on mobile since nav grid is already visible */}
+        <div className="hidden md:block py-4 border-t border-white/10">
           <h4 className="text-xs font-semibold text-white/50 mb-3">SITEMAP</h4>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-white/40">
             <Link to="/" className="hover:text-gold">Home</Link>
