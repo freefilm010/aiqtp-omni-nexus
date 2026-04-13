@@ -59,33 +59,33 @@ const Index = () => {
         {/* ===== AI COMMAND CENTER ===== */}
         <LazySection minHeight="600px" rootMargin={heroSectionRootMargin}>
           <Suspense fallback={<SectionLoader />}>
-            <section className="py-16 bg-[hsl(225,20%,6%)]">
-              <div className="max-w-7xl mx-auto px-4">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl md:text-4xl font-bold mb-3 text-foreground">
+            <section className="py-8 md:py-16 bg-[hsl(225,20%,6%)]">
+              <div className="max-w-7xl mx-auto px-3 sm:px-4">
+                <div className="text-center mb-6 md:mb-10">
+                  <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-3 text-foreground">
                     AI-Powered <span className="text-[hsl(270,91%,65%)]">Command Center</span>
                   </h2>
-                  <p className="text-muted-foreground max-w-2xl mx-auto">
+                  <p className="text-xs md:text-base text-muted-foreground max-w-2xl mx-auto">
                     Professional-grade tools for crypto, stocks, and beyond — unified in one powerful platform.
                   </p>
                 </div>
 
                 {/* Row 1: AI Panel + Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
                   <AimeStyleAIPanel />
-                  <div className="space-y-6">
+                  <div className="space-y-4 md:space-y-6">
                     <SuperchartsWidget />
                   </div>
                 </div>
 
                 {/* Row 2: Screener + Smart Money */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
                   <UltimateAIScreener />
                   <SmartMoneyFlow />
                 </div>
 
                 {/* Row 3: Calendar + Portfolio + Copy Trading */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   <FinancialCalendarWidget />
                   <PortfolioSyncWidget />
                   <CopyTradingLeaderboard />

@@ -118,7 +118,7 @@ const MiniChartPanel = ({ symbol, price, change, timeframe, positive, featured =
         <span className="font-mono text-[9px] text-muted-foreground">C <span className="text-foreground/80">{price}</span></span>
       </div>
 
-      <div className="relative h-32 p-2">
+      <div className="relative h-20 p-2 sm:h-32">
         <svg className="absolute inset-0 w-full h-full opacity-20">
           <defs>
             <pattern id={`miniGrid-${symbol}`} width="30" height="20" patternUnits="userSpaceOnUse">
@@ -284,7 +284,7 @@ const Hero = () => {
   const visibleMiniCharts = isMobile ? miniCharts.slice(0, 2) : miniCharts;
 
   return (
-    <section className="relative flex min-h-[85svh] items-center justify-center overflow-hidden bg-[hsl(225,20%,6%)] md:min-h-screen">
+    <section className="relative flex min-h-[70svh] items-center justify-center overflow-hidden bg-[hsl(225,20%,6%)] md:min-h-screen">
       <TerminalGridBackground />
 
       <div
@@ -296,28 +296,28 @@ const Hero = () => {
       {!isMobile && <LeftToolbar />}
       {!isMobile && <BottomToolbar assetCount={assetCount} />}
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-6 pt-16 sm:px-6 md:px-8 md:pb-12 md:pt-16 md:ml-11">
-        <div className="mb-4 text-center animate-fade-in md:mb-10">
-          <h1 className="mb-1 text-3xl font-bold tracking-tight animate-slide-up sm:text-5xl md:text-6xl lg:text-7xl">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-3 pb-4 pt-10 sm:px-6 md:px-8 md:pb-12 md:pt-16 md:ml-11">
+        <div className="mb-3 text-center animate-fade-in md:mb-10">
+          <h1 className="mb-0.5 text-2xl font-bold tracking-tight animate-slide-up sm:text-5xl md:text-6xl lg:text-7xl">
             <span className="bg-gradient-to-r from-white via-[hsl(270,91%,75%)] to-[hsl(355,88%,65%)] bg-clip-text text-transparent drop-shadow-lg">
               AIQTP™
             </span>
           </h1>
-          <h2 className="mb-2 text-xl font-bold tracking-tight animate-slide-up stagger-1 sm:text-3xl md:text-4xl lg:text-5xl">
+          <h2 className="mb-1.5 text-lg font-bold tracking-tight animate-slide-up stagger-1 sm:text-3xl md:text-4xl lg:text-5xl">
             <span className="bg-gradient-to-r from-[hsl(270,91%,70%)] via-[hsl(320,85%,60%)] to-[hsl(355,88%,58%)] bg-clip-text text-transparent">
               Terminal
             </span>
           </h2>
 
-          <div className="mb-4 flex justify-center animate-slide-up stagger-2 md:mb-6">
-            <p className="max-w-xl rounded-xl px-3 py-2 text-xs text-muted-foreground glass-morphism-subtle sm:px-6 sm:py-3 sm:text-sm md:text-base">
+          <div className="mb-3 flex justify-center animate-slide-up stagger-2 md:mb-6">
+            <p className="max-w-xl rounded-xl px-2.5 py-1.5 text-[11px] leading-snug text-muted-foreground glass-morphism-subtle sm:px-6 sm:py-3 sm:text-sm md:text-base">
               Quantum-powered trading, AI pattern recognition and institutional analytics —
               built from the ground up for serious traders.
             </p>
           </div>
 
           {/* Primary CTA — always above fold */}
-          <div className="mb-4 flex flex-col items-stretch justify-center gap-2 animate-slide-up stagger-3 sm:flex-row sm:flex-wrap sm:gap-3 md:mb-8">
+          <div className="mb-3 flex flex-col items-stretch justify-center gap-1.5 animate-slide-up stagger-3 sm:flex-row sm:flex-wrap sm:gap-3 md:mb-8">
             <Button
               size="lg"
               onClick={() => setQuickStartOpen(true)}
@@ -335,7 +335,7 @@ const Hero = () => {
           </div>
 
           {/* Secondary CTAs — still prominent but below primary pair */}
-          <div className="mb-4 flex items-stretch justify-center gap-2 animate-slide-up stagger-3 sm:mb-6 md:mb-8">
+          <div className="mb-3 flex items-stretch justify-center gap-1.5 animate-slide-up stagger-3 sm:mb-6 md:mb-8">
             <Link to="/qaqi" className="flex-1 sm:flex-initial sm:w-auto">
               <Button size="sm" className="w-full gap-1.5 border-[hsl(270,91%,65%,0.3)] text-foreground glass-morphism micro-hover hover:border-[hsl(270,91%,65%,0.5)] text-xs sm:size-lg sm:text-sm">
                 <Cpu className="w-3.5 h-3.5 text-[hsl(270,91%,65%)]" />
@@ -351,7 +351,7 @@ const Hero = () => {
           </div>
 
           {/* Social proof strip */}
-          <div className="mb-4 flex items-center justify-center gap-4 animate-slide-up stagger-3 md:mb-6">
+          <div className="mb-3 flex items-center justify-center gap-3 animate-slide-up stagger-3 md:mb-6">
             <div className="flex items-center gap-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-[hsl(162,91%,32%)] animate-pulse" />
               <span className="font-mono text-[10px] text-[hsl(162,91%,32%)]">2,847 traders online</span>
@@ -361,13 +361,13 @@ const Hero = () => {
           </div>
         </div>
 
-        <div className="bento-grid mb-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 animate-scale-in stagger-4 md:mb-8">
+        <div className="bento-grid mb-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 animate-scale-in stagger-4 md:mb-8">
           {visibleMiniCharts.map((chart, i) => (
             <MiniChartPanel key={i} {...chart} featured={i === 0 || i === 3} />
           ))}
         </div>
 
-        <div className="mb-4 flex flex-wrap justify-center gap-1.5 animate-slide-up stagger-5 md:mb-8 md:gap-2">
+        <div className="mb-3 flex flex-wrap justify-center gap-1 animate-slide-up stagger-5 md:mb-8 md:gap-2">
           <Badge variant="outline" className="px-2.5 py-1 font-mono text-[9px] text-muted-foreground glass-morphism-subtle micro-hover border-[hsl(270,91%,65%,0.2)] md:px-4 md:py-1.5 md:text-[10px]">
             <Shield className="w-3 h-3 mr-1 text-[hsl(270,91%,65%)]" />
             Quantum Security
@@ -386,22 +386,22 @@ const Hero = () => {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-center animate-slide-up stagger-6 lg:grid-cols-4 lg:gap-4">
-          <div className="rounded-xl px-3 py-2 glass-morphism-subtle micro-hover md:px-6 md:py-3">
-            <div className="font-mono text-base font-bold text-[hsl(43,96%,56%)] md:text-xl">Multi-Asset</div>
-            <div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground md:text-[9px]">Crypto · Stocks · More</div>
+        <div className="grid grid-cols-2 gap-1.5 text-center animate-slide-up stagger-6 lg:grid-cols-4 lg:gap-4">
+          <div className="rounded-xl px-2 py-1.5 glass-morphism-subtle micro-hover md:px-6 md:py-3">
+            <div className="font-mono text-sm font-bold text-[hsl(43,96%,56%)] md:text-xl">Multi-Asset</div>
+            <div className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground md:text-[9px]">Crypto · Stocks · More</div>
           </div>
-          <div className="rounded-xl px-3 py-2 glass-morphism-subtle micro-hover md:px-6 md:py-3">
-            <div className="font-mono text-base font-bold text-[hsl(162,91%,32%)] md:text-xl">Zero Fees</div>
-            <div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground md:text-[9px]">No Subscriptions</div>
+          <div className="rounded-xl px-2 py-1.5 glass-morphism-subtle micro-hover md:px-6 md:py-3">
+            <div className="font-mono text-sm font-bold text-[hsl(162,91%,32%)] md:text-xl">Zero Fees</div>
+            <div className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground md:text-[9px]">No Subscriptions</div>
           </div>
-          <div className="rounded-xl px-3 py-2 glass-morphism-subtle micro-hover md:px-6 md:py-3">
-            <div className="font-mono text-base font-bold text-[hsl(270,91%,65%)] md:text-xl">AI-Powered</div>
-            <div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground md:text-[9px]">ML Signals & Bots</div>
+          <div className="rounded-xl px-2 py-1.5 glass-morphism-subtle micro-hover md:px-6 md:py-3">
+            <div className="font-mono text-sm font-bold text-[hsl(270,91%,65%)] md:text-xl">AI-Powered</div>
+            <div className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground md:text-[9px]">ML Signals & Bots</div>
           </div>
-          <div className="rounded-xl px-3 py-2 glass-morphism-subtle micro-hover md:px-6 md:py-3">
-            <div className="font-mono text-base font-bold text-[hsl(224,100%,58%)] md:text-xl">Quantum-Safe</div>
-            <div className="font-mono text-[8px] uppercase tracking-wider text-muted-foreground md:text-[9px]">Post-Quantum Crypto</div>
+          <div className="rounded-xl px-2 py-1.5 glass-morphism-subtle micro-hover md:px-6 md:py-3">
+            <div className="font-mono text-sm font-bold text-[hsl(224,100%,58%)] md:text-xl">Quantum-Safe</div>
+            <div className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground md:text-[9px]">Post-Quantum Crypto</div>
           </div>
         </div>
       </div>
