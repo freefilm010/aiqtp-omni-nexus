@@ -59,9 +59,9 @@ export interface AssetValuation {
   isTestnet: boolean;
 }
 
-const STALE_THRESHOLD_MS = 60 * 1000; // 1 minute
+const STALE_THRESHOLD_MS = 5 * 1000; // 5 seconds — real-time standard
 /** Platform tokens use same staleness window — they have real-time feeds */
-const PLATFORM_STALE_THRESHOLD_MS = 60 * 1000; // 1 minute
+const PLATFORM_STALE_THRESHOLD_MS = 5 * 1000; // 5 seconds — real-time standard
 
 const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
 
@@ -108,7 +108,7 @@ export function useAssetValuation() {
       } catch {
         // silent — realtime will still pick up changes
       }
-    }, 45_000);
+    }, 10_000); // every 10 seconds for true real-time
 
     const channel = supabase
       .channel("platform-token-prices-live")
