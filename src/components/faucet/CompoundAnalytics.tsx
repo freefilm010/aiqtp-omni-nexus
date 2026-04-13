@@ -54,18 +54,11 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
 
   useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
 
-  // Realtime: auto-refresh when new compound transactions arrive
+  // Poll for new transactions (table removed from realtime publication for security)
   useEffect(() => {
     if (!engineId) return;
-    const channel = supabase
-      .channel('compound-analytics-realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'auto_invest_transactions' },
-        () => { loadAnalytics(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const interval = setInterval(loadAnalytics, 15000);
+    return () => clearInterval(interval);
   }, [engineId, loadAnalytics]);
 
   if (!engineId || transactions.length === 0) {

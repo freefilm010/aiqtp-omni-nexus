@@ -53,16 +53,9 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
     };
     loadLeaderboard();
 
-    // Realtime refresh for leaderboard when claims change
-    const channel = supabase
-      .channel('leaderboard-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'faucet_claims' },
-        () => { loadLeaderboard(); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    // Poll leaderboard (faucet_claims removed from realtime for security)
+    const interval = setInterval(loadLeaderboard, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleReferral = () => {
