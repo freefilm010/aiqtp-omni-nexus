@@ -150,20 +150,20 @@ const CopyTradingLeaderboard = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1">
           {[
-            { id: 'all', label: 'All Traders', icon: Users },
+            { id: 'all', label: 'All', icon: Users },
             { id: 'elite', label: 'Elite', icon: Crown },
             { id: 'pro', label: 'Pro', icon: Award },
-            { id: 'rising', label: 'Rising Stars', icon: Star },
+            { id: 'rising', label: 'Rising', icon: Star },
           ].map((filter) => {
             const Icon = filter.icon;
             return (
               <button
                 key={filter.id}
                 onClick={() => setActiveFilter(filter.id as any)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-medium whitespace-nowrap transition-all ${
                   activeFilter === filter.id
                     ? 'bg-[hsl(43,96%,56%,0.15)] text-[hsl(43,96%,56%)] border border-[hsl(43,96%,56%,0.3)]'
                     : 'bg-[hsl(223,18%,12%)] text-muted-foreground hover:text-foreground border border-transparent'
@@ -227,31 +227,31 @@ const CopyTradingLeaderboard = () => {
                   </div>
                 )}
 
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                   {/* Avatar */}
                   <div className="relative">
-                    <div className={`w-12 h-12 rounded-xl ${tierColors.bg} flex items-center justify-center text-2xl`}>
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${tierColors.bg} flex items-center justify-center text-xl sm:text-2xl`}>
                       {trader.avatar}
                     </div>
                     {trader.verified && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[hsl(224,100%,58%)] flex items-center justify-center">
-                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[hsl(224,100%,58%)] flex items-center justify-center">
+                        <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                       </div>
                     )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-foreground">{trader.name}</span>
-                      <Badge className={`text-[8px] ${tierColors.bg} ${tierColors.text}`}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="font-bold text-foreground text-sm">{trader.name}</span>
+                      <Badge className={`text-[7px] sm:text-[8px] ${tierColors.bg} ${tierColors.text}`}>
                         {trader.tier.toUpperCase()}
                       </Badge>
                     </div>
                     <p className="text-[10px] text-muted-foreground mb-2 truncate">{trader.strategy}</p>
                     
                     {/* Stats Row */}
-                    <div className="grid grid-cols-4 gap-3 text-center">
+                    <div className="grid grid-cols-4 gap-1.5 sm:gap-3 text-center">
                       <div>
                         <div className={`font-mono text-sm font-bold ${trader.pnl30d >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
                           {trader.pnl30d >= 0 ? '+' : ''}{trader.pnl30d.toFixed(1)}%

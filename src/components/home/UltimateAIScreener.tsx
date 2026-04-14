@@ -221,12 +221,12 @@ const UltimateAIScreener = () => {
                   </div>
                 )}
 
-                <div className="flex items-start gap-4">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-12 h-12 rounded-xl bg-[hsl(223,18%,15%)] flex items-center justify-center">
-                      <span className="font-mono text-sm font-bold text-foreground">{result.symbol}</span>
+                <div className="flex items-start gap-2.5 sm:gap-4">
+                  <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[hsl(223,18%,15%)] flex items-center justify-center">
+                      <span className="font-mono text-[10px] sm:text-sm font-bold text-foreground">{result.symbol}</span>
                     </div>
-                    <Badge className={`text-[8px] font-bold ${signalStyle.bg} ${signalStyle.text}`}>
+                    <Badge className={`text-[7px] sm:text-[8px] font-bold ${signalStyle.bg} ${signalStyle.text}`}>
                       {signalStyle.label}
                     </Badge>
                   </div>
@@ -252,53 +252,53 @@ const UltimateAIScreener = () => {
                       ))}
                     </div>
 
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
                       <div>
-                        <div className="font-mono text-sm font-bold text-foreground">
+                        <div className="font-mono text-[10px] sm:text-sm font-bold text-foreground">
                           {formatPrice(result.currentPrice)}
                         </div>
-                        <div className="text-[8px] text-muted-foreground">Current</div>
+                        <div className="text-[7px] sm:text-[8px] text-muted-foreground">Current</div>
                       </div>
                       <div>
-                        <div className={`font-mono text-sm font-bold ${result.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
-                          {result.change24h >= 0 ? '+' : ''}{result.change24h.toFixed(2)}%
+                        <div className={`font-mono text-[10px] sm:text-sm font-bold ${result.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+                          {result.change24h >= 0 ? '+' : ''}{result.change24h.toFixed(1)}%
                         </div>
-                        <div className="text-[8px] text-muted-foreground">24h Change</div>
+                        <div className="text-[7px] sm:text-[8px] text-muted-foreground">24h</div>
                       </div>
                       <div>
-                        <div className="font-mono text-sm font-bold text-[hsl(162,91%,32%)]">
+                        <div className="font-mono text-[10px] sm:text-sm font-bold text-[hsl(162,91%,32%)]">
                           +{upside}%
                         </div>
-                        <div className="text-[8px] text-muted-foreground">Upside</div>
+                        <div className="text-[7px] sm:text-[8px] text-muted-foreground">Upside</div>
                       </div>
                       <div>
-                        <div className={`font-mono text-sm font-bold ${getAIScoreColor(result.aiScore)}`}>
+                        <div className={`font-mono text-[10px] sm:text-sm font-bold ${getAIScoreColor(result.aiScore)}`}>
                           {result.aiScore}
                         </div>
-                        <div className="text-[8px] text-muted-foreground">AI Score</div>
+                        <div className="text-[7px] sm:text-[8px] text-muted-foreground">AI Score</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-end gap-1.5 sm:gap-2">
                     <div className="text-right">
                       <div className="flex items-center gap-1">
                         <Target className="w-3 h-3 text-[hsl(162,91%,32%)]" />
-                        <span className="font-mono text-xs text-[hsl(162,91%,32%)] font-bold">
+                        <span className="font-mono text-[10px] sm:text-xs text-[hsl(162,91%,32%)] font-bold">
                           {formatPrice(result.priceTarget)}
                         </span>
                       </div>
-                      <div className="text-[9px] text-muted-foreground">Target</div>
+                      <div className="text-[8px] sm:text-[9px] text-muted-foreground">Target</div>
                     </div>
-                    <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
+                    <div className="hidden sm:flex items-center gap-1 text-[9px] text-muted-foreground">
                       <Activity className="w-3 h-3" />
                       {result.confidence}% conf.
                     </div>
                     <Button 
                       size="sm" 
-                      className="h-7 px-3 text-[10px] bg-[hsl(270,91%,65%)] hover:bg-[hsl(270,91%,70%)] text-white"
+                      className="h-6 sm:h-7 px-2 sm:px-3 text-[9px] sm:text-[10px] bg-[hsl(270,91%,65%)] hover:bg-[hsl(270,91%,70%)] text-white"
                     >
-                      <Eye className="w-3 h-3 mr-1" />
+                      <Eye className="w-3 h-3 mr-0.5 sm:mr-1" />
                       Analyze
                     </Button>
                   </div>
