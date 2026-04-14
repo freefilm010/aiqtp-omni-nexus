@@ -21,30 +21,30 @@ const StrategyMarketplacePage = () => {
           </p>
         </div>
 
-          <Tabs defaultValue="marketplace" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
-            <TabsTrigger value="agents" className="flex items-center gap-1 text-xs">
-              <Bot className="h-4 w-4" />
+          <Tabs defaultValue="marketplace" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
+            <TabsTrigger value="agents" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5">
+              <Bot className="h-3 w-3 sm:h-4 sm:w-4" />
               Agents
             </TabsTrigger>
-            <TabsTrigger value="marketplace" className="flex items-center gap-1 text-xs">
-              <ShoppingCart className="h-4 w-4" />
+            <TabsTrigger value="marketplace" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5">
+              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
               Market
             </TabsTrigger>
-            <TabsTrigger value="graduation" className="flex items-center gap-1 text-xs">
-              <Award className="h-4 w-4" />
+            <TabsTrigger value="graduation" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5">
+              <Award className="h-3 w-3 sm:h-4 sm:w-4" />
               Graduate
             </TabsTrigger>
-            <TabsTrigger value="factors" className="flex items-center gap-1 text-xs">
-              <Code2 className="h-4 w-4" />
+            <TabsTrigger value="factors" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5">
+              <Code2 className="h-3 w-3 sm:h-4 sm:w-4" />
               Factors
             </TabsTrigger>
-            <TabsTrigger value="competitions" className="flex items-center gap-1 text-xs">
-              <Trophy className="h-4 w-4" />
+            <TabsTrigger value="competitions" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5">
+              <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
               Compete
             </TabsTrigger>
-            <TabsTrigger value="suggestions" className="flex items-center gap-1 text-xs">
-              <Lightbulb className="h-4 w-4" />
+            <TabsTrigger value="suggestions" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5">
+              <Lightbulb className="h-3 w-3 sm:h-4 sm:w-4" />
               Ideas
             </TabsTrigger>
           </TabsList>
