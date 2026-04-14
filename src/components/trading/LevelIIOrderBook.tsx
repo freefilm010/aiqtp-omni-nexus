@@ -92,44 +92,51 @@ const LevelIIOrderBook = () => {
   const formatSize = (size: number) => size.toFixed(4);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <CardContent className="py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Select value={symbol} onValueChange={setSymbol}>
-                <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[100px] sm:w-[150px] h-8 text-xs sm:text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="BTC">BTC/USD</SelectItem><SelectItem value="ETH">ETH/USD</SelectItem></SelectContent>
               </Select>
               <Select value={aggregation} onValueChange={setAggregation}>
-                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[80px] sm:w-[120px] h-8 text-xs sm:text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0.01">$0.01</SelectItem><SelectItem value="0.1">$0.10</SelectItem>
                   <SelectItem value="1">$1.00</SelectItem><SelectItem value="10">$10.00</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Badge variant="outline" className="text-green-500 border-green-500"><Activity className="h-3 w-3 mr-1 animate-pulse" />LIVE FEED</Badge>
+            <Badge variant="outline" className="text-green-500 border-green-500 text-[10px]"><Activity className="h-3 w-3 mr-1 animate-pulse" />LIVE</Badge>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Layers className="h-5 w-5" />Level II Order Book</CardTitle>
-            <CardDescription>Depth across multiple exchanges</CardDescription>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base"><Layers className="h-4 w-4 sm:h-5 sm:w-5" />Level II Order Book</CardTitle>
+            <CardDescription className="text-[10px] sm:text-sm">Depth across multiple exchanges</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="px-2 sm:px-6">
+            {/* Mobile: stacked, Desktop: side by side */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <div className="grid grid-cols-5 text-xs text-muted-foreground mb-2 px-2"><span>Exchange</span><span className="text-right">Orders</span><span className="text-right">Size</span><span className="text-right">Price</span><span className="text-right">Total</span></div>
-                <ScrollArea className="h-[400px]">
+                <div className="grid grid-cols-3 sm:grid-cols-5 text-[9px] sm:text-xs text-muted-foreground mb-1 px-1">
+                  <span className="hidden sm:block">Exch</span>
+                  <span className="text-right hidden sm:block">Qty</span>
+                  <span className="text-right">Size</span>
+                  <span className="text-right">Bid</span>
+                  <span className="text-right">Total</span>
+                </div>
+                <ScrollArea className="h-[200px] sm:h-[400px]">
                   {bids.map((bid, i) => (
-                    <div key={i} className="grid grid-cols-5 text-sm py-1 px-2 relative">
+                    <div key={i} className="grid grid-cols-3 sm:grid-cols-5 text-[10px] sm:text-sm py-0.5 sm:py-1 px-1 sm:px-2 relative">
                       <div className="absolute inset-0 bg-green-500/20" style={{ width: `${(bid.total / maxTotal) * 100}%` }} />
-                      <span className="relative text-xs text-muted-foreground">{bid.exchange}</span>
-                      <span className="relative text-right text-muted-foreground">{bid.orders}</span>
+                      <span className="relative text-muted-foreground hidden sm:block">{bid.exchange.slice(0, 3)}</span>
+                      <span className="relative text-right text-muted-foreground hidden sm:block">{bid.orders}</span>
                       <span className="relative text-right">{formatSize(bid.size)}</span>
                       <span className="relative text-right text-green-500 font-mono">${formatPrice(bid.price)}</span>
                       <span className="relative text-right text-muted-foreground">{formatSize(bid.total)}</span>
@@ -138,15 +145,21 @@ const LevelIIOrderBook = () => {
                 </ScrollArea>
               </div>
               <div>
-                <div className="grid grid-cols-5 text-xs text-muted-foreground mb-2 px-2"><span>Price</span><span className="text-right">Size</span><span className="text-right">Orders</span><span className="text-right">Exchange</span><span className="text-right">Total</span></div>
-                <ScrollArea className="h-[400px]">
+                <div className="grid grid-cols-3 sm:grid-cols-5 text-[9px] sm:text-xs text-muted-foreground mb-1 px-1">
+                  <span className="text-left">Ask</span>
+                  <span className="text-right">Size</span>
+                  <span className="text-right hidden sm:block">Qty</span>
+                  <span className="text-right hidden sm:block">Exch</span>
+                  <span className="text-right">Total</span>
+                </div>
+                <ScrollArea className="h-[200px] sm:h-[400px]">
                   {asks.map((ask, i) => (
-                    <div key={i} className="grid grid-cols-5 text-sm py-1 px-2 relative">
+                    <div key={i} className="grid grid-cols-3 sm:grid-cols-5 text-[10px] sm:text-sm py-0.5 sm:py-1 px-1 sm:px-2 relative">
                       <div className="absolute inset-0 bg-red-500/20 right-0" style={{ width: `${(ask.total / maxTotal) * 100}%`, marginLeft: 'auto' }} />
                       <span className="relative text-red-500 font-mono">${formatPrice(ask.price)}</span>
                       <span className="relative text-right">{formatSize(ask.size)}</span>
-                      <span className="relative text-right text-muted-foreground">{ask.orders}</span>
-                      <span className="relative text-right text-xs text-muted-foreground">{ask.exchange}</span>
+                      <span className="relative text-right text-muted-foreground hidden sm:block">{ask.orders}</span>
+                      <span className="relative text-right text-muted-foreground hidden sm:block">{ask.exchange.slice(0, 3)}</span>
                       <span className="relative text-right text-muted-foreground">{formatSize(ask.total)}</span>
                     </div>
                   ))}
@@ -154,30 +167,30 @@ const LevelIIOrderBook = () => {
               </div>
             </div>
 
-            <div className="mt-4 p-3 rounded bg-muted/50 flex items-center justify-center gap-8">
-              <div className="text-center"><p className="text-xs text-muted-foreground">Best Bid</p><p className="text-lg font-bold text-green-500">${formatPrice(bids[0]?.price || 0)}</p></div>
-              <div className="text-center"><p className="text-xs text-muted-foreground">Spread</p><p className="text-lg font-bold">${((asks[0]?.price || 0) - (bids[0]?.price || 0)).toFixed(2)}</p></div>
-              <div className="text-center"><p className="text-xs text-muted-foreground">Best Ask</p><p className="text-lg font-bold text-red-500">${formatPrice(asks[0]?.price || 0)}</p></div>
+            <div className="mt-3 p-2 sm:p-3 rounded bg-muted/50 flex items-center justify-center gap-4 sm:gap-8">
+              <div className="text-center"><p className="text-[9px] sm:text-xs text-muted-foreground">Best Bid</p><p className="text-sm sm:text-lg font-bold text-green-500">${formatPrice(bids[0]?.price || 0)}</p></div>
+              <div className="text-center"><p className="text-[9px] sm:text-xs text-muted-foreground">Spread</p><p className="text-sm sm:text-lg font-bold">${((asks[0]?.price || 0) - (bids[0]?.price || 0)).toFixed(2)}</p></div>
+              <div className="text-center"><p className="text-[9px] sm:text-xs text-muted-foreground">Best Ask</p><p className="text-sm sm:text-lg font-bold text-red-500">${formatPrice(asks[0]?.price || 0)}</p></div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Zap className="h-5 w-5" />Time & Sales</CardTitle>
-            <CardDescription>Real-time trade execution feed</CardDescription>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base"><Zap className="h-4 w-4 sm:h-5 sm:w-5" />Time & Sales</CardTitle>
+            <CardDescription className="text-[10px] sm:text-sm">Real-time trade feed</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="grid grid-cols-4 text-xs text-muted-foreground py-2 px-4 border-b"><span>Time</span><span className="text-right">Price</span><span className="text-right">Size</span><span className="text-right">Exch</span></div>
-            <ScrollArea className="h-[450px]">
+            <div className="grid grid-cols-4 text-[9px] sm:text-xs text-muted-foreground py-1.5 sm:py-2 px-3 sm:px-4 border-b"><span>Time</span><span className="text-right">Price</span><span className="text-right">Size</span><span className="text-right">Exch</span></div>
+            <ScrollArea className="h-[250px] sm:h-[450px]">
               {trades.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground text-sm">Waiting for price updates...</div>
+                <div className="py-8 text-center text-muted-foreground text-xs">Waiting for price updates...</div>
               ) : trades.map((trade, i) => (
-                <div key={i} className={`grid grid-cols-4 text-sm py-1.5 px-4 border-b border-border/50 ${trade.side === 'buy' ? 'bg-green-500/5' : 'bg-red-500/5'}`}>
-                  <span className="text-muted-foreground text-xs">{trade.time.toLocaleTimeString()}</span>
+                <div key={i} className={`grid grid-cols-4 text-[10px] sm:text-sm py-1 sm:py-1.5 px-3 sm:px-4 border-b border-border/50 ${trade.side === 'buy' ? 'bg-green-500/5' : 'bg-red-500/5'}`}>
+                  <span className="text-muted-foreground">{trade.time.toLocaleTimeString()}</span>
                   <span className={`text-right font-mono ${trade.side === 'buy' ? 'text-green-500' : 'text-red-500'}`}>${formatPrice(trade.price)}</span>
                   <span className="text-right">{formatSize(trade.size)}</span>
-                  <span className="text-right text-xs text-muted-foreground">{trade.exchange.slice(0, 3)}</span>
+                  <span className="text-right text-muted-foreground">{trade.exchange.slice(0, 3)}</span>
                 </div>
               ))}
             </ScrollArea>
