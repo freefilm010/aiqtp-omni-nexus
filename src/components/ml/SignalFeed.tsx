@@ -109,8 +109,8 @@ const SignalFeed = () => {
   const strongSignals = signals.filter(s => s.strength === 'strong').length;
 
   return (
-    <div className="grid grid-cols-3 gap-6">
-      <Card className="col-span-2">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+      <Card className="sm:col-span-2">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -177,7 +177,7 @@ const SignalFeed = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-4 gap-4 mt-3 p-3 rounded-lg bg-muted/30">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mt-2 sm:mt-3 p-2 sm:p-3 rounded-lg bg-muted/30">
                     <div>
                       <p className="text-xs text-muted-foreground">Entry Price</p>
                       <p className="font-mono font-medium">${signal.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
