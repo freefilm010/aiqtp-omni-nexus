@@ -175,14 +175,14 @@ const HeatMap = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Controls */}
       <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <CardContent className="py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Select value={view} onValueChange={(v: any) => setView(v)}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[100px] sm:w-[150px] h-8 text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -191,7 +191,7 @@ const HeatMap = () => {
                 </SelectContent>
               </Select>
               <Select value={timeframe} onValueChange={setTimeframe}>
-                <SelectTrigger className="w-[120px]">
+                <SelectTrigger className="w-[80px] sm:w-[120px] h-8 text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -201,9 +201,9 @@ const HeatMap = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              {isLive && <Badge variant="outline">LIVE</Badge>}
-              <Badge>{data.length} Assets</Badge>
+            <div className="flex items-center gap-1.5">
+              {isLive && <Badge variant="outline" className="text-[10px] px-1.5">LIVE</Badge>}
+              <Badge className="text-[10px] px-1.5">{data.length}</Badge>
             </div>
           </div>
         </CardContent>
@@ -211,28 +211,28 @@ const HeatMap = () => {
 
       {/* Heat Map Grid */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5" />
+        <CardHeader className="pb-2 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <LayoutGrid className="h-4 w-4 sm:h-5 sm:w-5" />
             Market Heat Map
           </CardTitle>
-          <CardDescription>Asset size represents market cap, color represents {timeframe} change</CardDescription>
+          <CardDescription className="text-[10px] sm:text-sm">Size = market cap, color = {timeframe} change</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-6 gap-1 auto-rows-fr" style={{ minHeight: '400px' }}>
+        <CardContent className="px-2 sm:px-6">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 auto-rows-fr" style={{ minHeight: '250px' }}>
             {sortedData.map((cell) => (
               <div
                 key={cell.symbol}
-                className={`${getCellSize(cell.marketCap)} ${getColor(cell.change)} rounded-lg p-2 flex flex-col justify-between cursor-pointer hover:opacity-90 transition-opacity text-white`}
+                className={`${getCellSize(cell.marketCap)} ${getColor(cell.change)} rounded-lg p-1.5 sm:p-2 flex flex-col justify-between cursor-pointer hover:opacity-90 transition-opacity text-white`}
               >
                 <div>
-                  <p className="font-bold text-sm">{cell.symbol}</p>
-                  <p className="text-xs opacity-80 truncate">{cell.name}</p>
+                  <p className="font-bold text-[10px] sm:text-sm">{cell.symbol}</p>
+                  <p className="text-[9px] sm:text-xs opacity-80 truncate hidden sm:block">{cell.name}</p>
                 </div>
                 <div>
-                  <p className="font-mono text-sm">{formatPrice(cell.price)}</p>
-                  <p className="text-xs font-medium">
-                    {cell.change >= 0 ? '+' : ''}{cell.change.toFixed(2)}%
+                  <p className="font-mono text-[10px] sm:text-sm">{formatPrice(cell.price)}</p>
+                  <p className="text-[9px] sm:text-xs font-medium">
+                    {cell.change >= 0 ? '+' : ''}{cell.change.toFixed(1)}%
                   </p>
                 </div>
               </div>

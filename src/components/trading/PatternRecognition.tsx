@@ -181,58 +181,58 @@ const PatternRecognition = () => {
   return (
     <div className="space-y-4">
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
         <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-          <CardContent className="py-4 px-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
+          <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
               <div>
-                <p className="text-xs text-muted-foreground">Bullish</p>
-                <p className="text-2xl font-bold text-green-500">{bullishCount}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Bull</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-500">{bullishCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20">
-          <CardContent className="py-4 px-4">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-red-500" />
+          <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
               <div>
-                <p className="text-xs text-muted-foreground">Bearish</p>
-                <p className="text-2xl font-bold text-red-500">{bearishCount}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Bear</p>
+                <p className="text-lg sm:text-2xl font-bold text-red-500">{bearishCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="py-4 px-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+          <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
               <div>
-                <p className="text-xs text-muted-foreground">Confirmed</p>
-                <p className="text-2xl font-bold">{confirmedCount}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Conf</p>
+                <p className="text-lg sm:text-2xl font-bold">{confirmedCount}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="py-4 px-4">
-            <div className="flex items-center gap-2">
-              <Gauge className="h-5 w-5 text-primary" />
+        <Card className="hidden sm:block">
+          <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Gauge className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               <div>
-                <p className="text-xs text-muted-foreground">Avg Conf.</p>
-                <p className="text-2xl font-bold">{avgConfidence.toFixed(0)}%</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Avg Conf.</p>
+                <p className="text-lg sm:text-2xl font-bold">{avgConfidence.toFixed(0)}%</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="py-4 px-4">
-            <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-purple-500" />
+        <Card className="hidden sm:block">
+          <CardContent className="py-2.5 sm:py-4 px-3 sm:px-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
               <div>
-                <p className="text-xs text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{patterns.length}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Total</p>
+                <p className="text-lg sm:text-2xl font-bold">{patterns.length}</p>
               </div>
             </div>
           </CardContent>
@@ -241,10 +241,10 @@ const PatternRecognition = () => {
 
       {/* Filters + Refresh */}
       <Card>
-        <CardContent className="py-3">
-          <div className="flex items-center gap-3 flex-wrap">
+        <CardContent className="py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <Select value={filterType} onValueChange={(v: any) => setFilterType(v)}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectTrigger className="w-[90px] sm:w-[130px] h-7 sm:h-8 text-[10px] sm:text-xs">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
@@ -254,43 +254,40 @@ const PatternRecognition = () => {
               </SelectContent>
             </Select>
             <Select value={filterTimeframe} onValueChange={setFilterTimeframe}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
-                <SelectValue placeholder="Timeframe" />
+              <SelectTrigger className="w-[90px] sm:w-[130px] h-7 sm:h-8 text-[10px] sm:text-xs">
+                <SelectValue placeholder="TF" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Timeframes</SelectItem>
+                <SelectItem value="all">All TFs</SelectItem>
                 {TIMEFRAMES.map(tf => (
                   <SelectItem key={tf} value={tf}>{tf}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectTrigger className="w-[90px] sm:w-[130px] h-7 sm:h-8 text-[10px] sm:text-xs">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 <SelectItem value="forming">Forming</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
                 <SelectItem value="triggered">Triggered</SelectItem>
               </SelectContent>
             </Select>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                Updated {formatTimeAgo(lastRefresh)}
-              </span>
+            <div className="ml-auto flex items-center gap-1.5">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5"
+                className="h-7 sm:h-8 gap-1 text-[10px] sm:text-xs px-2"
                 onClick={refreshPatterns}
                 disabled={isRefreshing}
               >
-                <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
                 Scan
               </Button>
-              <Badge variant="outline" className="text-xs">
-                {filteredPatterns.length} found
+              <Badge variant="outline" className="text-[9px] sm:text-xs">
+                {filteredPatterns.length}
               </Badge>
             </div>
           </div>

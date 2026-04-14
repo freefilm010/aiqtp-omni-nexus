@@ -46,33 +46,33 @@ const SmartOrders = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-6">
+    <div className="space-y-3 sm:space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
         {/* Order Types */}
-        <Card className="col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5" />
+        <Card className="sm:col-span-2">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
               Smart Order Types
             </CardTitle>
-            <CardDescription>
-              Institutional-grade order execution algorithms
+            <CardDescription className="text-[10px] sm:text-sm">
+              Institutional-grade execution algorithms
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={orderType} onValueChange={setOrderType}>
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="iceberg">Iceberg</TabsTrigger>
-                <TabsTrigger value="twap">TWAP</TabsTrigger>
-                <TabsTrigger value="vwap">VWAP</TabsTrigger>
-                <TabsTrigger value="trailing">Trailing</TabsTrigger>
-                <TabsTrigger value="oco">OCO</TabsTrigger>
-                <TabsTrigger value="bracket">Bracket</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto">
+                <TabsTrigger value="iceberg" className="text-[9px] sm:text-sm px-1 py-1.5">Iceberg</TabsTrigger>
+                <TabsTrigger value="twap" className="text-[9px] sm:text-sm px-1 py-1.5">TWAP</TabsTrigger>
+                <TabsTrigger value="vwap" className="text-[9px] sm:text-sm px-1 py-1.5">VWAP</TabsTrigger>
+                <TabsTrigger value="trailing" className="text-[9px] sm:text-sm px-1 py-1.5">Trail</TabsTrigger>
+                <TabsTrigger value="oco" className="text-[9px] sm:text-sm px-1 py-1.5">OCO</TabsTrigger>
+                <TabsTrigger value="bracket" className="text-[9px] sm:text-sm px-1 py-1.5">Bracket</TabsTrigger>
               </TabsList>
 
               <div className="mt-6 space-y-6">
                 {/* Common Fields */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div>
                     <Label>Symbol</Label>
                     <Select value={symbol} onValueChange={setSymbol}>
@@ -344,7 +344,7 @@ const SmartOrders = () => {
         </Card>
 
         {/* Order Summary */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Order Summary</CardTitle>
@@ -383,7 +383,7 @@ const SmartOrders = () => {
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <p className="text-3xl font-bold">${currentPrice.toLocaleString()}</p>
+                <p className="text-xl sm:text-3xl font-bold">${currentPrice.toLocaleString()}</p>
                 <Badge variant="outline" className="mt-2 text-green-500 border-green-500">
                   <TrendingUp className="h-3 w-3 mr-1" />
                   +2.34%
