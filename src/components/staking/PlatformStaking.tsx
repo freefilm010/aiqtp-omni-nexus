@@ -81,18 +81,18 @@ export const PlatformStaking = () => {
 
   return (
     <div>
-      <div className="text-center mb-8">
+      <div className="text-center mb-4 sm:mb-8">
         <Badge className="mb-2 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
           <Coins className="h-3 w-3 mr-1" />
           Earn Passive Income
         </Badge>
-        <h2 className="text-2xl font-bold">Platform Token Staking</h2>
-        <p className="text-muted-foreground mt-2">
-          Lock your tokens to earn rewards. Higher lock periods = higher APY.
+        <h2 className="text-lg sm:text-2xl font-bold">Platform Token Staking</h2>
+        <p className="text-muted-foreground mt-1 sm:mt-2 text-xs sm:text-base">
+          Lock tokens to earn rewards. Higher lock = higher APY.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
         {STAKING_POOLS.map((pool) => {
           const amount = Number(amounts[pool.symbol] || 0);
           const dailyReward = amount > 0 ? ((amount * pool.apy) / 100 / 365).toFixed(4) : "0";
@@ -100,19 +100,19 @@ export const PlatformStaking = () => {
 
           return (
             <Card key={pool.symbol} className="border-border hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 sm:pb-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className={`text-lg ${pool.color}`}>{pool.token}</CardTitle>
-                    <CardDescription>{pool.symbol}</CardDescription>
+                    <CardTitle className={`text-sm sm:text-lg ${pool.color}`}>{pool.token}</CardTitle>
+                    <CardDescription className="text-[10px] sm:text-sm">{pool.symbol}</CardDescription>
                   </div>
-                  <Badge variant="outline" className="text-lg font-bold border-emerald-500/50 text-emerald-400">
+                  <Badge variant="outline" className="text-xs sm:text-lg font-bold border-emerald-500/50 text-emerald-400">
                     {pool.apy}% APY
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-[10px] sm:text-sm">
                   <div className="flex items-center gap-1">
                     <Lock className="h-3 w-3 text-muted-foreground" />
                     <span>{pool.lockPeriod}</span>

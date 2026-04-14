@@ -171,41 +171,41 @@ const PortfolioAnalyticsDashboard = () => {
   const formatPercent = (v: number) => `${v > 0 ? '+' : ''}${v.toFixed(2)}%`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Top Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Portfolio Value</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalValue)}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Portfolio Value</p>
+            <p className="text-lg sm:text-2xl font-bold">{formatCurrency(totalValue)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Total P&L</p>
-            <p className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Total P&L</p>
+            <p className={`text-lg sm:text-2xl font-bold ${totalPnL >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
               {formatCurrency(Math.abs(totalPnL))}
             </p>
-            <p className={`text-xs ${totalPnL >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+            <p className={`text-[10px] sm:text-xs ${totalPnL >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
               {formatPercent(totalPnLPercent)}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Positions</p>
-            <p className="text-2xl font-bold">{portfolio.length}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Positions</p>
+            <p className="text-lg sm:text-2xl font-bold">{portfolio.length}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Sectors</p>
-            <p className="text-2xl font-bold">{sectorData.length}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4 px-3 sm:px-6">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Sectors</p>
+            <p className="text-lg sm:text-2xl font-bold">{sectorData.length}</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">

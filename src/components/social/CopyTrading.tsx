@@ -137,29 +137,29 @@ const CopyTrading = () => {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Traders</p>
-                <p className="text-xl font-bold text-foreground">{traders.length}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Traders</p>
+                <p className="text-base sm:text-xl font-bold text-foreground">{traders.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <TrendingUp className="h-5 w-5 text-green-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-green-500/10">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Avg. 30D Return</p>
-                <p className={`text-xl font-bold ${avgReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">30D Avg</p>
+                <p className={`text-base sm:text-xl font-bold ${avgReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                   {avgReturn >= 0 ? '+' : ''}{avgReturn.toFixed(1)}%
                 </p>
               </div>
@@ -167,27 +167,27 @@ const CopyTrading = () => {
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <Copy className="h-5 w-5 text-blue-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-blue-500/10">
+                <Copy className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Copiers</p>
-                <p className="text-xl font-bold text-foreground">{totalCopiers.toLocaleString()}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Copiers</p>
+                <p className="text-base sm:text-xl font-bold text-foreground">{totalCopiers.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <DollarSign className="h-5 w-5 text-yellow-500" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-yellow-500/10">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total AUM</p>
-                <p className="text-xl font-bold text-foreground">${(totalAum / 1000000).toFixed(1)}M</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">AUM</p>
+                <p className="text-base sm:text-xl font-bold text-foreground">${(totalAum / 1000000).toFixed(1)}M</p>
               </div>
             </div>
           </CardContent>
@@ -204,11 +204,11 @@ const CopyTrading = () => {
         <TabsContent value="leaderboard" className="space-y-4">
           {filteredTraders.map((trader, index) => (
             <Card key={trader.id} className="bg-card border-border hover:border-primary/50 transition-colors">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 sm:gap-4">
                     <div className="relative">
-                      <Avatar className="h-14 w-14">
+                      <Avatar className="h-10 w-10 sm:h-14 sm:w-14">
                         <AvatarImage src={trader.avatar} />
                         <AvatarFallback className="bg-primary/20 text-primary">
                           {trader.name.slice(0, 2).toUpperCase()}
@@ -244,8 +244,8 @@ const CopyTrading = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="grid grid-cols-4 gap-6 text-center">
+                  <div className="flex items-center gap-3 sm:gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 text-center">
                       <div>
                         <p className="text-xs text-muted-foreground">30D PnL</p>
                         <p className={`font-bold ${trader.pnl30d >= 0 ? 'text-green-500' : 'text-red-500'}`}>
