@@ -84,7 +84,7 @@ const PortfolioPage = () => {
             )}
 
             {/* Net Worth Summary — ONLY live, valid prices */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
               <Card>
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2 mb-1">
