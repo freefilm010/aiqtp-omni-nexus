@@ -80,51 +80,51 @@ const LiveHeatMapWidget = () => {
   const topLosers = [...assets].filter(a => a.change < 0).sort((a, b) => a.change - b.change).slice(0, 3);
 
   return (
-    <section className="py-16 bg-gradient-to-b from-background to-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
+    <section className="py-8 sm:py-16 bg-gradient-to-b from-background to-muted/30">
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 gap-3">
           <div>
-            <h2 className="text-3xl font-bold mb-2 flex items-center gap-3">
-              <LayoutGrid className="h-8 w-8 text-primary" />
+            <h2 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2 flex items-center gap-2 sm:gap-3">
+              <LayoutGrid className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
               Live Market Heat Map
             </h2>
-            <p className="text-muted-foreground">Real CoinGecko data • Size = Market Cap • Color = 24h Change</p>
+            <p className="text-muted-foreground text-[10px] sm:text-sm">Real CoinGecko data • Size = Market Cap • Color = 24h Change</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing} className="text-xs h-7 sm:h-9">
+              <RefreshCw className={`h-3.5 w-3.5 mr-1 sm:mr-2 ${syncing ? 'animate-spin' : ''}`} />
               Sync
             </Button>
             <Badge variant={isLive ? 'default' : 'secondary'} className={isLive ? 'bg-emerald-500 animate-pulse' : ''}>
               {isLive ? '● LIVE' : 'LOADING'}
             </Badge>
-            <Button variant="outline" onClick={() => navigate('/advanced-trading')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/advanced-trading')} className="hidden sm:flex">
               Full Trading Terminal <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           <Card className="lg:col-span-3 border-2">
-            <CardContent className="p-4">
-              <div className="grid grid-cols-6 gap-2 auto-rows-[80px]">
+            <CardContent className="p-2 sm:p-4">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2 auto-rows-[60px] sm:auto-rows-[80px]">
                 {sortedAssets.map((asset) => (
                   <div
                     key={asset.symbol}
-                    className={`${getColor(asset.change)} ${getCellSize(asset.marketCap)} rounded-lg p-3 flex flex-col justify-between cursor-pointer hover:opacity-90 transition-all hover:scale-[1.02] shadow-lg`}
+                    className={`${getColor(asset.change)} ${getCellSize(asset.marketCap)} rounded-lg p-2 sm:p-3 flex flex-col justify-between cursor-pointer hover:opacity-90 transition-all hover:scale-[1.02] shadow-lg`}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <span className="font-bold text-white text-lg">{asset.symbol}</span>
-                        <p className="text-white/70 text-xs">{asset.name}</p>
+                        <span className="font-bold text-white text-xs sm:text-lg">{asset.symbol}</span>
+                        <p className="text-white/70 text-[8px] sm:text-xs hidden sm:block">{asset.name}</p>
                       </div>
-                      <span className="text-white/60 text-xs">{formatMarketCap(asset.marketCap)}</span>
+                      <span className="text-white/60 text-[8px] sm:text-xs hidden sm:inline">{formatMarketCap(asset.marketCap)}</span>
                     </div>
                     <div className="flex items-end justify-between">
-                      <span className="text-white font-semibold text-sm">{formatPrice(asset.price)}</span>
-                      <span className="text-white font-bold flex items-center gap-1">
-                        {asset.change >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                        {asset.change >= 0 ? '+' : ''}{asset.change.toFixed(2)}%
+                      <span className="text-white font-semibold text-[10px] sm:text-sm">{formatPrice(asset.price)}</span>
+                      <span className="text-white font-bold flex items-center gap-0.5 text-[10px] sm:text-sm">
+                        {asset.change >= 0 ? <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> : <TrendingDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
+                        {asset.change >= 0 ? '+' : ''}{asset.change.toFixed(1)}%
                       </span>
                     </div>
                   </div>

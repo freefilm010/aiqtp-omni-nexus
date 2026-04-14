@@ -126,28 +126,28 @@ const AimeStyleAIPanel = () => {
   return (
     <div className="space-y-6">
       {/* AI Copilot Header */}
-      <Card className="relative overflow-hidden p-6 bg-gradient-to-br from-[hsl(223,18%,9%)] to-[hsl(223,18%,7%)] border-[hsl(270,91%,65%,0.3)]">
+      <Card className="relative overflow-hidden p-4 sm:p-6 bg-gradient-to-br from-[hsl(223,18%,9%)] to-[hsl(223,18%,7%)] border-[hsl(270,91%,65%,0.3)]">
         <div className="absolute inset-0 bg-mesh-card opacity-30 pointer-events-none" />
         
-        <div className="relative flex items-start gap-4">
+        <div className="relative flex items-start gap-3 sm:gap-4">
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(270,91%,65%)] to-[hsl(224,100%,58%)] flex items-center justify-center shadow-lg"
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[hsl(270,91%,65%)] to-[hsl(224,100%,58%)] flex items-center justify-center shadow-lg"
               style={{ boxShadow: '0 0 30px hsl(270,91%,65%,0.3)' }}>
-              <Bot className="w-7 h-7 text-white" />
+              <Bot className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[hsl(162,91%,32%)] border-2 border-[hsl(223,18%,9%)] flex items-center justify-center">
-              <Activity className="w-3 h-3 text-white" />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[hsl(162,91%,32%)] border-2 border-[hsl(223,18%,9%)] flex items-center justify-center">
+              <Activity className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
             </div>
           </div>
           
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-lg text-foreground">QAQI™ AI Assistant</h3>
-              <Badge className="bg-[hsl(162,91%,32%,0.15)] text-[hsl(162,91%,32%)] text-[9px]">ONLINE</Badge>
-              <Badge className="bg-[hsl(270,91%,65%,0.15)] text-[hsl(270,91%,65%)] text-[9px]">QUANTUM-ENHANCED</Badge>
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+              <h3 className="font-bold text-sm sm:text-lg text-foreground">QAQI™ AI Assistant</h3>
+              <Badge className="bg-[hsl(162,91%,32%,0.15)] text-[hsl(162,91%,32%)] text-[8px] sm:text-[9px]">ONLINE</Badge>
+              <Badge className="bg-[hsl(270,91%,65%,0.15)] text-[hsl(270,91%,65%)] text-[8px] sm:text-[9px] hidden sm:inline-flex">QUANTUM-ENHANCED</Badge>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Your personal AI trading mentor. Ask me anything about markets, trades, or get instant analysis.
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+              Your personal AI trading mentor. Ask about markets, trades, or get instant analysis.
             </p>
             
             <div className="flex items-center gap-2 p-3 rounded-xl bg-[hsl(223,18%,12%)] border border-[hsl(222,14%,20%)] group focus-within:border-[hsl(270,91%,65%,0.5)] transition-colors">

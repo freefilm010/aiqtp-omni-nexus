@@ -133,23 +133,23 @@ const SmartMoneyFlow = () => {
 
           {/* Flow Table */}
           <div className="space-y-2">
-            <div className="grid grid-cols-6 gap-2 px-3 py-2 text-[9px] font-mono text-muted-foreground uppercase">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 text-[8px] sm:text-[9px] font-mono text-muted-foreground uppercase">
               <span>Asset</span>
               <span className="text-right">Price</span>
               <span className="text-right">24h</span>
               <span className="text-right">Net Flow</span>
-              <span className="text-center">Whales</span>
-              <span className="text-center">Inst. Bias</span>
+              <span className="text-center hidden sm:block">Whales</span>
+              <span className="text-center hidden sm:block">Inst. Bias</span>
             </div>
 
             {flowData.map((item) => (
               <div 
                 key={item.id}
-                className="grid grid-cols-6 gap-2 px-3 py-3 rounded-lg bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,12%)] hover:border-[hsl(222,14%,22%)] transition-colors items-center"
+                className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 sm:gap-2 px-2 sm:px-3 py-2.5 sm:py-3 rounded-lg bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,12%)] hover:border-[hsl(222,14%,22%)] transition-colors items-center"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-[hsl(223,18%,15%)] flex items-center justify-center">
-                    <span className="font-mono text-[9px] font-bold text-foreground">{item.asset}</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[hsl(223,18%,15%)] flex items-center justify-center">
+                    <span className="font-mono text-[8px] sm:text-[9px] font-bold text-foreground">{item.asset}</span>
                   </div>
                 </div>
                 
