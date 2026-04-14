@@ -109,57 +109,57 @@ const ArbitrageScanner = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Zap className="h-5 w-5 text-green-500" />
+          <CardContent className="pt-3 sm:pt-4 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-green-500/10">
+                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Opportunities</p>
-                <p className="text-2xl font-bold">{filteredOpportunities.length}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Active</p>
+                <p className="text-lg sm:text-2xl font-bold">{filteredOpportunities.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <DollarSign className="h-5 w-5 text-primary" />
+          <CardContent className="pt-3 sm:pt-4 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Potential Profit</p>
-                <p className="text-2xl font-bold">${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Profit</p>
+                <p className="text-lg sm:text-2xl font-bold">${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <TrendingUp className="h-5 w-5 text-amber-500" />
+          <CardContent className="pt-3 sm:pt-4 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-amber-500/10">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Best Spread</p>
-                <p className="text-2xl font-bold">{filteredOpportunities[0]?.spreadPercent.toFixed(3) || 0}%</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Best</p>
+                <p className="text-lg sm:text-2xl font-bold">{filteredOpportunities[0]?.spreadPercent.toFixed(3) || 0}%</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <RefreshCw className={`h-5 w-5 text-blue-500 ${isScanning ? 'animate-spin' : ''}`} />
+          <CardContent className="pt-3 sm:pt-4 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 rounded-lg bg-blue-500/10">
+                <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 text-blue-500 ${isScanning ? 'animate-spin' : ''}`} />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Scanner Status</p>
-                <p className="text-2xl font-bold">{isScanning ? 'Active' : 'Paused'}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Scanner</p>
+                <p className="text-lg sm:text-2xl font-bold">{isScanning ? 'On' : 'Off'}</p>
               </div>
             </div>
           </CardContent>
@@ -168,42 +168,45 @@ const ArbitrageScanner = () => {
 
       {/* Controls */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2 sm:pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Scanner Settings
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
+              Settings
             </CardTitle>
             <Button
               variant={isScanning ? 'destructive' : 'default'}
+              size="sm"
+              className="h-8 text-xs sm:text-sm"
               onClick={() => setIsScanning(!isScanning)}
             >
-              {isScanning ? <PauseCircle className="h-4 w-4 mr-2" /> : <PlayCircle className="h-4 w-4 mr-2" />}
-              {isScanning ? 'Pause Scanner' : 'Start Scanner'}
+              {isScanning ? <PauseCircle className="h-3.5 w-3.5 mr-1" /> : <PlayCircle className="h-3.5 w-3.5 mr-1" />}
+              {isScanning ? 'Pause' : 'Start'}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-6">
-            <div className="space-y-2">
-              <Label>Minimum Spread (%)</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6">
+            <div className="space-y-1">
+              <Label className="text-[10px] sm:text-sm">Min Spread %</Label>
               <Input
                 type="number"
                 step="0.01"
                 value={minSpread}
                 onChange={(e) => setMinSpread(e.target.value)}
+                className="h-8 text-xs sm:text-sm"
               />
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <Label>Auto-Execute Trades</Label>
+            <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg border">
+              <Label className="text-[10px] sm:text-sm">Auto</Label>
               <Switch checked={autoExecute} onCheckedChange={setAutoExecute} />
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <Label>Triangular Arb</Label>
+            <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg border">
+              <Label className="text-[10px] sm:text-sm">Tri</Label>
               <Switch checked={showTriangular} onCheckedChange={setShowTriangular} />
             </div>
-            <div className="flex items-center justify-between p-3 rounded-lg border">
-              <Label>Cross-Chain Arb</Label>
+            <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg border">
+              <Label className="text-[10px] sm:text-sm">Cross</Label>
               <Switch checked={showCrossChain} onCheckedChange={setShowCrossChain} />
             </div>
           </div>
@@ -212,65 +215,52 @@ const ArbitrageScanner = () => {
 
       {/* Opportunities */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Live Arbitrage Opportunities
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            Live Arbitrage
           </CardTitle>
-          <CardDescription>Real-time cross-exchange price discrepancies</CardDescription>
+          <CardDescription className="text-[10px] sm:text-sm">Cross-exchange price discrepancies</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-8 text-xs text-muted-foreground px-4 py-2 border-b bg-muted/30">
-            <span>Pair</span>
-            <span>Type</span>
-            <span>Buy</span>
-            <span>Sell</span>
-            <span className="text-right">Spread</span>
-            <span className="text-right">Est. Profit</span>
-            <span className="text-right">Expires</span>
-            <span className="text-right">Action</span>
+          {/* Mobile: card layout, Desktop: table */}
+          <div className="hidden sm:block">
+            <div className="grid grid-cols-8 text-xs text-muted-foreground px-4 py-2 border-b bg-muted/30">
+              <span>Pair</span><span>Type</span><span>Buy</span><span>Sell</span>
+              <span className="text-right">Spread</span><span className="text-right">Profit</span>
+              <span className="text-right">Expires</span><span className="text-right">Action</span>
+            </div>
+            <ScrollArea className="h-[400px]">
+              {filteredOpportunities.map((opp) => (
+                <div key={opp.id} className="grid grid-cols-8 items-center px-4 py-3 border-b hover:bg-muted/50">
+                  <div><span className="font-medium">{opp.pair}</span></div>
+                  <div><Badge variant="outline" className={`capitalize text-[10px] ${opp.type === 'triangular' ? 'border-purple-500 text-purple-500' : opp.type === 'cross-chain' ? 'border-blue-500 text-blue-500' : ''}`}>{opp.type}</Badge></div>
+                  <div><div className="text-green-500 text-xs">{opp.buyExchange}</div><div className="text-[10px] text-muted-foreground">${opp.buyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div></div>
+                  <div><div className="text-red-500 text-xs">{opp.sellExchange}</div><div className="text-[10px] text-muted-foreground">${opp.sellPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div></div>
+                  <div className="text-right"><span className={`font-bold text-xs ${getRiskColor(opp.risk)} px-1.5 py-0.5 rounded`}>{opp.spreadPercent.toFixed(3)}%</span></div>
+                  <div className="text-right font-medium text-green-500 text-xs">${opp.estimatedProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                  <div className="text-right"><div className="flex items-center justify-end gap-1"><Clock className="h-3 w-3 text-muted-foreground" /><span className={`text-xs ${opp.expiresIn < 10 ? 'text-red-500' : 'text-muted-foreground'}`}>{opp.expiresIn}s</span></div></div>
+                  <div className="text-right"><Button size="sm" className="h-7 text-xs"><Zap className="h-3 w-3 mr-1" />Exec</Button></div>
+                </div>
+              ))}
+            </ScrollArea>
           </div>
-          <ScrollArea className="h-[400px]">
+          {/* Mobile card list */}
+          <ScrollArea className="h-[400px] sm:hidden">
             {filteredOpportunities.map((opp) => (
-              <div key={opp.id} className="grid grid-cols-8 items-center px-4 py-3 border-b hover:bg-muted/50">
-                <div>
-                  <span className="font-medium">{opp.pair}</span>
+              <div key={opp.id} className="px-3 py-2.5 border-b hover:bg-muted/50">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium text-sm">{opp.pair}</span>
+                  <Badge variant="outline" className={`capitalize text-[9px] ${opp.type === 'triangular' ? 'border-purple-500 text-purple-500' : opp.type === 'cross-chain' ? 'border-blue-500 text-blue-500' : ''}`}>{opp.type}</Badge>
                 </div>
-                <div>
-                  <Badge variant="outline" className={`capitalize ${opp.type === 'triangular' ? 'border-purple-500 text-purple-500' : opp.type === 'cross-chain' ? 'border-blue-500 text-blue-500' : ''}`}>
-                    {opp.type}
-                  </Badge>
+                <div className="grid grid-cols-3 gap-1 text-[10px]">
+                  <div><span className="text-muted-foreground">Buy: </span><span className="text-green-500">{opp.buyExchange}</span></div>
+                  <div><span className="text-muted-foreground">Sell: </span><span className="text-red-500">{opp.sellExchange}</span></div>
+                  <div className="text-right"><span className={`font-bold ${getRiskColor(opp.risk)} px-1 rounded`}>{opp.spreadPercent.toFixed(3)}%</span></div>
                 </div>
-                <div>
-                  <div className="text-green-500">{opp.buyExchange}</div>
-                  <div className="text-xs text-muted-foreground">${opp.buyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                </div>
-                <div>
-                  <div className="text-red-500">{opp.sellExchange}</div>
-                  <div className="text-xs text-muted-foreground">${opp.sellPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                </div>
-                <div className="text-right">
-                  <span className={`font-bold ${getRiskColor(opp.risk)} px-2 py-0.5 rounded`}>
-                    {opp.spreadPercent.toFixed(3)}%
-                  </span>
-                </div>
-                <div className="text-right font-medium text-green-500">
-                  ${opp.estimatedProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span className={opp.expiresIn < 10 ? 'text-red-500' : 'text-muted-foreground'}>
-                      {opp.expiresIn}s
-                    </span>
-                  </div>
-                  <Progress value={(opp.expiresIn / 30) * 100} className="h-1 mt-1" />
-                </div>
-                <div className="text-right">
-                  <Button size="sm" className="h-7">
-                    <Zap className="h-3 w-3 mr-1" />
-                    Execute
-                  </Button>
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-green-500 text-xs font-medium">${opp.estimatedProfit.toFixed(2)}</span>
+                  <Button size="sm" className="h-6 text-[10px] px-2"><Zap className="h-2.5 w-2.5 mr-0.5" />Execute</Button>
                 </div>
               </div>
             ))}

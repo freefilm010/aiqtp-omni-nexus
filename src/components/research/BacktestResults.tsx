@@ -30,75 +30,71 @@ export default function BacktestResults({ result }: BacktestResultsProps) {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardHeader className="pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
               {isPositive ? (
-                <TrendingUp className="h-4 w-4 text-green-500" />
+                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-500" />
+                <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500" />
               )}
-              Total Return
+              Return
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+          <CardContent className="pb-3">
+            <div className={`text-lg sm:text-2xl font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
               {isPositive ? '+' : ''}{(result.totalReturn * 100).toFixed(2)}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               ${result.finalCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              Sharpe Ratio
+          <CardHeader className="pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+              <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+              Sharpe
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-3">
+            <div className="text-lg sm:text-2xl font-bold">
               {result.sharpeRatio.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Risk-adjusted return
-            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Risk-adjusted</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-orange-500" />
-              Max Drawdown
+          <CardHeader className="pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+              <TrendingDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500" />
+              Max DD
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">
+          <CardContent className="pb-3">
+            <div className="text-lg sm:text-2xl font-bold text-orange-500">
               {(result.maxDrawdown * 100).toFixed(2)}%
             </div>
-            <p className="text-xs text-muted-foreground">
-              Peak to trough
-            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Peak to trough</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Target className="h-4 w-4 text-accent" />
+          <CardHeader className="pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+              <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
               Win Rate
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-3">
+            <div className="text-lg sm:text-2xl font-bold">
               {(result.winRate * 100).toFixed(1)}%
             </div>
-            <p className="text-xs text-muted-foreground">
-              {result.winningTrades} wins / {result.totalTrades} trades
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              {result.winningTrades}W / {result.totalTrades}T
             </p>
           </CardContent>
         </Card>
@@ -106,23 +102,21 @@ export default function BacktestResults({ result }: BacktestResultsProps) {
 
       {/* Detailed Results */}
       <Card>
-        <CardHeader>
-          <CardTitle>Backtest Analysis</CardTitle>
-          <CardDescription>
-            Detailed performance metrics and visualizations
-          </CardDescription>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm sm:text-base">Backtest Analysis</CardTitle>
+          <CardDescription className="text-[10px] sm:text-sm">Performance metrics and visualizations</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="equity" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="equity">Equity Curve</TabsTrigger>
-              <TabsTrigger value="drawdown">Drawdown</TabsTrigger>
-              <TabsTrigger value="trades">Trades</TabsTrigger>
-              <TabsTrigger value="metrics">Metrics</TabsTrigger>
+          <Tabs defaultValue="equity" className="space-y-3 sm:space-y-4">
+            <TabsList className="grid w-full grid-cols-4 h-auto">
+              <TabsTrigger value="equity" className="text-[9px] sm:text-sm px-1 py-1.5">Equity</TabsTrigger>
+              <TabsTrigger value="drawdown" className="text-[9px] sm:text-sm px-1 py-1.5">DD</TabsTrigger>
+              <TabsTrigger value="trades" className="text-[9px] sm:text-sm px-1 py-1.5">Trades</TabsTrigger>
+              <TabsTrigger value="metrics" className="text-[9px] sm:text-sm px-1 py-1.5">Metrics</TabsTrigger>
             </TabsList>
 
             <TabsContent value="equity" className="space-y-4">
-              <div className="h-80">
+              <div className="h-48 sm:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={equityData}>
                     <defs>
@@ -164,7 +158,7 @@ export default function BacktestResults({ result }: BacktestResultsProps) {
             </TabsContent>
 
             <TabsContent value="drawdown" className="space-y-4">
-              <div className="h-80">
+              <div className="h-48 sm:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={equityData}>
                     <defs>
@@ -324,9 +318,9 @@ function MetricCard({
   negative?: boolean;
 }) {
   return (
-    <div className="p-4 bg-muted/50 rounded-lg">
-      <div className="text-xs text-muted-foreground mb-1">{label}</div>
-      <div className={`text-lg font-semibold ${highlight ? 'text-green-500' : negative ? 'text-red-500' : ''}`}>
+    <div className="p-2.5 sm:p-4 bg-muted/50 rounded-lg">
+      <div className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">{label}</div>
+      <div className={`text-sm sm:text-lg font-semibold ${highlight ? 'text-green-500' : negative ? 'text-red-500' : ''}`}>
         {value}
       </div>
     </div>
