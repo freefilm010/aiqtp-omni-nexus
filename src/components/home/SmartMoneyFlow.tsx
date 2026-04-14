@@ -171,7 +171,7 @@ const SmartMoneyFlow = () => {
                   </span>
                 </div>
                 
-                <div className="flex justify-center">
+                <div className="hidden sm:flex justify-center">
                   <Badge 
                     className={`text-[8px] ${
                       item.whaleActivity === 'accumulating' ? 'bg-[hsl(162,91%,32%,0.15)] text-[hsl(162,91%,32%)]' :
@@ -183,7 +183,7 @@ const SmartMoneyFlow = () => {
                   </Badge>
                 </div>
                 
-                <div className="flex justify-center">
+                <div className="hidden sm:flex justify-center">
                   {item.institutionalBias === 'bullish' ? (
                     <TrendingUp className="w-4 h-4 text-[hsl(162,91%,32%)]" />
                   ) : item.institutionalBias === 'bearish' ? (
