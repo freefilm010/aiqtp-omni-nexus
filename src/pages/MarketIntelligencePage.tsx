@@ -7,7 +7,6 @@ import {
   Building2, 
   Wallet, 
   MessageCircle, 
-  TrendingUp,
   Zap
 } from "lucide-react";
 
@@ -17,7 +16,7 @@ const OnChainIntelligence = lazy(() => import("@/components/intelligence/OnChain
 const SocialAlphaFeed = lazy(() => import("@/components/intelligence/SocialAlphaFeed"));
 
 const TabLoader = () => (
-  <div className="flex items-center justify-center h-[400px]">
+  <div className="flex items-center justify-center h-[300px] sm:h-[400px]">
     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
   </div>
 );
@@ -26,36 +25,36 @@ const MarketIntelligencePage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20">
-              <Zap className="h-6 w-6 text-primary" />
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20">
+              <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">Market Intelligence</h1>
+            <h1 className="text-xl sm:text-3xl font-bold">Market Intelligence</h1>
           </div>
-          <p className="text-muted-foreground">
-            Options flow • Institutional filings • On-chain data • Social alpha • The data edge
+          <p className="text-muted-foreground text-xs sm:text-sm">
+            Options flow • Institutional • On-chain • Social alpha
           </p>
         </div>
 
-        <Tabs defaultValue="options" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
-            <TabsTrigger value="options" className="gap-2">
-              <Activity className="h-4 w-4" />
-              Options Flow
+        <Tabs defaultValue="options" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="options" className="gap-1 sm:gap-2 text-[10px] sm:text-sm px-1 sm:px-3">
+              <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+              Options
             </TabsTrigger>
-            <TabsTrigger value="institutional" className="gap-2">
-              <Building2 className="h-4 w-4" />
-              Institutional
+            <TabsTrigger value="institutional" className="gap-1 sm:gap-2 text-[10px] sm:text-sm px-1 sm:px-3">
+              <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
+              Inst.
             </TabsTrigger>
-            <TabsTrigger value="onchain" className="gap-2">
-              <Wallet className="h-4 w-4" />
-              On-Chain
+            <TabsTrigger value="onchain" className="gap-1 sm:gap-2 text-[10px] sm:text-sm px-1 sm:px-3">
+              <Wallet className="h-3 w-3 sm:h-4 sm:w-4" />
+              Chain
             </TabsTrigger>
-            <TabsTrigger value="social" className="gap-2">
-              <MessageCircle className="h-4 w-4" />
-              Social Alpha
+            <TabsTrigger value="social" className="gap-1 sm:gap-2 text-[10px] sm:text-sm px-1 sm:px-3">
+              <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+              Social
             </TabsTrigger>
           </TabsList>
 
