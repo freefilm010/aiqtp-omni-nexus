@@ -8,24 +8,23 @@ const DefiSniperPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">DeFi Sniper</h1>
-          <p className="text-muted-foreground mt-1">
-            Solana pump.fun & Raydium sniper • Early token detection
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-3xl font-bold">DeFi Sniper</h1>
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+            Solana pump.fun & Raydium • Early token detection
           </p>
         </div>
 
-        <Tabs defaultValue="sniper" className="space-y-6">
+        <Tabs defaultValue="sniper" className="space-y-4 sm:space-y-6">
           <TabsList>
-            <TabsTrigger value="sniper">Token Sniper</TabsTrigger>
-            <TabsTrigger value="scanner">New Token Scanner</TabsTrigger>
+            <TabsTrigger value="sniper" className="text-xs sm:text-sm">Token Sniper</TabsTrigger>
+            <TabsTrigger value="scanner" className="text-xs sm:text-sm">Token Scanner</TabsTrigger>
           </TabsList>
 
           <TabsContent value="sniper">
             <DeFiSniper />
           </TabsContent>
-
           <TabsContent value="scanner">
             <TokenScanner />
           </TabsContent>
