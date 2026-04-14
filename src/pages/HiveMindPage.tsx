@@ -241,7 +241,7 @@ const HiveMindPage = () => {
   return (
     <div className="min-h-screen bg-[hsl(225,20%,6%)]">
       <Header />
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="p-3 rounded-xl bg-primary/10 w-fit"><Brain className="h-10 w-10 text-primary" /></div>
           <div className="flex-1">

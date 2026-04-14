@@ -11,7 +11,7 @@ const QAQIPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         <div className="mb-4">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="min-w-0">

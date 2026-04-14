@@ -214,7 +214,7 @@ const AutoInvestPage = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24 flex items-center justify-center h-[60vh]">
+        <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24 flex items-center justify-center h-[60vh]">
           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
         </main>
         <Footer />
@@ -225,7 +225,7 @@ const AutoInvestPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24 space-y-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24 space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>

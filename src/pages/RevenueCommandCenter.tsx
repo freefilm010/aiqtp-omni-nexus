@@ -147,7 +147,7 @@ const RevenueCommandCenter = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         {/* Command Center Header */}
         <div className="mb-4 sm:mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">

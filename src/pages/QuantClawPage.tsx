@@ -72,7 +72,7 @@ const QuantClawPage = () => {
   return (
     <div className="min-h-screen bg-[hsl(225,20%,6%)]">
       <Header />
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         <div className="mb-6 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Bot className="h-8 w-8 text-primary" />
