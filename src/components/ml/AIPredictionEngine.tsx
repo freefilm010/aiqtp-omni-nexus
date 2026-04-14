@@ -148,11 +148,11 @@ const AIPredictionEngine = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 items-end">
-            <div className="space-y-2 flex-1">
-              <label className="text-sm font-medium">Asset</label>
+          <div className="grid grid-cols-3 sm:flex gap-2 sm:gap-4 items-end">
+            <div className="space-y-1 sm:space-y-2 flex-1">
+              <label className="text-[10px] sm:text-sm font-medium">Asset</label>
               <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -163,31 +163,31 @@ const AIPredictionEngine = () => {
               </Select>
             </div>
 
-            <div className="space-y-2 flex-1">
-              <label className="text-sm font-medium">Timeframe</label>
+            <div className="space-y-1 sm:space-y-2 flex-1">
+              <label className="text-[10px] sm:text-sm font-medium">Timeframe</label>
               <Select value={selectedTimeframe} onValueChange={(v) => setSelectedTimeframe(v as any)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1h">1 Hour</SelectItem>
-                  <SelectItem value="4h">4 Hours</SelectItem>
-                  <SelectItem value="24h">24 Hours</SelectItem>
-                  <SelectItem value="7d">7 Days</SelectItem>
+                  <SelectItem value="1h">1H</SelectItem>
+                  <SelectItem value="4h">4H</SelectItem>
+                  <SelectItem value="24h">24H</SelectItem>
+                  <SelectItem value="7d">7D</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2 flex-1">
-              <label className="text-sm font-medium">Model</label>
+            <div className="space-y-1 sm:space-y-2 flex-1">
+              <label className="text-[10px] sm:text-sm font-medium">Model</label>
               <Select value={selectedModel} onValueChange={(v) => setSelectedModel(v as any)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LSTM">LSTM (Long-term)</SelectItem>
-                  <SelectItem value="AR">AR (Short-term)</SelectItem>
-                  <SelectItem value="Ensemble">Ensemble (Combined)</SelectItem>
+                  <SelectItem value="LSTM">LSTM</SelectItem>
+                  <SelectItem value="AR">AR</SelectItem>
+                  <SelectItem value="Ensemble">Ensemble</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -195,17 +195,19 @@ const AIPredictionEngine = () => {
             <Button 
               onClick={generatePrediction} 
               disabled={isLoading}
-              className="bg-gradient-to-r from-purple-500 to-blue-500"
+              className="col-span-3 sm:col-span-1 h-8 sm:h-10 text-xs sm:text-sm bg-gradient-to-r from-purple-500 to-blue-500"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Analyzing...
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />
+                  <span className="hidden sm:inline">Analyzing...</span>
+                  <span className="sm:hidden">Analyze</span>
                 </>
               ) : (
                 <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Generate Prediction
+                  <Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="hidden sm:inline">Generate Prediction</span>
+                  <span className="sm:hidden">Predict</span>
                 </>
               )}
             </Button>
@@ -213,9 +215,9 @@ const AIPredictionEngine = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         {/* Current Prediction */}
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           {currentPrediction ? (
             <Card>
               <CardHeader>
@@ -235,22 +237,22 @@ const AIPredictionEngine = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Price Prediction */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Current Price</p>
-                    <p className="text-2xl font-bold">
-                      ${currentPrediction.currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                  <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Current</p>
+                    <p className="text-sm sm:text-2xl font-bold">
+                      ${currentPrediction.currentPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
                   </div>
-                  <div className="text-center p-4 bg-primary/10 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Predicted Price</p>
-                    <p className="text-2xl font-bold text-primary">
-                      ${currentPrediction.prediction.predictedPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  <div className="text-center p-2 sm:p-4 bg-primary/10 rounded-lg">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Predicted</p>
+                    <p className="text-sm sm:text-2xl font-bold text-primary">
+                      ${currentPrediction.prediction.predictedPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
                   </div>
-                  <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Expected Change</p>
-                    <p className={`text-2xl font-bold ${
+                  <div className="text-center p-2 sm:p-4 bg-muted/50 rounded-lg">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mb-1">Change</p>
+                    <p className={`text-sm sm:text-2xl font-bold ${
                       currentPrediction.prediction.predictedPrice > currentPrediction.currentPrice 
                         ? 'text-green-500' 
                         : 'text-red-500'
@@ -272,7 +274,7 @@ const AIPredictionEngine = () => {
                 </div>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground flex items-center gap-1">

@@ -210,16 +210,16 @@ const PortfolioSyncWidget = () => {
                 SECURED
               </Badge>
             </div>
-            <div className="flex items-end gap-3">
-              <span className="font-mono text-3xl font-bold text-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3">
+              <span className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
                 {showBalance ? `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••••'}
               </span>
               <div className={`flex items-center gap-1 pb-1 ${totalChangePercent >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
-                {totalChangePercent >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                <span className="font-mono text-sm font-bold">
+                {totalChangePercent >= 0 ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />}
+                <span className="font-mono text-xs sm:text-sm font-bold">
                   {showBalance ? `${totalChangePercent >= 0 ? '+' : ''}${totalChangePercent.toFixed(2)}%` : '••••'}
                 </span>
-                <span className="font-mono text-sm">
+                <span className="font-mono text-xs sm:text-sm hidden sm:inline">
                   ({showBalance ? `${totalChange >= 0 ? '+' : ''}$${Math.abs(totalChange).toFixed(2)}` : '••••'})
                 </span>
               </div>
@@ -314,7 +314,7 @@ const PortfolioSyncWidget = () => {
           )}
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             {[
               { icon: TrendingUp, label: 'Buy', color: 'hsl(162,91%,32%)' },
               { icon: TrendingDown, label: 'Sell', color: 'hsl(355,88%,58%)' },
@@ -327,7 +327,7 @@ const PortfolioSyncWidget = () => {
                   key={action.label}
                   variant="ghost" 
                   size="sm" 
-                  className="h-16 flex-col gap-1.5 bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,12%)] hover:border-[hsl(222,14%,25%)]"
+                  className="h-12 sm:h-16 flex-col gap-1 sm:gap-1.5 bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,12%)] hover:border-[hsl(222,14%,25%)]"
                 >
                   <Icon className="w-5 h-5" style={{ color: action.color }} />
                   <span className="text-[10px] text-muted-foreground">{action.label}</span>

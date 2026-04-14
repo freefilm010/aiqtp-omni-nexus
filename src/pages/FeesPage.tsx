@@ -111,7 +111,7 @@ const FeesPage = () => {
         </div>
 
         {/* Key Benefits */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-8 sm:mb-12">
           <Card className="bg-gradient-to-br from-success/10 to-success/5 border-success/20">
             <CardContent className="pt-6 text-center">
               <Gift className="h-8 w-8 mx-auto text-success mb-2" />
@@ -154,8 +154,8 @@ const FeesPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-6 items-center">
-              <div className="flex-1 w-full">
+            <div className="flex flex-col gap-4 sm:gap-6">
+              <div className="w-full">
                 <label className="text-sm font-medium mb-2 block">Your Profit Amount</label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -168,30 +168,32 @@ const FeesPage = () => {
                   />
                 </div>
               </div>
-              <div className="text-center md:text-right">
-                <p className="text-sm text-muted-foreground mb-1">Platform Fee</p>
-                <p className="text-xl sm:text-4xl font-bold text-primary">
-                  ${calculatedFee.fee.toFixed(2)}
-                </p>
-                <Badge variant="outline" className="mt-1">
-                  {calculatedFee.rate}% rate applied
-                </Badge>
-              </div>
-              <div className="text-center md:text-right">
-                <p className="text-sm text-muted-foreground mb-1">You Keep</p>
-                <p className="text-xl sm:text-4xl font-bold text-success">
-                  ${(profitAmount - calculatedFee.fee).toFixed(2)}
-                </p>
-                <Badge variant="secondary" className="mt-1">
-                  {(((profitAmount - calculatedFee.fee) / profitAmount) * 100).toFixed(1)}% of profits
-                </Badge>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Platform Fee</p>
+                  <p className="text-lg sm:text-4xl font-bold text-primary">
+                    ${calculatedFee.fee.toFixed(2)}
+                  </p>
+                  <Badge variant="outline" className="mt-1 text-[10px] sm:text-xs">
+                    {calculatedFee.rate}% rate
+                  </Badge>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">You Keep</p>
+                  <p className="text-lg sm:text-4xl font-bold text-success">
+                    ${(profitAmount - calculatedFee.fee).toFixed(2)}
+                  </p>
+                  <Badge variant="secondary" className="mt-1 text-[10px] sm:text-xs">
+                    {(((profitAmount - calculatedFee.fee) / profitAmount) * 100).toFixed(1)}%
+                  </Badge>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Fee Categories Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-8 sm:mb-12">
           {feeCategories.map((category) => (
             <Card key={category.title}>
               <CardHeader>
