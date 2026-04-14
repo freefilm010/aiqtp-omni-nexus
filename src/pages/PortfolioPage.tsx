@@ -42,10 +42,10 @@ const PortfolioPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Portfolio Command Center</h1>
-          <p className="text-muted-foreground mt-1">Real asset holdings • live market valuation</p>
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-3xl font-bold">Portfolio Command Center</h1>
+          <p className="text-muted-foreground mt-0.5 text-xs sm:text-base">Real asset holdings • live market valuation</p>
         </div>
 
         {isLoading && <LoadingSkeleton rows={5} className="mb-6" />}
@@ -193,11 +193,11 @@ const PortfolioPage = () => {
           </>
         )}
 
-        <Tabs defaultValue="portfolio" className="space-y-6">
+        <Tabs defaultValue="portfolio" className="space-y-4 sm:space-y-6">
           <TabsList className="grid w-full max-w-xl grid-cols-3">
-            <TabsTrigger value="portfolio" className="gap-1.5 text-xs"><Wallet className="h-3.5 w-3.5" /> Portfolio</TabsTrigger>
-            <TabsTrigger value="heatmap" className="gap-1.5 text-xs"><LayoutGrid className="h-3.5 w-3.5" /> Heatmaps</TabsTrigger>
-            <TabsTrigger value="fundamentals" className="gap-1.5 text-xs"><BarChart3 className="h-3.5 w-3.5" /> Fundamentals</TabsTrigger>
+            <TabsTrigger value="portfolio" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs"><Wallet className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> Portfolio</TabsTrigger>
+            <TabsTrigger value="heatmap" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs"><LayoutGrid className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> Heatmaps</TabsTrigger>
+            <TabsTrigger value="fundamentals" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs"><BarChart3 className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> Fundamentals</TabsTrigger>
           </TabsList>
           <TabsContent value="portfolio"><Suspense fallback={<TabLoader />}><PortfolioAnalyticsDashboard /></Suspense></TabsContent>
           <TabsContent value="heatmap"><Suspense fallback={<TabLoader />}><MarketHeatmap /></Suspense></TabsContent>
