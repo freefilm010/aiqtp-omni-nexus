@@ -207,20 +207,20 @@ const Footer = () => {
         </div>
 
         {/* Company Info & Contact Row */}
-        <div className="py-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="py-4 sm:py-8 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-gold rounded-lg flex items-center justify-center">
-                <Zap className="w-6 h-6 text-gold-foreground font-bold" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-gold rounded-lg flex items-center justify-center">
+                <Zap className="w-4 h-4 sm:w-6 sm:h-6 text-gold-foreground font-bold" />
               </div>
               <div>
-                <div className="text-xl font-bold">AIQTP™</div>
-                <div className="text-sm text-white/70">AI Quantum Trading Portal</div>
+                <div className="text-lg sm:text-xl font-bold">AIQTP™</div>
+                <div className="text-xs sm:text-sm text-white/70">AI Quantum Trading Portal</div>
               </div>
             </div>
             
-            <p className="text-white/80 text-sm leading-relaxed">
+            <p className="text-white/80 text-xs sm:text-sm leading-relaxed hidden sm:block">
               The world's most comprehensive asset trading platform, combining traditional 
               finance with cutting-edge blockchain technology.
             </p>
@@ -357,20 +357,20 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="py-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-white/70 text-sm mb-4 md:mb-0 space-y-1">
-            <div>© {new Date().getFullYear()} AIQTP™ AI Quantum Trading Portal. All rights reserved.</div>
-            <div className="text-[10px] text-white/40">
+        <div className="py-4 sm:py-8 border-t border-white/20 flex flex-col md:flex-row justify-between items-center">
+          <div className="text-white/70 text-xs sm:text-sm mb-3 md:mb-0 space-y-1">
+            <div>© {new Date().getFullYear()} AIQTP™ All rights reserved.</div>
+            <div className="text-[9px] sm:text-[10px] text-white/40 hidden sm:block">
               Owned by TRUST AIQTP HOLDINGS (TAH) • Wyoming, USA &nbsp;|&nbsp; 
               Platform operated under license by AIQTP TRUST ENTERPRISE (ATE) • New Jersey, USA
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-6 text-sm text-white/70">
-            <span>🔒 FIPS 204-206 Compliant</span>
-            <span>🌍 ISO 27001 Certified</span>
-            <span>⚡ Lightning Network</span>
-            <span>🛡️ Quantum Resistant</span>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-[10px] sm:text-sm text-white/70">
+            <span>🔒 FIPS 204-206</span>
+            <span>🌍 ISO 27001</span>
+            <span>⚡ Lightning</span>
+            <span>🛡️ Quantum</span>
           </div>
         </div>
       </div>
