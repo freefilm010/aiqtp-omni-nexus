@@ -93,13 +93,13 @@ const RiskAnalytics = () => {
   }, [timeframe]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
         <div className="space-y-1">
-          <Label className="text-sm">Timeframe</Label>
+          <Label className="text-[10px] sm:text-sm">Timeframe</Label>
           <Select value={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[90px] sm:w-[120px] h-8 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -111,8 +111,8 @@ const RiskAnalytics = () => {
           </Select>
         </div>
 
-        <div className="space-y-1 flex-1 min-w-[200px] max-w-[300px]">
-          <Label className="text-sm">Confidence Level: {confidenceLevel[0]}%</Label>
+        <div className="space-y-1 flex-1 min-w-[140px] sm:min-w-[200px] max-w-[300px]">
+          <Label className="text-[10px] sm:text-sm">Confidence: {confidenceLevel[0]}%</Label>
           <Slider 
             value={confidenceLevel} 
             onValueChange={setConfidenceLevel}
@@ -122,38 +122,38 @@ const RiskAnalytics = () => {
           />
         </div>
 
-        <Button variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Recalculate
+        <Button variant="outline" size="sm" className="h-8 text-xs">
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+          Recalc
         </Button>
       </div>
 
       {/* Risk Metrics Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-4">
         {[
-          { label: "VaR (95%)", value: `${riskMetrics.var95}%`, color: "text-warning" },
-          { label: "VaR (99%)", value: `${riskMetrics.var99}%`, color: "text-destructive" },
-          { label: "CVaR (95%)", value: `${riskMetrics.cvar95}%`, color: "text-warning" },
-          { label: "Max Drawdown", value: `${riskMetrics.maxDrawdown}%`, color: "text-destructive" },
-          { label: "Sharpe Ratio", value: riskMetrics.sharpeRatio.toFixed(2), color: "text-success" },
+          { label: "VaR 95%", value: `${riskMetrics.var95}%`, color: "text-warning" },
+          { label: "VaR 99%", value: `${riskMetrics.var99}%`, color: "text-destructive" },
+          { label: "CVaR 95%", value: `${riskMetrics.cvar95}%`, color: "text-warning" },
+          { label: "Max DD", value: `${riskMetrics.maxDrawdown}%`, color: "text-destructive" },
+          { label: "Sharpe", value: riskMetrics.sharpeRatio.toFixed(2), color: "text-success" },
           { label: "Beta", value: riskMetrics.beta.toFixed(2), color: "text-primary" },
         ].map((metric, idx) => (
           <Card key={idx}>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">{metric.label}</p>
-              <p className={`text-2xl font-bold ${metric.color}`}>{metric.value}</p>
+            <CardContent className="pt-3 pb-2 sm:pt-4 px-2 sm:px-4">
+              <p className="text-[9px] sm:text-sm text-muted-foreground truncate">{metric.label}</p>
+              <p className={`text-base sm:text-2xl font-bold ${metric.color}`}>{metric.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Tabs defaultValue="var" className="space-y-4">
-        <TabsList className="grid grid-cols-5 w-full">
-          <TabsTrigger value="var">VaR Analysis</TabsTrigger>
-          <TabsTrigger value="drawdown">Drawdown</TabsTrigger>
-          <TabsTrigger value="contribution">Risk Contribution</TabsTrigger>
-          <TabsTrigger value="stress">Stress Testing</TabsTrigger>
-          <TabsTrigger value="greeks">Greeks</TabsTrigger>
+      <Tabs defaultValue="var" className="space-y-3 sm:space-y-4">
+        <TabsList className="grid grid-cols-5 w-full h-auto">
+          <TabsTrigger value="var" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">VaR</TabsTrigger>
+          <TabsTrigger value="drawdown" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">DD</TabsTrigger>
+          <TabsTrigger value="contribution" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Risk</TabsTrigger>
+          <TabsTrigger value="stress" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Stress</TabsTrigger>
+          <TabsTrigger value="greeks" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Greeks</TabsTrigger>
         </TabsList>
 
         {/* VaR Analysis Tab */}
@@ -167,7 +167,7 @@ const RiskAnalytics = () => {
               <CardDescription>Historical VaR and actual losses comparison</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={250}>
                 <ComposedChart data={varHistory}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="day" />
@@ -184,7 +184,7 @@ const RiskAnalytics = () => {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Parametric VaR</CardTitle>
@@ -264,7 +264,7 @@ const RiskAnalytics = () => {
               <CardDescription>Historical drawdown periods and recovery</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={drawdownData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="day" />
@@ -276,22 +276,22 @@ const RiskAnalytics = () => {
                 </AreaChart>
               </ResponsiveContainer>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <div className="p-4 bg-secondary/30 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Max Drawdown</p>
-                  <p className="text-2xl font-bold text-destructive">-{riskMetrics.maxDrawdown}%</p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-4 sm:mt-6">
+                <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Max DD</p>
+                  <p className="text-base sm:text-2xl font-bold text-destructive">-{riskMetrics.maxDrawdown}%</p>
                 </div>
-                <div className="p-4 bg-secondary/30 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Avg Drawdown</p>
-                  <p className="text-2xl font-bold text-warning">-8.5%</p>
+                <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Avg DD</p>
+                  <p className="text-base sm:text-2xl font-bold text-warning">-8.5%</p>
                 </div>
-                <div className="p-4 bg-secondary/30 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Avg Recovery</p>
-                  <p className="text-2xl font-bold text-success">42 days</p>
+                <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Avg Recovery</p>
+                  <p className="text-base sm:text-2xl font-bold text-success">42 days</p>
                 </div>
-                <div className="p-4 bg-secondary/30 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Calmar Ratio</p>
-                  <p className="text-2xl font-bold text-primary">{riskMetrics.calmarRatio}</p>
+                <div className="p-2 sm:p-4 bg-secondary/30 rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Calmar</p>
+                  <p className="text-base sm:text-2xl font-bold text-primary">{riskMetrics.calmarRatio}</p>
                 </div>
               </div>
             </CardContent>
