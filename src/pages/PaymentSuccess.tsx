@@ -47,7 +47,7 @@ const PaymentSuccess = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24">
         <div className="max-w-2xl mx-auto text-center">
           <Card className="border-2 border-green-500/30 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
             <CardHeader className="pb-2">

@@ -515,7 +515,7 @@ const LightningVault = () => {
     <div className="min-h-screen bg-gradient-primary">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Hero Section */}
         <div className="text-center mb-12 pt-8">
           <div className="inline-flex items-center space-x-2 bg-gold/10 px-4 py-2 rounded-full mb-4">
@@ -540,7 +540,7 @@ const LightningVault = () => {
                 <span className="text-muted-foreground">Total Balance</span>
                 <Wallet className="w-5 h-5 text-gold" />
               </div>
-              <div className="text-3xl font-bold text-foreground">
+              <div className="text-xl sm:text-3xl font-bold text-foreground">
                 ${totalBalance.toFixed(2)}
               </div>
               <div className="text-sm text-success mt-1">+5.23% 24h</div>
@@ -553,8 +553,8 @@ const LightningVault = () => {
                 <span className="text-muted-foreground">24h Transactions</span>
                 <TrendingUp className="w-5 h-5 text-accent" />
               </div>
-              <div className="text-3xl font-bold text-foreground">{transactions24h}</div>
-              <div className="text-sm text-muted-foreground mt-1">All settled</div>
+              <div className="text-xl sm:text-3xl font-bold text-foreground">{transactions24h}</div>
+              <div className="text-sm text-muted-foreground mt-1 text-xs sm:text-sm">All settled</div>
             </CardContent>
           </Card>
 
@@ -564,8 +564,8 @@ const LightningVault = () => {
                 <span className="text-muted-foreground">Avg. Speed</span>
                 <Zap className="w-5 h-5 text-gold" />
               </div>
-              <div className="text-3xl font-bold text-foreground">&lt;1s</div>
-              <div className="text-sm text-muted-foreground mt-1">Lightning fast</div>
+              <div className="text-xl sm:text-3xl font-bold text-foreground">&lt;1s</div>
+              <div className="text-sm text-muted-foreground mt-1 text-xs sm:text-sm">Lightning fast</div>
             </CardContent>
           </Card>
 
@@ -575,8 +575,8 @@ const LightningVault = () => {
                 <span className="text-muted-foreground">Security</span>
                 <Shield className="w-5 h-5 text-success" />
               </div>
-              <div className="text-3xl font-bold text-success">Active</div>
-              <div className="text-sm text-muted-foreground mt-1">SHA-3 2048-bit</div>
+              <div className="text-xl sm:text-3xl font-bold text-success">Active</div>
+              <div className="text-sm text-muted-foreground mt-1 text-xs sm:text-sm">SHA-3 2048-bit</div>
             </CardContent>
           </Card>
         </div>
@@ -703,7 +703,7 @@ const LightningVault = () => {
                                 />
                               </div>
                               {invoiceAmountUsd && getPrice("BTC") && (
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-xs text-muted-foreground mt-1 text-xs sm:text-sm">
                                   ≈ {(parseFloat(invoiceAmountUsd) / getPrice("BTC")!.priceNumeric).toFixed(8)} BTC
                                 </p>
                               )}
@@ -846,7 +846,7 @@ const LightningVault = () => {
                             <option value="USDC">USDC - USD Coin</option>
                           </select>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-muted-foreground mt-1 text-xs sm:text-sm">
                           Available: {getAssetBalance(swapFromAsset).toFixed(8)} {swapFromAsset}
                         </div>
                       </div>

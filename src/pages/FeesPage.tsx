@@ -98,12 +98,12 @@ const FeesPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-4">
             <DollarSign className="h-10 w-10 text-primary" />
-            <h1 className="text-4xl font-bold">Transparent Fee Schedule</h1>
+            <h1 className="text-xl sm:text-4xl font-bold">Transparent Fee Schedule</h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             No hidden fees. No profits = No fees. We only earn when you earn.
@@ -170,7 +170,7 @@ const FeesPage = () => {
               </div>
               <div className="text-center md:text-right">
                 <p className="text-sm text-muted-foreground mb-1">Platform Fee</p>
-                <p className="text-4xl font-bold text-primary">
+                <p className="text-xl sm:text-4xl font-bold text-primary">
                   ${calculatedFee.fee.toFixed(2)}
                 </p>
                 <Badge variant="outline" className="mt-1">
@@ -179,7 +179,7 @@ const FeesPage = () => {
               </div>
               <div className="text-center md:text-right">
                 <p className="text-sm text-muted-foreground mb-1">You Keep</p>
-                <p className="text-4xl font-bold text-success">
+                <p className="text-xl sm:text-4xl font-bold text-success">
                   ${(profitAmount - calculatedFee.fee).toFixed(2)}
                 </p>
                 <Badge variant="secondary" className="mt-1">

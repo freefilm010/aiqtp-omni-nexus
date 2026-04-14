@@ -34,13 +34,13 @@ const ConnectorsPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-3xl font-bold flex items-center gap-2">
             <Plug className="h-7 w-7 text-primary" />
             Connectors
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
             One place to connect everything — exchanges, wallets, cloud storage, mining, staking, gaming, payments & automation
           </p>
         </div>

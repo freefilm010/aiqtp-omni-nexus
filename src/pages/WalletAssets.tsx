@@ -190,16 +190,16 @@ const WalletAssets = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-24">
         {/* Hero Stats */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20">
                 <DollarSign className="h-8 w-8 text-emerald-400" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                   Assets & Wallets
                 </h1>
                 <p className="text-muted-foreground">
@@ -217,7 +217,7 @@ const WalletAssets = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Daily Revenue</p>
-                  <p className="text-3xl font-bold text-emerald-400">
+                  <p className="text-xl sm:text-3xl font-bold text-emerald-400">
                     ${totalDailyRevenue.toFixed(2)}
                   </p>
                 </div>
@@ -236,7 +236,7 @@ const WalletAssets = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Monthly Revenue</p>
-                  <p className="text-3xl font-bold text-cyan-400">
+                  <p className="text-xl sm:text-3xl font-bold text-cyan-400">
                     ${totalMonthlyRevenue.toLocaleString()}
                   </p>
                 </div>
@@ -253,7 +253,7 @@ const WalletAssets = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Avg Profitability</p>
-                  <p className="text-3xl font-bold text-purple-400">
+                  <p className="text-xl sm:text-3xl font-bold text-purple-400">
                     {avgProfitability.toFixed(1)}%
                   </p>
                 </div>
@@ -268,7 +268,7 @@ const WalletAssets = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Active Streams</p>
-                  <p className="text-3xl font-bold text-amber-400">
+                  <p className="text-xl sm:text-3xl font-bold text-amber-400">
                     {revenueStreams.filter(s => s.status === "active").length}
                   </p>
                 </div>
@@ -569,7 +569,7 @@ const WalletAssets = () => {
                   <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/30">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-3xl font-bold">$49<span className="text-sm text-muted-foreground">/mo</span></p>
+                        <p className="text-xl sm:text-3xl font-bold">$49<span className="text-sm text-muted-foreground">/mo</span></p>
                         <p className="text-xs text-muted-foreground">Cancel anytime</p>
                       </div>
                       <Badge className="bg-purple-500/20 text-purple-400">Popular</Badge>
