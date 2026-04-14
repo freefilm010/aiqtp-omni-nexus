@@ -241,14 +241,14 @@ const HiveMindPage = () => {
   return (
     <div className="min-h-screen bg-[hsl(225,20%,6%)]">
       <Header />
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="p-3 rounded-xl bg-primary/10 w-fit"><Brain className="h-10 w-10 text-primary" /></div>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
               HiveMind <Badge variant="outline" className="text-xs border-primary/30 text-primary">Swarm Intelligence</Badge>
             </h1>
-            <p className="text-muted-foreground mt-1">{activeAgents.length} specialist agents • Consensus voting • Evolutionary retraining</p>
+            <p className="text-muted-foreground mt-1 text-xs sm:text-sm">{activeAgents.length} specialist agents • Consensus voting • Evolutionary retraining</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Auto-Evolution</span>

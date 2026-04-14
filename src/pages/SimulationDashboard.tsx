@@ -277,7 +277,7 @@ const SimulationDashboard = () => {
               <Badge variant={REGIME_BADGES[sim.regime]} className="text-lg px-4 py-1 mb-2">
                 {sim.regime}
               </Badge>
-              <p className={`text-3xl font-bold ${REGIME_COLORS[sim.regime]}`}>{sim.regime}</p>
+              <p className={`text-xl sm:text-3xl font-bold ${REGIME_COLORS[sim.regime]}`}>{sim.regime}</p>
             </CardContent>
           </Card>
 
@@ -302,10 +302,10 @@ const SimulationDashboard = () => {
               <Eye className="h-4 w-4" /> Collusion Pressure
             </CardTitle></CardHeader>
             <CardContent className="p-4 text-center">
-              <p className="text-4xl font-bold" style={{ color: `hsl(${(1 - sim.collusionPressure) * 120}, 80%, 50%)` }}>
+              <p className="text-xl sm:text-4xl font-bold" style={{ color: `hsl(${(1 - sim.collusionPressure) * 120}, 80%, 50%)` }}>
                 {(sim.collusionPressure * 100).toFixed(0)}%
               </p>
-              <p className="text-xs text-muted-foreground mt-1">Herding alignment</p>
+              <p className="text-xs text-muted-foreground mt-1 text-xs sm:text-sm">Herding alignment</p>
               <div className="w-full h-2 bg-muted rounded-full mt-2 overflow-hidden">
                 <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${sim.collusionPressure * 100}%` }} />
               </div>

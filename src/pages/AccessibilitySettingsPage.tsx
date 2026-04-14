@@ -7,7 +7,7 @@ const AccessibilitySettingsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main id="main-content" className="flex-1 container mx-auto px-4 py-8">
+      <main id="main-content" className="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <AccessibilityPanel />
       </main>
       <Footer />

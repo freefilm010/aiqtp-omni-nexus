@@ -90,14 +90,14 @@ const DataEcosystem = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
             <Database className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium">AIQTP Data Ecosystem</span>
           </div>
-          <h1 className="text-4xl font-bold mb-4">
+          <h1 className="text-xl sm:text-4xl font-bold mb-4">
             The Future of <span className="text-primary">Decentralized Data</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -124,7 +124,7 @@ const DataEcosystem = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-3xl font-bold">${token.price_usd.toFixed(4)}</p>
+                  <p className="text-xl sm:text-3xl font-bold">${token.price_usd.toFixed(4)}</p>
                   <p className="text-sm text-muted-foreground">
                     Market Cap: ${(token.total_supply * token.price_usd).toLocaleString()}
                   </p>
@@ -143,7 +143,7 @@ const DataEcosystem = () => {
         )}
 
         {/* Ecosystem Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -203,7 +203,7 @@ const DataEcosystem = () => {
 
         {/* Main Content */}
         <Tabs defaultValue="tokens" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
             <TabsTrigger value="tokens" className="flex items-center gap-2">
               <Network className="h-4 w-4" />
               Token Hierarchy

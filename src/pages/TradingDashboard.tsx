@@ -153,10 +153,10 @@ const TradingDashboard = () => {
       <main className="pt-24 pb-16">
         <div className="max-w-7xl mx-auto px-4">
           {/* Dashboard Header */}
-          <div className="mb-8">
+          <div className="mb-4 sm:mb-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                  <h1 className="text-4xl font-bold text-foreground mb-2">
+                  <h1 className="text-xl sm:text-4xl font-bold text-foreground mb-2">
                     Trading <span className="text-gradient-gold">Dashboard</span>
                   </h1>
                   <p className="text-muted-foreground">Monitor and trade all your assets in one place</p>
@@ -185,7 +185,7 @@ const TradingDashboard = () => {
                 <CardTitle className="text-sm text-muted-foreground">Total Balance</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-foreground">
+                <div className="text-xl sm:text-3xl font-bold text-foreground">
                   ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <div className={`flex items-center text-sm mt-2 ${changeAmount >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -200,7 +200,7 @@ const TradingDashboard = () => {
                 <CardTitle className="text-sm text-muted-foreground">24h Volume</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-foreground">
+                <div className="text-xl sm:text-3xl font-bold text-foreground">
                   {formatCompactUsd(total24hVolumeUsd) ?? "--"}
                 </div>
                 <div className="flex items-center text-accent text-sm mt-2">
@@ -215,7 +215,7 @@ const TradingDashboard = () => {
                 <CardTitle className="text-sm text-muted-foreground">Active Trades</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-foreground">{activeTrades}</div>
+                <div className="text-xl sm:text-3xl font-bold text-foreground">{activeTrades}</div>
                 <div className="flex items-center text-primary text-sm mt-2">
                   <Clock className="w-4 h-4 mr-1" />
                   <span>{activeTrades} pending orders</span>
@@ -228,7 +228,7 @@ const TradingDashboard = () => {
                 <CardTitle className="text-sm text-muted-foreground">Security Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-success">Secure</div>
+                <div className="text-xl sm:text-3xl font-bold text-success">Secure</div>
                 <div className="flex items-center text-muted-foreground text-sm mt-2">
                   <Shield className="w-4 h-4 mr-1" />
                   <span>Protected</span>
@@ -238,7 +238,7 @@ const TradingDashboard = () => {
           </div>
 
           {/* Chart Section */}
-          <div className="mb-8">
+          <div className="mb-4 sm:mb-8">
             <TradingViewChart height={450} />
           </div>
 

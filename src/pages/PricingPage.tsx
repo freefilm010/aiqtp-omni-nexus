@@ -158,11 +158,11 @@ const PricingPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <Badge className="mb-4 bg-success/20 text-success border-success/30">100% Free Access</Badge>
-          <h1 className="text-4xl font-bold mb-4">{FEE_SUMMARY.headline}</h1>
+          <h1 className="text-xl sm:text-4xl font-bold mb-4">{FEE_SUMMARY.headline}</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             {FEE_SUMMARY.subheadline}
           </p>
@@ -188,7 +188,7 @@ const PricingPage = () => {
                     i === 3 ? 'border-primary bg-primary/10' : 'border-border'
                   }`}
                 >
-                  <div className={`text-3xl font-bold mb-1 ${i === 3 ? 'text-primary' : ''}`}>
+                  <div className={`text-xl sm:text-3xl font-bold mb-1 ${i === 3 ? 'text-primary' : ''}`}>
                     {PROFIT_TIERS[i].label}
                   </div>
                   <div className="text-sm text-muted-foreground mb-2">of profit</div>
@@ -252,7 +252,7 @@ const PricingPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-success">FREE</div>
+                  <div className="text-xl sm:text-4xl font-bold text-success">FREE</div>
                   <div className="text-sm text-muted-foreground">No subscription required</div>
                 </div>
 
@@ -431,7 +431,7 @@ const PricingPage = () => {
           <CardContent className="pt-4">
             <div className="grid md:grid-cols-4 gap-4 mb-6">
               <div className="p-4 rounded-xl border-2 border-border text-center">
-                <div className="text-3xl font-bold mb-1">{AFFILIATE_FEES.baseTier.label}</div>
+                <div className="text-xl sm:text-3xl font-bold mb-1">{AFFILIATE_FEES.baseTier.label}</div>
                 <div className="text-sm text-muted-foreground mb-2">of platform's cut</div>
                 <div className="text-xs font-medium bg-muted px-2 py-1 rounded">Base Tier</div>
               </div>
@@ -442,7 +442,7 @@ const PricingPage = () => {
                     i === 2 ? 'border-blue-500 bg-blue-500/10' : 'border-border'
                   }`}
                 >
-                  <div className={`text-3xl font-bold mb-1 ${i === 2 ? 'text-blue-400' : ''}`}>
+                  <div className={`text-xl sm:text-3xl font-bold mb-1 ${i === 2 ? 'text-blue-400' : ''}`}>
                     {tier.label}
                   </div>
                   <div className="text-sm text-muted-foreground mb-2">of platform's cut</div>

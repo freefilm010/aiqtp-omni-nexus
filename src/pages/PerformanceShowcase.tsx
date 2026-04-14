@@ -176,7 +176,7 @@ const PerformanceShowcase = () => {
         </div>
       </div>
 
-      <div className="container max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div className="container max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-8">
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard

@@ -299,13 +299,13 @@ const MediaHub = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-8 pt-24">
-        <div className="mb-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
+        <div className="mb-4 sm:mb-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20">
               <Music className="h-6 w-6 text-pink-500" />
             </div>
-            <h1 className="text-3xl font-bold">Media Hub</h1>
+            <h1 className="text-xl sm:text-3xl font-bold">Media Hub</h1>
           </div>
           <p className="text-muted-foreground">
             Connect your music, radio, and social accounts for motivation and market insights while you trade
@@ -316,25 +316,25 @@ const MediaHub = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-primary">{connectedCount}</div>
+              <div className="text-xl sm:text-3xl font-bold text-primary">{connectedCount}</div>
               <div className="text-sm text-muted-foreground">Connected</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold">{musicServices.length}</div>
+              <div className="text-xl sm:text-3xl font-bold">{musicServices.length}</div>
               <div className="text-sm text-muted-foreground">Music Services</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold">{radioServices.length}</div>
+              <div className="text-xl sm:text-3xl font-bold">{radioServices.length}</div>
               <div className="text-sm text-muted-foreground">Radio/Podcasts</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold">{socialServices.length}</div>
+              <div className="text-xl sm:text-3xl font-bold">{socialServices.length}</div>
               <div className="text-sm text-muted-foreground">Social Networks</div>
             </CardContent>
           </Card>
