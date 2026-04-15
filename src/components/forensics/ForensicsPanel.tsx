@@ -158,8 +158,8 @@ const ForensicsPanel = () => {
     <div className="space-y-6">
       <Tabs defaultValue="clusters">
         <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="clusters">Proxy Clusters</TabsTrigger>
-          <TabsTrigger value="taint">Taint Analysis</TabsTrigger>
+          <TabsTrigger value="clusters" className="text-[10px] sm:text-sm">Clusters</TabsTrigger>
+          <TabsTrigger value="taint" className="text-[10px] sm:text-sm">Taint</TabsTrigger>
         </TabsList>
 
         <TabsContent value="clusters" className="space-y-4 mt-6">
@@ -233,9 +233,9 @@ const ForensicsPanel = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
                 <div className="flex-1">
-                  <Label>Source Address</Label>
+                  <Label className="text-xs sm:text-sm">Source Address</Label>
                   <Input
                     placeholder="0x..."
                     value={taintAddress}

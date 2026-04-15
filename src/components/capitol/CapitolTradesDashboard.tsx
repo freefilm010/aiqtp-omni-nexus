@@ -153,18 +153,18 @@ const CapitolTradesDashboard = () => {
 
       {/* Tabs: Trades / Community */}
       <Tabs defaultValue="trades" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="trades" className="gap-1.5">
-            <BarChart3 className="h-3.5 w-3.5" /> Trades
+        <TabsList className="mb-4 w-full flex-wrap">
+          <TabsTrigger value="trades" className="gap-1 text-[10px] sm:text-sm px-2 sm:px-3">
+            <BarChart3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Trades
           </TabsTrigger>
-          <TabsTrigger value="community" className="gap-1.5">
-            <MessageSquare className="h-3.5 w-3.5" /> Community
+          <TabsTrigger value="community" className="gap-1 text-[10px] sm:text-sm px-2 sm:px-3">
+            <MessageSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Chat
           </TabsTrigger>
-          <TabsTrigger value="polls" className="gap-1.5">
-            <Vote className="h-3.5 w-3.5" /> Polls
+          <TabsTrigger value="polls" className="gap-1 text-[10px] sm:text-sm px-2 sm:px-3">
+            <Vote className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Polls
           </TabsTrigger>
-          <TabsTrigger value="predictions" className="gap-1.5">
-            <Crosshair className="h-3.5 w-3.5" /> Predictions
+          <TabsTrigger value="predictions" className="gap-1 text-[10px] sm:text-sm px-2 sm:px-3">
+            <Crosshair className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Pred
           </TabsTrigger>
         </TabsList>
 
@@ -296,30 +296,30 @@ const CapitolTradesDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 text-right shrink-0">
+                      <div className="flex items-center gap-2 sm:gap-4 text-right shrink-0">
                         <div>
-                          <p className="text-sm font-semibold text-foreground">
+                          <p className="text-[11px] sm:text-sm font-semibold text-foreground">
                             {pol.total_trades.toLocaleString()}
                           </p>
-                          <p className="text-[10px] text-muted-foreground">Trades</p>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">Trades</p>
                         </div>
-                        <div>
+                        <div className="hidden sm:block">
                           <p className="text-sm font-semibold text-foreground">
                             {pol.total_filings}
                           </p>
                           <p className="text-[10px] text-muted-foreground">Filings</p>
                         </div>
-                        <div>
+                        <div className="hidden sm:block">
                           <p className="text-sm font-semibold text-foreground">
                             {pol.total_issuers}
                           </p>
                           <p className="text-[10px] text-muted-foreground">Issuers</p>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-primary">
+                          <p className="text-[11px] sm:text-sm font-semibold text-primary">
                             {pol.total_volume}
                           </p>
-                          <p className="text-[10px] text-muted-foreground">Volume</p>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">Volume</p>
                         </div>
                       </div>
                     </div>
