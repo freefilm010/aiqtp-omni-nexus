@@ -226,18 +226,18 @@ const MLTrainingInterface = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="training" className="space-y-6">
-        <TabsList className="grid grid-cols-5 w-full">
-          <TabsTrigger value="training">Training</TabsTrigger>
-          <TabsTrigger value="architecture">Architecture</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
-          <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
-          <TabsTrigger value="models">Saved Models</TabsTrigger>
+      <Tabs defaultValue="training" className="space-y-3 sm:space-y-6">
+        <TabsList className="grid grid-cols-5 w-full h-auto">
+          <TabsTrigger value="training" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Train</TabsTrigger>
+          <TabsTrigger value="architecture" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Arch</TabsTrigger>
+          <TabsTrigger value="features" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Features</TabsTrigger>
+          <TabsTrigger value="evaluation" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Eval</TabsTrigger>
+          <TabsTrigger value="models" className="text-[8px] sm:text-sm px-0.5 sm:px-3 py-1.5">Models</TabsTrigger>
         </TabsList>
 
         {/* Training Tab */}
-        <TabsContent value="training" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <TabsContent value="training" className="space-y-3 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>Training Progress</CardTitle>
@@ -255,12 +255,12 @@ const MLTrainingInterface = () => {
                     <Progress value={trainingProgress} />
                   </div>
                 )}
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={trainingHistory.slice(-50)}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="epoch" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
+                    <XAxis dataKey="epoch" tick={{ fontSize: 10 }} />
+                    <YAxis yAxisId="left" tick={{ fontSize: 10 }} width={35} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} width={35} />
                     <Tooltip />
                     <Legend />
                     <Line yAxisId="left" type="monotone" dataKey="loss" stroke="hsl(0, 84%, 60%)" name="Train Loss" />
@@ -371,42 +371,42 @@ const MLTrainingInterface = () => {
           </div>
 
           {/* Current Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-3 sm:pt-6 px-2 sm:px-4">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Training Loss</p>
-                  <p className="text-3xl font-bold text-destructive">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Train Loss</p>
+                  <p className="text-lg sm:text-3xl font-bold text-destructive">
                     {(trainingHistory[trainingHistory.length - 1]?.loss || 0).toFixed(4)}
                   </p>
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-3 sm:pt-6 px-2 sm:px-4">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Training Accuracy</p>
-                  <p className="text-3xl font-bold text-success">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Train Acc</p>
+                  <p className="text-lg sm:text-3xl font-bold text-success">
                     {((trainingHistory[trainingHistory.length - 1]?.accuracy || 0) * 100).toFixed(1)}%
                   </p>
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-3 sm:pt-6 px-2 sm:px-4">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Validation Loss</p>
-                  <p className="text-3xl font-bold text-warning">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Val Loss</p>
+                  <p className="text-lg sm:text-3xl font-bold text-warning">
                     {(trainingHistory[trainingHistory.length - 1]?.valLoss || 0).toFixed(4)}
                   </p>
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-3 sm:pt-6 px-2 sm:px-4">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Validation Accuracy</p>
-                  <p className="text-3xl font-bold text-accent">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Val Acc</p>
+                  <p className="text-lg sm:text-3xl font-bold text-accent">
                     {((trainingHistory[trainingHistory.length - 1]?.valAccuracy || 0) * 100).toFixed(1)}%
                   </p>
                 </div>
@@ -554,11 +554,11 @@ const MLTrainingInterface = () => {
                 <CardDescription>Contribution of each feature to predictions</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+               <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={featureImportance} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" domain={[0, 0.2]} />
-                    <YAxis dataKey="feature" type="category" width={80} />
+                    <XAxis type="number" domain={[0, 0.2]} tick={{ fontSize: 10 }} />
+                    <YAxis dataKey="feature" type="category" width={50} tick={{ fontSize: 9 }} />
                     <Tooltip />
                     <Bar dataKey="importance" fill="hsl(220, 91%, 25%)" />
                   </BarChart>
@@ -612,7 +612,7 @@ const MLTrainingInterface = () => {
                 <CardTitle>Classification Metrics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   {[
                     { label: "Precision", value: 0.82 },
                     { label: "Recall", value: 0.79 },
@@ -621,9 +621,9 @@ const MLTrainingInterface = () => {
                     { label: "Cohen's Kappa", value: 0.71 },
                     { label: "Matthews CC", value: 0.68 },
                   ].map((metric, idx) => (
-                    <div key={idx} className="p-3 bg-secondary/30 rounded-lg">
-                      <p className="text-sm text-muted-foreground">{metric.label}</p>
-                      <p className="text-2xl font-bold">{(metric.value * 100).toFixed(1)}%</p>
+                    <div key={idx} className="p-2 sm:p-3 bg-secondary/30 rounded-lg">
+                      <p className="text-[10px] sm:text-sm text-muted-foreground">{metric.label}</p>
+                      <p className="text-base sm:text-2xl font-bold">{(metric.value * 100).toFixed(1)}%</p>
                     </div>
                   ))}
                 </div>
@@ -642,41 +642,42 @@ const MLTrainingInterface = () => {
             <CardContent>
               <div className="space-y-4">
                 {savedModels.map((model) => (
-                  <div key={model.id} className="p-4 border rounded-lg hover:shadow-md transition-all">
-                    <div className="flex items-center justify-between">
+                  <div key={model.id} className="p-2 sm:p-4 border rounded-lg hover:shadow-md transition-all">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
-                        <h4 className="font-semibold flex items-center gap-2">
+                        <h4 className="font-semibold flex items-center gap-2 text-sm">
                           <Brain className="h-4 w-4" />
                           {model.name}
                         </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline">{model.type}</Badge>
-                          <Badge variant={model.status === "deployed" ? "default" : "secondary"}>
+                        <div className="flex items-center gap-1 sm:gap-2 mt-1 flex-wrap">
+                          <Badge variant="outline" className="text-[9px] sm:text-xs">{model.type}</Badge>
+                          <Badge variant={model.status === "deployed" ? "default" : "secondary"} className="text-[9px] sm:text-xs">
                             {model.status}
                           </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            Created {model.createdAt.toLocaleDateString()}
+                          <span className="text-[10px] sm:text-sm text-muted-foreground">
+                            {model.createdAt.toLocaleDateString()}
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 sm:gap-4">
                         <div className="text-right">
-                          <p className="text-sm text-muted-foreground">Accuracy</p>
-                          <p className="text-xl font-bold text-success">{model.accuracy.toFixed(1)}%</p>
+                          <p className="text-[10px] sm:text-sm text-muted-foreground">Accuracy</p>
+                          <p className="text-base sm:text-xl font-bold text-success">{model.accuracy.toFixed(1)}%</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <Button 
                             variant={model.status === "deployed" ? "outline" : "default"}
                             size="sm"
+                            className="text-[10px] sm:text-sm h-7 sm:h-8 px-2 sm:px-3"
                             onClick={() => handleDeployModel(model.id)}
                           >
                             {model.status === "deployed" ? "Undeploy" : "Deploy"}
                           </Button>
-                          <Button variant="outline" size="icon">
-                            <Download className="h-4 w-4" />
+                          <Button variant="outline" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
+                            <Download className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8">
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
                           </Button>
                         </div>
                       </div>
