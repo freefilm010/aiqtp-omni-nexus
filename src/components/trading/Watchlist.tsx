@@ -251,20 +251,20 @@ const Watchlist = () => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Star className="h-5 w-5" />
+      <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-6">
+        <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-lg">
+          <Star className="h-4 w-4 sm:h-5 sm:w-5" />
           Watchlist
-          {isLive && <Badge variant="outline" className="ml-2 text-xs">LIVE</Badge>}
+          {isLive && <Badge variant="outline" className="ml-1 sm:ml-2 text-[9px] sm:text-xs">LIVE</Badge>}
         </CardTitle>
         {user && (
-          <Button size="sm" onClick={() => setShowAddModal(!showAddModal)}>
-            <Plus className="h-4 w-4 mr-1" />
+          <Button size="sm" className="h-7 sm:h-8 text-[10px] sm:text-sm px-2 sm:px-3" onClick={() => setShowAddModal(!showAddModal)}>
+            <Plus className="h-3.5 w-3.5 mr-0.5 sm:mr-1" />
             Add
           </Button>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 sm:p-6 pt-0">
         {!user ? (
           <div className="text-center py-8">
             <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -286,26 +286,26 @@ const Watchlist = () => {
             </Button>
           </div>
         ) : (
-          <ScrollArea className="h-[400px]">
-            <div className="space-y-2">
+          <ScrollArea className="h-[350px] sm:h-[400px]">
+            <div className="space-y-1.5 sm:space-y-2">
               {watchlist.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-xs font-bold">{item.symbol.slice(0, 2)}</span>
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-[9px] sm:text-xs font-bold">{item.symbol.slice(0, 2)}</span>
                     </div>
                     <div>
-                      <p className="font-medium">{item.symbol}</p>
-                      <p className="text-xs text-muted-foreground">{item.name}</p>
+                      <p className="font-medium text-xs sm:text-sm">{item.symbol}</p>
+                      <p className="text-[9px] sm:text-xs text-muted-foreground">{item.name}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4">
                     <div className="text-right">
-                      <p className="font-medium">{formatPrice(item.price)}</p>
-                      <p className={`text-xs flex items-center gap-1 ${
+                      <p className="font-medium text-xs sm:text-sm">{formatPrice(item.price)}</p>
+                      <p className={`text-[10px] sm:text-xs flex items-center gap-0.5 justify-end ${
                         item.changePercent >= 0 ? 'text-green-500' : 'text-red-500'
                       }`}>
                         {item.changePercent >= 0 ? (

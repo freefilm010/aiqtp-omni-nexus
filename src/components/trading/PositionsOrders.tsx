@@ -116,47 +116,47 @@ const PositionsOrders = () => {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Positions & Orders</CardTitle>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={loadData}>
-              <RefreshCw className="h-4 w-4" />
+          <CardTitle className="text-sm sm:text-lg">Positions & Orders</CardTitle>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={loadData}>
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Button>
             <Switch checked={showAllSymbols} onCheckedChange={setShowAllSymbols} />
-            <span className="text-sm text-muted-foreground">All Symbols</span>
+            <span className="text-[10px] sm:text-sm text-muted-foreground hidden sm:inline">All Symbols</span>
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <Tabs defaultValue="positions">
-          <TabsList className="w-full rounded-none border-b">
-            <TabsTrigger value="positions" className="flex-1">
-              Positions ({positions.length})
+          <TabsList className="w-full rounded-none border-b h-auto">
+            <TabsTrigger value="positions" className="flex-1 text-[10px] sm:text-sm py-1.5">
+              Pos ({positions.length})
             </TabsTrigger>
-            <TabsTrigger value="open" className="flex-1">
-              Open Orders ({orders.filter(o => o.status === 'open' || o.status === 'partial').length})
+            <TabsTrigger value="open" className="flex-1 text-[10px] sm:text-sm py-1.5">
+              Open ({orders.filter(o => o.status === 'open' || o.status === 'partial').length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1">
+            <TabsTrigger value="history" className="flex-1 text-[10px] sm:text-sm py-1.5">
               History
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="positions" className="m-0">
-            <div className="grid grid-cols-3 gap-4 p-4 border-b bg-muted/30">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 border-b bg-muted/30">
               <div>
-                <p className="text-xs text-muted-foreground">Total PnL</p>
-                <p className={`font-bold ${totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Total PnL</p>
+                <p className={`text-sm sm:text-base font-bold ${totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                   {totalPnl >= 0 ? '+' : ''}${totalPnl.toLocaleString()}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total Margin</p>
-                <p className="font-bold">${totalMargin.toLocaleString()}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Margin</p>
+                <p className="text-sm sm:text-base font-bold">${totalMargin.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Positions</p>
-                <p className="font-bold">{positions.length}</p>
+                <p className="text-[9px] sm:text-xs text-muted-foreground">Positions</p>
+                <p className="text-sm sm:text-base font-bold">{positions.length}</p>
               </div>
             </div>
 

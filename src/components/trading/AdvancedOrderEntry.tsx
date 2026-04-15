@@ -80,41 +80,41 @@ const AdvancedOrderEntry = ({ symbol = "BTC/USDT", currentPrice = 67500, onOrder
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Order Entry</CardTitle>
-          <Badge variant="outline">
-            <Zap className="h-3 w-3 mr-1" />
-            Pro Mode
+          <CardTitle className="text-sm sm:text-lg">Order Entry</CardTitle>
+          <Badge variant="outline" className="text-[9px] sm:text-xs">
+            <Zap className="h-3 w-3 mr-0.5" />
+            Pro
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6 pt-0">
         {/* Side Toggle */}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <Button
             variant={side === 'buy' ? 'default' : 'outline'}
-            className={side === 'buy' ? 'bg-green-500 hover:bg-green-600' : ''}
+            className={`text-xs sm:text-sm h-8 sm:h-9 ${side === 'buy' ? 'bg-green-500 hover:bg-green-600' : ''}`}
             onClick={() => setSide('buy')}
           >
-            <TrendingUp className="h-4 w-4 mr-2" />
-            Buy / Long
+            <TrendingUp className="h-3.5 w-3.5 mr-1 sm:mr-2" />
+            Buy
           </Button>
           <Button
             variant={side === 'sell' ? 'default' : 'outline'}
-            className={side === 'sell' ? 'bg-red-500 hover:bg-red-600' : ''}
+            className={`text-xs sm:text-sm h-8 sm:h-9 ${side === 'sell' ? 'bg-red-500 hover:bg-red-600' : ''}`}
             onClick={() => setSide('sell')}
           >
-            <TrendingDown className="h-4 w-4 mr-2" />
-            Sell / Short
+            <TrendingDown className="h-3.5 w-3.5 mr-1 sm:mr-2" />
+            Sell
           </Button>
         </div>
 
         {/* Order Type */}
-        <div className="space-y-2">
-          <Label>Order Type</Label>
+        <div className="space-y-1 sm:space-y-2">
+          <Label className="text-[10px] sm:text-sm">Order Type</Label>
           <Select value={orderType} onValueChange={(v: any) => setOrderType(v)}>
-            <SelectTrigger>
+            <SelectTrigger className="h-8 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
