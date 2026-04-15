@@ -128,28 +128,28 @@ const AchievementsPanel = () => {
   }, {} as Record<string, (AchievementDef & { unlocked: boolean })[]>);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Stats Header */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Trophy className="h-8 w-8 text-amber-500" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Trophy className="h-5 w-5 sm:h-8 sm:w-8 text-amber-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Points</p>
-                <p className="text-3xl font-bold">{totalPoints}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Points</p>
+                <p className="text-lg sm:text-3xl font-bold">{totalPoints}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Award className="h-8 w-8 text-primary" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Award className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Achievements</p>
-                <p className="text-3xl font-bold">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Unlocked</p>
+                <p className="text-lg sm:text-3xl font-bold">
                   {achievements.length}/{allAchievements.length}
                 </p>
               </div>
@@ -158,12 +158,12 @@ const AchievementsPanel = () => {
         </Card>
 
         <Card className={eliteStatus ? "border-amber-500 bg-amber-500/5" : ""}>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Crown className={`h-8 w-8 ${eliteStatus ? 'text-amber-500' : 'text-muted-foreground'}`} />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Crown className={`h-5 w-5 sm:h-8 sm:w-8 ${eliteStatus ? 'text-amber-500' : 'text-muted-foreground'}`} />
               <div>
-                <p className="text-sm text-muted-foreground">Elite Status</p>
-                <p className="text-xl font-bold capitalize">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Elite</p>
+                <p className="text-sm sm:text-xl font-bold capitalize">
                   {eliteStatus?.tier || 'Not Yet'}
                 </p>
               </div>
@@ -172,12 +172,12 @@ const AchievementsPanel = () => {
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Zap className="h-8 w-8 text-green-500" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Zap className="h-5 w-5 sm:h-8 sm:w-8 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Strategies Graduated</p>
-                <p className="text-3xl font-bold">
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Graduated</p>
+                <p className="text-lg sm:text-3xl font-bold">
                   {eliteStatus?.total_strategies_graduated || 0}
                 </p>
               </div>
@@ -199,7 +199,7 @@ const AchievementsPanel = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
               <div className="p-3 rounded-lg bg-background/50 text-center">
                 <Sparkles className="h-6 w-6 mx-auto text-amber-500 mb-1" />
                 <p className="text-sm font-medium">Exclusive Chat</p>
@@ -235,15 +235,16 @@ const AchievementsPanel = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="strategy">
-            <TabsList className="mb-4 flex-wrap">
+            <TabsList className="mb-4 flex-wrap h-auto">
               {Object.keys(achievementsByCategory).map(category => {
                 const Icon = CATEGORY_ICONS[category] || Star;
                 const unlocked = achievementsByCategory[category]?.filter(a => a.unlocked).length || 0;
                 const total = achievementsByCategory[category]?.length || 0;
                 return (
-                  <TabsTrigger key={category} value={category} className="capitalize">
-                    <Icon className="h-4 w-4 mr-1" />
-                    {category} ({unlocked}/{total})
+                  <TabsTrigger key={category} value={category} className="capitalize text-[10px] sm:text-sm py-1 sm:py-1.5">
+                    <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
+                    <span className="hidden sm:inline">{category}</span>
+                    <span className="sm:hidden">{category.slice(0, 4)}</span> ({unlocked}/{total})
                   </TabsTrigger>
                 );
               })}
@@ -251,7 +252,7 @@ const AchievementsPanel = () => {
 
             {Object.entries(achievementsByCategory).map(([category, items]) => (
               <TabsContent key={category} value={category}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                   {items.map(achievement => (
                     <Card 
                       key={achievement.id}
@@ -261,27 +262,27 @@ const AchievementsPanel = () => {
                           : 'opacity-60'
                       }`}
                     >
-                      <CardContent className="pt-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${
+                      <CardContent className="pt-3 sm:pt-4 px-3 sm:px-6">
+                        <div className="flex items-start gap-2 sm:gap-3">
+                          <div className={`h-8 w-8 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center shrink-0 ${
                             achievement.unlocked 
                               ? 'bg-primary text-primary-foreground' 
                               : 'bg-muted text-muted-foreground'
                           }`}>
                             {achievement.unlocked ? (
-                              <CheckCircle className="h-6 w-6" />
+                              <CheckCircle className="h-4 w-4 sm:h-6 sm:w-6" />
                             ) : (
-                              <Lock className="h-6 w-6" />
+                              <Lock className="h-4 w-4 sm:h-6 sm:w-6" />
                             )}
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-medium">{achievement.name}</h4>
-                              <Badge variant="secondary">
-                                +{achievement.points} pts
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <h4 className="font-medium text-xs sm:text-sm truncate">{achievement.name}</h4>
+                              <Badge variant="secondary" className="text-[10px] sm:text-xs shrink-0">
+                                +{achievement.points}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">
                               {achievement.description}
                             </p>
                           </div>

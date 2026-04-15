@@ -70,46 +70,46 @@ export const ExchangeAffiliateLinks = () => {
 
   return (
     <div>
-      <div className="text-center mb-8">
-        <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">
+      <div className="text-center mb-4 sm:mb-8">
+        <Badge className="mb-2 bg-primary/20 text-primary border-primary/30 text-[10px] sm:text-xs">
           <Gift className="h-3 w-3 mr-1" />
-          Exclusive Partner Bonuses
+          Partner Bonuses
         </Badge>
-        <h2 className="text-2xl font-bold">Connect Your Exchange</h2>
-        <p className="text-muted-foreground mt-2">
-          Sign up through our links to get exclusive bonuses and fee discounts
+        <h2 className="text-lg sm:text-2xl font-bold">Connect Your Exchange</h2>
+        <p className="text-xs sm:text-base text-muted-foreground mt-1 sm:mt-2">
+          Sign up through our links for exclusive bonuses
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
         {AFFILIATE_EXCHANGES.map((exchange) => (
           <Card key={exchange.name} className="hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{exchange.logo}</span>
+            <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xl sm:text-3xl">{exchange.logo}</span>
                 <div>
-                  <CardTitle className="text-lg">{exchange.name}</CardTitle>
-                  <CardDescription className="text-xs">{exchange.description}</CardDescription>
+                  <CardTitle className="text-sm sm:text-lg">{exchange.name}</CardTitle>
+                  <CardDescription className="text-[10px] sm:text-xs">{exchange.description}</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <Gift className="h-4 w-4 text-green-500" />
-                <span>{exchange.bonus}</span>
+            <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
+              <div className="flex items-center gap-2 text-[11px] sm:text-sm">
+                <Gift className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 shrink-0" />
+                <span className="truncate">{exchange.bonus}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Percent className="h-4 w-4 text-blue-500" />
+              <div className="flex items-center gap-2 text-[11px] sm:text-sm">
+                <Percent className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 shrink-0" />
                 <span>{exchange.feeDiscount}</span>
               </div>
               <Button
                 onClick={() => handleClick(exchange)}
-                className="w-full"
+                className="w-full text-[10px] sm:text-sm h-7 sm:h-9"
                 variant="outline"
                 size="sm"
               >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Sign Up & Get Bonus
+                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                Sign Up
               </Button>
             </CardContent>
           </Card>
