@@ -147,17 +147,17 @@ const StrategyBacktest = () => {
     <div className="space-y-6">
       {/* Control Bar */}
       <Card>
-        <CardContent className="py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Zap className="h-5 w-5 text-primary" />
+        <CardContent className="py-3 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             <div>
-              <h3 className="font-semibold text-foreground">Auto-Backtest Engine</h3>
-              <p className="text-xs text-muted-foreground">
-                10,000 cycles • 500/batch • Graduate at ≥77% profitability & consistency • Rent-to-earn
+              <h3 className="font-semibold text-foreground text-xs sm:text-base">Auto-Backtest Engine</h3>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                10K cycles • 500/batch • Graduate ≥77%
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2">
             <Button variant="outline" size="sm" onClick={fetchStrategies} disabled={!!runningId}>
               <RefreshCw className="h-4 w-4 mr-1" /> Refresh
             </Button>

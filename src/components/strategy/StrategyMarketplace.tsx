@@ -235,49 +235,47 @@ const StrategyMarketplace = () => {
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Eye className="h-8 w-8 text-primary" />
+          <CardContent className="p-3 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Eye className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">
-                  Client-Visible <Explain term="aiTradingBots">AI Trading Bots</Explain>
-                </p>
-                <p className="text-3xl font-bold">{clientVisibleStrategies.length}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Client-Visible</p>
+                <p className="text-lg sm:text-3xl font-bold">{clientVisibleStrategies.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Award className="h-8 w-8 text-green-500" />
+          <CardContent className="p-3 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Award className="h-5 w-5 sm:h-8 sm:w-8 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Ready to Publish</p>
-                <p className="text-3xl font-bold text-green-500">{readyToListOwnStrategies.length}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Ready</p>
+                <p className="text-lg sm:text-3xl font-bold text-green-500">{readyToListOwnStrategies.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-amber-500/10 to-amber-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Users className="h-8 w-8 text-amber-500" />
+          <CardContent className="p-3 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Users className="h-5 w-5 sm:h-8 sm:w-8 text-amber-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Pending Approval</p>
-                <p className="text-3xl font-bold text-amber-500">{pendingApprovalOwnStrategies.length}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Pending</p>
+                <p className="text-lg sm:text-3xl font-bold text-amber-500">{pendingApprovalOwnStrategies.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <DollarSign className="h-8 w-8 text-emerald-500" />
+          <CardContent className="p-3 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <DollarSign className="h-5 w-5 sm:h-8 sm:w-8 text-emerald-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Earnings</p>
-                <p className="text-3xl font-bold text-emerald-500">${totalEarnings.toFixed(2)}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Earnings</p>
+                <p className="text-lg sm:text-3xl font-bold text-emerald-500">${totalEarnings.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -303,21 +301,15 @@ const StrategyMarketplace = () => {
       {/* Fee Structure Info */}
       <Card className="border-success/30 bg-success/5">
         <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Gift className="h-5 w-5 text-success" />
-              <span className="font-medium">$0 to Start • ${MIN_INVESTMENT} Minimum Investment</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
+              <span className="font-medium text-xs sm:text-base">$0 to Start • ${MIN_INVESTMENT} Min</span>
             </div>
-            <div className="flex gap-4 text-sm">
+            <div className="flex gap-2 sm:gap-4 text-[10px] sm:text-sm flex-wrap">
               {PROFIT_TIERS.map((tier, i) => (
                 <div key={i} className="flex items-center gap-1">
                   <span className="font-bold text-primary">{tier.label}</span>
-                  <span className="text-muted-foreground">
-                    {tier.max === Infinity ? `$${(tier.min / 1000000).toFixed(0)}M+` : 
-                     tier.min >= 100000 ? `$${(tier.min / 1000).toFixed(0)}K-${(tier.max / 1000).toFixed(0)}K` :
-                     tier.min >= 10000 ? `$${(tier.min / 1000).toFixed(0)}K-${(tier.max / 1000).toFixed(0)}K` :
-                     `$0-$${(tier.max / 1000).toFixed(0)}K`}
-                  </span>
                 </div>
               ))}
             </div>
@@ -331,23 +323,23 @@ const StrategyMarketplace = () => {
       {/* Profit Split Info */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-primary" />
-              <span className="font-medium">Profit Sharing Model</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <span className="font-medium text-xs sm:text-base">Profit Sharing</span>
             </div>
-            <div className="flex gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-green-500" />
-                <span>Creator: <strong>40%</strong></span>
+            <div className="flex gap-3 sm:gap-6 text-[10px] sm:text-sm">
+              <div className="flex items-center gap-1">
+                <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-green-500" />
+                <span>Creator <strong>40%</strong></span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-blue-500" />
-                <span>Renter: <strong>40%</strong></span>
+              <div className="flex items-center gap-1">
+                <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-blue-500" />
+                <span>Renter <strong>40%</strong></span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-primary" />
-                <span>Platform: <strong>20%</strong> (tiered fee applies)</span>
+              <div className="flex items-center gap-1">
+                <div className="h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-primary" />
+                <span>Platform <strong>20%</strong></span>
               </div>
             </div>
           </div>
@@ -355,18 +347,20 @@ const StrategyMarketplace = () => {
       </Card>
 
       <Tabs defaultValue="marketplace" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="marketplace">
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Marketplace
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="marketplace" className="text-[10px] sm:text-sm gap-1">
+            <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Marketplace</span>
+            <span className="sm:hidden">Market</span>
           </TabsTrigger>
-          <TabsTrigger value="my-strategies">
-            <Target className="h-4 w-4 mr-2" />
-            My Strategies
+          <TabsTrigger value="my-strategies" className="text-[10px] sm:text-sm gap-1">
+            <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">My Strategies</span>
+            <span className="sm:hidden">Mine</span>
           </TabsTrigger>
-          <TabsTrigger value="rentals">
-            <Zap className="h-4 w-4 mr-2" />
-            My Rentals
+          <TabsTrigger value="rentals" className="text-[10px] sm:text-sm gap-1">
+            <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
+            Rentals
           </TabsTrigger>
         </TabsList>
 
