@@ -121,11 +121,11 @@ transaction_cost = 0.001
   return (
     <div className="space-y-6">
       <Tabs defaultValue="notebook" className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="notebook">Research Notebook</TabsTrigger>
-          <TabsTrigger value="factors">Factor Analysis</TabsTrigger>
-          <TabsTrigger value="backtest">Backtest Engine</TabsTrigger>
-          <TabsTrigger value="library">Strategy Library</TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full h-auto p-1">
+          <TabsTrigger value="notebook" className="text-[9px] sm:text-sm py-1.5">Notebook</TabsTrigger>
+          <TabsTrigger value="factors" className="text-[9px] sm:text-sm py-1.5">Factors</TabsTrigger>
+          <TabsTrigger value="backtest" className="text-[9px] sm:text-sm py-1.5">Backtest</TabsTrigger>
+          <TabsTrigger value="library" className="text-[9px] sm:text-sm py-1.5">Library</TabsTrigger>
         </TabsList>
 
         {/* Research Notebook Tab */}
@@ -190,7 +190,7 @@ transaction_cost = 0.001
                 <Textarea 
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className="font-mono text-sm min-h-[400px] bg-secondary/30"
+                  className="font-mono text-[10px] sm:text-sm min-h-[200px] sm:min-h-[400px] bg-secondary/30"
                   placeholder="Enter your research code..."
                 />
               </CardContent>
@@ -224,7 +224,7 @@ transaction_cost = 0.001
                 <CardDescription>Cumulative returns by factor</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={factorPerformance}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="day" />
@@ -246,7 +246,7 @@ transaction_cost = 0.001
                 <CardDescription>Information coefficient over holding period</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={factorDecay}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="day" />
@@ -385,7 +385,7 @@ transaction_cost = 0.001
                   </div>
                 </div>
 
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={factorPerformance}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="day" />

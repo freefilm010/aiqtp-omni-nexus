@@ -176,55 +176,55 @@ const AutomationHub = () => {
   return (
     <div className="space-y-6">
       {/* Overview Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-success/10 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-success" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-success/10 rounded-lg">
+                <CheckCircle className="h-4 w-4 sm:h-6 sm:w-6 text-success" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Automations</p>
-                <p className="text-2xl font-bold">{automations.filter(a => a.status === "active").length}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Active</p>
+                <p className="text-lg sm:text-2xl font-bold">{automations.filter(a => a.status === "active").length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Zap className="h-6 w-6 text-primary" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
+                <Zap className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Executions Today</p>
-                <p className="text-2xl font-bold">47</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Executions</p>
+                <p className="text-lg sm:text-2xl font-bold">47</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-accent/10 rounded-lg">
-                <Clock className="h-6 w-6 text-accent" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-accent/10 rounded-lg">
+                <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-accent" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Scheduled Tasks</p>
-                <p className="text-2xl font-bold">{scheduledTasks.length}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Scheduled</p>
+                <p className="text-lg sm:text-2xl font-bold">{scheduledTasks.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gold/10 rounded-lg">
-                <AlertTriangle className="h-6 w-6 text-gold" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-gold/10 rounded-lg">
+                <AlertTriangle className="h-4 w-4 sm:h-6 sm:w-6 text-gold" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Errors (24h)</p>
-                <p className="text-2xl font-bold">2</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Errors</p>
+                <p className="text-lg sm:text-2xl font-bold">2</p>
               </div>
             </div>
           </CardContent>
@@ -232,11 +232,11 @@ const AutomationHub = () => {
       </div>
 
       <Tabs defaultValue="automations" className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="automations">Automations</TabsTrigger>
-          <TabsTrigger value="scheduler">Scheduler</TabsTrigger>
-          <TabsTrigger value="logs">Execution Logs</TabsTrigger>
-          <TabsTrigger value="builder">Workflow Builder</TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full h-auto p-1">
+          <TabsTrigger value="automations" className="text-[9px] sm:text-sm py-1.5">Auto</TabsTrigger>
+          <TabsTrigger value="scheduler" className="text-[9px] sm:text-sm py-1.5">Schedule</TabsTrigger>
+          <TabsTrigger value="logs" className="text-[9px] sm:text-sm py-1.5">Logs</TabsTrigger>
+          <TabsTrigger value="builder" className="text-[9px] sm:text-sm py-1.5">Builder</TabsTrigger>
         </TabsList>
 
         {/* Automations Tab */}
@@ -428,10 +428,10 @@ const AutomationHub = () => {
               <CardDescription>Create automations with drag-and-drop</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
                 {/* Trigger Blocks */}
                 <div>
-                  <h4 className="font-semibold mb-3 text-sm text-muted-foreground">TRIGGERS</h4>
+                  <h4 className="font-semibold mb-2 sm:mb-3 text-xs sm:text-sm text-muted-foreground">TRIGGERS</h4>
                   <div className="space-y-2">
                     {["Price Alert", "Schedule", "Signal", "API Webhook", "Manual"].map((trigger) => (
                       <div key={trigger} className="p-3 border rounded-lg cursor-move hover:border-primary transition-colors">
