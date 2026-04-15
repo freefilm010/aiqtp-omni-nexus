@@ -205,9 +205,9 @@ ${strategy.exitRules.map(r => `      (dataframe['${r.indicator}'] ${r.condition 
         </div>
       </div>
       
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div>
-          <Label className="text-xs">Indicator</Label>
+          <Label className="text-[10px] sm:text-xs">Indicator</Label>
           <Select value={rule.indicator} onValueChange={(v) => updateRule(rule.id, type, 'indicator', v)}>
             <SelectTrigger>
               <SelectValue />
@@ -259,9 +259,9 @@ ${strategy.exitRules.map(r => `      (dataframe['${r.indicator}'] ${r.condition 
   );
 
   return (
-    <div className="grid grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       {/* Main Builder */}
-      <div className="col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-4 sm:space-y-6">
         {/* Strategy Info */}
         <Card>
           <CardHeader className="pb-3">
@@ -271,9 +271,9 @@ ${strategy.exitRules.map(r => `      (dataframe['${r.indicator}'] ${r.condition 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Strategy Name</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-1 sm:space-y-2">
+                <Label className="text-xs sm:text-sm">Strategy Name</Label>
                 <Input 
                   value={strategy.name}
                   onChange={(e) => setStrategy(s => ({ ...s, name: e.target.value }))}
@@ -389,7 +389,7 @@ ${strategy.exitRules.map(r => `      (dataframe['${r.indicator}'] ${r.condition 
       </div>
 
       {/* Sidebar */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Risk Parameters */}
         <Card>
           <CardHeader>

@@ -101,12 +101,12 @@ const AutoPipeline = () => {
       {/* Pipeline Stats */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Rocket className="h-5 w-5" />
+         <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Rocket className="h-4 w-4 sm:h-5 sm:w-5" />
             Auto Strategy Pipeline
           </CardTitle>
-          <CardDescription>
-            Fully autonomous: Build → Train 10K cycles → Graduate → Rent-to-Earn
+          <CardDescription className="text-[10px] sm:text-sm">
+            Build → Train 10K → Graduate → Rent-to-Earn
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -137,9 +137,9 @@ const AutoPipeline = () => {
             </div>
           ) : null}
 
-          <div className="flex gap-2 items-center flex-wrap">
+          <div className="flex gap-1.5 sm:gap-2 items-center flex-wrap">
             <Select value={batchSize} onValueChange={setBatchSize}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[70px] sm:w-[100px] text-xs sm:text-sm h-8 sm:h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -149,24 +149,24 @@ const AutoPipeline = () => {
               </SelectContent>
             </Select>
 
-            <Button onClick={runPipeline} disabled={running || autoRunning}>
+            <Button onClick={runPipeline} disabled={running || autoRunning} size="sm" className="text-xs sm:text-sm h-8 sm:h-10">
               {running ? (
-                <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Building...</>
+                <><Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />Build...</>
               ) : (
-                <><Zap className="h-4 w-4 mr-1" />Run Pipeline</>
+                <><Zap className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />Pipeline</>
               )}
             </Button>
 
-            <Button variant="outline" onClick={startAutoLoop} disabled={running || autoRunning}>
+            <Button variant="outline" onClick={startAutoLoop} disabled={running || autoRunning} size="sm" className="text-xs sm:text-sm h-8 sm:h-10">
               {autoRunning ? (
-                <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Round {autoRound}/5</>
+                <><Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />{autoRound}/5</>
               ) : (
-                <><Play className="h-4 w-4 mr-1" />Auto 5x Loop</>
+                <><Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />5x Loop</>
               )}
             </Button>
 
-            <Button variant="ghost" size="icon" onClick={fetchStats} disabled={loadingStats}>
-              <RefreshCw className={`h-4 w-4 ${loadingStats ? 'animate-spin' : ''}`} />
+            <Button variant="ghost" size="icon" onClick={fetchStats} disabled={loadingStats} className="h-8 w-8 sm:h-10 sm:w-10">
+              <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loadingStats ? 'animate-spin' : ''}`} />
             </Button>
           </div>
 
