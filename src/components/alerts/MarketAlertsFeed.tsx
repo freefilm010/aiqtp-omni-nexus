@@ -135,47 +135,48 @@ const MarketAlertsFeed = () => {
   const criticalCount = alerts.filter(a => a.severity === 'critical' && !a.read).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-6 text-center">
-          <BellRing className="h-6 w-6 mx-auto mb-2 text-primary" />
-          <p className="text-2xl font-bold">{alerts.length}</p>
-          <p className="text-xs text-muted-foreground">Total Alerts</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+        <Card><CardContent className="pt-3 sm:pt-6 px-3 sm:px-6 text-center">
+          <BellRing className="h-4 w-4 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-primary" />
+          <p className="text-lg sm:text-2xl font-bold">{alerts.length}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
         </CardContent></Card>
-        <Card><CardContent className="pt-6 text-center">
-          <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-red-400" />
-          <p className="text-2xl font-bold text-red-400">{criticalCount}</p>
-          <p className="text-xs text-muted-foreground">Critical</p>
+        <Card><CardContent className="pt-3 sm:pt-6 px-3 sm:px-6 text-center">
+          <AlertTriangle className="h-4 w-4 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-red-400" />
+          <p className="text-lg sm:text-2xl font-bold text-red-400">{criticalCount}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">Critical</p>
         </CardContent></Card>
-        <Card><CardContent className="pt-6 text-center">
-          <Eye className="h-6 w-6 mx-auto mb-2 text-yellow-400" />
-          <p className="text-2xl font-bold">{unreadCount}</p>
-          <p className="text-xs text-muted-foreground">Unread</p>
+        <Card><CardContent className="pt-3 sm:pt-6 px-3 sm:px-6 text-center">
+          <Eye className="h-4 w-4 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-yellow-400" />
+          <p className="text-lg sm:text-2xl font-bold">{unreadCount}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">Unread</p>
         </CardContent></Card>
-        <Card><CardContent className="pt-6 text-center">
-          <Activity className="h-6 w-6 mx-auto mb-2 text-green-400" />
-          <p className="text-2xl font-bold">{alerts.filter(a => a.actionable).length}</p>
-          <p className="text-xs text-muted-foreground">Actionable</p>
+        <Card><CardContent className="pt-3 sm:pt-6 px-3 sm:px-6 text-center">
+          <Activity className="h-4 w-4 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-green-400" />
+          <p className="text-lg sm:text-2xl font-bold">{alerts.filter(a => a.actionable).length}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">Action</p>
         </CardContent></Card>
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
           {(['all', 'pattern', 'technical', 'whale', 'news', 'economic', 'sentiment'] as const).map(cat => (
-            <Button key={cat} variant={filter === cat ? "default" : "outline"} size="sm" onClick={() => setFilter(cat)} className="text-xs capitalize">
-              {cat}
+            <Button key={cat} variant={filter === cat ? "default" : "outline"} size="sm" onClick={() => setFilter(cat)} className="text-[10px] sm:text-xs capitalize h-6 sm:h-8 px-2 sm:px-3">
+              {cat === 'technical' ? 'Tech' : cat === 'economic' ? 'Econ' : cat === 'sentiment' ? 'Sent' : cat}
             </Button>
           ))}
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Auto-refresh</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Auto</span>
             <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} />
           </div>
-          <Button variant="outline" size="sm" onClick={loadAlerts} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+          <Button variant="outline" size="sm" onClick={loadAlerts} disabled={isLoading} className="h-6 sm:h-8 text-[10px] sm:text-xs">
+            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>

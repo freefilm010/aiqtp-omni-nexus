@@ -242,40 +242,40 @@ const AutomationHub = () => {
         {/* Automations Tab */}
         <TabsContent value="automations" className="space-y-6">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Trading Automations</h3>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Automation
+            <h3 className="text-sm sm:text-lg font-semibold">Trading Automations</h3>
+            <Button size="sm" className="h-7 sm:h-9 text-[10px] sm:text-sm">
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+              New
             </Button>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {automations.map((automation) => (
               <Card key={automation.id} className="hover:shadow-md transition-all">
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h4 className="font-semibold flex items-center gap-2">
-                        <Workflow className="h-4 w-4" />
-                        {automation.name}
+                <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+                  <div className="flex items-start justify-between mb-2 sm:mb-4 gap-2">
+                    <div className="min-w-0">
+                      <h4 className="font-semibold flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                        <Workflow className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                        <span className="truncate">{automation.name}</span>
                       </h4>
-                      <p className="text-sm text-muted-foreground mt-1">{automation.description}</p>
+                      <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 line-clamp-2">{automation.description}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                       <Switch 
                         checked={automation.status === "active"}
                         onCheckedChange={() => toggleAutomation(automation.id)}
                       />
-                      <Badge variant={getStatusBadge(automation.status)}>
+                      <Badge variant={getStatusBadge(automation.status)} className="text-[10px] sm:text-xs">
                         {automation.status}
                       </Badge>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Bell className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Trigger:</span>
+                    <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm">
+                      <Bell className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground hidden sm:inline">Trigger:</span>
                       <span>{automation.trigger}</span>
                     </div>
 
@@ -287,21 +287,21 @@ const AutomationHub = () => {
                       ))}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 text-sm pt-2 border-t">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[10px] sm:text-sm pt-2 border-t">
                       <div>
                         <p className="text-muted-foreground">Runs</p>
                         <p className="font-mono font-bold">{automation.runCount}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Success Rate</p>
+                        <p className="text-muted-foreground">Win%</p>
                         <p className={`font-mono font-bold ${automation.successRate > 95 ? 'text-success' : automation.successRate > 80 ? 'text-warning' : 'text-destructive'}`}>
                           {automation.successRate}%
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Last Run</p>
-                        <p className="font-mono text-xs">
-                          {automation.lastRun ? automation.lastRun.toLocaleString() : "Never"}
+                        <p className="text-muted-foreground">Last</p>
+                        <p className="font-mono text-[9px] sm:text-xs truncate">
+                          {automation.lastRun ? automation.lastRun.toLocaleDateString() : "Never"}
                         </p>
                       </div>
                     </div>
@@ -341,28 +341,28 @@ const AutomationHub = () => {
             <CardContent>
               <div className="space-y-4">
                 {scheduledTasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${task.status === "running" ? 'bg-primary/10' : 'bg-secondary'}`}>
+                  <div key={task.id} className="flex items-center justify-between p-2 sm:p-4 border rounded-lg gap-2">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                      <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${task.status === "running" ? 'bg-primary/10' : 'bg-secondary'}`}>
                         {task.status === "running" ? (
-                          <RefreshCw className="h-5 w-5 text-primary animate-spin" />
+                          <RefreshCw className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-primary animate-spin" />
                         ) : (
-                          <Clock className="h-5 w-5 text-muted-foreground" />
+                          <Clock className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-muted-foreground" />
                         )}
                       </div>
-                      <div>
-                        <h4 className="font-semibold">{task.name}</h4>
-                        <p className="text-sm text-muted-foreground">{task.schedule}</p>
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-xs sm:text-sm truncate">{task.name}</h4>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground">{task.schedule}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="flex items-center gap-1 sm:gap-4 shrink-0">
+                      <div className="text-right hidden sm:block">
                         <p className="text-sm text-muted-foreground">Next Run</p>
                         <p className="font-mono text-sm">{task.nextRun.toLocaleString()}</p>
                       </div>
-                      <Badge variant={getStatusBadge(task.status)}>{task.status}</Badge>
-                      <Button variant="ghost" size="icon">
-                        <Settings className="h-4 w-4" />
+                      <Badge variant={getStatusBadge(task.status)} className="text-[10px] sm:text-xs">{task.status}</Badge>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-8 sm:w-8">
+                        <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
