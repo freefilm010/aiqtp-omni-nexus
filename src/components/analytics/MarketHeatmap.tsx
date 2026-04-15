@@ -214,12 +214,12 @@ const MarketHeatmap = () => {
   }).sort((a, b) => b.avgChange - a.avgChange);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Controls */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4">
         <div className="flex items-center gap-4">
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[110px] sm:w-[140px] text-xs sm:text-sm">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -236,17 +236,17 @@ const MarketHeatmap = () => {
       </div>
 
       <Tabs defaultValue="stocks">
-        <TabsList>
-          <TabsTrigger value="stocks" className="gap-2">
-            <LayoutGrid className="h-4 w-4" />
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="stocks" className="gap-1 sm:gap-2 text-[10px] sm:text-sm">
+            <LayoutGrid className="h-3 w-3 sm:h-4 sm:w-4" />
             S&P 500
           </TabsTrigger>
-          <TabsTrigger value="crypto" className="gap-2">
-            <LayoutGrid className="h-4 w-4" />
+          <TabsTrigger value="crypto" className="gap-1 sm:gap-2 text-[10px] sm:text-sm">
+            <LayoutGrid className="h-3 w-3 sm:h-4 sm:w-4" />
             Crypto
           </TabsTrigger>
-          <TabsTrigger value="sectors" className="gap-2">
-            <LayoutGrid className="h-4 w-4" />
+          <TabsTrigger value="sectors" className="gap-1 sm:gap-2 text-[10px] sm:text-sm">
+            <LayoutGrid className="h-3 w-3 sm:h-4 sm:w-4" />
             Sectors
           </TabsTrigger>
         </TabsList>
@@ -260,7 +260,7 @@ const MarketHeatmap = () => {
                   <CardDescription>Size = Market Cap • Color = % Change</CardDescription>
                 </div>
                 <Select value={selectedSector} onValueChange={setSelectedSector}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-[110px] sm:w-[150px] text-xs sm:text-sm">
                     <SelectValue placeholder="Sector" />
                   </SelectTrigger>
                   <SelectContent>
@@ -297,14 +297,14 @@ const MarketHeatmap = () => {
               <CardDescription>Average performance by sector</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
                 {sectorSummary.map(sector => (
                   <div
                     key={sector.name}
                     className={`${getColorByChange(sector.avgChange)} ${getTextColorByChange(sector.avgChange)} rounded-lg p-4 text-center`}
                   >
-                    <p className="font-bold text-sm">{sector.name}</p>
-                    <p className="text-2xl font-bold mt-2">
+                    <p className="font-bold text-[10px] sm:text-sm">{sector.name}</p>
+                    <p className="text-lg sm:text-2xl font-bold mt-1 sm:mt-2">
                       {sector.avgChange > 0 ? '+' : ''}{sector.avgChange.toFixed(2)}%
                     </p>
                     <div className="mt-2">
