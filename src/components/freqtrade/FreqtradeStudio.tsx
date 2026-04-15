@@ -146,10 +146,10 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
   return (
     <Tabs defaultValue="bots" className="space-y-6">
       <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="bots" className="flex items-center gap-2"><Bot className="h-4 w-4" />Active Bots</TabsTrigger>
-        <TabsTrigger value="create" className="flex items-center gap-2"><Zap className="h-4 w-4" />Create Bot</TabsTrigger>
-        <TabsTrigger value="strategies" className="flex items-center gap-2"><Code className="h-4 w-4" />Strategies</TabsTrigger>
-        <TabsTrigger value="performance" className="flex items-center gap-2"><BarChart3 className="h-4 w-4" />Performance</TabsTrigger>
+        <TabsTrigger value="bots" className="flex items-center gap-1 text-[9px] sm:text-sm px-1 sm:px-3"><Bot className="h-3 w-3 sm:h-4 sm:w-4" /><span className="hidden sm:inline">Active </span>Bots</TabsTrigger>
+        <TabsTrigger value="create" className="flex items-center gap-1 text-[9px] sm:text-sm px-1 sm:px-3"><Zap className="h-3 w-3 sm:h-4 sm:w-4" />Create</TabsTrigger>
+        <TabsTrigger value="strategies" className="flex items-center gap-1 text-[9px] sm:text-sm px-1 sm:px-3"><Code className="h-3 w-3 sm:h-4 sm:w-4" />Strats</TabsTrigger>
+        <TabsTrigger value="performance" className="flex items-center gap-1 text-[9px] sm:text-sm px-1 sm:px-3"><BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />Perf</TabsTrigger>
       </TabsList>
 
       <TabsContent value="bots">
@@ -161,48 +161,43 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
           ) : bots.map(bot => (
             <Card key={bot.id}>
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`h-3 w-3 rounded-full ${
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className={`h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full ${
                       bot.status === 'running' ? 'bg-green-500 animate-pulse' :
                       bot.status === 'error' ? 'bg-red-500' : 'bg-muted-foreground'
                     }`} />
                     <div>
-                      <h3 className="font-semibold text-lg">{bot.name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{bot.pair}</span><span>•</span><span>{bot.timeframe}</span><span>•</span><span>{bot.strategy}</span>
+                      <h3 className="font-semibold text-xs sm:text-lg">{bot.name}</h3>
+                      <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-muted-foreground">
+                        <span>{bot.pair}</span><span>•</span><span>{bot.timeframe}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-8">
+                  <div className="flex items-center gap-3 sm:gap-8">
                     <div className="text-center">
-                      <div className={`text-xl font-bold ${bot.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <div className={`text-xs sm:text-xl font-bold ${bot.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {bot.profit >= 0 ? '+' : ''}{bot.profit}%
                       </div>
-                      <div className="text-xs text-muted-foreground">Profit</div>
+                      <div className="text-[9px] sm:text-xs text-muted-foreground">PnL</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold">{bot.trades}</div>
-                      <div className="text-xs text-muted-foreground">Trades</div>
+                      <div className="text-xs sm:text-xl font-bold">{bot.trades}</div>
+                      <div className="text-[9px] sm:text-xs text-muted-foreground">Trades</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xl font-bold">{bot.winRate}%</div>
-                      <div className="text-xs text-muted-foreground">Win Rate</div>
+                      <div className="text-xs sm:text-xl font-bold">{bot.winRate}%</div>
+                      <div className="text-[9px] sm:text-xs text-muted-foreground">Win</div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-sm font-medium">{bot.lastTrade}</div>
-                      <div className="text-xs text-muted-foreground">Last Trade</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        size="sm" 
-                        variant={bot.status === 'running' ? 'destructive' : 'default'}
-                        onClick={() => toggleBot(bot.id)}
-                      >
-                        {bot.status === 'running' ? <><Pause className="h-4 w-4 mr-1" /> Stop</> : <><Play className="h-4 w-4 mr-1" /> Start</>}
-                      </Button>
-                    </div>
+                    <Button 
+                      size="sm" 
+                      variant={bot.status === 'running' ? 'destructive' : 'default'}
+                      onClick={() => toggleBot(bot.id)}
+                      className="h-7 sm:h-9 text-[10px] sm:text-sm px-2 sm:px-3"
+                    >
+                      {bot.status === 'running' ? <><Pause className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> Stop</> : <><Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> Start</>}
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -212,7 +207,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
       </TabsContent>
 
       <TabsContent value="create">
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" />Create New Trading Bot</CardTitle>
@@ -291,7 +286,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
       </TabsContent>
 
       <TabsContent value="strategies">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {strategyTemplates.map(strategy => (
             <Card key={strategy.name}>
               <CardHeader>
@@ -325,7 +320,7 @@ class ${template.name.replace(/\s/g, '')}Strategy(IStrategy):
       </TabsContent>
 
       <TabsContent value="performance">
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
           <Card>
             <CardContent className="p-6 text-center">
               <div className={`text-3xl font-bold ${bots.reduce((s,b) => s + b.profit, 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
