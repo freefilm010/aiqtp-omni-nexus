@@ -135,16 +135,16 @@ const BroadcastStation = () => {
   const currentBroadcast = broadcasts[tickerIndex];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Live Ticker Bar */}
       <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-primary/20 via-background to-primary/20 border border-primary/30">
-        <div className="flex items-center px-4 py-3">
-          <div className="flex items-center gap-2 shrink-0 mr-4">
-            <div className={`w-2.5 h-2.5 rounded-full ${isLive ? "bg-red-500 animate-pulse" : "bg-muted-foreground"}`} />
-            <span className="text-xs font-bold text-foreground uppercase tracking-wider">
+        <div className="flex items-center px-2 sm:px-4 py-2 sm:py-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 mr-2 sm:mr-4">
+            <div className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full ${isLive ? "bg-red-500 animate-pulse" : "bg-muted-foreground"}`} />
+            <span className="text-[9px] sm:text-xs font-bold text-foreground uppercase tracking-wider">
               {isLive ? "LIVE" : "PAUSED"}
             </span>
-            <Radio className="h-4 w-4 text-primary" />
+            <Radio className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary hidden sm:block" />
           </div>
           <div className="flex-1 overflow-hidden">
             {currentBroadcast ? (
@@ -174,26 +174,26 @@ const BroadcastStation = () => {
 
       {/* Main Content */}
       <Tabs defaultValue="feed" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="feed" className="gap-1.5"><Newspaper className="h-3.5 w-3.5" /> News Feed</TabsTrigger>
-          <TabsTrigger value="radio" className="gap-1.5"><Radio className="h-3.5 w-3.5" /> AI Radio</TabsTrigger>
-          <TabsTrigger value="dashboard" className="gap-1.5"><Tv className="h-3.5 w-3.5" /> Live Dashboard</TabsTrigger>
+        <TabsList className="mb-3 sm:mb-4 grid grid-cols-3 w-full h-auto">
+          <TabsTrigger value="feed" className="gap-1 sm:gap-1.5 text-[9px] sm:text-sm py-1.5"><Newspaper className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Feed</TabsTrigger>
+          <TabsTrigger value="radio" className="gap-1 sm:gap-1.5 text-[9px] sm:text-sm py-1.5"><Radio className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Radio</TabsTrigger>
+          <TabsTrigger value="dashboard" className="gap-1 sm:gap-1.5 text-[9px] sm:text-sm py-1.5"><Tv className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Live</TabsTrigger>
         </TabsList>
 
         <TabsContent value="feed">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
             <div className="lg:col-span-2">
               <Card className="border-border/50">
-                <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Newspaper className="h-4 w-4 text-primary" /> Market Feed
+                <CardHeader className="pb-2 sm:pb-3 flex flex-row items-center justify-between p-3 sm:p-6">
+                  <CardTitle className="text-sm sm:text-lg flex items-center gap-2">
+                    <Newspaper className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" /> Feed
                   </CardTitle>
-                  <Button size="sm" variant="outline" onClick={generateContent} className="h-8">
-                    <Zap className="h-3.5 w-3.5 mr-1" /> Generate
+                  <Button size="sm" variant="outline" onClick={generateContent} className="h-7 sm:h-8 text-[10px] sm:text-sm px-2 sm:px-3">
+                    <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1" /> Generate
                   </Button>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[500px]">
+                  <ScrollArea className="h-[400px] sm:h-[500px]">
                     <div className="divide-y divide-border/40">
                       {broadcasts.map(item => {
                         const Icon = categoryIcons[item.category] || Newspaper;
@@ -234,7 +234,7 @@ const BroadcastStation = () => {
             </div>
 
             {/* Ad Sidebar */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4 hidden sm:block">
               <Card className="border-border/50 bg-gradient-to-b from-accent/20 to-background">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -317,7 +317,7 @@ const BroadcastStation = () => {
         <TabsContent value="dashboard">
           <Card className="border-border/50">
             <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                 {["market_update", "breaking_news", "economic_calendar", "ipo_ico", "pattern_alert", "earnings"].map(cat => {
                   const Icon = categoryIcons[cat] || Newspaper;
                   const color = categoryColors[cat] || "text-muted-foreground";

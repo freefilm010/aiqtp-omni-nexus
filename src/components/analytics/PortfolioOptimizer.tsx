@@ -298,13 +298,13 @@ const PortfolioOptimizer = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         {/* Asset Allocation */}
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-6">
             <div>
-              <CardTitle>Asset Allocation</CardTitle>
-              <CardDescription>Configure your portfolio assets and weights</CardDescription>
+              <CardTitle className="text-sm sm:text-lg">Asset Allocation</CardTitle>
+              <CardDescription className="text-[10px] sm:text-sm">Configure portfolio assets</CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={addAsset}>
               <Plus className="h-4 w-4 mr-2" />
@@ -314,8 +314,8 @@ const PortfolioOptimizer = () => {
           <CardContent>
             <div className="space-y-3">
               {assets.map((asset, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 bg-secondary/30 rounded-lg">
-                  <div className="flex-1 grid grid-cols-5 gap-4 items-center">
+                <div key={index} className="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 bg-secondary/30 rounded-lg">
+                  <div className="flex-1 grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4 items-center">
                     <Input 
                       value={asset.symbol}
                       onChange={(e) => {
@@ -346,10 +346,10 @@ const PortfolioOptimizer = () => {
                       />
                       <span className="text-sm text-muted-foreground">%</span>
                     </div>
-                    <div className="text-sm">
+                    <div className="text-[10px] sm:text-sm hidden sm:block">
                       <span className="text-muted-foreground">Vol:</span> {asset.volatility}%
                     </div>
-                    <div className="text-sm">
+                    <div className="text-[10px] sm:text-sm hidden sm:block">
                       <span className="text-muted-foreground">SR:</span> {asset.sharpeRatio.toFixed(2)}
                     </div>
                   </div>
@@ -368,14 +368,14 @@ const PortfolioOptimizer = () => {
             <CardTitle>Current Allocation</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
+                  innerRadius={40}
+                  outerRadius={70}
                   paddingAngle={2}
                   dataKey="value"
                   label={({ name, value }) => `${name}: ${value}%`}
@@ -402,30 +402,30 @@ const PortfolioOptimizer = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-success-light rounded-lg">
-                  <p className="text-sm text-muted-foreground">Expected Return</p>
-                  <p className="text-2xl font-bold text-success">{result.expectedReturn.toFixed(1)}%</p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                <div className="p-2 sm:p-4 bg-success-light rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Expected Return</p>
+                  <p className="text-base sm:text-2xl font-bold text-success">{result.expectedReturn.toFixed(1)}%</p>
                 </div>
-                <div className="p-4 bg-warning-light rounded-lg">
-                  <p className="text-sm text-muted-foreground">Volatility</p>
-                  <p className="text-2xl font-bold text-warning">{result.volatility.toFixed(1)}%</p>
+                <div className="p-2 sm:p-4 bg-warning-light rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Volatility</p>
+                  <p className="text-base sm:text-2xl font-bold text-warning">{result.volatility.toFixed(1)}%</p>
                 </div>
-                <div className="p-4 bg-primary-light rounded-lg">
-                  <p className="text-sm text-muted-foreground">Sharpe Ratio</p>
-                  <p className="text-2xl font-bold text-primary">{result.sharpeRatio.toFixed(2)}</p>
+                <div className="p-2 sm:p-4 bg-primary-light rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Sharpe Ratio</p>
+                  <p className="text-base sm:text-2xl font-bold text-primary">{result.sharpeRatio.toFixed(2)}</p>
                 </div>
-                <div className="p-4 bg-destructive/10 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Max Drawdown</p>
-                  <p className="text-2xl font-bold text-destructive">{result.maxDrawdown.toFixed(1)}%</p>
+                <div className="p-2 sm:p-4 bg-destructive/10 rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Max Drawdown</p>
+                  <p className="text-base sm:text-2xl font-bold text-destructive">{result.maxDrawdown.toFixed(1)}%</p>
                 </div>
-                <div className="p-4 bg-accent-light rounded-lg">
-                  <p className="text-sm text-muted-foreground">VaR (95%)</p>
-                  <p className="text-2xl font-bold text-accent">{result.var95.toFixed(1)}%</p>
+                <div className="p-2 sm:p-4 bg-accent-light rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">VaR (95%)</p>
+                  <p className="text-base sm:text-2xl font-bold text-accent">{result.var95.toFixed(1)}%</p>
                 </div>
-                <div className="p-4 bg-gold-light rounded-lg">
-                  <p className="text-sm text-muted-foreground">CVaR (95%)</p>
-                  <p className="text-2xl font-bold text-gold">{result.cvar95.toFixed(1)}%</p>
+                <div className="p-2 sm:p-4 bg-gold-light rounded-lg">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">CVaR (95%)</p>
+                  <p className="text-base sm:text-2xl font-bold text-gold">{result.cvar95.toFixed(1)}%</p>
                 </div>
               </div>
             </CardContent>
@@ -462,12 +462,12 @@ const PortfolioOptimizer = () => {
       )}
 
       {/* Advanced Analytics */}
-      <Tabs defaultValue="frontier" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="frontier">Efficient Frontier</TabsTrigger>
-          <TabsTrigger value="monte-carlo">Monte Carlo</TabsTrigger>
-          <TabsTrigger value="backtest">Backtest Results</TabsTrigger>
-          <TabsTrigger value="stress">Stress Testing</TabsTrigger>
+      <Tabs defaultValue="frontier" className="space-y-3 sm:space-y-4">
+        <TabsList className="grid grid-cols-4 w-full h-auto">
+          <TabsTrigger value="frontier" className="text-[8px] sm:text-sm px-1 sm:px-3 py-1.5">Frontier</TabsTrigger>
+          <TabsTrigger value="monte-carlo" className="text-[8px] sm:text-sm px-1 sm:px-3 py-1.5">Monte Carlo</TabsTrigger>
+          <TabsTrigger value="backtest" className="text-[8px] sm:text-sm px-1 sm:px-3 py-1.5">Backtest</TabsTrigger>
+          <TabsTrigger value="stress" className="text-[8px] sm:text-sm px-1 sm:px-3 py-1.5">Stress</TabsTrigger>
         </TabsList>
 
         <TabsContent value="frontier">
@@ -477,11 +477,11 @@ const PortfolioOptimizer = () => {
               <CardDescription>Risk-return trade-off visualization with optimal portfolios</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={250}>
                 <ScatterChart>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="volatility" name="Volatility" unit="%" />
-                  <YAxis dataKey="return" name="Return" unit="%" />
+                  <XAxis dataKey="volatility" name="Volatility" unit="%" tick={{ fontSize: 10 }} />
+                  <YAxis dataKey="return" name="Return" unit="%" tick={{ fontSize: 10 }} width={35} />
                   <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                   <Legend />
                   <Scatter name="Efficient Frontier" data={efficientFrontierData} fill="hsl(220, 91%, 25%)" line />
@@ -499,11 +499,11 @@ const PortfolioOptimizer = () => {
               <CardDescription>10,000 portfolio simulations with random weight allocations</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={250}>
                 <ScatterChart>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="volatility" name="Volatility" unit="%" />
-                  <YAxis dataKey="return" name="Return" unit="%" />
+                  <XAxis dataKey="volatility" name="Volatility" unit="%" tick={{ fontSize: 10 }} />
+                  <YAxis dataKey="return" name="Return" unit="%" tick={{ fontSize: 10 }} width={35} />
                   <Tooltip />
                   <Scatter name="Simulated Portfolios" data={efficientFrontierData} fill="hsl(180, 84%, 35%)" fillOpacity={0.3} />
                 </ScatterChart>
@@ -519,7 +519,7 @@ const PortfolioOptimizer = () => {
               <CardDescription>Portfolio performance over historical data</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={Array.from({ length: 365 }, (_, i) => ({
                   day: i,
                   portfolio: 100 * Math.exp(0.0003 * i + 0.02 * Math.sin(i / 30) + 0.1 * (Math.random() - 0.5)),
