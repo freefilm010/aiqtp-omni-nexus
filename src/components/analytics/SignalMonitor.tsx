@@ -173,12 +173,12 @@ const SignalMonitor = () => {
   const unreadAlerts = alerts.filter(a => !a.read).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Control Bar */}
       <Card>
-        <CardContent className="py-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+        <CardContent className="py-3 sm:py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <Button
                 variant={isMonitoring ? "default" : "outline"}
                 onClick={() => setIsMonitoring(!isMonitoring)}
@@ -196,10 +196,10 @@ const SignalMonitor = () => {
                 )}
               </Button>
 
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Refresh:</Label>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Label className="text-[10px] sm:text-sm">Refresh:</Label>
                 <Select value={refreshInterval} onValueChange={setRefreshInterval}>
-                  <SelectTrigger className="w-[100px]">
+                  <SelectTrigger className="w-[70px] sm:w-[100px] text-xs sm:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -217,7 +217,7 @@ const SignalMonitor = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Badge variant="outline" className="gap-1">
                 <Bell className="h-3 w-3" />
                 {unreadAlerts} Unread Alerts
@@ -231,7 +231,7 @@ const SignalMonitor = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         {/* Signal Strength Chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -239,7 +239,7 @@ const SignalMonitor = () => {
             <CardDescription>Live multi-factor signal analysis</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={strengthHistory}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
@@ -261,7 +261,7 @@ const SignalMonitor = () => {
             <CardDescription>Signal composition breakdown</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={factorData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" domain={[0, 100]} />
@@ -300,16 +300,16 @@ const SignalMonitor = () => {
             {signals
               .filter(s => signalFilter === "all" || s.type === signalFilter || s.status === signalFilter)
               .map((signal) => (
-              <div key={signal.id} className="p-4 border rounded-lg hover:shadow-md transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center gap-1 font-bold ${getSignalTypeColor(signal.type)}`}>
-                      {signal.type === "buy" ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+              <div key={signal.id} className="p-2.5 sm:p-4 border rounded-lg hover:shadow-md transition-all">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap">
+                    <div className={`flex items-center gap-1 font-bold text-xs sm:text-base ${getSignalTypeColor(signal.type)}`}>
+                      {signal.type === "buy" ? <TrendingUp className="h-3.5 w-3.5 sm:h-5 sm:w-5" /> : <TrendingDown className="h-3.5 w-3.5 sm:h-5 sm:w-5" />}
                       {signal.type.toUpperCase()}
                     </div>
-                    <span className="text-xl font-bold">{signal.symbol}</span>
-                    <Badge variant="outline">{signal.source}</Badge>
-                    <Badge variant={signal.status === "active" ? "default" : "secondary"}>
+                    <span className="text-sm sm:text-xl font-bold">{signal.symbol}</span>
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">{signal.source}</Badge>
+                    <Badge variant={signal.status === "active" ? "default" : "secondary"} className="text-[10px] sm:text-xs">
                       {signal.status}
                     </Badge>
                   </div>
@@ -318,7 +318,7 @@ const SignalMonitor = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4 mb-2 sm:mb-3">
                   <div>
                     <p className="text-sm text-muted-foreground">Entry Price</p>
                     <p className="font-mono font-bold">${signal.price.toLocaleString()}</p>

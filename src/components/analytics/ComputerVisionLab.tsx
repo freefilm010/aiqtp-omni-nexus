@@ -147,16 +147,16 @@ const ComputerVisionLab = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Controls */}
       <Card>
-        <CardContent className="py-4">
-          <div className="flex flex-wrap items-center gap-4">
+        <CardContent className="py-3 sm:py-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-2">
               <Label htmlFor="image-upload" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors">
-                  <Upload className="h-4 w-4" />
-                  Upload Chart
+                <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary-hover transition-colors text-xs sm:text-sm">
+                  <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  Upload
                 </div>
               </Label>
               <Input 
@@ -169,7 +169,7 @@ const ComputerVisionLab = () => {
             </div>
 
             <Select value={detectionModel} onValueChange={setDetectionModel}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[140px] sm:w-[200px] text-xs sm:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -183,8 +183,8 @@ const ComputerVisionLab = () => {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-              <Label className="text-sm whitespace-nowrap">Sensitivity: {sensitivityLevel[0]}%</Label>
+            <div className="flex items-center gap-2 flex-1 min-w-[140px] sm:min-w-[200px]">
+              <Label className="text-[10px] sm:text-sm whitespace-nowrap">Sens: {sensitivityLevel[0]}%</Label>
               <Slider 
                 value={sensitivityLevel} 
                 onValueChange={setSensitivityLevel}
@@ -193,12 +193,12 @@ const ComputerVisionLab = () => {
               />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <Switch checked={showOverlay} onCheckedChange={setShowOverlay} />
               <Label className="text-sm">Show Overlay</Label>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <Switch checked={autoDetect} onCheckedChange={setAutoDetect} />
               <Label className="text-sm">Auto Detect</Label>
             </div>
@@ -234,15 +234,15 @@ const ComputerVisionLab = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         {/* Chart Canvas */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
               Chart Analysis
             </CardTitle>
-            <CardDescription>Upload a chart image or connect to live feed</CardDescription>
+            <CardDescription className="text-[10px] sm:text-sm">Upload a chart image or connect to live feed</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="relative bg-secondary/30 rounded-lg aspect-video flex items-center justify-center border-2 border-dashed">
@@ -272,9 +272,9 @@ const ComputerVisionLab = () => {
                 </div>
               ) : (
                 <div className="text-center">
-                  <Camera className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Upload a chart image to analyze</p>
-                  <p className="text-sm text-muted-foreground mt-2">Supports PNG, JPG, WEBP</p>
+                  <Camera className="h-10 w-10 sm:h-16 sm:w-16 mx-auto text-muted-foreground mb-2 sm:mb-4" />
+                  <p className="text-muted-foreground text-xs sm:text-base">Upload a chart image to analyze</p>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground mt-1 sm:mt-2">Supports PNG, JPG, WEBP</p>
                 </div>
               )}
             </div>
@@ -367,12 +367,12 @@ const ComputerVisionLab = () => {
       </div>
 
       {/* Additional Analysis */}
-      <Tabs defaultValue="candlestick" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="candlestick">Candlestick Patterns</TabsTrigger>
-          <TabsTrigger value="trendlines">Trendlines</TabsTrigger>
-          <TabsTrigger value="fibonacci">Fibonacci</TabsTrigger>
-          <TabsTrigger value="harmonic">Harmonic Patterns</TabsTrigger>
+      <Tabs defaultValue="candlestick" className="space-y-3 sm:space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="candlestick" className="text-[9px] sm:text-sm">Candles</TabsTrigger>
+          <TabsTrigger value="trendlines" className="text-[9px] sm:text-sm">Trends</TabsTrigger>
+          <TabsTrigger value="fibonacci" className="text-[9px] sm:text-sm">Fib</TabsTrigger>
+          <TabsTrigger value="harmonic" className="text-[9px] sm:text-sm">Harmonic</TabsTrigger>
         </TabsList>
 
         <TabsContent value="candlestick">
@@ -382,7 +382,7 @@ const ComputerVisionLab = () => {
               <CardDescription>Identified Japanese candlestick patterns</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {candlestickPatterns.map((pattern, idx) => (
                   <div key={idx} className="p-4 border rounded-lg hover:shadow-md transition-all">
                     <div className="flex items-center justify-between mb-2">
@@ -414,7 +414,7 @@ const ComputerVisionLab = () => {
               <CardDescription>AI-detected trend lines and channels</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 {trendlines.map((line, idx) => (
                   <div key={idx} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
@@ -483,7 +483,7 @@ const ComputerVisionLab = () => {
               <CardDescription>Advanced harmonic pattern recognition</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   { pattern: "Gartley", status: "Forming", completion: 78, direction: "Bullish" },
                   { pattern: "Bat", status: "Complete", completion: 100, direction: "Bearish" },

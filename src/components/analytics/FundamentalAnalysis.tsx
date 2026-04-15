@@ -199,24 +199,24 @@ const FundamentalAnalysis = () => {
   const upside = ((fundamentals.targetPrice - fundamentals.price) / fundamentals.price * 100).toFixed(1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-6">
       {/* Search & Quick Select */}
       <Card>
         <CardContent className="pt-4">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             <div className="flex gap-2">
               <Input
                 placeholder="Enter symbol..."
                 value={searchSymbol}
                 onChange={(e) => setSearchSymbol(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-32"
+                className="w-24 sm:w-32 text-xs sm:text-sm"
               />
               <Button onClick={handleSearch}>
                 <Search className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1 sm:gap-2">
               {WATCHLIST.map(sym => (
                 <Button
                   key={sym}
@@ -234,18 +234,18 @@ const FundamentalAnalysis = () => {
 
       {/* Company Header */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-start justify-between flex-wrap gap-4">
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="flex items-start justify-between flex-wrap gap-2 sm:gap-4">
             <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold">{fundamentals.symbol}</h2>
-                <Badge variant="outline">{fundamentals.sector}</Badge>
-                <Badge variant="secondary">{fundamentals.industry}</Badge>
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <h2 className="text-lg sm:text-2xl font-bold">{fundamentals.symbol}</h2>
+                <Badge variant="outline" className="text-[10px] sm:text-xs">{fundamentals.sector}</Badge>
+                <Badge variant="secondary" className="text-[10px] sm:text-xs">{fundamentals.industry}</Badge>
               </div>
-              <p className="text-muted-foreground">{fundamentals.name}</p>
+              <p className="text-muted-foreground text-xs sm:text-base">{fundamentals.name}</p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold">${fundamentals.price.toFixed(2)}</p>
+              <p className="text-xl sm:text-3xl font-bold">${fundamentals.price.toFixed(2)}</p>
               <div className="flex items-center gap-2 justify-end mt-1">
                 <Badge className={getRatingColor(fundamentals.analystRating)}>
                   {fundamentals.analystRating}
@@ -262,51 +262,51 @@ const FundamentalAnalysis = () => {
       </Card>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Market Cap</p>
-            <p className="text-xl font-bold">{formatValue(fundamentals.marketCap)}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Market Cap</p>
+            <p className="text-sm sm:text-xl font-bold">{formatValue(fundamentals.marketCap)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">P/E Ratio</p>
-            <p className="text-xl font-bold">{fundamentals.pe.toFixed(1)}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">P/E Ratio</p>
+            <p className="text-sm sm:text-xl font-bold">{fundamentals.pe.toFixed(1)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Forward P/E</p>
-            <p className="text-xl font-bold">{fundamentals.forwardPe.toFixed(1)}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Forward P/E</p>
+            <p className="text-sm sm:text-xl font-bold">{fundamentals.forwardPe.toFixed(1)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">PEG Ratio</p>
-            <p className="text-xl font-bold">{fundamentals.peg.toFixed(2)}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">PEG Ratio</p>
+            <p className="text-sm sm:text-xl font-bold">{fundamentals.peg.toFixed(2)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">EV/EBITDA</p>
-            <p className="text-xl font-bold">{fundamentals.evEbitda.toFixed(1)}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">EV/EBITDA</p>
+            <p className="text-sm sm:text-xl font-bold">{fundamentals.evEbitda.toFixed(1)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground">Beta</p>
-            <p className="text-xl font-bold">{fundamentals.beta.toFixed(2)}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-4 sm:pb-4">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Beta</p>
+            <p className="text-sm sm:text-xl font-bold">{fundamentals.beta.toFixed(2)}</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="financials">
-        <TabsList>
-          <TabsTrigger value="financials">Financials</TabsTrigger>
-          <TabsTrigger value="valuation">Valuation</TabsTrigger>
-          <TabsTrigger value="earnings">Earnings</TabsTrigger>
-          <TabsTrigger value="ownership">Ownership</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="financials" className="text-[9px] sm:text-sm">Financials</TabsTrigger>
+          <TabsTrigger value="valuation" className="text-[9px] sm:text-sm">Valuation</TabsTrigger>
+          <TabsTrigger value="earnings" className="text-[9px] sm:text-sm">Earnings</TabsTrigger>
+          <TabsTrigger value="ownership" className="text-[9px] sm:text-sm">Ownership</TabsTrigger>
         </TabsList>
 
         <TabsContent value="financials" className="mt-4">
@@ -319,7 +319,7 @@ const FundamentalAnalysis = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={revenueHistory}>
                     <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}B`} />
@@ -382,28 +382,28 @@ const FundamentalAnalysis = () => {
               <CardTitle className="text-base">Valuation Multiples</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">P/E Ratio</p>
-                  <p className="text-2xl font-bold">{fundamentals.pe.toFixed(1)}</p>
+                  <p className="text-lg sm:text-2xl font-bold">{fundamentals.pe.toFixed(1)}</p>
                   <Progress value={Math.min(fundamentals.pe / 50 * 100, 100)} />
                   <p className="text-xs text-muted-foreground">Sector Avg: 25</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">P/S Ratio</p>
-                  <p className="text-2xl font-bold">{fundamentals.ps.toFixed(1)}</p>
+                  <p className="text-lg sm:text-2xl font-bold">{fundamentals.ps.toFixed(1)}</p>
                   <Progress value={Math.min(fundamentals.ps / 15 * 100, 100)} />
                   <p className="text-xs text-muted-foreground">Sector Avg: 5</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">P/B Ratio</p>
-                  <p className="text-2xl font-bold">{fundamentals.pb.toFixed(1)}</p>
+                  <p className="text-lg sm:text-2xl font-bold">{fundamentals.pb.toFixed(1)}</p>
                   <Progress value={Math.min(fundamentals.pb / 20 * 100, 100)} />
                   <p className="text-xs text-muted-foreground">Sector Avg: 4</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">EV/EBITDA</p>
-                  <p className="text-2xl font-bold">{fundamentals.evEbitda.toFixed(1)}</p>
+                  <p className="text-lg sm:text-2xl font-bold">{fundamentals.evEbitda.toFixed(1)}</p>
                   <Progress value={Math.min(fundamentals.evEbitda / 40 * 100, 100)} />
                   <p className="text-xs text-muted-foreground">Sector Avg: 15</p>
                 </div>
@@ -426,7 +426,7 @@ const FundamentalAnalysis = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={earningsHistory}>
                   <XAxis dataKey="quarter" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} />
