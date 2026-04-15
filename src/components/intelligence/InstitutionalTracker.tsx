@@ -94,7 +94,7 @@ const InstitutionalTracker = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
         <Card><CardContent className="pt-6">
           <div className="flex items-center gap-3">
             <ArrowUpRight className="h-5 w-5 text-green-500" />
@@ -125,20 +125,20 @@ const InstitutionalTracker = () => {
       </div>
 
       <Tabs defaultValue="insider" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="insider">Insider Trades</TabsTrigger>
-          <TabsTrigger value="13f">13F Filings</TabsTrigger>
+        <TabsList className="w-full flex-wrap">
+          <TabsTrigger value="insider" className="text-[10px] sm:text-sm px-2 sm:px-3">Insider</TabsTrigger>
+          <TabsTrigger value="13f" className="text-[10px] sm:text-sm px-2 sm:px-3">13F</TabsTrigger>
         </TabsList>
 
         <TabsContent value="insider" className="space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by symbol or insider..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
+              <Input placeholder="Search symbol / insider..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 text-xs sm:text-sm" />
             </div>
             <div className="flex gap-1">
               {(['all', 'buys', 'sells'] as const).map(f => (
-                <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)} className="capitalize text-xs">{f}</Button>
+                <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)} className="capitalize text-[10px] sm:text-xs h-7 sm:h-8 px-2">{f}</Button>
               ))}
             </div>
           </div>
@@ -157,27 +157,26 @@ const InstitutionalTracker = () => {
                 {filteredTrades.map(trade => (
                   <Card key={trade.id}>
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${trade.type === 'buy' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                            {trade.type === 'buy' ? <ArrowUpRight className="h-4 w-4 text-green-500" /> : <ArrowDownRight className="h-4 w-4 text-red-500" />}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className={`p-1.5 sm:p-2 rounded-lg ${trade.type === 'buy' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                            {trade.type === 'buy' ? <ArrowUpRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" /> : <ArrowDownRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500" />}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary">{trade.symbol}</Badge>
-                              <span className="font-semibold text-sm">{trade.insider}</span>
-                              <span className="text-xs text-muted-foreground">({trade.title})</span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <Badge variant="secondary" className="text-[10px]">{trade.symbol}</Badge>
+                              <span className="font-semibold text-xs sm:text-sm truncate">{trade.insider}</span>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {trade.shares.toLocaleString()} shares @ ${trade.price.toFixed(2)} • {trade.company}
+                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+                              {trade.shares.toLocaleString()} @ ${trade.price.toFixed(2)}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className={`font-bold ${trade.type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
+                        <div className="text-right shrink-0">
+                          <p className={`font-bold text-xs sm:text-sm ${trade.type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
                             ${(trade.value / 1e6).toFixed(2)}M
                           </p>
-                          <p className="text-xs text-muted-foreground">{trade.date.toLocaleDateString()}</p>
+                          <p className="text-[10px] text-muted-foreground">{trade.date.toLocaleDateString()}</p>
                         </div>
                       </div>
                     </CardContent>

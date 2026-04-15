@@ -56,19 +56,19 @@ const PrimeServices = () => {
         <Button><FileText className="h-4 w-4 mr-2" />Request Statement</Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card border-border"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Wallet className="h-5 w-5 text-primary" /></div><div><p className="text-sm text-muted-foreground">Total AUM</p><p className="text-xl font-bold text-foreground">${(totalBalance / 1e6).toFixed(1)}M</p></div></div></CardContent></Card>
-        <Card className="bg-card border-border"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-green-500/10"><Shield className="h-5 w-5 text-green-500" /></div><div><p className="text-sm text-muted-foreground">Insurance Coverage</p><p className="text-xl font-bold text-green-500">${(totalInsurance / 1e6).toFixed(0)}M</p></div></div></CardContent></Card>
-        <Card className="bg-card border-border"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-blue-500/10"><Banknote className="h-5 w-5 text-blue-500" /></div><div><p className="text-sm text-muted-foreground">Credit Available</p><p className="text-xl font-bold text-foreground">${(totalCreditAvail / 1e6).toFixed(1)}M</p></div></div></CardContent></Card>
-        <Card className="bg-card border-border"><CardContent className="p-4"><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-yellow-500/10"><PiggyBank className="h-5 w-5 text-yellow-500" /></div><div><p className="text-sm text-muted-foreground">Accounts</p><p className="text-xl font-bold text-foreground">{custodyAccounts.length}</p></div></div></CardContent></Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+        <Card className="bg-card border-border"><CardContent className="p-3 sm:p-4"><div className="flex items-center gap-2 sm:gap-3"><div className="p-1.5 sm:p-2 rounded-lg bg-primary/10"><Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" /></div><div><p className="text-[10px] sm:text-sm text-muted-foreground">Total AUM</p><p className="text-sm sm:text-xl font-bold text-foreground">${(totalBalance / 1e6).toFixed(1)}M</p></div></div></CardContent></Card>
+        <Card className="bg-card border-border"><CardContent className="p-3 sm:p-4"><div className="flex items-center gap-2 sm:gap-3"><div className="p-1.5 sm:p-2 rounded-lg bg-green-500/10"><Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" /></div><div><p className="text-[10px] sm:text-sm text-muted-foreground">Insurance</p><p className="text-sm sm:text-xl font-bold text-green-500">${(totalInsurance / 1e6).toFixed(0)}M</p></div></div></CardContent></Card>
+        <Card className="bg-card border-border"><CardContent className="p-3 sm:p-4"><div className="flex items-center gap-2 sm:gap-3"><div className="p-1.5 sm:p-2 rounded-lg bg-blue-500/10"><Banknote className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" /></div><div><p className="text-[10px] sm:text-sm text-muted-foreground">Credit</p><p className="text-sm sm:text-xl font-bold text-foreground">${(totalCreditAvail / 1e6).toFixed(1)}M</p></div></div></CardContent></Card>
+        <Card className="bg-card border-border"><CardContent className="p-3 sm:p-4"><div className="flex items-center gap-2 sm:gap-3"><div className="p-1.5 sm:p-2 rounded-lg bg-yellow-500/10"><PiggyBank className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" /></div><div><p className="text-[10px] sm:text-sm text-muted-foreground">Accounts</p><p className="text-sm sm:text-xl font-bold text-foreground">{custodyAccounts.length}</p></div></div></CardContent></Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="custody">Custody</TabsTrigger>
-          <TabsTrigger value="margin">Margin & Lending</TabsTrigger>
-          <TabsTrigger value="reporting">Reporting</TabsTrigger>
-          <TabsTrigger value="compliance">Compliance</TabsTrigger>
+        <TabsList className="w-full flex-wrap">
+          <TabsTrigger value="custody" className="text-[10px] sm:text-sm px-2 sm:px-3">Custody</TabsTrigger>
+          <TabsTrigger value="margin" className="text-[10px] sm:text-sm px-2 sm:px-3">Margin</TabsTrigger>
+          <TabsTrigger value="reporting" className="text-[10px] sm:text-sm px-2 sm:px-3">Reports</TabsTrigger>
+          <TabsTrigger value="compliance" className="text-[10px] sm:text-sm px-2 sm:px-3">Comply</TabsTrigger>
         </TabsList>
 
         <TabsContent value="custody" className="space-y-4">
@@ -76,23 +76,22 @@ const PrimeServices = () => {
             <Card><CardContent className="py-12 text-center text-muted-foreground"><Lock className="h-12 w-12 mx-auto mb-4 opacity-50" /><p>No custody accounts set up yet</p></CardContent></Card>
           ) : custodyAccounts.map((account) => (
             <Card key={account.id} className="bg-card border-border">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-primary/10">
-                      {account.account_type === 'cold_storage' ? <Lock className="h-6 w-6 text-primary" /> : account.account_type === 'staking' ? <TrendingUp className="h-6 w-6 text-primary" /> : <Wallet className="h-6 w-6 text-primary" />}
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="p-2 sm:p-3 rounded-lg bg-primary/10">
+                      {account.account_type === 'cold_storage' ? <Lock className="h-4 w-4 sm:h-6 sm:w-6 text-primary" /> : account.account_type === 'staking' ? <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-primary" /> : <Wallet className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2"><h3 className="font-bold text-foreground">{account.name}</h3><Badge className={getStatusColor(account.status)}>{account.status}</Badge></div>
-                      <p className="text-sm text-muted-foreground">{account.account_type}</p>
+                      <div className="flex items-center gap-2"><h3 className="font-bold text-xs sm:text-base text-foreground">{account.name}</h3><Badge className={`text-[9px] sm:text-xs ${getStatusColor(account.status)}`}>{account.status}</Badge></div>
+                      <p className="text-[10px] sm:text-sm text-muted-foreground">{account.account_type}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-8 text-right">
-                    <div><p className="text-xs text-muted-foreground">Balance</p><p className="font-bold text-foreground">${(Number(account.balance) / 1e6).toFixed(1)}M</p></div>
-                    <div><p className="text-xs text-muted-foreground">Insurance</p><p className="font-bold text-green-500">${(Number(account.insurance_coverage) / 1e6).toFixed(0)}M</p></div>
-                    <div><p className="text-xs text-muted-foreground">Last Audit</p><p className="font-bold text-foreground">{account.last_audit_date || 'N/A'}</p></div>
+                  <div className="grid grid-cols-3 gap-3 sm:gap-8 text-right">
+                    <div><p className="text-[9px] sm:text-xs text-muted-foreground">Balance</p><p className="font-bold text-xs sm:text-base text-foreground">${(Number(account.balance) / 1e6).toFixed(1)}M</p></div>
+                    <div><p className="text-[9px] sm:text-xs text-muted-foreground">Insurance</p><p className="font-bold text-xs sm:text-base text-green-500">${(Number(account.insurance_coverage) / 1e6).toFixed(0)}M</p></div>
+                    <div><p className="text-[9px] sm:text-xs text-muted-foreground">Audit</p><p className="font-bold text-[10px] sm:text-base text-foreground">{account.last_audit_date || 'N/A'}</p></div>
                   </div>
-                  <Button variant="outline" size="sm">Manage<ChevronRight className="h-4 w-4 ml-1" /></Button>
                 </div>
               </CardContent>
             </Card>

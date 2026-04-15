@@ -142,29 +142,29 @@ const OptionsFlowTracker = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-1 mb-4 flex-wrap">
               {(['all', 'calls', 'puts', 'unusual', 'sweeps'] as const).map(f => (
-                <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)}>{f.charAt(0).toUpperCase() + f.slice(1)}</Button>
+                <Button key={f} variant={filter === f ? 'default' : 'outline'} size="sm" onClick={() => setFilter(f)} className="text-[10px] sm:text-xs h-6 sm:h-8 px-1.5 sm:px-2">{f.charAt(0).toUpperCase() + f.slice(1)}</Button>
               ))}
             </div>
             <ScrollArea className="h-[400px]">
               <div className="space-y-2">
                 {filteredFlows.map(flow => (
-                  <div key={flow.id} className={`p-3 rounded-lg border flex items-center justify-between ${flow.unusual ? 'border-amber-500/50 bg-amber-500/5' : ''}`}>
-                    <div className="flex items-center gap-3">
-                      <Badge className={flow.type === 'call' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}>{flow.type.toUpperCase()}</Badge>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold">{flow.symbol}</span>
-                          <span className="font-mono">${flow.strike}</span>
-                          <span className="text-sm text-muted-foreground">{flow.expiry}</span>
-                          {flow.sweep && <Badge variant="outline" className="text-xs">SWEEP</Badge>}
+                  <div key={flow.id} className={`p-2 sm:p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 ${flow.unusual ? 'border-amber-500/50 bg-amber-500/5' : ''}`}>
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <Badge className={`text-[9px] sm:text-xs ${flow.type === 'call' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>{flow.type.toUpperCase()}</Badge>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                          <span className="font-bold text-xs sm:text-sm">{flow.symbol}</span>
+                          <span className="font-mono text-[10px] sm:text-sm">${flow.strike}</span>
+                          <span className="text-[10px] sm:text-sm text-muted-foreground">{flow.expiry}</span>
+                          {flow.sweep && <Badge variant="outline" className="text-[8px] sm:text-xs px-1">SWEEP</Badge>}
                           {flow.unusual && <Flame className="h-3 w-3 text-amber-500" />}
                         </div>
-                        <div className="text-xs text-muted-foreground">Vol: {flow.volume.toLocaleString()} | OI: {flow.openInterest.toLocaleString()} | IV: {flow.iv.toFixed(0)}%</div>
+                        <div className="text-[9px] sm:text-xs text-muted-foreground">Vol: {flow.volume.toLocaleString()} | OI: {flow.openInterest.toLocaleString()}</div>
                       </div>
                     </div>
-                    <div className="text-right"><p className="font-bold text-lg">{formatPremium(flow.premium)}</p><p className="text-xs text-muted-foreground">Spot: ${flow.spot.toFixed(2)}</p></div>
+                    <div className="text-right shrink-0"><p className="font-bold text-sm sm:text-lg">{formatPremium(flow.premium)}</p><p className="text-[9px] sm:text-xs text-muted-foreground">Spot: ${flow.spot.toFixed(2)}</p></div>
                   </div>
                 ))}
               </div>
