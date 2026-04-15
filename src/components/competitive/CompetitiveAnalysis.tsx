@@ -180,7 +180,7 @@ const CompetitiveAnalysis = () => {
   return (
     <div className="space-y-6">
       {/* Header Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -239,26 +239,26 @@ const CompetitiveAnalysis = () => {
       </div>
 
       <Tabs defaultValue="comparison" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="comparison">Feature Comparison</TabsTrigger>
-          <TabsTrigger value="scores">Competitive Scores</TabsTrigger>
-          <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
-          <TabsTrigger value="competitors">Competitor Profiles</TabsTrigger>
+        <TabsList className="w-full flex-wrap">
+          <TabsTrigger value="comparison" className="text-[10px] sm:text-sm px-2 sm:px-3">Compare</TabsTrigger>
+          <TabsTrigger value="scores" className="text-[10px] sm:text-sm px-2 sm:px-3">Scores</TabsTrigger>
+          <TabsTrigger value="roadmap" className="text-[10px] sm:text-sm px-2 sm:px-3">Roadmap</TabsTrigger>
+          <TabsTrigger value="competitors" className="text-[10px] sm:text-sm px-2 sm:px-3">Profiles</TabsTrigger>
         </TabsList>
 
         <TabsContent value="comparison">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Feature-by-Feature Comparison</CardTitle>
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <CardTitle className="text-sm sm:text-base">Feature Comparison</CardTitle>
+                <div className="flex gap-1 flex-wrap">
                   {categories.map(cat => (
                     <Button
                       key={cat}
                       variant={selectedCategory === cat ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setSelectedCategory(cat)}
-                      className="capitalize"
+                      className="capitalize text-[9px] sm:text-xs h-6 sm:h-8 px-1.5 sm:px-2"
                     >
                       {cat}
                     </Button>
@@ -271,30 +271,27 @@ const CompetitiveAnalysis = () => {
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-background">
                     <tr className="border-b">
-                      <th className="text-left p-2 font-medium">Feature</th>
-                      <th className="text-center p-2 font-medium text-primary">Us</th>
-                      <th className="text-center p-2 font-medium">Bloomberg</th>
-                      <th className="text-center p-2 font-medium">ToS</th>
-                      <th className="text-center p-2 font-medium">TradingView</th>
-                      <th className="text-center p-2 font-medium">Aladdin</th>
+                      <th className="text-left p-1.5 sm:p-2 font-medium text-[10px] sm:text-sm">Feature</th>
+                      <th className="text-center p-1 sm:p-2 font-medium text-primary text-[10px] sm:text-sm">Us</th>
+                      <th className="text-center p-1 sm:p-2 font-medium text-[10px] sm:text-sm hidden sm:table-cell">BB</th>
+                      <th className="text-center p-1 sm:p-2 font-medium text-[10px] sm:text-sm hidden sm:table-cell">ToS</th>
+                      <th className="text-center p-1 sm:p-2 font-medium text-[10px] sm:text-sm">TV</th>
+                      <th className="text-center p-1 sm:p-2 font-medium text-[10px] sm:text-sm hidden sm:table-cell">Aladdin</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredFeatures.map((f, i) => (
                       <tr key={i} className="border-b hover:bg-muted/30">
-                        <td className="p-2">
-                          <div className="flex items-center gap-2">
-                            <span>{f.feature}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {f.importance}
-                            </Badge>
+                        <td className="p-1.5 sm:p-2">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] sm:text-sm">{f.feature}</span>
                           </div>
                         </td>
-                        <td className="text-center p-2">{getStatusIcon(f.us)}</td>
-                        <td className="text-center p-2">{getStatusIcon(f.bloomberg)}</td>
-                        <td className="text-center p-2">{getStatusIcon(f.thinkorswim)}</td>
-                        <td className="text-center p-2">{getStatusIcon(f.tradingview)}</td>
-                        <td className="text-center p-2">{getStatusIcon(f.aladdin)}</td>
+                        <td className="text-center p-1 sm:p-2">{getStatusIcon(f.us)}</td>
+                        <td className="text-center p-1 sm:p-2 hidden sm:table-cell">{getStatusIcon(f.bloomberg)}</td>
+                        <td className="text-center p-1 sm:p-2 hidden sm:table-cell">{getStatusIcon(f.thinkorswim)}</td>
+                        <td className="text-center p-1 sm:p-2">{getStatusIcon(f.tradingview)}</td>
+                        <td className="text-center p-1 sm:p-2 hidden sm:table-cell">{getStatusIcon(f.aladdin)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -364,7 +361,7 @@ const CompetitiveAnalysis = () => {
         </TabsContent>
 
         <TabsContent value="competitors">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Object.entries(COMPETITOR_INFO).map(([key, info]) => (
               <Card key={key}>
                 <CardHeader>
