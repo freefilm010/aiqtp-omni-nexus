@@ -160,9 +160,9 @@ const SentimentAnalysis = () => {
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
         <Select value={selectedAsset} onValueChange={setSelectedAsset}>
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[100px] sm:w-[120px] h-8 sm:h-10 text-xs sm:text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -174,7 +174,7 @@ const SentimentAnalysis = () => {
         </Select>
 
         <Select value={timeframe} onValueChange={setTimeframe}>
-          <SelectTrigger className="w-[100px]">
+          <SelectTrigger className="w-[80px] sm:w-[100px] h-8 sm:h-10 text-xs sm:text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -185,27 +185,27 @@ const SentimentAnalysis = () => {
           </SelectContent>
         </Select>
 
-        <Button variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <Button variant="outline" size="sm" className="h-8 sm:h-10 text-xs sm:text-sm">
+          <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
           Refresh
         </Button>
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Fear & Greed Index</p>
-                <p className={`text-3xl font-bold ${fearGreed.color}`}>{fearGreedIndex}</p>
-                <p className={`text-sm ${fearGreed.color}`}>{fearGreed.label}</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Fear & Greed</p>
+                <p className={`text-xl sm:text-3xl font-bold ${fearGreed.color}`}>{fearGreedIndex}</p>
+                <p className={`text-[10px] sm:text-sm ${fearGreed.color}`}>{fearGreed.label}</p>
               </div>
-              <div className="relative h-16 w-16">
-                <svg className="transform -rotate-90 h-16 w-16">
-                  <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="8" className="text-secondary" />
+              <div className="relative h-10 w-10 sm:h-16 sm:w-16">
+                <svg className="transform -rotate-90 h-10 w-10 sm:h-16 sm:w-16">
+                  <circle cx="50%" cy="50%" r="40%" fill="none" stroke="currentColor" strokeWidth="8" className="text-secondary" />
                   <circle 
-                    cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="8" 
+                    cx="50%" cy="50%" r="40%" fill="none" stroke="currentColor" strokeWidth="8" 
                     className={fearGreed.color} 
                     strokeDasharray={`${fearGreedIndex * 1.76} 176`}
                   />
@@ -216,36 +216,36 @@ const SentimentAnalysis = () => {
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <ThumbsUp className="h-8 w-8 text-success" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ThumbsUp className="h-5 w-5 sm:h-8 sm:w-8 text-success" />
               <div>
-                <p className="text-sm text-muted-foreground">Bullish Sentiment</p>
-                <p className="text-2xl font-bold text-success">65%</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Bullish</p>
+                <p className="text-lg sm:text-2xl font-bold text-success">65%</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Volume2 className="h-8 w-8 text-primary" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Volume2 className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Social Volume</p>
-                <p className="text-2xl font-bold">+24%</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Social Vol</p>
+                <p className="text-lg sm:text-2xl font-bold">+24%</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Activity className="h-8 w-8 text-accent" />
+          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Activity className="h-5 w-5 sm:h-8 sm:w-8 text-accent" />
               <div>
-                <p className="text-sm text-muted-foreground">Sentiment Change</p>
-                <p className="text-2xl font-bold text-success">+8.5%</p>
+                <p className="text-[10px] sm:text-sm text-muted-foreground">Change</p>
+                <p className="text-lg sm:text-2xl font-bold text-success">+8.5%</p>
               </div>
             </div>
           </CardContent>
@@ -260,7 +260,7 @@ const SentimentAnalysis = () => {
             <CardDescription>Historical sentiment analysis over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={sentimentHistory}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" />
@@ -281,7 +281,7 @@ const SentimentAnalysis = () => {
             <CardTitle>Multi-Source Sentiment</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={220}>
               <RadarChart data={radarData}>
                 <PolarGrid />
                 <PolarAngleAxis dataKey="subject" />
@@ -294,11 +294,11 @@ const SentimentAnalysis = () => {
       </div>
 
       <Tabs defaultValue="news" className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="news">News</TabsTrigger>
-          <TabsTrigger value="social">Social Media</TabsTrigger>
-          <TabsTrigger value="onchain">On-Chain</TabsTrigger>
-          <TabsTrigger value="influencers">Influencers</TabsTrigger>
+        <TabsList className="grid grid-cols-4 w-full h-auto p-1">
+          <TabsTrigger value="news" className="text-[9px] sm:text-sm py-1.5">News</TabsTrigger>
+          <TabsTrigger value="social" className="text-[9px] sm:text-sm py-1.5">Social</TabsTrigger>
+          <TabsTrigger value="onchain" className="text-[9px] sm:text-sm py-1.5">On-Chain</TabsTrigger>
+          <TabsTrigger value="influencers" className="text-[9px] sm:text-sm py-1.5">Influencers</TabsTrigger>
         </TabsList>
 
         {/* News Tab */}
@@ -350,7 +350,7 @@ const SentimentAnalysis = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
+              <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={socialVolume}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="hour" />

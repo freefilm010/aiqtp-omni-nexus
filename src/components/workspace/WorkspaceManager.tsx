@@ -690,11 +690,11 @@ const WorkspaceManager = () => {
       {/* Toolbar */}
       <Card>
         <CardContent className="py-3">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4">
             {/* Layout Controls */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Layout:</span>
-              <div className="flex gap-1">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">Layout:</span>
+              <div className="flex gap-0.5 sm:gap-1 flex-wrap">
                 {LAYOUT_PRESETS.map((preset) => (
                   <Button
                     key={preset.id}
@@ -711,7 +711,7 @@ const WorkspaceManager = () => {
             </div>
 
             {/* Workspace Name */}
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <Input
                 value={workspaceName}
                 onChange={(e) => setWorkspaceName(e.target.value)}
@@ -897,7 +897,7 @@ const WorkspaceManager = () => {
       <Card>
         <CardContent className="py-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
               <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Ctrl+1-9</kbd>
               <span>Switch windows</span>
               <span className="mx-2">|</span>
@@ -906,9 +906,6 @@ const WorkspaceManager = () => {
               <span className="mx-2">|</span>
               <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">F11</kbd>
               <span>Fullscreen</span>
-              <span className="mx-2">|</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">Esc</kbd>
-              <span>Exit fullscreen</span>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-green-500">
