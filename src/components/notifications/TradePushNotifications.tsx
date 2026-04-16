@@ -167,78 +167,78 @@ const TradePushNotifications = () => {
     <div className="space-y-6">
       {/* Enable Push */}
       <Card className="border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BellRing className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <BellRing className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Trade Push Notifications
           </CardTitle>
-          <CardDescription>
-            Get instant alerts when bots execute trades, hit targets, or trigger risk events
+          <CardDescription className="text-xs sm:text-sm">
+            Instant alerts for trades, targets, and risk events
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-3">
-              <Smartphone className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium text-sm">Push Notifications</p>
-                <p className="text-xs text-muted-foreground">
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-muted/50 gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-xs sm:text-sm truncate">Push Notifications</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                   {permissionState === "granted"
                     ? "Browser notifications enabled"
                     : permissionState === "denied"
-                    ? "Notifications blocked — update browser settings"
-                    : "Click to enable browser notifications"}
+                    ? "Notifications blocked"
+                    : "Click to enable"}
                 </p>
               </div>
             </div>
             {permissionState === "granted" ? (
               <Switch checked={pushEnabled} onCheckedChange={setPushEnabled} />
             ) : (
-              <Button size="sm" onClick={requestPermission} disabled={permissionState === "denied"}>
+              <Button size="sm" onClick={requestPermission} disabled={permissionState === "denied"} className="text-xs h-7 sm:h-8 shrink-0">
                 Enable
               </Button>
             )}
           </div>
 
-          <Button variant="outline" size="sm" onClick={sendTestNotification}>
-            <Bell className="h-4 w-4 mr-2" /> Send Test Notification
+          <Button variant="outline" size="sm" onClick={sendTestNotification} className="text-xs h-7 sm:h-8">
+            <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> Test
           </Button>
         </CardContent>
       </Card>
 
       {/* Notification Rules */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Settings className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+            <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
             Alert Rules
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-border"
+                className="flex items-center justify-between p-2 sm:p-3 rounded-lg border border-border gap-2"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   {typeIcon(rule.type)}
-                  <div>
-                    <p className="font-medium text-sm">{rule.label}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-xs sm:text-sm truncate">{rule.label}</p>
                     {rule.threshold !== undefined && (
-                      <p className="text-xs text-muted-foreground">
-                        Threshold: {rule.type === "drawdown_alert" ? `${rule.threshold}%` : `$${rule.threshold.toLocaleString()}`}
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">
+                        {rule.type === "drawdown_alert" ? `${rule.threshold}%` : `$${rule.threshold.toLocaleString()}`}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <button
                     onClick={() => toggleSound(rule.id)}
                     className={`p-1 rounded ${rule.sound ? "text-primary" : "text-muted-foreground"}`}
                     title="Toggle sound"
                   >
-                    <Volume2 className="h-4 w-4" />
+                    <Volume2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </button>
                   <Switch checked={rule.enabled} onCheckedChange={() => toggleRule(rule.id)} />
                 </div>
@@ -250,21 +250,23 @@ const TradePushNotifications = () => {
 
       {/* Notification Log */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Bell className="h-5 w-5" />
-              Recent Alerts
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Recent Alerts</span>
+              <span className="sm:hidden">Alerts</span>
               {unreadCount > 0 && (
-                <Badge variant="destructive" className="text-xs">{unreadCount}</Badge>
+                <Badge variant="destructive" className="text-[10px] sm:text-xs">{unreadCount}</Badge>
               )}
             </CardTitle>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={markAllRead}>
-                Mark all read
+            <div className="flex gap-1 sm:gap-2">
+              <Button variant="ghost" size="sm" onClick={markAllRead} className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3">
+                <span className="hidden sm:inline">Mark all read</span>
+                <span className="sm:hidden">Read all</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={clearAll}>
-                <Trash2 className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={clearAll} className="h-7 sm:h-8 px-2">
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
