@@ -346,15 +346,16 @@ const EducationLibrary = () => {
 
             <TabsContent value="courses" className="mt-6">
               {/* Category Filter */}
-              <div className="flex gap-2 mb-6">
+              <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
                 {['all', 'basics', 'trading', 'technical', 'defi', 'risk', 'ai'].map((cat) => (
                   <Button
                     key={cat}
                     variant={selectedCategory === cat ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedCategory(cat)}
+                    className="text-[10px] sm:text-xs h-7 sm:h-8"
                   >
-                    {cat === 'all' ? 'All Courses' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    {cat === 'all' ? 'All' : cat.slice(0, 4)}
                   </Button>
                 ))}
               </div>
@@ -367,7 +368,7 @@ const EducationLibrary = () => {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {filteredCourses.map((course) => {
                     const progressPercent = course.lessons_count > 0 && course.user_progress
                       ? Math.round((course.user_progress.lessons_completed / course.lessons_count) * 100)
@@ -375,78 +376,81 @@ const EducationLibrary = () => {
 
                     return (
                       <Card key={course.id} className="hover:shadow-lg transition-shadow">
-                        <CardHeader>
+                        <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <div className="p-2 rounded-lg bg-primary/10">
                               {getCategoryIcon(course.category)}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
                               {course.is_premium && (
-                                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500">
-                                  <Lock className="h-3 w-3 mr-1" />
-                                  Premium
+                                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-[10px] sm:text-xs">
+                                  <Lock className="h-3 w-3 mr-0.5 sm:mr-1" />
+                                  <span className="hidden sm:inline">Premium</span>
+                                  <span className="sm:hidden">Pro</span>
                                 </Badge>
                               )}
-                              <Badge variant="outline" className={getLevelColor(course.level)}>
-                                {course.level}
+                              <Badge variant="outline" className={`text-[10px] sm:text-xs ${getLevelColor(course.level)}`}>
+                                {course.level.slice(0, 3)}
                               </Badge>
                             </div>
                           </div>
-                          <CardTitle className="text-lg mt-3">{course.title}</CardTitle>
-                          <CardDescription>{course.description}</CardDescription>
+                          <CardTitle className="text-sm sm:text-lg mt-2 sm:mt-3 line-clamp-2">{course.title}</CardTitle>
+                          <CardDescription className="text-xs line-clamp-2">{course.description}</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-3 sm:space-y-4 pt-0">
                           {/* Progress */}
                           {course.user_progress && (
                             <div className="space-y-1">
-                              <div className="flex justify-between text-sm">
+                              <div className="flex justify-between text-xs sm:text-sm">
                                 <span className="text-muted-foreground">Progress</span>
                                 <span>{progressPercent}%</span>
                               </div>
-                              <Progress value={progressPercent} className="h-2" />
+                              <Progress value={progressPercent} className="h-1.5 sm:h-2" />
                             </div>
                           )}
 
                           {/* Stats */}
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
+                              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                               {formatDuration(course.duration_minutes)}
                             </div>
                             <div className="flex items-center gap-1">
-                              <BookOpen className="h-4 w-4" />
-                              {course.lessons_count} lessons
+                              <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
+                              {course.lessons_count} <span className="hidden sm:inline">lessons</span>
                             </div>
                             {course.avg_rating ? (
                               <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                                <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-amber-500 text-amber-500" />
                                 {course.avg_rating.toFixed(1)}
                               </div>
                             ) : (
                               <div className="flex items-center gap-1 text-muted-foreground/50">
-                                <Star className="h-4 w-4" />
-                                No ratings
+                                <Star className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline">No ratings</span>
                               </div>
                             )}
                           </div>
 
                           {/* Enrollment count */}
                           {course.enrolled_count > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              {course.enrolled_count} student{course.enrolled_count !== 1 ? 's' : ''} enrolled
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">
+                              {course.enrolled_count} student{course.enrolled_count !== 1 ? 's' : ''}
                             </p>
                           )}
 
-                          <Button className="w-full" onClick={() => startCourse(course.id)}>
+                          <Button className="w-full h-8 sm:h-10 text-xs sm:text-sm" onClick={() => startCourse(course.id)}>
                             {course.user_progress ? (
                               <>
-                                <Play className="h-4 w-4 mr-2" />
-                                Continue
+                                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Continue</span>
+                                <span className="sm:hidden">Resume</span>
                               </>
                             ) : (
                               <>
-                                <Play className="h-4 w-4 mr-2" />
-                                Start Course
+                                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Start Course</span>
+                                <span className="sm:hidden">Start</span>
                               </>
                             )}
                           </Button>
