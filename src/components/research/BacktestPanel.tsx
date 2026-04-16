@@ -268,23 +268,23 @@ export default function BacktestPanel({ strategies = defaultStrategies, onBackte
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Settings2 className="h-4 w-4 sm:h-5 sm:w-5" />
             Backtest Configuration
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Configure and run backtests using qlib-inspired quantitative engine
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6">
           {/* Strategy Selection */}
           <div className="space-y-2">
-            <Label>Select Strategy</Label>
+            <Label className="text-xs sm:text-sm">Select Strategy</Label>
             <Select value={selectedStrategy} onValueChange={setSelectedStrategy}>
-              <SelectTrigger>
+              <SelectTrigger className="text-xs sm:text-sm h-8 sm:h-10">
                 <SelectValue placeholder="Choose a strategy to backtest" />
               </SelectTrigger>
               <SelectContent>
@@ -294,7 +294,7 @@ export default function BacktestPanel({ strategies = defaultStrategies, onBackte
                   </SelectItem>
                 ) : (
                   strategies.map(s => (
-                    <SelectItem key={s.id} value={s.id}>
+                    <SelectItem key={s.id} value={s.id} className="text-xs sm:text-sm">
                       {s.name}
                     </SelectItem>
                   ))
@@ -336,11 +336,11 @@ export default function BacktestPanel({ strategies = defaultStrategies, onBackte
           </div>
 
           {/* Slippage & Commission */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-2 sm:space-y-3">
               <div className="flex justify-between">
-                <Label>Slippage</Label>
-                <span className="text-sm text-muted-foreground">{slippage[0]}%</span>
+                <Label className="text-xs sm:text-sm">Slippage</Label>
+                <span className="text-xs sm:text-sm text-muted-foreground">{slippage[0]}%</span>
               </div>
               <Slider
                 value={slippage}
@@ -350,10 +350,10 @@ export default function BacktestPanel({ strategies = defaultStrategies, onBackte
                 step={0.01}
               />
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <div className="flex justify-between">
-                <Label>Commission</Label>
-                <span className="text-sm text-muted-foreground">{commission[0]}%</span>
+                <Label className="text-xs sm:text-sm">Commission</Label>
+                <span className="text-xs sm:text-sm text-muted-foreground">{commission[0]}%</span>
               </div>
               <Slider
                 value={commission}
@@ -397,17 +397,18 @@ export default function BacktestPanel({ strategies = defaultStrategies, onBackte
           <Button
             onClick={runBacktest}
             disabled={isRunning || !selectedStrategy || strategies.length === 0}
-            className="w-full"
-            size="lg"
+            className="w-full text-xs sm:text-sm h-9 sm:h-11"
+            size="default"
           >
             {isRunning ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Running Backtest...
+                <Loader2 className="mr-1.5 sm:mr-2 h-4 w-4 animate-spin" />
+                <span className="hidden sm:inline">Running Backtest...</span>
+                <span className="sm:hidden">Running...</span>
               </>
             ) : (
               <>
-                <Play className="mr-2 h-4 w-4" />
+                <Play className="mr-1.5 sm:mr-2 h-4 w-4" />
                 Run Backtest
               </>
             )}
