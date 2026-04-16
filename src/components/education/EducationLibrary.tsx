@@ -248,47 +248,47 @@ const EducationLibrary = () => {
   return (
     <div className="space-y-6">
       {/* Progress Overview */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <GraduationCap className="h-8 w-8 text-primary" />
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Courses Available</p>
-                <p className="text-3xl font-bold">{courses.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Courses</p>
+                <p className="text-xl sm:text-3xl font-bold">{courses.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-8 w-8 text-green-500" />
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="text-3xl font-bold">{completedCourses}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Completed</p>
+                <p className="text-xl sm:text-3xl font-bold">{completedCourses}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <BookOpen className="h-8 w-8 text-purple-500" />
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Lessons Done</p>
-                <p className="text-3xl font-bold">{totalProgress}/{totalLessons || 0}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Lessons</p>
+                <p className="text-xl sm:text-3xl font-bold">{totalProgress}/{totalLessons || 0}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Clock className="h-8 w-8 text-muted-foreground" />
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">Learning Time</p>
-                <p className="text-3xl font-bold">{learningHours}h</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Learning Time</p>
+                <p className="text-xl sm:text-3xl font-bold">{learningHours}h</p>
               </div>
             </div>
           </CardContent>
@@ -324,18 +324,23 @@ const EducationLibrary = () => {
           </div>
 
           <Tabs defaultValue="courses">
-            <TabsList>
-              <TabsTrigger value="courses">
-                <Video className="h-4 w-4 mr-2" />
-                Courses ({courses.length})
+            <TabsList className="w-full flex-wrap h-auto">
+              <TabsTrigger value="courses" className="text-xs sm:text-sm">
+                <Video className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Courses</span>
+                <span className="sm:hidden">Learn</span>
+                <span className="ml-1">({courses.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="articles">
-                <FileText className="h-4 w-4 mr-2" />
-                Articles ({articles.length})
+              <TabsTrigger value="articles" className="text-xs sm:text-sm">
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Articles</span>
+                <span className="sm:hidden">Read</span>
+                <span className="ml-1">({articles.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="glossary">
-                <BookOpen className="h-4 w-4 mr-2" />
-                Glossary
+              <TabsTrigger value="glossary" className="text-xs sm:text-sm">
+                <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Glossary</span>
+                <span className="sm:hidden">Terms</span>
               </TabsTrigger>
             </TabsList>
 
