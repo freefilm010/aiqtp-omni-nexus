@@ -115,15 +115,15 @@ export const PlatformStaking = () => {
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-[10px] sm:text-sm">
                   <div className="flex items-center gap-1">
                     <Lock className="h-3 w-3 text-muted-foreground" />
-                    <span>{pool.lockPeriod}</span>
+                    <span className="truncate">{pool.lockPeriod}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <TrendingUp className="h-3 w-3 text-muted-foreground" />
-                    <span>{pool.totalStaked}</span>
+                    <span className="truncate">{pool.totalStaked}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Zap className="h-3 w-3 text-muted-foreground" />
-                    <span>Min: {pool.minStake}</span>
+                    <span className="truncate">Min: {pool.minStake}</span>
                   </div>
                 </div>
 
@@ -146,9 +146,9 @@ export const PlatformStaking = () => {
                 </div>
 
                 {amount > 0 && (
-                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm space-y-1">
+                  <div className="p-2 sm:p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs sm:text-sm space-y-1">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Daily reward:</span>
+                      <span className="text-muted-foreground">Daily:</span>
                       <span className="text-emerald-400 font-mono">{dailyReward} {pool.symbol}</span>
                     </div>
                     <div className="flex justify-between">
