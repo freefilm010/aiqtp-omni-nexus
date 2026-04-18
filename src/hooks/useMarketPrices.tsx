@@ -53,7 +53,12 @@ const COINGECKO_IDS: Record<string, string> = {
 
 const MIN_POLL_MS = 10_000; // 10s fallback polling — WebSocket is primary
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
-const MARKET_PRICE_STALE_MS = 5 * 1000; // 5 seconds — real-time standard
+/**
+ * 90s = 3× the 30s poll interval. Tighter thresholds were causing the DB-cache
+ * coverage check to constantly trigger paid CoinGecko fetches and were marking
+ * fresh prices as stale (see useAssetValuation for full context).
+ */
+const MARKET_PRICE_STALE_MS = 90 * 1000;
 
 const COINGECKO_SYMBOL_BY_ID = Object.fromEntries(
   Object.entries(COINGECKO_IDS).map(([symbol, id]) => [id, symbol])

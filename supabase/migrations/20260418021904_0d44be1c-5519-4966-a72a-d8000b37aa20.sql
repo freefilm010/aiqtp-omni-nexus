@@ -1,0 +1,1 @@
+DELETE FROM public.portfolio_snapshots WHERE net_worth < 50000;
