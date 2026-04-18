@@ -59,9 +59,23 @@ export interface AssetValuation {
   isTestnet: boolean;
 }
 
-const STALE_THRESHOLD_MS = 5 * 1000; // 5 seconds — real-time standard
-/** Platform tokens use same staleness window — they have real-time feeds */
-const PLATFORM_STALE_THRESHOLD_MS = 5 * 1000; // 5 seconds — real-time standard
+/**
+ * Staleness tolerance for market prices.
+ *
+ * The market data poll cadence is 30s (useMarketPrices) with a 10s minimum,
+ * and the binance-prices proxy patches the cache every ~2s via Realtime.
+ * A 5-second hard cutoff was incorrectly flagging every price as stale
+ * during the 25s window between polls, which caused the portfolio valuation
+ * to collapse to ~$3.5k (platform tokens only) and the historical snapshot
+ * job to record those collapsed values — producing the $980k → $3.5k
+ * oscillation the user observed in portfolio history.
+ *
+ * 90s is 3× the poll interval — the standard "missed three heartbeats"
+ * tolerance. Prices older than this are genuinely stale and excluded.
+ */
+const STALE_THRESHOLD_MS = 90 * 1000;
+/** Platform tokens refresh every 30s via the platform-token-refresh edge function. */
+const PLATFORM_STALE_THRESHOLD_MS = 90 * 1000;
 
 const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
 
