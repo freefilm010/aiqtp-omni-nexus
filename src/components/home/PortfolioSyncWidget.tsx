@@ -52,6 +52,7 @@ const PortfolioSyncWidget = () => {
     hasStaleData,
     hasMissingPrices,
     isLoading: portfolioLoading,
+    refetch: refetchPortfolio,
   } = usePortfolioValuation();
 
   const portfolioAssets = useMemo(() => {
@@ -72,7 +73,7 @@ const PortfolioSyncWidget = () => {
     }));
   }, [realAssets, testAssets]);
 
-  const displayBalance = hasStaleData && netWorthIncludingStale > netWorth ? netWorthIncludingStale : netWorth;
+  const displayBalance = netWorth;
   const totalChange = realAssets.reduce((sum, asset) => {
     if (asset.priceUnavailable || asset.change24h === null) return sum;
     return sum + (asset.valueUsd * asset.change24h) / 100;
@@ -126,7 +127,7 @@ const PortfolioSyncWidget = () => {
 
   const handleSync = async () => {
     setIsSyncing(true);
-    await fetchData();
+    await Promise.allSettled([fetchData(), refetchPortfolio()]);
     setIsSyncing(false);
   };
 
@@ -229,7 +230,7 @@ const PortfolioSyncWidget = () => {
               {hasStaleData && netWorthIncludingStale > netWorth && (
                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                   <AlertTriangle className="w-3 h-3" />
-                  <span>{showBalance ? `Verified: $${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••'}</span>
+                  <span>{showBalance ? `Stale estimate: $${netWorthIncludingStale.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••'}</span>
                 </div>
               )}
               {hasMissingPrices && (
