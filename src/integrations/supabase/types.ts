@@ -9565,6 +9565,19 @@ export type Database = {
         }
         Relationships: []
       }
+      reinvest_vs_holdings_audit: {
+        Row: {
+          holdings_qty: number | null
+          holdings_value_usd: number | null
+          qty_drift: number | null
+          reinvest_count: number | null
+          reinvested_qty: number | null
+          reinvested_usd: number | null
+          symbol: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       saved_payment_methods_safe: {
         Row: {
           bank_name: string | null
