@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePortfolioValuation } from "@/hooks/usePortfolioValuation";
 import { 
   Wallet,
   Link as LinkIcon,
@@ -21,7 +22,9 @@ import {
   PieChart,
   BarChart3,
   Layers,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  XCircle
 } from "lucide-react";
 
 interface ConnectedAccount {
@@ -34,31 +37,55 @@ interface ConnectedAccount {
   lastSync: Date;
 }
 
-interface Asset {
-  symbol: string;
-  name: string;
-  value: number;
-  quantity: number;
-  change24h: number;
-  allocation: number;
-  source: string;
-}
-
 const PortfolioSyncWidget = () => {
   const { user } = useAuth();
   const [showBalance, setShowBalance] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
-  const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const {
+    realAssets,
+    testAssets,
+    netWorth,
+    netWorthIncludingStale,
+    hasStaleData,
+    hasMissingPrices,
+    isLoading: portfolioLoading,
+  } = usePortfolioValuation();
+
+  const portfolioAssets = useMemo(() => {
+    const totalRealValue = realAssets.reduce((sum, asset) => sum + (asset.priceUnavailable ? 0 : asset.valueUsd), 0);
+
+    return [...realAssets, ...testAssets].map((asset) => ({
+      symbol: asset.symbol,
+      name: asset.symbol,
+      value: asset.valueUsd,
+      quantity: asset.quantity,
+      priceUsd: asset.priceUsd,
+      change24h: asset.change24h ?? 0,
+      allocation: !asset.isTestnet && totalRealValue > 0 ? (asset.valueUsd / totalRealValue) * 100 : 0,
+      source: asset.isTestnet ? 'Test' : asset.isStale ? 'Stale' : asset.priceUnavailable ? 'No Price' : 'Live',
+      isTestnet: asset.isTestnet,
+      isStale: asset.isStale,
+      priceUnavailable: asset.priceUnavailable,
+    }));
+  }, [realAssets, testAssets]);
+
+  const displayBalance = hasStaleData && netWorthIncludingStale > netWorth ? netWorthIncludingStale : netWorth;
+  const totalChange = realAssets.reduce((sum, asset) => {
+    if (asset.priceUnavailable || asset.change24h === null) return sum;
+    return sum + (asset.valueUsd * asset.change24h) / 100;
+  }, 0);
+  const totalChangePercent = displayBalance > 0 ? (totalChange / displayBalance) * 100 : 0;
+  const hasPortfolioAssets = portfolioAssets.length > 0;
+  const showEmptyAccountsState = accounts.length === 0 && !hasPortfolioAssets;
 
   useEffect(() => {
     if (user) {
       fetchData();
     } else {
       setAccounts([]);
-      setAssets([]);
       setLoading(false);
     }
   }, [user]);
@@ -89,28 +116,6 @@ const PortfolioSyncWidget = () => {
       }));
 
       setAccounts(mappedAccounts);
-
-      // Fetch portfolio holdings
-      const { data: holdingsData, error: holdingsError } = await supabase
-        .from('portfolio_holdings')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('value_usd', { ascending: false })
-        .limit(10);
-
-      if (holdingsError) throw holdingsError;
-
-      const mappedAssets: Asset[] = (holdingsData || []).map(h => ({
-        symbol: h.symbol,
-        name: h.name,
-        value: Number(h.value_usd) || 0,
-        quantity: Number(h.quantity) || 0,
-        change24h: Number(h.change_24h) || 0,
-        allocation: Number(h.allocation_percent) || 0,
-        source: 'Portfolio'
-      }));
-
-      setAssets(mappedAssets);
     } catch (err: any) {
       console.error('Error fetching portfolio data:', err);
       setError(err.message);
@@ -124,10 +129,6 @@ const PortfolioSyncWidget = () => {
     await fetchData();
     setIsSyncing(false);
   };
-
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const totalChange = accounts.reduce((sum, acc) => sum + (acc.balance * acc.change24h / 100), 0);
-  const totalChangePercent = totalBalance > 0 ? (totalChange / totalBalance) * 100 : 0;
 
   const getAccountIcon = (type: string) => {
     switch (type) {
@@ -189,7 +190,7 @@ const PortfolioSyncWidget = () => {
           <AlertCircle className="h-5 w-5" />
           <span>Error loading portfolio</span>
         </div>
-      ) : accounts.length === 0 ? (
+      ) : showEmptyAccountsState ? (
         <div className="text-center py-12 text-muted-foreground">
           <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="font-medium">No Accounts Connected</p>
@@ -212,7 +213,7 @@ const PortfolioSyncWidget = () => {
             </div>
             <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3">
               <span className="font-mono text-2xl sm:text-3xl font-bold text-foreground">
-                {showBalance ? `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••••'}
+                {showBalance ? `$${displayBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••••••'}
               </span>
               <div className={`flex items-center gap-1 pb-1 ${totalChangePercent >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
                 {totalChangePercent >= 0 ? <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" /> : <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />}
@@ -223,6 +224,20 @@ const PortfolioSyncWidget = () => {
                   ({showBalance ? `${totalChange >= 0 ? '+' : ''}$${Math.abs(totalChange).toFixed(2)}` : '••••'})
                 </span>
               </div>
+            </div>
+            <div className="mt-2 space-y-1">
+              {hasStaleData && netWorthIncludingStale > netWorth && (
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>{showBalance ? `Verified: $${netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••'}</span>
+                </div>
+              )}
+              {hasMissingPrices && (
+                <div className="flex items-center gap-1 text-[10px] text-destructive">
+                  <XCircle className="w-3 h-3" />
+                  <span>Some holdings are missing price data</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -235,49 +250,55 @@ const PortfolioSyncWidget = () => {
                 Add Account
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {accounts.map((account) => (
-                <div 
-                  key={account.id}
-                  className="flex items-center gap-2 p-2.5 rounded-lg bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,12%)]"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[hsl(223,18%,15%)] flex items-center justify-center text-lg">
-                    {getAccountIcon(account.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-xs text-foreground">{account.name}</span>
-                      {account.status === 'connected' && <CheckCircle2 className="w-3 h-3 text-[hsl(162,91%,32%)]" />}
-                      {account.status === 'syncing' && <RefreshCw className="w-3 h-3 text-[hsl(43,96%,56%)] animate-spin" />}
+            {accounts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {accounts.map((account) => (
+                  <div 
+                    key={account.id}
+                    className="flex items-center gap-2 p-2.5 rounded-lg bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,12%)]"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[hsl(223,18%,15%)] flex items-center justify-center text-lg">
+                      {getAccountIcon(account.type)}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="font-mono text-[10px] text-muted-foreground">
-                        {showBalance ? `$${account.balance.toLocaleString()}` : '••••'}
-                      </span>
-                      <span className={`font-mono text-[9px] ${account.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
-                        {account.change24h >= 0 ? '+' : ''}{account.change24h.toFixed(2)}%
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-xs text-foreground">{account.name}</span>
+                        {account.status === 'connected' && <CheckCircle2 className="w-3 h-3 text-[hsl(162,91%,32%)]" />}
+                        {account.status === 'syncing' && <RefreshCw className="w-3 h-3 text-[hsl(43,96%,56%)] animate-spin" />}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          {showBalance ? `$${account.balance.toLocaleString()}` : '••••'}
+                        </span>
+                        <span className={`font-mono text-[9px] ${account.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+                          {account.change24h >= 0 ? '+' : ''}{account.change24h.toFixed(2)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-[hsl(222,14%,12%)] bg-[hsl(223,18%,7%)] p-3 text-[11px] text-muted-foreground">
+                No linked external accounts yet — portfolio value below is coming from your live holdings ledger.
+              </div>
+            )}
           </div>
 
           {/* Asset Allocation */}
-          {assets.length > 0 && (
+          {hasPortfolioAssets && (
             <div className="mb-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-muted-foreground">Top Holdings</span>
+                <span className="text-xs font-medium text-muted-foreground">Portfolio Assets</span>
                 <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground">
                   <Layers className="w-3 h-3 mr-1" />
-                  View All
+                  {portfolioAssets.length} total
                 </Button>
               </div>
-              <div className="space-y-2">
-                {assets.slice(0, 5).map((asset) => (
+              <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                {portfolioAssets.map((asset) => (
                   <div 
-                    key={asset.symbol}
+                    key={`${asset.symbol}-${asset.source}`}
                     className="flex items-center gap-3 p-2.5 rounded-lg bg-[hsl(223,18%,7%)] border border-[hsl(222,14%,12%)]"
                   >
                     <div className="w-8 h-8 rounded-lg bg-[hsl(223,18%,15%)] flex items-center justify-center">
@@ -287,17 +308,26 @@ const PortfolioSyncWidget = () => {
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium text-xs text-foreground">{asset.name}</span>
                         <span className="font-mono text-xs font-bold text-foreground">
-                          {showBalance ? `$${asset.value.toLocaleString()}` : '••••'}
+                          {showBalance ? (asset.priceUnavailable ? '—' : `${asset.isStale ? '~' : ''}$${asset.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`) : '••••'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[9px] text-muted-foreground">{asset.quantity} {asset.symbol}</span>
-                          <Badge className="text-[8px] bg-[hsl(222,14%,20%)] text-muted-foreground">{asset.source}</Badge>
+                        <div className="flex flex-col gap-1">
+                          <span className="font-mono text-[9px] text-muted-foreground">
+                            {asset.quantity.toLocaleString(undefined, { maximumFractionDigits: asset.quantity < 1 ? 6 : 2 })} {asset.symbol}
+                          </span>
+                          <span className="font-mono text-[9px] text-muted-foreground">
+                            {asset.priceUnavailable ? 'No live price' : `${asset.quantity.toLocaleString(undefined, { maximumFractionDigits: asset.quantity < 1 ? 6 : 2 })} × $${asset.priceUsd.toLocaleString(undefined, { minimumFractionDigits: asset.priceUsd < 1 ? 4 : 2, maximumFractionDigits: asset.priceUsd < 1 ? 4 : 2 })}`}
+                          </span>
                         </div>
-                        <span className={`font-mono text-[10px] ${asset.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
-                          {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                          <Badge className="text-[8px] bg-[hsl(222,14%,20%)] text-muted-foreground">{asset.source}</Badge>
+                          {!asset.isTestnet && (
+                            <span className={`font-mono text-[10px] ${asset.change24h >= 0 ? 'text-[hsl(162,91%,32%)]' : 'text-[hsl(355,88%,58%)]'}`}>
+                              {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="w-16">
@@ -305,7 +335,7 @@ const PortfolioSyncWidget = () => {
                         value={asset.allocation} 
                         className="h-1.5 [&>div]:bg-[hsl(270,91%,65%)]" 
                       />
-                      <span className="font-mono text-[9px] text-muted-foreground">{asset.allocation.toFixed(1)}%</span>
+                      <span className="font-mono text-[9px] text-muted-foreground">{asset.isTestnet ? 'test' : `${asset.allocation.toFixed(1)}%`}</span>
                     </div>
                   </div>
                 ))}
