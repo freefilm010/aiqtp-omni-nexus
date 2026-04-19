@@ -74,6 +74,11 @@ const PortfolioSyncWidget = () => {
   }, [realAssets, testAssets]);
 
   const displayBalance = netWorth;
+  const connectedAccountsBalance = useMemo(
+    () => accounts.reduce((sum, account) => sum + account.balance, 0),
+    [accounts]
+  );
+  const hasUnreconciledConnectedBalances = connectedAccountsBalance > 0.01;
   const totalChange = realAssets.reduce((sum, asset) => {
     if (asset.priceUnavailable || asset.change24h === null) return sum;
     return sum + (asset.valueUsd * asset.change24h) / 100;
@@ -206,10 +211,10 @@ const PortfolioSyncWidget = () => {
           {/* Total Balance */}
           <div className="p-4 rounded-xl bg-gradient-to-br from-[hsl(270,91%,65%,0.1)] to-[hsl(224,100%,58%,0.05)] border border-[hsl(270,91%,65%,0.2)] mb-5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Total Portfolio Value</span>
+              <span className="text-sm text-muted-foreground">Holdings Ledger Value</span>
               <Badge className="bg-[hsl(162,91%,32%,0.15)] text-[hsl(162,91%,32%)] text-[9px]">
                 <Shield className="w-3 h-3 mr-1" />
-                SECURED
+                VERIFIED
               </Badge>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3">
@@ -227,6 +232,16 @@ const PortfolioSyncWidget = () => {
               </div>
             </div>
             <div className="mt-2 space-y-1">
+              {hasUnreconciledConnectedBalances && (
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <LinkIcon className="w-3 h-3" />
+                  <span>
+                    Connected account balances shown separately: {showBalance
+                      ? `$${connectedAccountsBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '••••'}
+                  </span>
+                </div>
+              )}
               {hasStaleData && netWorthIncludingStale > netWorth && (
                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                   <AlertTriangle className="w-3 h-3" />
@@ -281,7 +296,7 @@ const PortfolioSyncWidget = () => {
               </div>
             ) : (
               <div className="rounded-lg border border-[hsl(222,14%,12%)] bg-[hsl(223,18%,7%)] p-3 text-[11px] text-muted-foreground">
-                No linked external accounts yet — portfolio value below is coming from your live holdings ledger.
+                No linked external accounts yet — this card is showing your live holdings ledger only.
               </div>
             )}
           </div>
