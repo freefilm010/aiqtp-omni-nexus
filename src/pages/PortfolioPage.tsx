@@ -89,7 +89,7 @@ const PortfolioPage = () => {
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-primary"><Wallet className="h-4 w-4" /></span>
-                    <span className="text-xs text-muted-foreground">Net Worth (Verified)</span>
+                    <span className="text-xs text-muted-foreground">Live Net Worth</span>
                   </div>
                   <p className="text-lg font-bold">${netWorth.toFixed(2)}</p>
                   {hasStaleData && netWorthIncludingStale !== netWorth && (
@@ -103,7 +103,7 @@ const PortfolioPage = () => {
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-muted-foreground"><LayoutGrid className="h-4 w-4" /></span>
-                    <span className="text-xs text-muted-foreground">Verified Assets</span>
+                    <span className="text-xs text-muted-foreground">Live Priced Assets</span>
                   </div>
                   <p className="text-lg font-bold">{validAssetCount}</p>
                   {(staleAssetCount > 0 || missingPriceCount > 0) && (

@@ -64,9 +64,16 @@ const PortfolioOptimizer = () => {
 
   useEffect(() => {
     const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setAssets([]);
+        return;
+      }
+
       const { data } = await supabase
         .from('portfolio_holdings')
         .select('*')
+        .eq('user_id', user.id)
         .order('value_usd', { ascending: false })
         .limit(10);
 
