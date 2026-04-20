@@ -32,6 +32,9 @@ export function useRealtimePortfolio() {
     if (!user?.id) return;
 
     const queryKey = ["portfolio", "holdings", user.id];
+    const requestResync = () => {
+      queryClient.invalidateQueries({ queryKey });
+    };
 
     const channel = supabase
       .channel(`portfolio-${user.id}`)
@@ -44,26 +47,48 @@ export function useRealtimePortfolio() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
-          queryClient.setQueryData<Holding[]>(queryKey, (old = []) => {
-            if (payload.eventType === "INSERT") {
-              const newHolding = rowToHolding(payload.new);
-              // Avoid duplicates
-              if (old.some((h) => h.id === newHolding.id)) return old;
-              return [...old, newHolding];
+          const current = queryClient.getQueryData<Holding[]>(queryKey) ?? [];
+
+          // Never build a holdings cache from partial realtime events.
+          if (current.length === 0) {
+            requestResync();
+            return;
+          }
+
+          if (payload.eventType === "INSERT") {
+            const newHolding = rowToHolding(payload.new);
+            if (current.some((holding) => holding.id === newHolding.id)) return;
+
+            queryClient.setQueryData<Holding[]>(queryKey, [...current, newHolding]);
+            return;
+          }
+
+          if (payload.eventType === "UPDATE") {
+            const updated = rowToHolding(payload.new);
+            if (!current.some((holding) => holding.id === updated.id)) {
+              requestResync();
+              return;
             }
 
-            if (payload.eventType === "UPDATE") {
-              const updated = rowToHolding(payload.new);
-              return old.map((h) => (h.id === updated.id ? updated : h));
+            queryClient.setQueryData<Holding[]>(
+              queryKey,
+              current.map((holding) => (holding.id === updated.id ? updated : holding))
+            );
+            return;
+          }
+
+          if (payload.eventType === "DELETE") {
+            const deletedId = String((payload.old as Record<string, unknown>).id ?? "");
+            if (!current.some((holding) => holding.id === deletedId)) {
+              requestResync();
+              return;
             }
 
-            if (payload.eventType === "DELETE") {
-              const deletedId = String((payload.old as Record<string, unknown>).id ?? "");
-              return old.filter((h) => h.id !== deletedId);
-            }
-
-            return old;
-          });
+            queryClient.setQueryData<Holding[]>(
+              queryKey,
+              current.filter((holding) => holding.id !== deletedId)
+            );
+          }
         }
       )
       .subscribe();
