@@ -94,7 +94,7 @@ const FaucetAutomation = ({
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Routes eligible priced claims using {compoundStrategyLabel}
+                  Converts eligible priced claims into additional live token quantity using {compoundStrategyLabel}
                 </p>
               </div>
             </div>
@@ -109,7 +109,7 @@ const FaucetAutomation = ({
             >
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5">
-                  <Zap className="h-3 w-3 mr-1" />{reinvestPercent}% Reinvestment • Synced
+                  <Zap className="h-3 w-3 mr-1" />{reinvestPercent}% Reinvestment • Live holdings
                 </Badge>
                 <Badge variant="secondary" className="text-xs px-2 py-0.5">
                   {compoundMixLabel}
@@ -117,9 +117,9 @@ const FaucetAutomation = ({
               </div>
               <div className="grid grid-cols-3 gap-1.5 text-center">
                 {[
-                  { label: "Deployed", value: `$${compoundStats.deployed.toFixed(2)}`, color: "text-green-500" },
-                  { label: "Txns", value: compoundStats.transactions, color: "text-foreground" },
-                  { label: "Realized P/L", value: `$${compoundStats.profit.toFixed(2)}`, color: "text-green-500" },
+                  { label: "Reinvested", value: `$${compoundStats.deployed.toFixed(2)}`, color: "text-green-500" },
+                  { label: "Buys", value: compoundStats.transactions, color: "text-foreground" },
+                  { label: "Engine P/L", value: `$${compoundStats.profit.toFixed(2)}`, color: "text-green-500" },
                 ].map(s => (
                   <div key={s.label} className="p-1.5 rounded-md bg-muted/30">
                     <p className="text-[9px] text-muted-foreground">{s.label}</p>

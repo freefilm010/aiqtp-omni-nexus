@@ -64,11 +64,12 @@ const TradingDashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch portfolio
+      // Fetch live holdings from the current source of truth
       const { data: portfolioData, error: portfolioError } = await supabase
-        .from('portfolio')
-        .select('*')
-        .eq('user_id', user!.id);
+        .from('portfolio_holdings')
+        .select('id, symbol, name, quantity, value_usd, updated_at')
+        .eq('user_id', user!.id)
+        .gt('quantity', 0);
 
       if (portfolioError) throw portfolioError;
 
@@ -82,7 +83,16 @@ const TradingDashboard = () => {
 
       if (tradesError) throw tradesError;
 
-      setPortfolio(portfolioData || []);
+      setPortfolio((portfolioData || []).map((item) => ({
+        id: item.id,
+        asset_symbol: item.symbol,
+        asset_name: item.name || item.symbol,
+        quantity: Number(item.quantity) || 0,
+        current_price: Number(item.quantity) > 0 ? (Number(item.value_usd) || 0) / Number(item.quantity) : 0,
+        average_price: Number(item.quantity) > 0 ? (Number(item.value_usd) || 0) / Number(item.quantity) : 0,
+        value_usd: Number(item.value_usd) || 0,
+        updated_at: item.updated_at,
+      })));
       setTrades(tradesData || []);
     } catch (error: any) {
       console.error('Error fetching data:', error);
