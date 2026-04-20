@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 
 const RiskAnalytics = () => {
+  const { user } = useAuth();
   const [timeframe, setTimeframe] = useState("30d");
   const [confidenceLevel, setConfidenceLevel] = useState([95]);
 
@@ -38,10 +40,13 @@ const RiskAnalytics = () => {
 
   useEffect(() => {
     const load = async () => {
+      if (!user?.id) return;
+
       // Load portfolio holdings for risk contribution
       const { data: holdings } = await supabase
         .from('portfolio_holdings')
         .select('*')
+        .eq('user_id', user.id)
         .order('value_usd', { ascending: false })
         .limit(10);
 
@@ -76,6 +81,7 @@ const RiskAnalytics = () => {
       const { data: backtests } = await supabase
         .from('backtest_results')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(60);
 
@@ -90,7 +96,7 @@ const RiskAnalytics = () => {
       }
     };
     load();
-  }, [timeframe]);
+  }, [timeframe, user?.id]);
 
   return (
     <div className="space-y-3 sm:space-y-6">
