@@ -82,6 +82,7 @@ const DataBotBuilder = () => {
   const [bots, setBots] = useState<DataBot[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   
   // Builder state
   const [botName, setBotName] = useState('');
@@ -97,10 +98,39 @@ const DataBotBuilder = () => {
     loadBots();
   }, []);
 
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void loadBots();
+      }
+    };
+
+    window.addEventListener('focus', refreshIfVisible);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+
+    return () => {
+      window.removeEventListener('focus', refreshIfVisible);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+  }, []);
+
   const loadBots = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUser = userData.user;
+
+    if (!currentUser) {
+      setUserId(null);
+      setBots([]);
+      setLoading(false);
+      return;
+    }
+
+    setUserId(currentUser.id);
+
     const { data } = await supabase
       .from('data_aggregator_bots')
       .select('*')
+      .eq('user_id', currentUser.id)
       .order('created_at', { ascending: false });
     if (data) setBots(data as DataBot[]);
     setLoading(false);
@@ -124,6 +154,8 @@ const DataBotBuilder = () => {
       toast.error('Please sign in to create a bot');
       return;
     }
+
+    setUserId(userData.user.id);
 
     const { error } = await supabase.from('data_aggregator_bots').insert({
       user_id: userData.user.id,
