@@ -33,6 +33,8 @@ const isTestnetToken = (symbol: string): boolean => {
 };
 
 const STABLECOINS = new Set(["USDC", "USDT", "DAI", "BUSD"]);
+const FIAT_CASH_EQUIVALENTS = new Set(["USD"]);
+const DOLLAR_PEGGED_ASSETS = new Set([...STABLECOINS, ...FIAT_CASH_EQUIVALENTS]);
 
 /** USDT is pegged ~1:1 to USD */
 const USDT_USD_RATIO = 1.0;
@@ -195,13 +197,13 @@ export function useAssetValuation() {
         live = !platformPriceIsStale;
       }
 
-      if (STABLECOINS.has(upper) && priceUsd === 0) {
+       if (DOLLAR_PEGGED_ASSETS.has(upper) && priceUsd === 0) {
         priceUsd = 1;
       }
 
       const valueUsd = quantity * priceUsd;
       const valueUsdt = valueUsd / USDT_USD_RATIO;
-      const priceUnavailable = priceUsd === 0 && !STABLECOINS.has(upper);
+       const priceUnavailable = priceUsd === 0 && !DOLLAR_PEGGED_ASSETS.has(upper);
       const isStale = marketPrice ? marketPriceIsStale : platformPriceIsStale;
 
       return {
