@@ -167,7 +167,7 @@ const PortfolioSyncWidget = () => {
             <Wallet className="w-5 h-5 text-[hsl(270,91%,65%)]" />
           </div>
           <div>
-            <h3 className="font-bold text-foreground">Portfolio Ledger</h3>
+            <h3 className="font-bold text-foreground">Verified Portfolio</h3>
             <p className="text-[10px] text-muted-foreground">{accounts.length} linked accounts shown separately</p>
           </div>
         </div>
