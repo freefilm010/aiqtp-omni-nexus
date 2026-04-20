@@ -83,6 +83,7 @@ const SimulationDashboard = lazy(() => import("./pages/SimulationDashboard"));
 const MemeCoinLaunch = lazy(() => import("./pages/Launch"));
 const NFTDrop = lazy(() => import("./pages/NFTDrop"));
 const ViralLanding = lazy(() => import("./pages/ViralLanding"));
+const VerifiedLedger = lazy(() => import("./pages/VerifiedLedger"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
