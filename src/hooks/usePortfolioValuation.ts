@@ -10,9 +10,26 @@
  * Usage:
  *   const { realAssets, testAssets, netWorth, hasStaleData, hasMissingPrices, ... } = usePortfolioValuation();
  */
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useHoldingsQuery } from "@/hooks/usePortfolioQuery";
 import { useAssetValuation, type AssetValuation } from "@/hooks/useAssetValuation";
+
+const COLLAPSE_RATIO_THRESHOLD = 0.25;
+const COLLAPSE_NET_WORTH_FLOOR = 100_000;
+
+const isSuspiciousCollapse = (
+  current: PortfolioValuationResult,
+  previous: PortfolioValuationResult
+) => {
+  if (previous.netWorth < COLLAPSE_NET_WORTH_FLOOR) return false;
+
+  return (
+    current.netWorth > 0 &&
+    current.netWorth < previous.netWorth * COLLAPSE_RATIO_THRESHOLD &&
+    current.validAssetCount < previous.validAssetCount &&
+    current.realAssets.length < previous.realAssets.length
+  );
+};
 
 export interface PortfolioValuationResult {
   /** Real assets with live, valid prices */
@@ -33,6 +50,8 @@ export interface PortfolioValuationResult {
   hasStaleData: boolean;
   /** true if ANY real asset has no price */
   hasMissingPrices: boolean;
+  /** true when the live ledger appears partially loaded and the last verified total is being held */
+  hasDegradedData: boolean;
   /** React Query state */
   isLoading: boolean;
   error: Error | null;
@@ -42,8 +61,9 @@ export interface PortfolioValuationResult {
 export function usePortfolioValuation(): PortfolioValuationResult {
   const { data: holdings, isLoading, error, refetch } = useHoldingsQuery();
   const { getValuation } = useAssetValuation();
+  const lastStableRef = useRef<PortfolioValuationResult | null>(null);
 
-  return useMemo(() => {
+  const computed = useMemo(() => {
     const empty: PortfolioValuationResult = {
       realAssets: [],
       testAssets: [],
@@ -54,6 +74,7 @@ export function usePortfolioValuation(): PortfolioValuationResult {
       missingPriceCount: 0,
       hasStaleData: false,
       hasMissingPrices: false,
+      hasDegradedData: false,
       isLoading,
       error: error instanceof Error ? error : error ? new Error(String(error)) : null,
       refetch,
@@ -108,9 +129,46 @@ export function usePortfolioValuation(): PortfolioValuationResult {
       missingPriceCount,
       hasStaleData: staleAssetCount > 0,
       hasMissingPrices: missingPriceCount > 0,
+      hasDegradedData: false,
       isLoading,
       error: error instanceof Error ? error : error ? new Error(String(error)) : null,
       refetch,
     };
   }, [holdings, getValuation, isLoading, error, refetch]);
+
+  const lastStable = lastStableRef.current;
+  const suspiciousCollapse = Boolean(
+    lastStable &&
+      !computed.isLoading &&
+      !computed.error &&
+      !computed.hasStaleData &&
+      !computed.hasMissingPrices &&
+      computed.validAssetCount > 0 &&
+      isSuspiciousCollapse(computed, lastStable)
+  );
+
+  useEffect(() => {
+    if (
+      !computed.isLoading &&
+      !computed.error &&
+      !computed.hasStaleData &&
+      !computed.hasMissingPrices &&
+      computed.validAssetCount > 0 &&
+      !suspiciousCollapse
+    ) {
+      lastStableRef.current = computed;
+    }
+  }, [computed, suspiciousCollapse]);
+
+  if (suspiciousCollapse && lastStable) {
+    return {
+      ...lastStable,
+      isLoading: computed.isLoading,
+      error: computed.error,
+      refetch: computed.refetch,
+      hasDegradedData: true,
+    };
+  }
+
+  return computed;
 }

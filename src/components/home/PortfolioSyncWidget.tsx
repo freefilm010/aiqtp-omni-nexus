@@ -51,6 +51,7 @@ const PortfolioSyncWidget = () => {
     netWorthIncludingStale,
     hasStaleData,
     hasMissingPrices,
+    hasDegradedData,
     isLoading: portfolioLoading,
     refetch: refetchPortfolio,
   } = usePortfolioValuation();
@@ -252,6 +253,12 @@ const PortfolioSyncWidget = () => {
                 <div className="flex items-center gap-1 text-[10px] text-destructive">
                   <XCircle className="w-3 h-3" />
                   <span>Some holdings are missing price data</span>
+                </div>
+              )}
+              {hasDegradedData && (
+                <div className="flex items-center gap-1 text-[10px] text-[hsl(43,96%,56%)]">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>Ledger resync in progress — holding last verified total</span>
                 </div>
               )}
             </div>

@@ -11,7 +11,7 @@ const SNAPSHOT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 export function usePortfolioSnapshot() {
   const { user } = useAuth();
-  const { netWorth, isLoading, hasStaleData, hasMissingPrices, validAssetCount } = usePortfolioValuation();
+  const { netWorth, isLoading, hasStaleData, hasMissingPrices, hasDegradedData, validAssetCount } = usePortfolioValuation();
   const lastSnapshotRef = useRef(0);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function usePortfolioSnapshot() {
       if (now - lastSnapshotRef.current < SNAPSHOT_INTERVAL_MS) return;
 
       // Never snapshot partial / degraded valuations.
-      if (netWorth <= 0 || hasStaleData || hasMissingPrices || validAssetCount === 0) return;
+      if (netWorth <= 0 || hasStaleData || hasMissingPrices || hasDegradedData || validAssetCount === 0) return;
 
       const { error } = await supabase.from("portfolio_snapshots").insert({
         user_id: user.id,
@@ -44,5 +44,5 @@ export function usePortfolioSnapshot() {
       clearTimeout(initial);
       clearInterval(interval);
     };
-  }, [user?.id, netWorth, isLoading, hasStaleData, hasMissingPrices, validAssetCount]);
+  }, [user?.id, netWorth, isLoading, hasStaleData, hasMissingPrices, hasDegradedData, validAssetCount]);
 }
