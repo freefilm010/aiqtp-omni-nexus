@@ -9,43 +9,67 @@ interface CompoundAnalyticsProps {
   engineId: string | null;
 }
 
+interface EngineSummary {
+  total_capital: number;
+  total_deployed: number;
+  total_profit: number;
+  total_reinvested: number;
+  cycle_count: number;
+}
+
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
 const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [growthData, setGrowthData] = useState<any[]>([]);
   const [strategyBreakdown, setStrategyBreakdown] = useState<any[]>([]);
+  const [engineSummary, setEngineSummary] = useState<EngineSummary | null>(null);
 
   const loadAnalytics = useCallback(async () => {
     if (!engineId) return;
-    const { data } = await supabase
-      .from("auto_invest_transactions")
-      .select("amount_usd, asset_symbol, ai_reason, created_at, status")
-      .eq("engine_id", engineId)
-      .order("created_at", { ascending: true })
-      .limit(500);
 
-    if (!data?.length) return;
+    const [{ data: txData }, { data: engineData }] = await Promise.all([
+      supabase
+        .from("auto_invest_transactions")
+        .select("amount_usd, asset_symbol, ai_reason, created_at, status, transaction_type")
+        .eq("engine_id", engineId)
+        .eq("transaction_type", "reinvest")
+        .eq("status", "completed")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("auto_invest_engine")
+        .select("total_capital, total_deployed, total_profit, total_reinvested, cycle_count")
+        .eq("id", engineId)
+        .maybeSingle(),
+    ]);
+
+    const data = txData || [];
     setTransactions(data);
+    setEngineSummary(engineData || null);
 
-    // Build cumulative growth curve
+    const dailyAmounts = new Map<string, number>();
+    for (const tx of data) {
+      const day = new Date(tx.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      dailyAmounts.set(day, (dailyAmounts.get(day) || 0) + (Number(tx.amount_usd) || 0));
+    }
+
     let cumulative = 0;
-    const growth = data.map((t: any) => {
-      cumulative += Number(t.amount_usd) || 0;
+    const growth = Array.from(dailyAmounts.entries()).map(([date, amount]) => {
+      cumulative += amount;
       return {
-        date: new Date(t.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        date,
         deployed: parseFloat(cumulative.toFixed(2)),
       };
     });
     setGrowthData(growth);
 
-    // Strategy attribution
     const stratMap: Record<string, number> = {};
     for (const t of data) {
       const reason = t.ai_reason || "Unknown";
       const stratName = reason.includes("→") ? reason.split("→")[1]?.trim().split("(")[0]?.trim() : reason;
       stratMap[stratName] = (stratMap[stratName] || 0) + (Number(t.amount_usd) || 0);
     }
+
     setStrategyBreakdown(
       Object.entries(stratMap).map(([name, value]) => ({ name, value: parseFloat(value.toFixed(2)) }))
     );
@@ -85,7 +109,7 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
             <TrendingUp className="h-4 w-4 text-primary" />
-            Compound Growth Curve
+            Reinvested Capital Curve
             <Badge variant="secondary" className="ml-auto text-[9px]">{transactions.length} txns</Badge>
           </CardTitle>
         </CardHeader>
@@ -96,7 +120,7 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
               <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
               <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={v => `$${v}`} />
               <Tooltip contentStyle={{ fontSize: 11, backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
-              <Area type="monotone" dataKey="deployed" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} name="Deployed" />
+              <Area type="monotone" dataKey="deployed" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} name="Reinvested" />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
@@ -141,21 +165,25 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
               <Target className="h-4 w-4 text-primary" />
-              Deployment Summary
+              Engine Summary
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="p-2.5 rounded-lg bg-muted/20">
-              <p className="text-xs font-medium">Total Deployed</p>
-              <p className="font-bold text-sm">${growthData.length > 0 ? growthData[growthData.length - 1].deployed.toFixed(2) : '0.00'}</p>
+              <p className="text-xs font-medium">Total Reinvested</p>
+              <p className="font-bold text-sm">${(engineSummary?.total_reinvested ?? (growthData.length > 0 ? growthData[growthData.length - 1].deployed : 0)).toFixed(2)}</p>
             </div>
             <div className="p-2.5 rounded-lg bg-muted/20">
-              <p className="text-xs font-medium">Transactions</p>
-              <p className="font-bold text-sm">{transactions.length}</p>
+              <p className="text-xs font-medium">Engine Profit</p>
+              <p className="font-bold text-sm">${(engineSummary?.total_profit ?? 0).toFixed(2)}</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-muted/20">
+              <p className="text-xs font-medium">Cycles</p>
+              <p className="font-bold text-sm">{engineSummary?.cycle_count ?? transactions.length}</p>
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-2">
               <Zap className="h-3 w-3" />
-              Actual deployment records only • not withdrawable cash
+              Compounding works by logging reinvest buys and adding that quantity into live holdings
             </div>
           </CardContent>
         </Card>
