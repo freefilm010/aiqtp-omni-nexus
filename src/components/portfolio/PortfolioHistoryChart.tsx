@@ -27,7 +27,9 @@ const formatValue = (val: number) => {
 };
 
 export default function PortfolioHistoryChart() {
-  const { data: snapshots = [], isLoading } = usePortfolioHistory(30);
+  const { data, isLoading } = usePortfolioHistory(30);
+  const snapshots = data?.snapshots ?? [];
+  const excludedSnapshotCount = data?.excludedSnapshotCount ?? 0;
 
   const chartData = useMemo(
     () => snapshots.map((s) => ({ date: formatDate(s.createdAt), value: s.netWorth })),
@@ -66,6 +68,11 @@ export default function PortfolioHistoryChart() {
             {formatValue(change)} ({changePercent.toFixed(1)}%)
           </span>
         </p>
+        {excludedSnapshotCount > 0 && (
+          <p className="text-[10px] text-muted-foreground">
+            Excluded {excludedSnapshotCount} degraded snapshot{excludedSnapshotCount > 1 ? "s" : ""} from the chart
+          </p>
+        )}
       </CardHeader>
       <CardContent className="p-2">
         <div className="w-full h-48">
