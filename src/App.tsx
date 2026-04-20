@@ -412,6 +412,14 @@ const App = () => (
                         }
                       />
                       <Route
+                        path="/ledger"
+                        element={
+                          <ProtectedRoute>
+                            <VerifiedLedger />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
                         path="/cockpit"
                         element={
                           <ProtectedRoute>
