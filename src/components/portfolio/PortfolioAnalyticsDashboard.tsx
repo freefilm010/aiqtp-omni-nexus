@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,8 +34,8 @@ import {
   Layers,
   Loader2
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAssetValuation, formatUsdValue } from "@/hooks/useAssetValuation";
+import { useHoldingsQuery } from "@/hooks/usePortfolioQuery";
 
 interface Position {
   symbol: string;
@@ -70,47 +70,38 @@ const ASSET_META: Record<string, { sector: string; assetClass: Position['assetCl
 
 const PortfolioAnalyticsDashboard = () => {
   const [portfolio, setPortfolio] = useState<Position[]>([]);
-  const [loading, setLoading] = useState(true);
   const { getValuation } = useAssetValuation();
-  const getValuationRef = useRef(getValuation);
-  getValuationRef.current = getValuation;
+  const { data: holdings = [], isLoading: loading } = useHoldingsQuery();
 
   useEffect(() => {
-    const fetchPortfolio = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
+    if (holdings.length === 0) {
+      setPortfolio([]);
+      return;
+    }
 
-      const { data: holdings } = await supabase
-        .from('portfolio_holdings')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('quantity', { ascending: false });
+    const positions: Position[] = holdings
+      .filter((holding) => Number(holding.quantity) > 0)
+      .map((holding) => {
+        const val = getValuation(holding.symbol, Number(holding.quantity));
+        const meta = ASSET_META[holding.symbol] || { sector: 'Other', assetClass: 'crypto' as const, region: 'Global' };
+        const storedValuePerUnit = Number(holding.quantity) > 0 && Number(holding.valueUsd) > 0
+          ? Number(holding.valueUsd) / Number(holding.quantity)
+          : val.priceUsd;
 
-      if (holdings && holdings.length > 0) {
-        const positions: Position[] = holdings.map(h => {
-          const val = getValuationRef.current(h.symbol, Number(h.quantity));
-          const meta = ASSET_META[h.symbol] || { sector: 'Other', assetClass: 'crypto' as const, region: 'Global' };
-          const storedValuePerUnit = Number(h.quantity) > 0 && Number(h.value_usd) > 0
-            ? Number(h.value_usd) / Number(h.quantity)
-            : val.priceUsd;
-          return {
-            symbol: h.symbol,
-            name: h.name || h.symbol,
-            quantity: Number(h.quantity),
-            avgCost: storedValuePerUnit,
-            currentPrice: val.priceUsd,
-            sector: meta.sector,
-            assetClass: meta.assetClass,
-            region: meta.region,
-          };
-        });
-        setPortfolio(positions);
-      }
-      setLoading(false);
-    };
-    fetchPortfolio();
-  }, []); // Only fetch once on mount — prices update via live feeds
+        return {
+          symbol: holding.symbol,
+          name: holding.name || holding.symbol,
+          quantity: Number(holding.quantity),
+          avgCost: storedValuePerUnit,
+          currentPrice: val.priceUsd,
+          sector: meta.sector,
+          assetClass: meta.assetClass,
+          region: meta.region,
+        };
+      });
+
+    setPortfolio(positions);
+  }, [holdings, getValuation]);
 
   if (loading) {
     return (
