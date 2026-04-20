@@ -211,10 +211,10 @@ const PortfolioSyncWidget = () => {
           {/* Total Balance */}
           <div className="p-4 rounded-xl bg-gradient-to-br from-[hsl(270,91%,65%,0.1)] to-[hsl(224,100%,58%,0.05)] border border-[hsl(270,91%,65%,0.2)] mb-5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Live Ledger Value</span>
+              <span className="text-sm text-muted-foreground">Verified Portfolio Total</span>
               <Badge className="bg-[hsl(162,91%,32%,0.15)] text-[hsl(162,91%,32%)] text-[9px]">
                 <Shield className="w-3 h-3 mr-1" />
-                LIVE
+                VERIFIED
               </Badge>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3">
