@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toSafePublicName } from "@/lib/users/publicName";
 import { toast } from "sonner";
 import {
   Trophy, TrendingUp, Users, Flame, Crown, Medal,
@@ -42,6 +43,7 @@ interface UserStat {
 
 interface LeaderboardEntry {
   id: string;
+  user_id: string;
   rank: number;
   score: number;
   display_name: string | null;
@@ -122,18 +124,92 @@ const StatsArenaPage = () => {
     setMyStats(data as unknown as UserStat | null);
   };
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("leaderboard_entries")
-      .select("id, period_type, category, rank, score, display_name, avatar_url, highlight_stat, badge, period_start, updated_at")
+      .select("id, user_id, period_type, category, rank, score, display_name, avatar_url, highlight_stat, badge, period_start, updated_at")
       .eq("period_type", period)
       .eq("category", leaderCategory)
       .order("rank")
-      .limit(50);
-    setLeaderboard((data as unknown as LeaderboardEntry[]) || []);
+      .limit(100);
+
+    if (error || !data) {
+      setLeaderboard([]);
+      setLoading(false);
+      return;
+    }
+
+    const entries = data as unknown as LeaderboardEntry[];
+    const userIds = [...new Set(entries.map((entry) => entry.user_id).filter(Boolean))];
+    const usernameMap = new Map<string, string>();
+
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", userIds);
+
+      for (const profile of profiles || []) {
+        if (profile.username) {
+          usernameMap.set(profile.id, profile.username);
+        }
+      }
+    }
+
+    const deduped = new Map<string, LeaderboardEntry>();
+
+    for (const entry of entries) {
+      const sanitizedEntry = {
+        ...entry,
+        display_name: toSafePublicName({
+          username: usernameMap.get(entry.user_id),
+          displayName: entry.display_name,
+          fallbackId: entry.user_id,
+          fallbackRank: entry.rank,
+        }),
+      };
+
+      const existing = deduped.get(entry.user_id);
+      if (!existing || entry.rank < existing.rank) {
+        deduped.set(entry.user_id, sanitizedEntry);
+      }
+    }
+
+    const collapsed = Array.from(deduped.values())
+      .sort((a, b) => a.rank - b.rank)
+      .slice(0, 50)
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+    setLeaderboard(collapsed);
     setLoading(false);
-  };
+  }, [leaderCategory, period]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`leaderboard-${period}-${leaderCategory}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "leaderboard_entries" },
+        () => { void fetchLeaderboard(); }
+      )
+      .subscribe();
+
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        void fetchLeaderboard();
+      }
+    };
+
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [fetchLeaderboard, leaderCategory, period]);
 
   const fetchContests = async () => {
     const { data } = await supabase
