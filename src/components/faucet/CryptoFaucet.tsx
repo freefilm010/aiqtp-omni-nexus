@@ -123,6 +123,7 @@ const CryptoFaucet = () => {
   const autoClaimRef = useRef(false);
   const autoCompoundRef = useRef(false);
   const lastClaimTimesRef = useRef<Record<string, Date>>({});
+  const claimsLoadVersionRef = useRef(0);
   const { getValuation, getPortfolioValuation } = useAssetValuation();
   const compoundStrategyLabel = formatEngineStrategy(compoundEngine?.strategy);
   const compoundMixLabel = formatEngineMix({
@@ -132,36 +133,37 @@ const CryptoFaucet = () => {
   });
 
   const loadClaims = useCallback(async () => {
+    const loadVersion = ++claimsLoadVersionRef.current;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
     setUserId(user.id);
 
-    // Fetch claims for history/cooldown (recent 200 for cooldown tracking)
-    const { data } = await supabase
-      .from("faucet_claims")
-      .select("id, amount, chain, status, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(200) as { data: ClaimRecord[] | null };
+    const faucetSymbols = Array.from(new Set(FAUCET_TOKENS.map((t) => t.symbol)));
+    const [claimsResponse, countResponse, holdingsResponse] = await Promise.all([
+      supabase
+        .from("faucet_claims")
+        .select("id, amount, chain, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabase
+        .from("faucet_claims")
+        .select("id", { count: 'exact', head: true })
+        .eq("user_id", user.id),
+      supabase
+        .from("portfolio_holdings")
+        .select("symbol, quantity")
+        .eq("user_id", user.id)
+        .in("symbol", faucetSymbols),
+    ]);
 
-    const records = data || [];
+    if (loadVersion !== claimsLoadVersionRef.current) return;
+
+    const records = (claimsResponse.data as ClaimRecord[] | null) || [];
+    const totalClaimCount = countResponse.count;
+    const holdings = holdingsResponse.data;
     setClaims(records);
-
-    // Get total claim count (not limited to 200)
-    const { count: totalClaimCount } = await supabase
-      .from("faucet_claims")
-      .select("id", { count: 'exact', head: true })
-      .eq("user_id", user.id);
-    
     setTotalClaimCount(totalClaimCount || records.length);
-
-    // Use portfolio_holdings as source of truth for balances (set by credit_faucet_claim RPC)
-    const faucetSymbols = FAUCET_TOKENS.map(t => t.symbol);
-    const { data: holdings } = await supabase
-      .from("portfolio_holdings")
-      .select("symbol, quantity")
-      .eq("user_id", user.id)
-      .in("symbol", faucetSymbols);
 
     const bal: Record<string, number> = {};
     for (const h of holdings || []) {
@@ -207,6 +209,35 @@ const CryptoFaucet = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [userId, loadClaims]);
+
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel("faucet-holdings-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "portfolio_holdings", filter: `user_id=eq.${userId}` },
+        () => { loadClaims(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, loadClaims]);
+
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        void loadClaims();
+      }
+    };
+
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+
+    return () => {
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [loadClaims]);
 
   const loadCompoundEngine = useCallback(async () => {
     if (!userId) return;
