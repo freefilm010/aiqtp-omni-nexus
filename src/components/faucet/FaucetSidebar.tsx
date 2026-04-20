@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { FaucetToken, ClaimRecord } from "./faucetTypes";
 import { useAssetValuation, formatUsdValue, formatQuantity } from "@/hooks/useAssetValuation";
+import { toSafePublicName } from "@/lib/users/publicName";
 
 interface FaucetSidebarProps {
   balances: Record<string, number>;
@@ -48,15 +49,58 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
   const totalUsd = freshValuedItems.reduce((sum, item) => sum + item.valueUsd, 0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
+  const loadLeaderboard = useCallback(async () => {
+    const { data } = await supabase
+      .from("faucet_leaderboard")
+      .select("user_id, display_name, total_claims, active_days, arb_profit, arb_trades, invest_total, invest_txns, strategies_created, strategies_graduated, factors_created, composite_score")
+      .order("composite_score", { ascending: false })
+      .limit(25);
+
+    if (!data?.length) {
+      setLeaderboard([]);
+      return;
+    }
+
+    const userIds = [...new Set(data.map((entry) => entry.user_id).filter(Boolean))];
+    const usernameMap = new Map<string, string>();
+
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", userIds);
+
+      for (const profile of profiles || []) {
+        if (profile.username) usernameMap.set(profile.id, profile.username);
+      }
+    }
+
+    const deduped = new Map<string, LeaderboardEntry>();
+
+    for (const entry of data as LeaderboardEntry[]) {
+      const sanitized: LeaderboardEntry = {
+        ...entry,
+        display_name: toSafePublicName({
+          username: usernameMap.get(entry.user_id),
+          displayName: entry.display_name,
+          fallbackId: entry.user_id,
+        }),
+      };
+
+      const existing = deduped.get(entry.user_id);
+      if (!existing || sanitized.composite_score > existing.composite_score) {
+        deduped.set(entry.user_id, sanitized);
+      }
+    }
+
+    setLeaderboard(
+      Array.from(deduped.values())
+        .sort((a, b) => b.composite_score - a.composite_score)
+        .slice(0, 10)
+    );
+  }, []);
+
   useEffect(() => {
-    const loadLeaderboard = async () => {
-      const { data } = await supabase
-        .from("faucet_leaderboard")
-        .select("user_id, display_name, total_claims, active_days, arb_profit, arb_trades, invest_total, invest_txns, strategies_created, strategies_graduated, factors_created, composite_score")
-        .order("composite_score", { ascending: false })
-        .limit(10);
-      if (data) setLeaderboard(data as LeaderboardEntry[]);
-    };
     loadLeaderboard();
 
     const channel = supabase
@@ -68,7 +112,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [loadLeaderboard]);
 
   const handleReferral = () => {
     if (!userId) { toast.error("Sign in first"); return; }
