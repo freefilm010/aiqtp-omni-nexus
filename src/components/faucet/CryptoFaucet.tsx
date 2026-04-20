@@ -139,13 +139,13 @@ const CryptoFaucet = () => {
     setUserId(user.id);
 
     const faucetSymbols = Array.from(new Set(FAUCET_TOKENS.map((t) => t.symbol)));
-    const [{ data }, { count: totalClaimCount }, { data: holdings }] = await Promise.all([
+    const [claimsResponse, countResponse, holdingsResponse] = await Promise.all([
       supabase
         .from("faucet_claims")
         .select("id, amount, chain, status, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(200) as Promise<{ data: ClaimRecord[] | null }>,
+        .limit(200),
       supabase
         .from("faucet_claims")
         .select("id", { count: 'exact', head: true })
@@ -159,7 +159,9 @@ const CryptoFaucet = () => {
 
     if (loadVersion !== claimsLoadVersionRef.current) return;
 
-    const records = data || [];
+    const records = (claimsResponse.data as ClaimRecord[] | null) || [];
+    const totalClaimCount = countResponse.count;
+    const holdings = holdingsResponse.data;
     setClaims(records);
     setTotalClaimCount(totalClaimCount || records.length);
 
