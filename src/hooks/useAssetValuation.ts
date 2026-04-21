@@ -117,12 +117,11 @@ export function useAssetValuation() {
   useEffect(() => {
     loadPlatformTokenPrices();
 
-    // Refresh platform token timestamps every 30s (edge function updates last_updated)
-    const refreshInterval = setInterval(async () => {
-      try {
-        await supabase.functions.invoke("platform-token-refresh", { body: {} });
-      } catch {
-        // silent
+    // Refresh local token price cache every 30s while visible.
+    // Avoid invoking a write-capable backend refresh from every mounted hook instance.
+    const refreshInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void loadPlatformTokenPrices();
       }
     }, 30_000);
 
