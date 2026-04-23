@@ -17,12 +17,21 @@ interface EngineSummary {
   cycle_count: number;
 }
 
+interface AnalyticsTransaction {
+  amount_usd: number | null;
+  asset_symbol: string | null;
+  ai_reason: string | null;
+  created_at: string;
+  status: string;
+  transaction_type: string;
+}
+
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
 const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [growthData, setGrowthData] = useState<any[]>([]);
-  const [strategyBreakdown, setStrategyBreakdown] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<AnalyticsTransaction[]>([]);
+  const [growthData, setGrowthData] = useState<Array<{ date: string; deployed: number }>>([]);
+  const [strategyBreakdown, setStrategyBreakdown] = useState<Array<{ name: string; value: number }>>([]);
   const [engineSummary, setEngineSummary] = useState<EngineSummary | null>(null);
 
   const loadAnalytics = useCallback(async () => {
@@ -43,7 +52,7 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
         .maybeSingle(),
     ]);
 
-    const data = txData || [];
+    const data = (txData || []) as AnalyticsTransaction[];
     setTransactions(data);
     setEngineSummary(engineData || null);
 
@@ -75,6 +84,9 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
     );
 
   }, [engineId]);
+
+  const derivedReinvestedTotal = growthData.length > 0 ? growthData[growthData.length - 1].deployed : 0;
+  const displayedCycleCount = Math.max(engineSummary?.cycle_count ?? 0, transactions.length);
 
   useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
 
@@ -171,7 +183,7 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
           <CardContent className="space-y-3">
             <div className="p-2.5 rounded-lg bg-muted/20">
               <p className="text-xs font-medium">Total Reinvested</p>
-              <p className="font-bold text-sm">${(engineSummary?.total_reinvested ?? (growthData.length > 0 ? growthData[growthData.length - 1].deployed : 0)).toFixed(2)}</p>
+              <p className="font-bold text-sm">${derivedReinvestedTotal.toFixed(2)}</p>
             </div>
             <div className="p-2.5 rounded-lg bg-muted/20">
               <p className="text-xs font-medium">Engine Profit</p>
@@ -179,7 +191,7 @@ const CompoundAnalytics = ({ engineId }: CompoundAnalyticsProps) => {
             </div>
             <div className="p-2.5 rounded-lg bg-muted/20">
               <p className="text-xs font-medium">Cycles</p>
-              <p className="font-bold text-sm">{engineSummary?.cycle_count ?? transactions.length}</p>
+              <p className="font-bold text-sm">{displayedCycleCount}</p>
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-2">
               <Zap className="h-3 w-3" />

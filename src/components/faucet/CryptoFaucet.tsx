@@ -334,6 +334,8 @@ const CryptoFaucet = () => {
     for (const slice of deploymentPlan) {
       const stratAmount = deployAmount * (slice.pct / 100);
       if (stratAmount <= 0) continue;
+      const stratQuantity = valuation.priceUsd > 0 ? stratAmount / valuation.priceUsd : 0;
+      if (stratQuantity <= 0) continue;
       
       // Create allocation record for tracking
       await supabase.from("auto_invest_allocations").insert({
@@ -345,7 +347,7 @@ const CryptoFaucet = () => {
         target_percent: slice.pct,
         current_percent: slice.pct,
         value_usd: stratAmount,
-        quantity: amount * (slice.pct / 100),
+        quantity: stratQuantity,
         entry_price: valuation.priceUsd,
         current_price: valuation.priceUsd,
         is_active: true,
@@ -359,7 +361,7 @@ const CryptoFaucet = () => {
         asset_symbol: tokenSymbol,
         side: 'buy',
         price: valuation.priceUsd,
-        quantity: amount * (slice.pct / 100),
+        quantity: stratQuantity,
         status: 'completed',
         ai_triggered: true,
         ai_reason: `Auto-compound ${tokenSymbol} → ${slice.name} (${slice.pct}%) | $${usdValue.toFixed(2)} total`,
