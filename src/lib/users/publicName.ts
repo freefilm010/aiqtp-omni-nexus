@@ -1,4 +1,4 @@
-const REAL_NAME_PATTERN = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+$/;
+const NAME_PART_PATTERN = /^[A-Za-z][A-Za-z'\-]+$/;
 
 interface SafePublicNameOptions {
   username?: string | null;
@@ -10,7 +10,11 @@ interface SafePublicNameOptions {
 export function looksLikeRealName(value?: string | null): boolean {
   const trimmed = value?.trim();
   if (!trimmed) return false;
-  return REAL_NAME_PATTERN.test(trimmed);
+
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return false;
+
+  return parts.every((part) => NAME_PART_PATTERN.test(part));
 }
 
 export function toSafePublicName({
