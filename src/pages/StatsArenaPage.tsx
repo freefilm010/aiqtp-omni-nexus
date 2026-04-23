@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toSafePublicName } from "@/lib/users/publicName";
+import { looksLikeRealName, toSafePublicName } from "@/lib/users/publicName";
 import { toast } from "sonner";
 import {
   Trophy, TrendingUp, Users, Flame, Crown, Medal,
@@ -160,19 +160,30 @@ const StatsArenaPage = () => {
     const deduped = new Map<string, LeaderboardEntry>();
 
     for (const entry of entries) {
+      const resolvedUsername = usernameMap.get(entry.user_id)?.trim();
       const sanitizedEntry = {
         ...entry,
         display_name: toSafePublicName({
-          username: usernameMap.get(entry.user_id),
+          username: resolvedUsername,
           displayName: entry.display_name,
           fallbackId: entry.user_id,
           fallbackRank: entry.rank,
         }),
       };
 
-      const existing = deduped.get(entry.user_id);
-      if (!existing || entry.rank < existing.rank) {
-        deduped.set(entry.user_id, sanitizedEntry);
+      const displayName = entry.display_name?.trim();
+      const dedupeKey = resolvedUsername?.toLowerCase()
+        || (looksLikeRealName(displayName) ? displayName!.toLowerCase() : entry.user_id);
+
+      const existing = deduped.get(dedupeKey);
+      const existingHasUsername = existing ? Boolean(usernameMap.get(existing.user_id)?.trim()) : false;
+      const shouldReplace =
+        !existing ||
+        (Boolean(resolvedUsername) && !existingHasUsername) ||
+        entry.rank < existing.rank;
+
+      if (shouldReplace) {
+        deduped.set(dedupeKey, sanitizedEntry);
       }
     }
 

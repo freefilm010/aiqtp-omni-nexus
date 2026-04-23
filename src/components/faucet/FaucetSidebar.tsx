@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { FaucetToken, ClaimRecord } from "./faucetTypes";
 import { useAssetValuation, formatUsdValue, formatQuantity } from "@/hooks/useAssetValuation";
-import { toSafePublicName } from "@/lib/users/publicName";
+import { looksLikeRealName, toSafePublicName } from "@/lib/users/publicName";
 
 interface FaucetSidebarProps {
   balances: Record<string, number>;
@@ -78,18 +78,29 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
     const deduped = new Map<string, LeaderboardEntry>();
 
     for (const entry of data as LeaderboardEntry[]) {
+      const resolvedUsername = usernameMap.get(entry.user_id)?.trim();
       const sanitized: LeaderboardEntry = {
         ...entry,
         display_name: toSafePublicName({
-          username: usernameMap.get(entry.user_id),
+          username: resolvedUsername,
           displayName: entry.display_name,
           fallbackId: entry.user_id,
         }),
       };
 
-      const existing = deduped.get(entry.user_id);
-      if (!existing || sanitized.composite_score > existing.composite_score) {
-        deduped.set(entry.user_id, sanitized);
+      const displayName = entry.display_name?.trim();
+      const dedupeKey = resolvedUsername?.toLowerCase()
+        || (looksLikeRealName(displayName) ? displayName!.toLowerCase() : entry.user_id);
+
+      const existing = deduped.get(dedupeKey);
+      const existingHasUsername = existing ? Boolean(usernameMap.get(existing.user_id)?.trim()) : false;
+      const shouldReplace =
+        !existing ||
+        (Boolean(resolvedUsername) && !existingHasUsername) ||
+        sanitized.composite_score > existing.composite_score;
+
+      if (shouldReplace) {
+        deduped.set(dedupeKey, sanitized);
       }
     }
 
