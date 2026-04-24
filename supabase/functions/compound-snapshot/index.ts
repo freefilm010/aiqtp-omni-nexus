@@ -44,10 +44,13 @@ Deno.serve(async (req) => {
 
       const { error: insertErr } = await supabase.from("compound_snapshots").insert({
         engine_id: engine.id,
+        user_id: engine.user_id,
         total_value: totalValue,
         total_profit: totalPnl,
+        total_deployed: engine.total_deployed || 0,
         total_capital: engine.total_capital || 0,
         roi_percent: engine.total_capital > 0 ? (totalPnl / engine.total_capital) * 100 : 0,
+        strategy_breakdown: strategyAttribution,
         strategy_attribution: strategyAttribution,
       });
 

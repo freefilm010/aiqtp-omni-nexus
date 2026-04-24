@@ -1702,8 +1702,11 @@ export type Database = {
         Row: {
           engine_id: string
           id: string
+          roi_percent: number | null
           snapshot_at: string | null
+          strategy_attribution: Json | null
           strategy_breakdown: Json | null
+          total_capital: number | null
           total_deployed: number | null
           total_profit: number | null
           total_value: number | null
@@ -1712,8 +1715,11 @@ export type Database = {
         Insert: {
           engine_id: string
           id?: string
+          roi_percent?: number | null
           snapshot_at?: string | null
+          strategy_attribution?: Json | null
           strategy_breakdown?: Json | null
+          total_capital?: number | null
           total_deployed?: number | null
           total_profit?: number | null
           total_value?: number | null
@@ -1722,8 +1728,11 @@ export type Database = {
         Update: {
           engine_id?: string
           id?: string
+          roi_percent?: number | null
           snapshot_at?: string | null
+          strategy_attribution?: Json | null
           strategy_breakdown?: Json | null
+          total_capital?: number | null
           total_deployed?: number | null
           total_profit?: number | null
           total_value?: number | null
