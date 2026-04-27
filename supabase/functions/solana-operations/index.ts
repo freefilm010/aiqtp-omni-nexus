@@ -73,7 +73,12 @@ serve(async (req) => {
         })
       });
       const data = await response.json();
-      if (data.error) throw new Error(data.(error instanceof Error ? error.message : String(error)));
+      if (data.error) {
+        const msg = typeof data.error === 'string'
+          ? data.error
+          : (data.error?.message ?? JSON.stringify(data.error));
+        throw new Error(msg);
+      }
       return data.result;
     };
 
