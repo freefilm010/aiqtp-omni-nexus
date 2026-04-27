@@ -44,6 +44,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "🏛️ Charter Mission", href: "/admin/charter-mission", icon: Building2 },
+  { title: "🎯 CEO Mission Control", href: "/admin/mission-control", icon: Target },
   { title: "Overview", href: "/admin", icon: LayoutDashboard },
   { title: "Apex Prop Trading", href: "/admin/apex", icon: Target },
   { title: "Financials", href: "/admin/financials", icon: DollarSign },
