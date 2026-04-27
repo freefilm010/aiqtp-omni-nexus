@@ -66,6 +66,7 @@ const PopoutTool = lazy(() => import("./pages/PopoutTool"));
 const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
+const Billing = lazy(() => import("./pages/Billing"));
 import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
 const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
 const WalletAssets = lazy(() => import("./pages/WalletAssets"));
@@ -511,6 +512,7 @@ const App = () => (
                       <Route path="/broadcast" element={<ProtectedRoute><BroadcastStationPage /></ProtectedRoute>} />
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="/checkout/return" element={<CheckoutReturn />} />
+                      <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
                       <Route
                         path="/notifications"
                         element={
