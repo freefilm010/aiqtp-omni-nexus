@@ -75,7 +75,7 @@ export class EventBus {
         try {
           sub.handler(event);
         } catch (err) {
-          console.error(`[EventBus] handler ${sub.id} threw:`, err);
+          console.error('[EventBus] handler %s threw: %o', sub.id, err);
         }
       }
     }

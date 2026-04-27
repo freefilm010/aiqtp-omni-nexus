@@ -202,9 +202,9 @@ const Watchlist = () => {
     if (!item) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('watchlist')
-        .update({ alert_enabled: !item.alertEnabled } as Record<string, unknown>)
+        .update({ alert_enabled: !item.alertEnabled })
         .eq('id', id)
         .eq('user_id', user.id);
 

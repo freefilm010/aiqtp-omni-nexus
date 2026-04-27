@@ -1,0 +1,7 @@
+# Already-applied historical migrations — anon JWT is the publishable Supabase anon key (safe by design)
+supabase/migrations/
+# Vendor / third-party
+node_modules/
+dist/
+build/
+.next/

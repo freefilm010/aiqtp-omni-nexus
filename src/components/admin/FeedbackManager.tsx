@@ -28,7 +28,7 @@ const FeedbackManager = () => {
 
   const markRead = useMutation({
     mutationFn: async ({ id, notes }: { id: string; notes?: string }) => {
-      const update: Record<string, unknown> = { is_read: true };
+      const update: { is_read: boolean; admin_notes?: string } = { is_read: true };
       if (notes) update.admin_notes = notes;
       const { error } = await supabase.from("customer_feedback").update(update).eq("id", id);
       if (error) throw error;

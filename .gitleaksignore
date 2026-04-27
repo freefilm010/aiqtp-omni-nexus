@@ -1,0 +1,5 @@
+# Publishable Supabase anon key embedded in already-applied historical migration (safe by design)
+supabase/migrations/20260413121332_b1b970b1-8445-4e41-963a-96f36ab99821.sql:generic-api-key:11
+supabase/migrations/20260413121332_b1b970b1-8445-4e41-963a-96f36ab99821.sql:generic-api-key:24
+supabase/migrations/20260413121332_b1b970b1-8445-4e41-963a-96f36ab99821.sql:jwt:11
+supabase/migrations/20260413121332_b1b970b1-8445-4e41-963a-96f36ab99821.sql:jwt:24

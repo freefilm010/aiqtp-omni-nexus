@@ -55,7 +55,7 @@ export async function swr<T>(
           cache.set(key, { data, timestamp: Date.now(), revalidating: false });
         })
         .catch((err) => {
-          console.warn(`[SWR:${key}] Background revalidation failed:`, err);
+          console.warn('[SWR:%s] Background revalidation failed: %o', key, err);
           entry.revalidating = false;
         });
     }
