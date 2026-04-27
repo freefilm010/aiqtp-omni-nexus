@@ -54,27 +54,9 @@ const RevenueActivation = () => {
       return;
     }
     setLoading(planId);
-    try {
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
-        body: {
-          planId: amount ? "custom-deposit" : planId,
-          amount,
-          successUrl: `${window.location.origin}/payment-success`,
-          cancelUrl: `${window.location.origin}/pricing`,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
-        toast.success("Checkout opened — complete payment to activate");
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Checkout failed — try again");
-    } finally {
-      setLoading(null);
-    }
+    // Routed to unified Billing page (Platform Access subscription + custom deposit)
+    window.location.href = "/billing";
+    setLoading(null);
   };
 
   return (
