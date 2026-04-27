@@ -1,5 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -19,7 +17,7 @@ export interface RateLimitResult {
  * Base limit: 10 calls/hour. Extensions add extra calls at 15% surcharge.
  */
 export async function checkRateLimit(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   functionName: string,
   baseLimit = 10
@@ -52,7 +50,7 @@ export async function checkRateLimit(
   let extraCalls = 0;
   let extraUsed = 0;
   if (extensions && extensions.length > 0) {
-    for (const ext of extensions) {
+    for (const ext of extensions as Array<{ extra_calls: number; calls_used: number }>) {
       extraCalls += ext.extra_calls;
       extraUsed += ext.calls_used;
     }
@@ -76,7 +74,7 @@ export async function checkRateLimit(
  * Log an AI generation call for rate limiting.
  */
 export async function logGeneration(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   functionName: string
 ): Promise<void> {
@@ -139,7 +137,7 @@ export function validateMessages(
   }
 
   const sanitized = [];
-  for (const msg of messages) {
+  for (const msg of messages as Array<{ role?: unknown; content?: unknown }>) {
     if (!msg || typeof msg !== 'object') {
       return { valid: false, error: 'Each message must be an object' };
     }

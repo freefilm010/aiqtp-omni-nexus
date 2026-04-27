@@ -73,7 +73,7 @@ serve(async (req) => {
         })
       });
       const data = await response.json();
-      if (data.error) throw new Error(data.error.message);
+      if (data.error) throw new Error(data.(error instanceof Error ? error.message : String(error)));
       return data.result;
     };
 
@@ -332,7 +332,7 @@ serve(async (req) => {
     console.error('Solana operations error:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: (error instanceof Error ? error.message : String(error)) 
     }), { 
       status: 500, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

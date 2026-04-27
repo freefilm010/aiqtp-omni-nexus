@@ -63,7 +63,7 @@ async function triggerWebhook(webhookUrl: string, data: any): Promise<any> {
     };
   } catch (error) {
     console.error("Webhook trigger error:", error);
-    throw new Error(`Failed to trigger webhook: ${error.message}`);
+    throw new Error(`Failed to trigger webhook: ${(error instanceof Error ? error.message : String(error))}`);
   }
 }
 
@@ -135,7 +135,7 @@ async function createAutomation(
     .single();
   
   if (error) {
-    throw new Error(`Failed to create automation: ${error.message}`);
+    throw new Error(`Failed to create automation: ${(error instanceof Error ? error.message : String(error))}`);
   }
   
   return {
@@ -309,7 +309,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Automation Hub error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: (error instanceof Error ? error.message : String(error)) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
     );
   }

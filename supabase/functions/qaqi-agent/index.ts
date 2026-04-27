@@ -1096,13 +1096,13 @@ serve(async (req) => {
         } catch (e) {
           toolResults.push({
             tool: toolCall.function.name,
-            error: e.message,
+            error: (e instanceof Error ? e.message : String(e)),
             success: false
           });
           toolCallMessages.push({
             role: "tool",
             tool_call_id: toolCall.id,
-            content: JSON.stringify({ error: e.message })
+            content: JSON.stringify({ error: (e instanceof Error ? e.message : String(e)) })
           });
         }
       }
@@ -1205,7 +1205,7 @@ serve(async (req) => {
     console.error("QAQI Agent error:", error);
     return new Response(JSON.stringify({ 
       qaqi_status: "error",
-      error: error.message,
+      error: (error instanceof Error ? error.message : String(error)),
       recovery: "Attempting self-repair..."
     }), {
       status: 500,

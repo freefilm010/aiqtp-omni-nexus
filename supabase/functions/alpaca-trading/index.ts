@@ -79,15 +79,15 @@ serve(async (req) => {
         }
 
         case 'place_order': {
-          const orderBody = {
+          const orderBody: Record<string, unknown> = {
             symbol: params.symbol,
             qty: params.quantity,
             side: params.side,
             type: params.type || 'market',
             time_in_force: params.timeInForce || 'day',
-            ...(params.limitPrice && { limit_price: params.limitPrice }),
-            ...(params.stopPrice && { stop_price: params.stopPrice }),
           };
+          if (params.limitPrice) orderBody.limit_price = params.limitPrice;
+          if (params.stopPrice) orderBody.stop_price = params.stopPrice;
           const resp = await fetch(`${baseUrl}/v2/orders`, {
             method: 'POST',
             headers,

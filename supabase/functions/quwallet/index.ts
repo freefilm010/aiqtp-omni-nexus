@@ -98,7 +98,7 @@ async function encryptPrivateKeys(
   const derivedKey = await crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: salt,
+      salt: salt as BufferSource,
       iterations: 310000,
       hash: "SHA-256"
     },
@@ -112,7 +112,7 @@ async function encryptPrivateKeys(
   const plaintext = encoder.encode(JSON.stringify(keys));
   
   const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
+    { name: "AES-GCM", iv: iv as BufferSource },
     derivedKey,
     plaintext
   );
@@ -537,8 +537,8 @@ serve(async (req) => {
             total_supply: totalSupply,
             circulating_supply: circulatingSupply,
             treasury_reserve: treasury?.balance || 0,
-            total_transactions: txCount?.count || 0,
-            active_validators: validators?.count || 0,
+            total_transactions: (txCount as any)?.count || 0,
+            active_validators: (validators as any)?.count || 0,
             security: {
               encryption: 'ML-KEM-768 (Kyber)',
               signatures: 'ML-DSA-65 (Dilithium)',
