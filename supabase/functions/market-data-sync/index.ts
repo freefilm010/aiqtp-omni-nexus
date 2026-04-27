@@ -288,9 +288,9 @@ serve(async (req) => {
               await new Promise(r => setTimeout(r, 2000));
             }
           } catch (e: any) {
-            console.error(`Page ${page} error:`, e.message);
+            console.error(`Page ${page} error:`, (e instanceof Error ? e.message : String(e)));
             lastPage = page;
-            if (e.message.includes('Rate limit')) break;
+            if ((e instanceof Error ? e.message : String(e)).includes('Rate limit')) break;
           }
         }
 
@@ -412,13 +412,13 @@ serve(async (req) => {
           return respond({ success: true, prices });
         } catch (e: any) {
           if (cached) {
-            console.log('Error fetching, returning stale cache:', e.message);
+            console.log('Error fetching, returning stale cache:', (e instanceof Error ? e.message : String(e)));
             return respond({
               success: true,
               prices: cached,
               cached: true,
               stale: true,
-              error: e.message,
+              error: (e instanceof Error ? e.message : String(e)),
             });
           }
 
@@ -522,7 +522,7 @@ serve(async (req) => {
     console.error('Market data sync error:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: (error instanceof Error ? error.message : String(error)) 
     }), { 
       status: 500, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

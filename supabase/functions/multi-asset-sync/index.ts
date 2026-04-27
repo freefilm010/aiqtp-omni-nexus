@@ -448,7 +448,7 @@ serve(async (req) => {
     }
   } catch (e: any) {
     console.error('Multi-asset sync error:', e);
-    return new Response(JSON.stringify({ success: false, error: e.message }), {
+    return new Response(JSON.stringify({ success: false, error: (e instanceof Error ? e.message : String(e)) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
