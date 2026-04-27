@@ -212,6 +212,8 @@ const AdminSettingsPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      <ProjectExport />
     </div>
   );
 };
