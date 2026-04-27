@@ -3638,6 +3638,45 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          audience: string
+          category: string | null
+          created_at: string
+          description: string | null
+          display_name: string
+          flag_key: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audience?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_name: string
+          flag_key: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audience?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          flag_key?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       fee_discount_tiers: {
         Row: {
           created_at: string | null
@@ -6602,6 +6641,54 @@ export type Database = {
           status?: string
           surcharge_percent?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      reconciliation_reports: {
+        Row: {
+          created_at: string
+          db_deposit_total_cents: number
+          db_subscription_count: number
+          discrepancies: Json
+          environment: string
+          id: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          run_at: string
+          status: string
+          stripe_revenue_cents: number
+          stripe_subscription_count: number
+        }
+        Insert: {
+          created_at?: string
+          db_deposit_total_cents?: number
+          db_subscription_count?: number
+          discrepancies?: Json
+          environment?: string
+          id?: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          run_at?: string
+          status?: string
+          stripe_revenue_cents?: number
+          stripe_subscription_count?: number
+        }
+        Update: {
+          created_at?: string
+          db_deposit_total_cents?: number
+          db_subscription_count?: number
+          discrepancies?: Json
+          environment?: string
+          id?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          run_at?: string
+          status?: string
+          stripe_revenue_cents?: number
+          stripe_subscription_count?: number
         }
         Relationships: []
       }
