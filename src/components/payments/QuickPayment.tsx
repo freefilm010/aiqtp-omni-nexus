@@ -96,32 +96,9 @@ export const QuickPayment = () => {
 
   const handleCheckout = async (plan: PricingPlan) => {
     setLoading(plan.id);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
-        body: {
-          planId: plan.id,
-          successUrl: `${window.location.origin}/payment-success?plan=${plan.id}`,
-          cancelUrl: `${window.location.origin}/pricing`,
-          metadata: {
-            plan_name: plan.name,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (error: any) {
-      console.error("Checkout error:", error);
-      toast.error("Failed to start checkout: " + error.message);
-    } finally {
-      setLoading(null);
-    }
+    // Legacy plans now route through the unified Billing page (Platform Access $1/mo + custom deposits)
+    window.location.href = "/billing";
+    setLoading(null);
   };
 
   return (
