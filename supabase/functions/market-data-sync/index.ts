@@ -270,14 +270,14 @@ serve(async (req) => {
             }));
 
             const { error: coinError } = await supabase.from('market_coins').upsert(coinInserts, { onConflict: 'id' });
-            if (coinError) console.error(`market_coins upsert error page ${page}:`, JSON.stringify(coinError));
+            if (coinError) console.error('market_coins upsert error page %d: %s', page, JSON.stringify(coinError));
             
             const { error } = await supabase.from('market_prices').upsert(priceData, {
               onConflict: 'coin_id'
             });
             
             if (error) {
-              console.error(`market_prices upsert error page ${page}:`, JSON.stringify(error));
+              console.error('market_prices upsert error page %d: %s', page, JSON.stringify(error));
             } else {
               synced += priceData.length;
             }
@@ -288,7 +288,7 @@ serve(async (req) => {
               await new Promise(r => setTimeout(r, 2000));
             }
           } catch (e: any) {
-            console.error(`Page ${page} error:`, (e instanceof Error ? e.message : String(e)));
+            console.error('Page %d error: %s', page, (e instanceof Error ? e.message : String(e)));
             lastPage = page;
             if ((e instanceof Error ? e.message : String(e)).includes('Rate limit')) break;
           }

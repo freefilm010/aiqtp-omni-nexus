@@ -36,7 +36,7 @@ class WidgetErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error(`[Widget:${this.props.name || 'unknown'}] crashed:`, error, info.componentStack);
+    console.error('[Widget:%s] crashed: %o', this.props.name || 'unknown', error, info.componentStack);
   }
 
   handleRetry = () => {

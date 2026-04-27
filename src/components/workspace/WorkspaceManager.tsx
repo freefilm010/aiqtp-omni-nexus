@@ -582,9 +582,11 @@ const WorkspaceManager = () => {
             }
             setInterval(updateData, 2000);
             
-            // Notify parent when closed
+            // Notify parent when closed (target origin restricted to opener)
             window.onbeforeunload = () => {
-              window.opener?.postMessage({ type: 'WIDGET_CLOSED', widgetId: '${widget.id}' }, '*');
+              try {
+                window.opener?.postMessage({ type: 'WIDGET_CLOSED', widgetId: '${widget.id}' }, window.location.origin);
+              } catch (_) { /* ignore */ }
             };
           </script>
         </body>
@@ -605,6 +607,8 @@ const WorkspaceManager = () => {
   // Listen for popup close messages
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      // Only accept messages from same-origin popups we opened
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'WIDGET_CLOSED') {
         const widgetId = event.data.widgetId;
         popupWindows.delete(widgetId);
