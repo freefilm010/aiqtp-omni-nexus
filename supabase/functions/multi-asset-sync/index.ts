@@ -111,7 +111,7 @@ async function fetchYahooQuotes(symbols: string[]): Promise<any[]> {
       const quotes = data?.quoteResponse?.result || data?.finance?.result?.[0]?.quotes || [];
       results.push(...quotes);
     } catch (e) {
-      console.error(`Yahoo batch ${i} error:`, e);
+      console.error('Yahoo batch %d error: %o', i, e);
     }
     
     if (i + 50 < symbols.length) {
