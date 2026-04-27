@@ -137,7 +137,7 @@ async function getReferralStats(supabase: any) {
     .limit(100);
   
   if (error) {
-    throw new Error(`Failed to fetch referral stats: ${error.message}`);
+    throw new Error(`Failed to fetch referral stats: ${(error instanceof Error ? error.message : String(error))}`);
   }
   
   const totalReferrals = data?.length || 0;
@@ -281,7 +281,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Moonshot Integration error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: (error instanceof Error ? error.message : String(error)) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
     );
   }

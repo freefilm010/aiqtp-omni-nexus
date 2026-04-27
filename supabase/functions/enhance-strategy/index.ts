@@ -166,7 +166,7 @@ Apply institutional-grade improvements. Make it production-ready for live tradin
 
   } catch (error) {
     console.error('enhance-strategy error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
