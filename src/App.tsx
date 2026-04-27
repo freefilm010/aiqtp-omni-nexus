@@ -66,6 +66,7 @@ const PopoutTool = lazy(() => import("./pages/PopoutTool"));
 const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
+import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
 const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
 const WalletAssets = lazy(() => import("./pages/WalletAssets"));
 const AutoInvestPage = lazy(() => import("./pages/AutoInvestPage"));
@@ -146,6 +147,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <FloatingWindowsProvider>
+                  <PaymentTestModeBanner />
                   <RealtimeSync />
                   <AuthDeepLinkHandler />
                   <SkipLinks />
