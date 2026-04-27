@@ -98,7 +98,7 @@ async function alphaVantageQuote(symbol: string, apiKey: string, signal: AbortSi
       source: 'alphavantage',
       currentPrice: parseFloat(gq['05. price']),
       change: parseFloat(gq['09. change']),
-      changePercent: parseFloat(gq['10. change percent']?.replace('%', '')),
+      changePercent: parseFloat(gq['10. change percent']?.replace(/%/g, '')),
       high: parseFloat(gq['03. high']),
       low: parseFloat(gq['04. low']),
       open: parseFloat(gq['02. open']),

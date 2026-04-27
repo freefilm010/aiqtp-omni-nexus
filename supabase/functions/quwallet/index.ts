@@ -171,7 +171,7 @@ serve(async (req) => {
     }
 
     const { action, ...params } = await req.json();
-    console.log(`QuWallet action: ${action}`, { userId, params: Object.keys(params) });
+    console.log('QuWallet action: %s', action, { userId, params: Object.keys(params) });
 
     switch (action) {
       case 'create_wallet': {
