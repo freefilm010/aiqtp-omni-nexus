@@ -110,59 +110,16 @@ const WalletAssets = () => {
 
   const handleStripeDeposit = async (amount: number) => {
     setLoading(true);
-    try {
-      const isPreset = [20, 50, 100, 500].includes(amount);
-      const body = isPreset
-        ? {
-            planId: `deposit-${amount}`,
-            successUrl: `${window.location.origin}/payment-success?type=deposit&amount=${amount}`,
-            cancelUrl: `${window.location.origin}/wallet-assets`,
-          }
-        : {
-            planId: "custom-deposit",
-            amount,
-            successUrl: `${window.location.origin}/payment-success?type=deposit&amount=${amount}`,
-            cancelUrl: `${window.location.origin}/wallet-assets`,
-          };
-
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", { body });
-
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (error: any) {
-      toast({
-        title: "Payment Error",
-        description: error.message || "Failed to initiate checkout",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Routed to unified Billing page for embedded checkout deposit flow
+    window.location.href = "/billing";
+    setLoading(false);
   };
 
   const handleSubscription = async (planId: string) => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
-        body: {
-          planId,
-          successUrl: `${window.location.origin}/payment-success?type=subscription`,
-          cancelUrl: `${window.location.origin}/wallet-assets`,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-    } catch (error: any) {
-      toast({
-        title: "Payment Error",
-        description: error.message || "Failed to initiate checkout",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Routed to unified Billing page for embedded subscription checkout
+    window.location.href = "/billing";
+    setLoading(false);
   };
 
   const toggleStream = (id: string) => {
