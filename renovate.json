@@ -1,0 +1,45 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":dependencyDashboard",
+    "security:openssf-scorecard",
+    "group:allNonMajor",
+    "schedule:weekly"
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "priority:high"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": false,
+      "groupName": "non-major dependencies"
+    },
+    {
+      "matchPackagePatterns": ["^@radix-ui/", "^lucide-react$", "^tailwind"],
+      "groupName": "ui libraries"
+    },
+    {
+      "matchPackagePatterns": ["^@supabase/", "^supabase$"],
+      "groupName": "supabase",
+      "labels": ["backend"]
+    },
+    {
+      "matchPackagePatterns": ["^stripe", "^@stripe/"],
+      "groupName": "stripe",
+      "labels": ["payments"]
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "supabase/migrations/**"
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump"
+}
