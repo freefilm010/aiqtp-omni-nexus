@@ -8,6 +8,7 @@
  * with status 200 so the client can handle it gracefully.
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +19,75 @@ const corsHeaders = {
 const BTCC_WS_URL = "wss://kapi1.btloginc.com:9082/v2/quot/";
 const WS_TIMEOUT_MS = 15000;
 const MAX_RETRIES = 2;
+
+// ── Auth helpers ────────────────────────────────────────────────
+// Public actions: market data only, safe to expose anonymously.
+const PUBLIC_ACTIONS = new Set(["get_contracts", "get_trades", "subscribe_ticker", "health_check"]);
+// Destructive / fund-moving actions: require admin role.
+const ADMIN_ACTIONS = new Set(["place_order", "cancel_order", "cancel_all", "login"]);
+// All other authenticated actions: require any signed-in user (read-only account info).
+
+async function authorizeRequest(
+  req: Request,
+  action: string
+): Promise<{ ok: true; userId: string | null } | { ok: false; status: number; error: string }> {
+  if (PUBLIC_ACTIONS.has(action)) {
+    return { ok: true, userId: null };
+  }
+
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { ok: false, status: 401, error: "Authentication required" };
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !anonKey || !serviceKey) {
+    return { ok: false, status: 500, error: "Server auth not configured" };
+  }
+
+  const authClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await authClient.auth.getClaims(token);
+  if (error || !data?.claims?.sub) {
+    return { ok: false, status: 401, error: "Invalid or expired token" };
+  }
+  const userId = data.claims.sub as string;
+
+  if (ADMIN_ACTIONS.has(action)) {
+    // Use service role to bypass RLS when checking admin role.
+    const adminClient = createClient(supabaseUrl, serviceKey);
+    const { data: roleRow, error: roleErr } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (roleErr || !roleRow) {
+      // Audit the rejected attempt.
+      await adminClient.from("security_audit_log").insert({
+        event_type: "btcc_admin_action_denied",
+        user_id: userId,
+        details: { action },
+        severity: "warn",
+      });
+      return { ok: false, status: 403, error: "Admin role required for this action" };
+    }
+
+    // Audit the granted admin action.
+    await adminClient.from("security_audit_log").insert({
+      event_type: "btcc_admin_action_granted",
+      user_id: userId,
+      details: { action },
+      severity: "info",
+    });
+  }
+
+  return { ok: true, userId };
+}
 
 // ── Signature ───────────────────────────────────────────────────
 function sortObj(obj: Record<string, unknown>): Record<string, unknown> {
@@ -271,6 +341,15 @@ serve(async (req) => {
 
     const body: BTCCRequest = await req.json();
     console.log(`BTCC WS Action: ${body.action}${body.symbol ? ` [${body.symbol}]` : ""}`);
+
+    // ── Authorization gate ──────────────────────────────────────
+    const authz = await authorizeRequest(req, body.action);
+    if (!authz.ok) {
+      return new Response(
+        JSON.stringify({ success: false, error: authz.error, action: body.action }),
+        { status: authz.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Health check — no WS needed
     if (body.action === "health_check") {
