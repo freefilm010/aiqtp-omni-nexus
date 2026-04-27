@@ -1,0 +1,51 @@
+# CodeRabbit configuration — tuned for AIQTP (React + Vite + Supabase Edge Functions)
+# Docs: https://docs.coderabbit.ai/guides/configure-coderabbit
+language: en-US
+early_access: true
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  sequence_diagrams: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!src/integrations/supabase/types.ts"
+    - "!supabase/migrations/**"
+    - "!dist/**"
+    - "!node_modules/**"
+    - "!**/*.lock"
+    - "!bun.lockb"
+    - "!package-lock.json"
+    - "!public/**"
+  path_instructions:
+    - path: "supabase/functions/**"
+      instructions: |
+        Edge functions handle live financial transactions. Be strict about:
+        input validation (Zod), CORS headers on all responses (including errors),
+        JWT validation, secret handling via Deno.env.get only, no raw SQL,
+        rate limiting on mutating endpoints, and proper error shapes.
+    - path: "src/hooks/useAdminAuth.tsx"
+      instructions: |
+        Admin auth is server-side only via has_role RPC. Flag any client-side
+        admin checks (localStorage, hardcoded emails, role on profiles).
+    - path: "**/*.sql"
+      instructions: |
+        Every table needs RLS enabled with owner-scoped policies.
+        SECURITY DEFINER functions must SET search_path = public and
+        REVOKE EXECUTE FROM anon, public unless explicitly whitelisted.
+    - path: "src/**/*.{ts,tsx}"
+      instructions: |
+        Use semantic Tailwind tokens from index.css — never hardcoded colors
+        like text-white or bg-black. Imports from @/integrations/supabase/client only.
+chat:
+  auto_reply: true
+knowledge_base:
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
