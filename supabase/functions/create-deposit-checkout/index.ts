@@ -1,4 +1,5 @@
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,6 +55,22 @@ Deno.serve(async (req) => {
     if (body.environment !== 'sandbox' && body.environment !== 'live') {
       return new Response(JSON.stringify({ error: 'Invalid environment' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader! } },
+    });
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user || user.id !== body.userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     const clientSecret = await createDepositCheckout(body);
