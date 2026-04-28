@@ -25,8 +25,7 @@ import {
   ArrowRight,
   Sparkles,
   Users,
-  AlertTriangle,
-  CreditCard
+  AlertTriangle
 } from "lucide-react";
 import { Explain } from "@/components/ui/explainer-tooltip";
 import { 
@@ -216,15 +215,15 @@ const PricingPage = () => {
           </CardContent>
         </Card>
 
-        {/* Premium Plans - Quick Checkout */}
+        {/* Deposit Checkout */}
         <div className="mb-16">
           <div className="text-center mb-8">
             <Badge className="mb-2 bg-primary/20 text-primary border-primary/30">
-              <CreditCard className="h-3 w-3 mr-1" />
-              Instant Checkout
+              <DollarSign className="h-3 w-3 mr-1" />
+              Deposit Checkout
             </Badge>
-            <h2 className="text-2xl font-bold">Premium Plans</h2>
-            <p className="text-muted-foreground mt-2">Unlock advanced features and maximize your trading potential</p>
+            <h2 className="text-2xl font-bold">Fund Your Trading Balance</h2>
+            <p className="text-muted-foreground mt-2">No subscriptions. Use checkout only to add USD funds.</p>
           </div>
           
           <QuickPayment />
