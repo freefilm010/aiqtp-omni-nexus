@@ -1,14 +1,6 @@
 import { useState, useCallback } from "react";
 import { StripeEmbeddedCheckout } from "@/components/payments/StripeEmbeddedCheckout";
 
-interface SubscriptionOptions {
-  mode: "subscription";
-  priceId: string;
-  customerEmail?: string;
-  userId?: string;
-  returnUrl?: string;
-}
-
 interface DepositOptions {
   mode: "deposit";
   amountInCents: number;
@@ -17,7 +9,7 @@ interface DepositOptions {
   returnUrl?: string;
 }
 
-type CheckoutOptions = SubscriptionOptions | DepositOptions;
+type CheckoutOptions = DepositOptions;
 
 export function useStripeCheckout() {
   const [isOpen, setIsOpen] = useState(false);
