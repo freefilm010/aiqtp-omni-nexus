@@ -63,57 +63,35 @@ export default function Billing() {
       <Header />
       <main className="flex-1 container max-w-5xl py-12 space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold">Billing & Platform Access</h1>
+          <h1 className="text-4xl font-bold">Fund Trading Balance</h1>
           <p className="text-muted-foreground">
-            Activate your AIQTP membership and fund your platform balance.
+            Access and agents are free. Card checkout only adds USD funds to your account.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Platform Access */}
+          {/* Free Access */}
           <Card className="border-primary/40">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CreditCard className="h-8 w-8 text-primary" />
-                {isActive && <Badge variant="default" className="bg-green-500">Active</Badge>}
-              </div>
-              <CardTitle className="text-2xl">Platform Access</CardTitle>
+              <ShieldCheck className="h-8 w-8 text-primary" />
+              <CardTitle className="text-2xl">Free Access</CardTitle>
               <CardDescription>
-                <span className="text-3xl font-bold text-foreground">$1</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-3xl font-bold text-foreground">$0</span>
+                <span className="text-muted-foreground"> platform • $0 agents</span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2">
                 {PLATFORM_ACCESS_FEATURES.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                    <Check className="h-4 w-4 text-success mt-0.5 shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
               </ul>
-              {loading ? (
-                <Button disabled className="w-full">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Loading…
-                </Button>
-              ) : isActive ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    {subscription?.cancel_at_period_end
-                      ? `Access until ${subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : "period end"}`
-                      : `Renews ${subscription?.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : ""}`}
-                  </p>
-                  <Button onClick={handleManage} variant="outline" className="w-full" disabled={portalLoading}>
-                    {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Settings2 className="h-4 w-4 mr-2" />}
-                    Manage subscription
-                  </Button>
-                </div>
-              ) : (
-                <Button onClick={handleSubscribe} className="w-full" size="lg">
-                  Subscribe — $1/month
-                </Button>
-              )}
+              <Button onClick={() => { setDepositAmount("20"); setDepositOpen(true); }} className="w-full" size="lg">
+                Add minimum funds — $20
+              </Button>
             </CardContent>
           </Card>
 
@@ -129,20 +107,20 @@ export default function Billing() {
             <CardContent className="space-y-4">
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                  <span>Choose any amount from $5 to $10,000</span>
+                  <Check className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                  <span>Choose any amount from $20 to $10,000</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                  <Check className="h-4 w-4 text-success mt-0.5 shrink-0" />
                   <span>Auto-credited to your USD wallet on payment</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                  <Check className="h-4 w-4 text-success mt-0.5 shrink-0" />
                   <span>Use for bot deployment, strategy rentals, and trading</span>
                 </li>
               </ul>
               <div className="grid grid-cols-4 gap-2">
-                {["10", "25", "100", "500"].map((amt) => (
+                {["20", "50", "100", "500"].map((amt) => (
                   <Button
                     key={amt}
                     variant="outline"
