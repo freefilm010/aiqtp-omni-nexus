@@ -135,7 +135,7 @@ export function useAssetValuation() {
     };
 
     const channel = supabase
-      .channel("platform-token-prices-live")
+      .channel(`platform-token-prices-live-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "token_price_feeds" },
