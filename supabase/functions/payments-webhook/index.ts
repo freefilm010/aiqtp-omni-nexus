@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { type StripeEnv, verifyWebhook, createStripeClient } from "../_shared/stripe.ts";
+import { type StripeEnv, verifyWebhook } from "../_shared/stripe.ts";
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -131,8 +131,17 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     credited_at: new Date().toISOString(),
   }, { onConflict: 'stripe_session_id' });
 
-  // Credit user's USD platform wallet (or create row in portfolio_holdings as USD cash)
-  await getSupabase().rpc('increment_wallet_balance', { p_currency: 'USD', p_amount: amountUsd });
+  // Credit the user's own USD cash balance. Platform wallets track house funds only.
+  await getSupabase().from('portfolio_holdings').upsert({
+    user_id: userId,
+    symbol: 'USD',
+    name: 'US Dollar Cash',
+    quantity: amountUsd,
+    value_usd: amountUsd,
+    change_24h: 0,
+    allocation_percent: 0,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'user_id,symbol' });
 
   await logAudit('platform_deposit_credited', userId, {
     session_id: session.id, amount_usd: amountUsd, environment: env,
