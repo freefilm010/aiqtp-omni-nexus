@@ -14,8 +14,8 @@ interface DepositBody {
 }
 
 async function createDepositCheckout(opts: DepositBody) {
-  if (!opts.amountInCents || opts.amountInCents < 500) {
-    throw new Error("Minimum deposit is $5.00");
+  if (!opts.amountInCents || opts.amountInCents < 2000) {
+    throw new Error("Minimum deposit is $20.00");
   }
   if (opts.amountInCents > 1_000_000) {
     throw new Error("Maximum deposit is $10,000.00");
@@ -33,14 +33,12 @@ async function createDepositCheckout(opts: DepositBody) {
       quantity: 1,
     }],
     mode: "payment",
-    ui_mode: "embedded",
+    ui_mode: "embedded_page",
     return_url: opts.returnUrl,
-    managed_payments: { enabled: true },
     metadata: {
       userId: opts.userId,
       type: "platform_deposit",
       amount_usd: (opts.amountInCents / 100).toFixed(2),
-      managed_payments: "true",
     },
     ...(opts.customerEmail && { customer_email: opts.customerEmail }),
   } as any);
