@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Zap, ArrowRight, Shield, TrendingUp, Bot,
-  Rocket, CreditCard, Wallet
+  Rocket, CreditCard, Wallet, CheckCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -28,51 +29,27 @@ const RevenueActivation = () => {
 
   return (
     <div className="space-y-6">
-      {/* Subscription Plans */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {PLANS.map((plan) => {
-          const Icon = plan.icon;
-          return (
-            <Card
-              key={plan.id}
-              className={`relative ${plan.popular ? "border-primary shadow-lg shadow-primary/10" : ""}`}
-            >
-              {plan.popular && (
-                <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px]">
-                  Most Popular
-                </Badge>
-              )}
-              <CardHeader className="pb-2 text-center">
-                <Icon className="h-6 w-6 mx-auto text-primary mb-1" />
-                <CardTitle className="text-lg">{plan.name}</CardTitle>
-                <div className="mt-1">
-                  <span className="text-3xl font-bold text-foreground">${plan.price}</span>
-                  <span className="text-muted-foreground">/{plan.interval}</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <ul className="space-y-1.5">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                      <Check className="h-3 w-3 mt-0.5 text-green-500 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full"
-                  variant={plan.popular ? "default" : "outline"}
-                  onClick={() => startCheckout(plan.id)}
-                  disabled={loading === plan.id}
-                >
-                  {loading === plan.id ? "Opening..." : "Subscribe Now"}
-                  <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      <Card className="border-primary/40">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-primary" />
+            Free Access Revenue Model
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+            {["Platform $0", "Agents $0", "Bots $0 to start"].map((item) => (
+              <div key={item} className="flex items-center gap-2 rounded bg-muted/50 p-2">
+                <CheckCircle className="h-4 w-4 text-success shrink-0" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Revenue comes from realized-profit bot fees: 9% / 6% / 3% / 1%. No profit means no charge.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Quick Deposit */}
       <Card>
@@ -89,8 +66,8 @@ const RevenueActivation = () => {
                 key={amt}
                 variant="outline"
                 size="sm"
-                onClick={() => startCheckout("custom-deposit", amt)}
-                disabled={loading === `dep-${amt}`}
+                onClick={startDeposit}
+                disabled={loading === "deposit"}
               >
                 ${amt}
               </Button>
@@ -102,20 +79,20 @@ const RevenueActivation = () => {
                 className="w-20 h-8 text-xs"
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
-                min={5}
+                min={20}
                 max={10000}
               />
               <Button
                 size="sm"
-                disabled={!customAmount || Number(customAmount) < 5}
-                onClick={() => startCheckout("custom-deposit", Number(customAmount))}
+                disabled={!customAmount || Number(customAmount) < 20}
+                onClick={startDeposit}
               >
                 Deposit
               </Button>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground mt-2">
-            Powered by Stripe • Funds available instantly • Min $5, Max $10,000
+            Powered by Stripe • Funds available after payment confirmation • Min $20, Max $10,000
           </p>
         </CardContent>
       </Card>
@@ -130,7 +107,7 @@ const RevenueActivation = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-            <RevenueChannel icon={CreditCard} name="Subscriptions" status="live" />
+            <RevenueChannel icon={Shield} name="Free Access" status="live" />
             <RevenueChannel icon={Bot} name="Bot Rentals" status="live" />
             <RevenueChannel icon={Zap} name="Deposits" status="live" />
             <RevenueChannel icon={Rocket} name="NFT/Token" status="live" />
