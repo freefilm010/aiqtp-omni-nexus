@@ -1,45 +1,13 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Crown, Zap, Check, ArrowRight, Star, Shield, TrendingUp, Bot,
-  Rocket, CreditCard
+  Zap, ArrowRight, Shield, TrendingUp, Bot,
+  Rocket, CreditCard, Wallet
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-
-const PLANS = [
-  {
-    id: "pro-monthly",
-    name: "Pro",
-    price: 19,
-    interval: "mo",
-    features: ["Unlimited strategies", "Auto-backtest 10K cycles", "Strategy marketplace access", "Real-time signals", "Priority support"],
-    popular: true,
-    icon: Zap,
-  },
-  {
-    id: "enterprise-monthly",
-    name: "Enterprise",
-    price: 99,
-    interval: "mo",
-    features: ["Everything in Pro", "Unlimited bot rentals", "API access", "Custom indicators", "White-label ready", "Dedicated account manager"],
-    popular: false,
-    icon: Crown,
-  },
-  {
-    id: "elite-monthly",
-    name: "Elite",
-    price: 299,
-    interval: "mo",
-    features: ["Everything in Enterprise", "Quantum portfolio optimization", "Institutional analytics", "Priority bot graduation", "Revenue share on marketplace"],
-    popular: false,
-    icon: Star,
-  },
-];
 
 const QUICK_DEPOSITS = [20, 50, 100, 500];
 
@@ -48,13 +16,12 @@ const RevenueActivation = () => {
   const [loading, setLoading] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState("");
 
-  const startCheckout = async (planId: string, amount?: number) => {
+  const startDeposit = async () => {
     if (!user) {
-      toast.error("Sign in to subscribe");
+      toast.error("Sign in to add funds");
       return;
     }
-    setLoading(planId);
-    // Routed to unified Billing page (Platform Access subscription + custom deposit)
+    setLoading("deposit");
     window.location.href = "/billing";
     setLoading(null);
   };
