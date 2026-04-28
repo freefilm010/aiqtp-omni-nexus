@@ -194,7 +194,7 @@ const HiveMindPage = () => {
     load();
 
     // Realtime subscription for swarm agents
-    const channel = supabase.channel('swarm-agents-realtime')
+    const channel = supabase.channel(`swarm-agents-realtime-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'swarm_agents' }, () => { load(); })
       .subscribe();
 

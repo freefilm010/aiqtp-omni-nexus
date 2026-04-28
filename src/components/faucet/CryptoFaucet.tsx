@@ -200,7 +200,7 @@ const CryptoFaucet = () => {
   useEffect(() => {
     if (!userId) return;
     const channel = supabase
-      .channel("faucet-claims-live")
+      .channel(`faucet-claims-live-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "faucet_claims", filter: `user_id=eq.${userId}` },
@@ -213,7 +213,7 @@ const CryptoFaucet = () => {
   useEffect(() => {
     if (!userId) return;
     const channel = supabase
-      .channel("faucet-holdings-live")
+      .channel(`faucet-holdings-live-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "portfolio_holdings", filter: `user_id=eq.${userId}` },

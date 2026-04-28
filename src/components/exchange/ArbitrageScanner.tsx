@@ -75,7 +75,7 @@ const ArbitrageScanner = () => {
     fetchOpportunities();
 
     const channel = supabase
-      .channel('arbitrage-realtime')
+      .channel(`arbitrage-realtime-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'arbitrage_opportunities' }, () => {
         fetchOpportunities();
       })

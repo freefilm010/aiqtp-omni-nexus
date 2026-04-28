@@ -34,7 +34,7 @@ const TokenMarketplace = () => {
   useEffect(() => {
     fetchTokens();
     const channel = supabase
-      .channel('token-listings-rt')
+      .channel(`token-listings-rt-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'token_listings' }, () => fetchTokens())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

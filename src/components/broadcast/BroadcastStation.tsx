@@ -102,7 +102,7 @@ const BroadcastStation = () => {
     fetchAds();
 
     const channel = supabase
-      .channel("broadcast-live")
+      .channel(`broadcast-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "broadcast_content" }, () => fetchBroadcasts())
       .subscribe();
 

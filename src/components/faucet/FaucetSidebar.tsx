@@ -115,7 +115,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
     loadLeaderboard();
 
     const channel = supabase
-      .channel("faucet-leaderboard-live")
+      .channel(`faucet-leaderboard-live-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "faucet_claims" },

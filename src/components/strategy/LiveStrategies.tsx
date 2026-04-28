@@ -87,7 +87,7 @@ const LiveStrategies = () => {
     };
     load();
 
-    const channel = supabase.channel('live-strategies-rt')
+    const channel = supabase.channel(`live-strategies-rt-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'live_strategies', filter: `user_id=eq.${user.id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

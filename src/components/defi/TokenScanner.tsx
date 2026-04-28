@@ -115,7 +115,7 @@ const TokenScanner = () => {
   // Real-time subscription
   useEffect(() => {
     const channel = supabase
-      .channel('dex_tokens_changes')
+      .channel(`dex_tokens_changes-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dex_tokens' }, (payload) => {
         if (payload.eventType === 'INSERT' && payload.new) {
           const newToken = payload.new as any;
