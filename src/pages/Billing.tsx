@@ -140,13 +140,25 @@ export default function Billing() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">How fees work</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Percent className="h-4 w-4 text-primary" />
+              Realized-profit fee tiers
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground space-y-2">
-            <p>• <strong>Platform Access:</strong> $1/month grants full app access.</p>
-            <p>• <strong>Strategy rentals:</strong> Free to start — no charge if a bot generates $0 or losses.</p>
-            <p>• <strong>Profit fees:</strong> Tiered on realized profits only (9% under $10k, 6% under $100k, 3% under $1M, 1% above), deducted in-platform.</p>
-            <p>• <strong>Tax:</strong> Stripe handles end-to-end tax compliance for buyers in ~80 countries.</p>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2 sm:grid-cols-4">
+              {PROFIT_FEE_TIERS.map((tier) => (
+                <div key={tier.range} className="rounded-md border bg-muted/30 p-3 text-center">
+                  <div className="text-2xl font-bold text-primary">{tier.fee}</div>
+                  <div className="text-xs text-muted-foreground">{tier.range}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p>• <strong>Strategy bots:</strong> $0 to initiate; fees apply only to realized profits.</p>
+              <p>• <strong>Deposits:</strong> Stripe is used only to fund the user's USD balance. Deposits are not subscription products.</p>
+              <p>• <strong>Minimum:</strong> $20 investment minimum; network, gas, and transfer fees apply at actual cost.</p>
+            </div>
           </CardContent>
         </Card>
       </main>
@@ -174,14 +186,14 @@ export default function Billing() {
               <Input
                 id="deposit-amount"
                 type="number"
-                min={5}
+                min={20}
                 max={10000}
                 step="0.01"
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
-                placeholder="25.00"
+                placeholder="20.00"
               />
-              <p className="text-xs text-muted-foreground">Min $5, max $10,000.</p>
+              <p className="text-xs text-muted-foreground">Min $20, max $10,000.</p>
             </div>
             <Button onClick={handleDeposit} className="w-full">
               Continue to checkout
