@@ -112,7 +112,7 @@ const CapitolTradesDashboard = () => {
     fetchData();
 
     const channel = supabase
-      .channel("capitol-trades-live")
+      .channel(`capitol-trades-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "congress_trades" }, () =>
         fetchData()
       )

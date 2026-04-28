@@ -28,7 +28,7 @@ export function useRealtimeMarketPrices() {
     };
 
     const channel = supabase
-      .channel("market-prices-debounced")
+      .channel(`market-prices-debounced-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {

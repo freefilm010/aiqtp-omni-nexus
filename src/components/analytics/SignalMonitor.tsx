@@ -126,7 +126,7 @@ const SignalMonitor = () => {
     loadSignals();
 
     const channel = supabase
-      .channel('signals-realtime')
+      .channel(`signals-realtime-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trading_signals' }, () => loadSignals())
       .subscribe();
 

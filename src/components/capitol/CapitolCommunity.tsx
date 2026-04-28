@@ -132,7 +132,7 @@ const CapitolCommunity = () => {
     fetchUserLikes();
 
     const channel = supabase
-      .channel("capitol-community-live")
+      .channel(`capitol-community-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "capitol_community_posts" }, () =>
         fetchPosts()
       )

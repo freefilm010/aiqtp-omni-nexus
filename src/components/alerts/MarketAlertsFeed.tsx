@@ -90,7 +90,7 @@ const MarketAlertsFeed = () => {
 
   // Realtime subscription
   useEffect(() => {
-    const channel = supabase.channel('market-alerts-rt')
+    const channel = supabase.channel(`market-alerts-rt-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'market_alerts' }, (payload) => {
         const a = payload.new as any;
         setAlerts(prev => [{

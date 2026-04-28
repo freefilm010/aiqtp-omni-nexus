@@ -134,7 +134,7 @@ export function useRealMarketData(options?: {
   // Realtime subscription for instant price updates
   useEffect(() => {
     const channel = supabase
-      .channel('market-prices-realtime')
+      .channel(`market-prices-realtime-${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'market_prices' },

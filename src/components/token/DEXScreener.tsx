@@ -42,7 +42,7 @@ const DEXScreener = () => {
   useEffect(() => {
     fetchPairs();
     const channel = supabase
-      .channel('dex-pairs-rt')
+      .channel(`dex-pairs-rt-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dex_pairs' }, () => fetchPairs())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

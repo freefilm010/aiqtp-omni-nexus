@@ -76,7 +76,7 @@ const HeatMap = () => {
   // Real-time subscription
   useEffect(() => {
     const channel = supabase
-      .channel('heatmap_changes')
+      .channel(`heatmap_changes-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'heatmap_data' }, (payload) => {
         if (payload.eventType === 'UPDATE' && payload.new) {
           const updated = payload.new as Record<string, unknown>;
