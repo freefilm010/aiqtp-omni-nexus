@@ -115,13 +115,6 @@ const WalletAssets = () => {
     setLoading(false);
   };
 
-  const handleSubscription = async (planId: string) => {
-    setLoading(true);
-    // Routed to unified Billing page for embedded subscription checkout
-    window.location.href = "/billing";
-    setLoading(false);
-  };
-
   const toggleStream = (id: string) => {
     setRevenueStreams(streams =>
       streams.map(s =>
@@ -137,11 +130,11 @@ const WalletAssets = () => {
   };
 
   const fundingTourSteps: TourStep[] = [
-    { target: "[data-tour='tabs-nav']", title: "Navigation Tabs", description: "Switch between Revenue Streams, Funding, Subscription, and Compounding sections to manage all your money flows.", position: "bottom" },
+    { target: "[data-tour='tabs-nav']", title: "Navigation Tabs", description: "Switch between Revenue Streams, Funding, Free Access, and Compounding sections to manage all your money flows.", position: "bottom" },
     { target: "[data-tour='smart-router']", title: "Smart Transfer Router", description: "Automatically finds the cheapest way to move your money. We split the savings 50/50 — you always pay less.", position: "bottom" },
     { target: "[data-tour='stripe-card']", title: "Card & Bank Payments", description: "Add funds instantly with credit/debit cards or bank transfers via Stripe. Pick a preset amount or enter a custom one.", position: "bottom" },
     { target: "[data-tour='crypto-onramp']", title: "Crypto On-Ramp", description: "Buy crypto directly with fiat using MoonPay or Onramper — no exchange account needed.", position: "bottom" },
-    { target: "[data-tour='subscription']", title: "Pro Subscription", description: "Unlock premium features, AI signals, and priority execution with a monthly subscription.", position: "bottom" },
+    { target: "[data-tour='free-access']", title: "Free Access", description: "Platform access and agents are free. Revenue is collected only after realized bot profits.", position: "bottom" },
   ];
 
   return (
