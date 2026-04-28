@@ -9884,6 +9884,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      credit_platform_deposit: {
+        Args: {
+          p_amount_usd: number
+          p_currency?: string
+          p_environment?: string
+          p_stripe_payment_intent_id: string
+          p_stripe_session_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       get_factor_code: {
         Args: { p_factor_id: string }
         Returns: {

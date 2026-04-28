@@ -115,13 +115,6 @@ const WalletAssets = () => {
     setLoading(false);
   };
 
-  const handleSubscription = async (planId: string) => {
-    setLoading(true);
-    // Routed to unified Billing page for embedded subscription checkout
-    window.location.href = "/billing";
-    setLoading(false);
-  };
-
   const toggleStream = (id: string) => {
     setRevenueStreams(streams =>
       streams.map(s =>
@@ -137,11 +130,11 @@ const WalletAssets = () => {
   };
 
   const fundingTourSteps: TourStep[] = [
-    { target: "[data-tour='tabs-nav']", title: "Navigation Tabs", description: "Switch between Revenue Streams, Funding, Subscription, and Compounding sections to manage all your money flows.", position: "bottom" },
+    { target: "[data-tour='tabs-nav']", title: "Navigation Tabs", description: "Switch between Revenue Streams, Funding, Free Access, and Compounding sections to manage all your money flows.", position: "bottom" },
     { target: "[data-tour='smart-router']", title: "Smart Transfer Router", description: "Automatically finds the cheapest way to move your money. We split the savings 50/50 — you always pay less.", position: "bottom" },
     { target: "[data-tour='stripe-card']", title: "Card & Bank Payments", description: "Add funds instantly with credit/debit cards or bank transfers via Stripe. Pick a preset amount or enter a custom one.", position: "bottom" },
     { target: "[data-tour='crypto-onramp']", title: "Crypto On-Ramp", description: "Buy crypto directly with fiat using MoonPay or Onramper — no exchange account needed.", position: "bottom" },
-    { target: "[data-tour='subscription']", title: "Pro Subscription", description: "Unlock premium features, AI signals, and priority execution with a monthly subscription.", position: "bottom" },
+    { target: "[data-tour='free-access']", title: "Free Access", description: "Platform access and agents are free. Revenue is collected only after realized bot profits.", position: "bottom" },
   ];
 
   return (
@@ -511,34 +504,34 @@ const WalletAssets = () => {
                 </CardContent>
               </Card>
 
-              {/* Pro Subscription */}
-              <Card data-tour="subscription" className="border-purple-500/30 lg:row-span-2">
+              {/* Free Access */}
+              <Card data-tour="free-access" className="border-purple-500/30 lg:row-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-purple-400" />
-                    Pro Subscription
+                    Free Access
                   </CardTitle>
                   <CardDescription>
-                    Unlock all premium features
+                    Platform and agents are free
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-4 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/10 border border-purple-500/30">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-xl sm:text-3xl font-bold">$49<span className="text-sm text-muted-foreground">/mo</span></p>
-                        <p className="text-xs text-muted-foreground">Cancel anytime</p>
+                        <p className="text-xl sm:text-3xl font-bold">$0<span className="text-sm text-muted-foreground">/mo</span></p>
+                        <p className="text-xs text-muted-foreground">No subscription required</p>
                       </div>
-                      <Badge className="bg-purple-500/20 text-purple-400">Popular</Badge>
+                      <Badge className="bg-purple-500/20 text-purple-400">Open</Badge>
                     </div>
                     <ul className="space-y-2 mb-4">
                       {[
-                        "Unlimited trading strategies",
-                        "Priority bot execution",
-                        "Real-time ML signals",
-                        "Advanced analytics suite",
-                        "Quantum computing access",
-                        "24/7 priority support",
+                        "Full platform access",
+                        "AI agents included",
+                        "Rent strategy bots for $0 upfront",
+                        "9% / 6% / 3% / 1% realized-profit fees",
+                        "$20 minimum trading balance",
+                        "No profit means no platform fee",
                       ].map((feature) => (
                         <li key={feature} className="flex items-center gap-2 text-sm">
                           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -548,23 +541,23 @@ const WalletAssets = () => {
                     </ul>
                     <Button 
                       className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700"
-                      onClick={() => handleSubscription("pro-monthly")}
+                      onClick={() => handleStripeDeposit(20)}
                       disabled={loading}
                     >
-                      Start Pro Trial
+                      Add $20 Minimum Funds
                       <ArrowUpRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
                   
-                  {/* Annual option */}
+                  {/* Profit fee reminder */}
                   <div className="p-3 rounded-lg border border-dashed border-emerald-500/50 bg-emerald-500/5">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-sm">Annual Plan</p>
-                        <p className="text-xs text-muted-foreground">$399/yr (save 32%)</p>
+                        <p className="font-semibold text-sm">Profit Fee Model</p>
+                        <p className="text-xs text-muted-foreground">Collected in-platform only after realized bot profits.</p>
                       </div>
-                      <Button size="sm" variant="outline" className="border-emerald-500/50">
-                        Upgrade
+                      <Button size="sm" variant="outline" className="border-emerald-500/50" onClick={() => window.location.href = "/pricing"}>
+                        View tiers
                       </Button>
                     </div>
                   </div>

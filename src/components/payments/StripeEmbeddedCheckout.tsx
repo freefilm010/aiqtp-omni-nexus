@@ -3,8 +3,7 @@ import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { supabase } from "@/integrations/supabase/client";
 
 interface StripeEmbeddedCheckoutProps {
-  mode: "subscription" | "deposit";
-  priceId?: string;
+  mode: "deposit";
   amountInCents?: number;
   customerEmail?: string;
   userId?: string;
@@ -12,20 +11,15 @@ interface StripeEmbeddedCheckoutProps {
 }
 
 export function StripeEmbeddedCheckout({
-  mode,
-  priceId,
   amountInCents,
   customerEmail,
   userId,
   returnUrl,
 }: StripeEmbeddedCheckoutProps) {
   const fetchClientSecret = async (): Promise<string> => {
-    const fnName = mode === "subscription" ? "create-checkout" : "create-deposit-checkout";
-    const body = mode === "subscription"
-      ? { priceId, customerEmail, userId, returnUrl, environment: getStripeEnvironment() }
-      : { amountInCents, customerEmail, userId, returnUrl, environment: getStripeEnvironment() };
+    const body = { amountInCents, customerEmail, userId, returnUrl, environment: getStripeEnvironment() };
 
-    const { data, error } = await supabase.functions.invoke(fnName, { body });
+    const { data, error } = await supabase.functions.invoke("create-deposit-checkout", { body });
     if (error || !data?.clientSecret) {
       throw new Error(error?.message || data?.error || "Failed to create checkout session");
     }
