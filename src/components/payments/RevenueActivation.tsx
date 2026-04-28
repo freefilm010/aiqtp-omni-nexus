@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Zap, ArrowRight, Shield, TrendingUp, Bot,
+  Zap, Shield, TrendingUp, Bot,
   Rocket, CreditCard, Wallet, CheckCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
