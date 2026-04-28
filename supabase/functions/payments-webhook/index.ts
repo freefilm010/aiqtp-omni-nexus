@@ -109,39 +109,17 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     return;
   }
 
-  // Idempotent insert
-  const { data: existing } = await getSupabase()
-    .from('deposit_transactions')
-    .select('id, status')
-    .eq('stripe_session_id', session.id)
-    .maybeSingle();
+  const { data: wasCredited, error } = await getSupabase().rpc('credit_platform_deposit', {
+    p_user_id: userId,
+    p_stripe_session_id: session.id,
+    p_stripe_payment_intent_id: session.payment_intent || null,
+    p_amount_usd: amountUsd,
+    p_currency: session.currency || 'usd',
+    p_environment: env,
+  });
 
-  if (existing && (existing as any).status === 'credited') {
-    return; // already credited
-  }
-
-  await getSupabase().from('deposit_transactions').upsert({
-    user_id: userId,
-    stripe_session_id: session.id,
-    stripe_payment_intent_id: session.payment_intent || null,
-    amount_usd: amountUsd,
-    currency: session.currency || 'usd',
-    status: 'credited',
-    environment: env,
-    credited_at: new Date().toISOString(),
-  }, { onConflict: 'stripe_session_id' });
-
-  // Credit the user's own USD cash balance. Platform wallets track house funds only.
-  await getSupabase().from('portfolio_holdings').upsert({
-    user_id: userId,
-    symbol: 'USD',
-    name: 'US Dollar Cash',
-    quantity: amountUsd,
-    value_usd: amountUsd,
-    change_24h: 0,
-    allocation_percent: 0,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id,symbol' });
+  if (error) throw error;
+  if (!wasCredited) return;
 
   await logAudit('platform_deposit_credited', userId, {
     session_id: session.id, amount_usd: amountUsd, environment: env,
