@@ -5,32 +5,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, CreditCard, Wallet, Settings2, Loader2 } from "lucide-react";
+import { Check, Wallet, Percent, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
-import { useSubscription } from "@/hooks/useSubscription";
-import { getStripeEnvironment } from "@/lib/stripe";
 import { toast } from "sonner";
 
 const PLATFORM_ACCESS_FEATURES = [
-  "Full AIQTP platform access",
-  "AI strategy generation & backtesting",
-  "Real-time market signals & price feeds",
-  "Strategy marketplace (rent graduated bots free)",
-  "Auto-Invest engine + 37 income streams",
-  "Quantum-enhanced predictions",
-  "Profit fees on bot rentals (9%/6%/3%/1%) deducted from realized profits only",
+  "Full platform access is free",
+  "AI agents and strategy tools are free",
+  "Rentable strategy bots cost $0 to start",
+  "No profit from a bot means no platform fee",
+  "Profit fees are deducted in-platform only after realized gains",
+];
+
+const PROFIT_FEE_TIERS = [
+  { range: "$0.01 – $9,999.99", fee: "9%" },
+  { range: "$10,000 – $99,999.99", fee: "6%" },
+  { range: "$100,000 – $999,999.99", fee: "3%" },
+  { range: "$1,000,000+", fee: "1%" },
 ];
 
 export default function Billing() {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const { openCheckout, closeCheckout, isOpen, checkoutElement } = useStripeCheckout();
-  const { subscription, isActive, loading } = useSubscription(user?.id);
-  const [depositAmount, setDepositAmount] = useState("25");
+  const [depositAmount, setDepositAmount] = useState("20");
   const [depositOpen, setDepositOpen] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -38,28 +38,14 @@ export default function Billing() {
     });
   }, []);
 
-  const handleSubscribe = () => {
-    if (!user) {
-      toast.error("Please sign in first");
-      return;
-    }
-    openCheckout({
-      mode: "subscription",
-      priceId: "platform_access_monthly",
-      customerEmail: user.email,
-      userId: user.id,
-      returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
-    });
-  };
-
   const handleDeposit = () => {
     if (!user) {
       toast.error("Please sign in first");
       return;
     }
     const amt = parseFloat(depositAmount);
-    if (!amt || amt < 5 || amt > 10000) {
-      toast.error("Enter an amount between $5 and $10,000");
+    if (!amt || amt < 20 || amt > 10000) {
+      toast.error("Enter an amount between $20 and $10,000");
       return;
     }
     setDepositOpen(false);
@@ -70,24 +56,6 @@ export default function Billing() {
       userId: user.id,
       returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     });
-  };
-
-  const handleManage = async () => {
-    setPortalLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("create-portal-session", {
-        body: {
-          returnUrl: `${window.location.origin}/billing`,
-          environment: getStripeEnvironment(),
-        },
-      });
-      if (error || !data?.url) throw new Error(error?.message || "Failed");
-      window.open(data.url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      toast.error((e as Error).message || "Could not open billing portal");
-    } finally {
-      setPortalLoading(false);
-    }
   };
 
   return (
