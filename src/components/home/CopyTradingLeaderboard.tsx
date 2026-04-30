@@ -22,6 +22,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toSafePublicName } from "@/lib/users/publicName";
 
 interface Trader {
   id: string;
@@ -68,7 +69,7 @@ const CopyTradingLeaderboard = () => {
 
       const mapped: Trader[] = (data || []).map(t => ({
         id: t.id,
-        name: t.display_name,
+        name: toSafePublicName({ displayName: t.display_name, fallbackId: t.id }),
         avatar: t.avatar || '👤',
         tier: t.tier as 'elite' | 'pro' | 'rising',
         verified: t.is_verified || false,
