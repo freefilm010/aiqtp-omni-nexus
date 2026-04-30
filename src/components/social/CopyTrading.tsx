@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { toSafePublicName } from "@/lib/users/publicName";
 
 interface TopTrader {
   id: string;
@@ -61,7 +62,7 @@ const CopyTrading = () => {
       if (!error && data && data.length > 0) {
         setTraders(data.map(d => ({
           id: d.id,
-          name: d.display_name,
+          name: toSafePublicName({ displayName: d.display_name, fallbackId: d.id }),
           avatar: d.avatar || "",
           followers: d.copiers_count || 0,
           pnl30d: d.pnl_30d || 0,
