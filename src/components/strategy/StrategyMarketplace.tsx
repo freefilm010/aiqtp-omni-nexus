@@ -453,14 +453,16 @@ const StrategyMarketplace = () => {
                       <Button 
                         className="w-full" 
                         onClick={() => rentStrategy(strategy)}
-                        disabled={strategy.user_id === user?.id}
+                        disabled={strategy.user_id === user?.id || renting}
                       >
                         {strategy.user_id === user?.id ? (
                           "This is your strategy"
+                        ) : renting ? (
+                          "Renting..."
                         ) : (
                           <>
                             <ShoppingCart className="h-4 w-4 mr-2" />
-                            Rent Strategy
+                            Rent Free — Fees on Profit
                           </>
                         )}
                       </Button>
