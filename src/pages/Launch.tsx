@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Rocket, TrendingUp, Users, Flame, Copy, ExternalLink,
-  Zap, Shield, BarChart3, Globe, Twitter, MessageCircle
-} from "lucide-react";
+  Rocket, TrendingUp, Users, Flame, Copy, ExternalLink, Zap, Shield, BarChart3, Globe, MessageCircle } from "lucide-react";
+import { Twitter } from "@/lib/icons/brand-icons";
 import { toast } from "sonner";
 
 const TOKEN_DATA = {

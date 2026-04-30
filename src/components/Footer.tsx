@@ -7,44 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { CRISIS_HELPLINES } from "@/lib/fees/platformFees";
 import CustomerFeedbackForm from "@/components/feedback/CustomerFeedbackForm";
 import { 
-  Zap, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Globe, 
-  Shield, 
-  Twitter, 
-  Linkedin, 
-  Youtube,
-  Github,
-  Accessibility,
-  AlertTriangle,
-  MessageCircle,
-  Send,
-  Activity,
-  LineChart,
-  Crosshair,
-  TrendingUp,
-  Layers,
-  Atom,
-  Brain,
-  Cpu,
-  FlaskConical,
-  Target,
-  ShoppingCart,
-  LayoutGrid,
-  BarChart3,
-  Calendar,
-  Newspaper,
-  BellRing,
-  BookOpen,
-  Music,
-  DollarSign,
-  Percent,
-  Bot,
-  Coins,
-  Trophy
-} from "lucide-react";
+  Zap, Mail, Phone, MapPin, Globe, Shield, Accessibility, AlertTriangle, MessageCircle, Send, Activity, LineChart, Crosshair, TrendingUp, Layers, Atom, Brain, Cpu, FlaskConical, Target, ShoppingCart, LayoutGrid, BarChart3, Calendar, Newspaper, BellRing, BookOpen, Music, DollarSign, Percent, Bot, Coins, Trophy } from "lucide-react";
+import { Twitter, Linkedin, Youtube, Github } from "@/lib/icons/brand-icons";
 
 const AdminFooterLink = () => {
   const { isAdmin } = useAdminAuth();

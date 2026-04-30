@@ -5,29 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Music, 
-  Radio, 
-  Headphones, 
-  Play, 
-  ExternalLink,
-  Link2,
-  Check,
-  Twitter,
-  Instagram,
-  Youtube,
-  Linkedin,
-  MessageCircle,
-  Send,
-  Globe,
-  Podcast,
-  Mic2,
-  Volume2,
-  Sparkles,
-  Facebook,
-  Video,
-  Ghost,
-  Camera
-} from "lucide-react";
+  Music, Radio, Headphones, Play, ExternalLink, Link2, Check, MessageCircle, Send, Globe, Podcast, Mic2, Volume2, Sparkles, Video, Ghost, Camera } from "lucide-react";
+import { Twitter, Instagram, Youtube, Linkedin, Facebook } from "@/lib/icons/brand-icons";
 import { useState } from "react";
 import { toast } from "sonner";
 

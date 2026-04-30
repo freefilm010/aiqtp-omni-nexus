@@ -3,10 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Rocket, TrendingUp, Users, DollarSign, Shield, Zap,
-  BarChart3, Globe, ArrowRight, Star, Flame, Bot,
-  Twitter, MessageCircle, Copy
-} from "lucide-react";
+  Rocket, TrendingUp, Users, DollarSign, Shield, Zap, BarChart3, Globe, ArrowRight, Star, Flame, Bot, MessageCircle, Copy } from "lucide-react";
+import { Twitter } from "@/lib/icons/brand-icons";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 

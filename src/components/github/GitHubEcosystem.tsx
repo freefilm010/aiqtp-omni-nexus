@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExternalLink, Github, Code2, Star, GitFork } from 'lucide-react';
+import { ExternalLink, Code2, Star, GitFork } from "lucide-react";
+import { Github } from "@/lib/icons/brand-icons";
 import { GITHUB_REPOSITORIES, GITHUB_USERNAME, getTotalRepoCount, type GitHubRepo } from '@/lib/github/repositories';
 
 const GitHubEcosystem = () => {

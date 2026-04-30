@@ -12,9 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  Users, Plus, Twitter, Youtube, Instagram, Send as TelegramIcon,
-  TrendingUp, DollarSign, UserPlus, Gift, Star, Crown, Diamond
-} from "lucide-react";
+  Users, Plus, Send as TelegramIcon, TrendingUp, DollarSign, UserPlus, Gift, Star, Crown, Diamond } from "lucide-react";
+import { Twitter, Youtube, Instagram } from "@/lib/icons/brand-icons";
 
 interface Influencer {
   id: string;
