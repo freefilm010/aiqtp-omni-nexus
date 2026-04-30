@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import {
   DollarSign,
   TrendingUp,
@@ -451,7 +452,7 @@ const WalletAssets = () => {
                             BTC: "bitcoin", ETH: "ethereum", SOL: "solana", USDT: "ethereum"
                           };
                           try {
-                            const { data: { user } } = await supabase.auth.getUser();
+                            const user = await getCachedUser();
                             if (user) {
                               const network = networkMap[coin] || coin.toLowerCase();
                               const { data: quAddrs } = await supabase

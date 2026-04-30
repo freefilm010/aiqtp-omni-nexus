@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { ArrowRight, ArrowLeftRight, Shield, Clock, CheckCircle, Loader2, AlertTriangle, Zap } from "lucide-react";
 
 interface BridgeTransaction {
@@ -41,7 +42,7 @@ const CrossChainBridge = () => {
   const [userNfts, setUserNfts] = useState<UserNFT[]>([]);
 
   const loadUserNfts = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) return;
 
     const { data } = await supabase

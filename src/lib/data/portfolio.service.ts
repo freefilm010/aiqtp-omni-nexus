@@ -3,11 +3,12 @@
  * Single source of truth for portfolio_holdings and trade_logs queries.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import type { ServiceResult, Holding, TradeLog, PortfolioHoldingRow, TradeLogRow } from "./types";
 
 /** Get the current authenticated user's ID, or null. */
 async function currentUserId(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   return user?.id ?? null;
 }
 

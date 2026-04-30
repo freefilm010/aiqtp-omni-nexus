@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 interface Suggestion {
   id: string;
   title: string;
@@ -64,7 +65,7 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
       .order(sortBy === "votes" ? "votes" : "created_at", { ascending: false }) as any;
     if (data) setSuggestions(data);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (user) {
       const { data: myVotes } = await supabase
         .from("suggestion_votes" as any)
@@ -78,7 +79,7 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
   useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
 
   const handleVote = async (id: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) { toast.error("Sign in to vote"); return; }
 
     if (voted.includes(id)) {
@@ -96,7 +97,7 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
 
   const handleSubmit = async () => {
     if (!newTitle.trim() || !newDesc.trim()) { toast.error("Please fill in all fields"); return; }
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) { toast.error("Sign in first"); return; }
 
     const category = marketType === "nft" ? "NFT" : marketType === "strategy" ? "Strategy" : marketType === "token" ? "Token" : "Platform";

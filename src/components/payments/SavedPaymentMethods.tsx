@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { CreditCard, Plus, Star, Trash2, Edit2, Check, Wallet } from "lucide-react";
 
 interface SavedMethod {
@@ -42,7 +43,7 @@ const SavedPaymentMethods = () => {
   }, []);
 
   const loadMethods = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) { setLoading(false); return; }
 
     const { data } = await supabase
@@ -65,7 +66,7 @@ const SavedPaymentMethods = () => {
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in to save payment methods", variant: "destructive" });
       return;
@@ -114,7 +115,7 @@ const SavedPaymentMethods = () => {
   };
 
   const handleSetDefault = async (id: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) return;
 
     // Unset all defaults first

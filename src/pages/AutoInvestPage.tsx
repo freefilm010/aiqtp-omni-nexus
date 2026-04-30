@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { formatEngineMix, formatEngineStrategy } from "@/lib/autoInvest/deploymentPlan";
 import {
   Brain,
@@ -103,7 +104,7 @@ const AutoInvestPage = () => {
 
   const fetchEngine = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
 
     if (!user) {
       setEngine(null);

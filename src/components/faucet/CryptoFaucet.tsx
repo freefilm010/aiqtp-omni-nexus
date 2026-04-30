@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import {
   Gem, Zap, Star, Flame, Shield, TrendingUp, RefreshCw,
   CircleDollarSign, Coins, Bot, Layers, Lock, Bolt, Hexagon
@@ -134,7 +135,7 @@ const CryptoFaucet = () => {
 
   const loadClaims = useCallback(async () => {
     const loadVersion = ++claimsLoadVersionRef.current;
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) { setLoading(false); return; }
     setUserId(user.id);
 

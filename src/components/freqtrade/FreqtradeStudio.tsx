@@ -15,6 +15,7 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 interface FreqtradeBot {
   id: string;
   name: string;
@@ -54,7 +55,7 @@ const FreqtradeStudio = () => {
   const [botName, setBotName] = useState('New Bot');
 
   const loadBots = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) { setLoading(false); return; }
 
     const { data } = await supabase
@@ -93,7 +94,7 @@ const FreqtradeStudio = () => {
   };
 
   const createBot = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCachedUser();
     if (!user) { toast.error("Sign in first"); return; }
 
     const { error } = await supabase.from("trading_bots" as any).insert({

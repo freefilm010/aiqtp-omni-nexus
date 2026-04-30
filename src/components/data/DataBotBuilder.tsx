@@ -36,6 +36,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 interface DataBot {
   id: string;
   name: string;
@@ -115,7 +116,7 @@ const DataBotBuilder = () => {
   }, []);
 
   const loadBots = async () => {
-    const { data: userData } = await supabase.auth.getUser();
+    const userData = { user: await getCachedUser() };
     const currentUser = userData.user;
 
     if (!currentUser) {
@@ -149,7 +150,7 @@ const DataBotBuilder = () => {
       return;
     }
 
-    const { data: userData } = await supabase.auth.getUser();
+    const userData = { user: await getCachedUser() };
     if (!userData.user) {
       toast.error('Please sign in to create a bot');
       return;
