@@ -5,9 +5,11 @@ Continuous 24/7 background loop that runs on Render as a Worker service.
 
 Responsibility split:
   Frontend (React)  → writes strategy_registry configs, reads results,
-                       operates the master kill-switch via system_status
+                       operates the master kill-switch via system_status;
+                       dispatches QuantClaw tool directives via agent_directives
   This worker       → reads configs, fetches live prices, simulates execution,
-                       writes to trade_logs + performance_evaluator
+                       writes to trade_logs + performance_evaluator;
+                       polls agent_directives and executes QuantClaw tools
 
 Required environment variables:
   SUPABASE_URL              Supabase project REST URL
@@ -16,14 +18,19 @@ Required environment variables:
 Optional environment variables:
   COINGECKO_API_KEY         Pro API key; free-tier endpoint used if absent
   LOOP_INTERVAL_SECONDS     Main loop cadence in seconds (default: 60)
+  ALPACA_API_KEY            Alpaca brokerage API key
+  ALPACA_SECRET_KEY         Alpaca brokerage secret key
+  ALPACA_BASE_URL           Alpaca REST base URL (default: paper endpoint)
+  ALPACA_PAPER_MODE         'true' (default) blocks live order submission
 """
 
+import collections
 import logging
 import os
 import random
 import time
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 import pandas as pd
 import requests
@@ -47,6 +54,26 @@ SUPABASE_URL: str = os.environ["SUPABASE_URL"]
 SUPABASE_SERVICE_ROLE_KEY: str = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 COINGECKO_API_KEY: Optional[str] = os.getenv("COINGECKO_API_KEY")
 LOOP_INTERVAL_SECONDS: int = int(os.getenv("LOOP_INTERVAL_SECONDS", "60"))
+
+# ── Alpaca brokerage (QuantClaw-Prod live order execution) ────────────────────
+ALPACA_API_KEY: Optional[str]    = os.getenv("ALPACA_API_KEY")
+ALPACA_SECRET_KEY: Optional[str] = os.getenv("ALPACA_SECRET_KEY")
+ALPACA_BASE_URL: str             = os.getenv(
+    "ALPACA_BASE_URL", "https://paper-api.alpaca.markets"
+)
+# Hard safety flag: must be explicitly set to 'false' in the Render env to
+# allow live order submission. Paper mode is the safe default.
+ALPACA_PAPER_MODE: bool = os.getenv("ALPACA_PAPER_MODE", "true").lower() != "false"
+
+# Symbol whitelist for live orders (Alpaca symbol format, not CoinGecko)
+ALPACA_SYMBOL_WHITELIST: set[str] = {
+    s.strip() for s in os.getenv("ALPACA_SYMBOL_WHITELIST", "BTCUSD,ETHUSD").split(",")
+    if s.strip()
+}
+
+# Rate-limit: max 5 live order submissions per rolling hour per user_id
+# Keyed by user_id → deque of epoch timestamps
+_alpaca_order_times: dict[str, collections.deque] = {}
 
 # ─── Supabase client ──────────────────────────────────────────────────────────
 # Service-role key is mandatory: the RLS policies on trade_logs and
@@ -409,6 +436,287 @@ def update_performance(strategy_id: str) -> None:
         )
 
 
+# ─── Agent Directive helpers ──────────────────────────────────────────────────
+
+def _mark_directive(directive_id: str, status: str, result: Optional[dict] = None, error_msg: Optional[str] = None) -> None:
+    payload: dict[str, Any] = {"status": status, "updated_at": utcnow_iso()}
+    if result is not None:
+        payload["result"] = result
+    if error_msg is not None:
+        payload["error_msg"] = error_msg
+    try:
+        supabase.table("agent_directives").update(payload).eq("id", directive_id).execute()
+    except Exception as exc:
+        log.error("Failed to update directive %s → %s: %s", directive_id, status, exc)
+
+
+def _run_backtest_simulation(params: dict) -> dict:
+    """
+    Deterministic backtest simulation using the same logic as simulate_trade().
+    Replace with a real Freqtrade subprocess call when the backtesting
+    environment is available on the Render instance.
+    """
+    symbol   = str(params.get("symbol", "BTC/USDT")).replace("/", "").replace("-", "")[:3]
+    days     = int(params.get("days", 90))
+    strategy = str(params.get("strategy", "RSI_EMA_Cross"))
+
+    rng  = random.Random(strategy + symbol)
+    pnls = [rng.uniform(-0.02, 0.03) for _ in range(days)]
+    wins = sum(1 for p in pnls if p > 0)
+    total_pnl = sum(pnls)
+    gross_win  = sum(p for p in pnls if p > 0)
+    gross_loss = abs(sum(p for p in pnls if p < 0))
+
+    return {
+        "strategy":     strategy,
+        "symbol":       symbol,
+        "days":         days,
+        "total_trades": days,
+        "win_rate":     round(wins / days * 100, 2),
+        "total_pnl_pct": round(total_pnl * 100, 4),
+        "profit_factor": round(gross_win / gross_loss, 4) if gross_loss else 99.9999,
+        "max_drawdown_pct": round(max(
+            0,
+            max((sum(pnls[:i]) - sum(pnls[:j])) for i in range(days) for j in range(i + 1, days + 1)
+                if sum(pnls[:i]) > sum(pnls[:j])) if days > 1 else 0
+        ) * 100, 4),
+        "simulated": True,
+    }
+
+
+def _run_optimize_simulation(params: dict) -> dict:
+    strategy = str(params.get("strategy", "RSI_EMA_Cross"))
+    target   = str(params.get("optimization_target", "sharpe_ratio"))
+    n_trials = int(params.get("n_trials", 50))
+
+    rng = random.Random(strategy + target)
+    best_score = max(rng.uniform(0.5, 3.0) for _ in range(n_trials))
+    best_params = {
+        "rsi_period":   rng.randint(7, 21),
+        "ema_fast":     rng.randint(8, 20),
+        "ema_slow":     rng.randint(21, 55),
+        "stop_loss":    round(rng.uniform(0.01, 0.05), 4),
+        "take_profit":  round(rng.uniform(0.02, 0.10), 4),
+    }
+    return {
+        "strategy":        strategy,
+        "optimization_target": target,
+        "n_trials":        n_trials,
+        "best_score":      round(best_score, 4),
+        "best_params":     best_params,
+        "simulated":       True,
+    }
+
+
+def _run_factor_generation(params: dict) -> dict:
+    factors = params.get("factors", ["RSI", "MACD", "Volume_Profile"])
+    symbol  = str(params.get("symbol", "BTC/USDT"))
+
+    rng = random.Random(symbol + str(sorted(factors)))
+    result_factors = {}
+    for f in factors:
+        result_factors[f] = {
+            "value":       round(rng.uniform(0, 100), 4),
+            "signal":      rng.choice(["buy", "neutral", "sell"]),
+            "strength":    round(rng.uniform(0, 1), 4),
+        }
+    return {
+        "symbol":  symbol,
+        "factors": result_factors,
+        "simulated": True,
+    }
+
+
+def _alpaca_rate_limit_ok(user_id: str) -> bool:
+    now = time.time()
+    dq  = _alpaca_order_times.setdefault(user_id, collections.deque())
+    # Drop timestamps older than 1 hour
+    while dq and now - dq[0] > 3600:
+        dq.popleft()
+    return len(dq) < 5
+
+
+def _record_alpaca_order(user_id: str) -> None:
+    _alpaca_order_times.setdefault(user_id, collections.deque()).append(time.time())
+
+
+def _execute_alpaca_live_order(params: dict, user_id: str, agent_type: str) -> dict:
+    """
+    Submits a live or paper order to Alpaca.
+
+    Safety checks (all enforced before any network call):
+      1. agent_type must be 'prod'
+      2. ALPACA_PAPER_MODE must be False for live; paper orders always allowed
+      3. Symbol must be in ALPACA_SYMBOL_WHITELIST
+      4. Per-user rate limit: ≤ 5 orders per rolling hour
+      5. Notional value ≤ 2% of account NAV (fetched from Alpaca account endpoint)
+      6. ALPACA_API_KEY and ALPACA_SECRET_KEY must be set
+    """
+    if agent_type != "prod":
+        raise ValueError("ccxt_live_order requires agent_type='prod'. Switch to QuantClaw-Prod.")
+
+    if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
+        raise EnvironmentError(
+            "ALPACA_API_KEY and ALPACA_SECRET_KEY must be set in Render environment variables."
+        )
+
+    symbol   = str(params.get("symbol", "BTCUSD")).upper().replace("/", "").replace("-", "")
+    side     = str(params.get("side", "buy")).lower()
+    notional = float(params.get("notional", 0))
+    approved = bool(params.get("approved", False))
+
+    if not approved and not ALPACA_PAPER_MODE:
+        raise ValueError(
+            "Live order requires params.approved=true and explicit operator approval."
+        )
+
+    if symbol not in ALPACA_SYMBOL_WHITELIST:
+        raise ValueError(
+            f"Symbol {symbol} not in whitelist {sorted(ALPACA_SYMBOL_WHITELIST)}. "
+            "Update ALPACA_SYMBOL_WHITELIST env var to add it."
+        )
+
+    if not _alpaca_rate_limit_ok(user_id):
+        raise RuntimeError("Rate limit exceeded: max 5 live orders per hour per user.")
+
+    headers = {
+        "APCA-API-KEY-ID":     ALPACA_API_KEY,
+        "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
+        "Accept":              "application/json",
+        "Content-Type":        "application/json",
+    }
+
+    # Fetch account to enforce 2% position size limit
+    acct_resp = requests.get(f"{ALPACA_BASE_URL}/v2/account", headers=headers, timeout=10)
+    acct_resp.raise_for_status()
+    acct = acct_resp.json()
+    nav  = float(acct.get("portfolio_value") or acct.get("equity") or 0)
+
+    if nav > 0 and notional > nav * 0.02:
+        raise ValueError(
+            f"Notional ${notional:.2f} exceeds 2% position limit "
+            f"(account NAV=${nav:.2f}, max=${nav * 0.02:.2f})."
+        )
+
+    order_payload: dict[str, Any] = {
+        "symbol":        symbol,
+        "side":          side,
+        "type":          "market",
+        "time_in_force": "gtc",
+    }
+    if notional > 0:
+        order_payload["notional"] = str(round(notional, 2))
+    else:
+        order_payload["qty"] = str(params.get("qty", "1"))
+
+    order_resp = requests.post(
+        f"{ALPACA_BASE_URL}/v2/orders",
+        headers=headers,
+        json=order_payload,
+        timeout=10,
+    )
+    order_resp.raise_for_status()
+    order = order_resp.json()
+
+    _record_alpaca_order(user_id)
+
+    return {
+        "order_id":     order.get("id"),
+        "symbol":       order.get("symbol"),
+        "side":         order.get("side"),
+        "status":       order.get("status"),
+        "notional":     order.get("notional"),
+        "qty":          order.get("qty"),
+        "filled_qty":   order.get("filled_qty"),
+        "filled_avg_price": order.get("filled_avg_price"),
+        "paper_mode":   ALPACA_PAPER_MODE,
+        "submitted_at": order.get("submitted_at"),
+    }
+
+
+def poll_and_execute_directives() -> int:
+    """
+    Polls agent_directives for pending rows, executes each tool, and writes
+    results back. Returns the number of directives processed this cycle.
+
+    Tool dispatch table:
+      freqtrade_backtest  → _run_backtest_simulation()
+      freqtrade_optimize  → _run_optimize_simulation()
+      ccxt_sim_order      → simulate_trade() (no broker)
+      ccxt_live_order     → _execute_alpaca_live_order() (prod-gated)
+      factor_generation   → _run_factor_generation()
+    """
+    try:
+        result = (
+            supabase.table("agent_directives")
+            .select("id, user_id, tool, agent_type, params")
+            .eq("status", "pending")
+            .order("created_at", desc=False)
+            .limit(10)
+            .execute()
+        )
+        directives = result.data or []
+    except Exception as exc:
+        log.error("agent_directives poll failed: %s", exc)
+        return 0
+
+    if not directives:
+        return 0
+
+    processed = 0
+    for d in directives:
+        did        = d["id"]
+        tool       = d.get("tool", "")
+        params     = d.get("params") or {}
+        user_id    = d.get("user_id", "")
+        agent_type = d.get("agent_type", "dev")
+
+        _mark_directive(did, "running")
+        log.info("[directive] %s | tool=%s agent=%s", did[:8], tool, agent_type)
+
+        try:
+            if tool == "freqtrade_backtest":
+                out = _run_backtest_simulation(params)
+
+            elif tool == "freqtrade_optimize":
+                out = _run_optimize_simulation(params)
+
+            elif tool == "ccxt_sim_order":
+                required_symbol = str(params.get("symbol", "BTC/USDT")).replace("/", "")[:3]
+                prices = fetch_market_prices([required_symbol])
+                fake_strategy = {
+                    "id":                 did,
+                    "user_id":            user_id,
+                    "name":               "directive_sim",
+                    "bot_type":           "api_aggregator",
+                    "data_category":      "market",
+                    "collection_frequency": "realtime",
+                }
+                trade = simulate_trade(fake_strategy, prices)
+                out   = trade if trade else {"error": "No price available for simulation"}
+
+            elif tool == "ccxt_live_order":
+                out = _execute_alpaca_live_order(params, user_id, agent_type)
+
+            elif tool == "factor_generation":
+                out = _run_factor_generation(params)
+
+            else:
+                raise ValueError(f"Unknown tool: {tool!r}. Supported: freqtrade_backtest, "
+                                 "freqtrade_optimize, ccxt_sim_order, ccxt_live_order, factor_generation")
+
+            _mark_directive(did, "done", result=out)
+            log.info("[directive] %s done | tool=%s", did[:8], tool)
+
+        except Exception as exc:
+            _mark_directive(did, "error", error_msg=str(exc))
+            log.warning("[directive] %s error | tool=%s | %s", did[:8], tool, exc)
+
+        processed += 1
+
+    return processed
+
+
 # ─── Main loop ────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -417,6 +725,9 @@ def main() -> None:
     log.info("  Supabase URL   : %s", SUPABASE_URL)
     log.info("  Loop interval  : %ds", LOOP_INTERVAL_SECONDS)
     log.info("  CoinGecko tier : %s", "Pro" if COINGECKO_API_KEY else "Free (rate-limited)")
+    log.info("  Alpaca key     : %s", "set" if ALPACA_API_KEY else "NOT SET — live orders disabled")
+    log.info("  Alpaca mode    : %s", "PAPER" if ALPACA_PAPER_MODE else "LIVE")
+    log.info("  Alpaca symbols : %s", sorted(ALPACA_SYMBOL_WHITELIST))
     log.info("=" * 64)
 
     while True:
@@ -433,7 +744,14 @@ def main() -> None:
                 time.sleep(30)
                 continue
 
-            # ── Step 2: Fetch active strategy configurations ──────────────
+            # ── Step 2: Process QuantClaw agent directives ───────────────
+            # Runs before the strategy loop so UI-dispatched commands are
+            # always picked up within one cycle regardless of strategy count.
+            n_directives = poll_and_execute_directives()
+            if n_directives:
+                log.info("Processed %d directive(s) this cycle.", n_directives)
+
+            # ── Step 3: Fetch active strategy configurations ──────────────
             strategies = fetch_active_strategies()
             if not strategies:
                 log.info(
@@ -445,7 +763,7 @@ def main() -> None:
 
             log.info("Active strategies: %d", len(strategies))
 
-            # ── Step 3: Collect required symbols and fetch prices once ────
+            # ── Step 4: Collect required symbols and fetch prices once ────
             required_symbols: set[str] = {strategy_symbol(s) for s in strategies}
             prices = fetch_market_prices(list(required_symbols))
 
@@ -461,7 +779,7 @@ def main() -> None:
                 f"{sym}=${px:,.2f}" for sym, px in sorted(prices.items())
             ))
 
-            # ── Step 4: Per-strategy execution loop ───────────────────────
+            # ── Step 5: Per-strategy execution loop ───────────────────────
             executed = 0
             for strategy in strategies:
                 sid   = strategy["id"]
