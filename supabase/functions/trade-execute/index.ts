@@ -290,7 +290,7 @@ serve(async (req) => {
           action: 'settle_trade',
           symbol: symbol ?? null,
           status: 'success',
-          realized_pnl_usd: realizedPnlUsd,
+          price: realizedPnlUsd,
           exchange_order_id: tradeRef ?? null,
           created_at: new Date().toISOString(),
         });
