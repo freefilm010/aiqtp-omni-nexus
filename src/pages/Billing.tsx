@@ -35,8 +35,8 @@ export default function Billing() {
   const [depositOpen, setDepositOpen] = useState(false);
 
   useEffect(() => {
-    Promise.resolve(getCachedUser()).then((user) => { const data = { user };
-      if (data.user) setUser({ id: data.user.id, email: data.user.email ?? undefined });
+    getCachedUser().then((u) => {
+      if (u) setUser({ id: u.id, email: u.email ?? undefined });
     });
   }, []);
 
