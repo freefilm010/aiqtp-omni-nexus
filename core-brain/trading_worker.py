@@ -66,7 +66,10 @@ ALPACA_BASE_URL: str             = os.getenv(
 ALPACA_PAPER_MODE: bool = os.getenv("ALPACA_PAPER_MODE", "true").lower() != "false"
 
 ALPACA_SYMBOL_WHITELIST: set[str] = {
-    s.strip() for s in os.getenv("ALPACA_SYMBOL_WHITELIST", "BTCUSD,ETHUSD").split(",")
+    s.strip() for s in os.getenv(
+        "ALPACA_SYMBOL_WHITELIST",
+        "BTCUSD,ETHUSD,SOLUSD,AVAXUSD,LINKUSD,USDCUSD,USDTUSD,MATICUSD,DOTUSD,ADAUSD"
+    ).split(",")
     if s.strip()
 }
 
@@ -371,6 +374,53 @@ def log_trade(trade: dict) -> bool:
     except Exception as exc:
         log.error("trade_logs insert failed: %s | row=%s", exc, trade)
         return False
+
+
+def collect_platform_fee(trade: dict) -> None:
+    """
+    If the trade closed with a positive net PnL, debit the tiered platform fee
+    (9% / 6% / 3% / 1%) from the user's USD balance via the record-profit-fee
+    edge function.  Errors are logged but never propagate — fee collection must
+    never crash the main trading loop.
+    """
+    net_pnl = trade.get("realized_pnl_usd", 0.0)
+    if not isinstance(net_pnl, (int, float)) or net_pnl <= 0:
+        return
+
+    user_id = trade.get("user_id", "")
+    symbol  = trade.get("symbol", "")
+    # Build a stable, idempotent trade reference so duplicate calls are no-ops
+    trade_ref = f"{trade.get('strategy_id','')}-{trade.get('closed_at','')}-{symbol}"
+
+    try:
+        resp = requests.post(
+            f"{SUPABASE_URL}/functions/v1/record-profit-fee",
+            headers={
+                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                "Content-Type":  "application/json",
+            },
+            json={
+                "userId":         user_id,
+                "rentalId":       None,
+                "grossProfitUsd": round(float(net_pnl), 4),
+                "tradeRef":       trade_ref,
+                "symbol":         symbol,
+            },
+            timeout=10,
+        )
+        if resp.ok:
+            body = resp.json()
+            log.info(
+                "[fee] Collected platform fee for user=%s  pnl=$%.4f  feeEventId=%s",
+                user_id, net_pnl, body.get("feeEventId", "?"),
+            )
+        else:
+            log.warning(
+                "[fee] record-profit-fee returned %d: %s  user=%s",
+                resp.status_code, resp.text[:200], user_id,
+            )
+    except Exception as exc:
+        log.warning("[fee] collect_platform_fee failed (non-fatal): %s", exc)
 
 
 def update_performance(strategy_id: str) -> None:
@@ -833,6 +883,9 @@ def main() -> None:
                 # Persist to trade_logs
                 if not log_trade(trade):
                     continue
+
+                # Collect platform profit fee (9/6/3/1% tier) on winning trades
+                collect_platform_fee(trade)
 
                 # Update in-memory state only after a confirmed write
                 _last_run_at[sid]          = time.time()

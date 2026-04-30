@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, Wallet, Percent, ShieldCheck } from "lucide-react";
+import { Check, Wallet, Percent, ShieldCheck, ArrowUpRight, Loader2, TrendingUp, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
@@ -28,17 +30,73 @@ const PROFIT_FEE_TIERS = [
   { range: "$1,000,000+", fee: "1%" },
 ];
 
+type FeeEvent = {
+  id: string;
+  gross_profit_usd: number;
+  fee_rate: number;
+  platform_fee_usd: number;
+  symbol: string | null;
+  status: string;
+  created_at: string;
+};
+
 export default function Billing() {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const { openCheckout, closeCheckout, isOpen, checkoutElement } = useStripeCheckout();
   const [depositAmount, setDepositAmount] = useState("20");
   const [depositOpen, setDepositOpen] = useState(false);
 
+  // Withdrawal state
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("20");
+  const [withdrawType, setWithdrawType] = useState("bank_ach");
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+
+  // Fee history state
+  const [feeEvents, setFeeEvents] = useState<FeeEvent[]>([]);
+  const [feeLoading, setFeeLoading] = useState(false);
+
   useEffect(() => {
     getCachedUser().then((u) => {
       if (u) setUser({ id: u.id, email: u.email ?? undefined });
     });
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    setFeeLoading(true);
+    supabase
+      .from("platform_fee_events")
+      .select("id, gross_profit_usd, fee_rate, platform_fee_usd, symbol, status, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) setFeeEvents(data as FeeEvent[]);
+        setFeeLoading(false);
+      });
+  }, [user]);
+
+  const handleWithdraw = async () => {
+    const amt = parseFloat(withdrawAmount);
+    if (!amt || amt < 20) { toast.error("Minimum withdrawal is $20"); return; }
+    if (!user) { toast.error("Please sign in first"); return; }
+    setWithdrawLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("request-withdrawal", {
+        body: { amountUsd: amt, destinationType: withdrawType, destinationDetails: {} },
+      });
+      if (error) throw error;
+      toast.success(`Withdrawal of $${amt.toFixed(2)} submitted`, {
+        description: `Withdrawal ID: ${(data as any)?.withdrawalId ?? "pending"}. Processing within 1–3 business days.`,
+      });
+      setWithdrawOpen(false);
+    } catch (e: unknown) {
+      toast.error("Withdrawal failed", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setWithdrawLoading(false);
+    }
+  };
 
   const handleDeposit = () => {
     if (!user) {
@@ -142,29 +200,112 @@ export default function Billing() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Percent className="h-4 w-4 text-primary" />
-              Realized-profit fee tiers
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2 sm:grid-cols-4">
-              {PROFIT_FEE_TIERS.map((tier) => (
-                <div key={tier.range} className="rounded-md border bg-muted/30 p-3 text-center">
-                  <div className="text-2xl font-bold text-primary">{tier.fee}</div>
-                  <div className="text-xs text-muted-foreground">{tier.range}</div>
+        {/* Withdraw + Fee tiers row */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Withdrawal */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ArrowUpRight className="h-4 w-4 text-green-400" />
+                Withdraw Funds
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Request a withdrawal of your USD balance. Minimum $20. Processed within 1–3 business days.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                {["20", "100", "500"].map((amt) => (
+                  <Button key={amt} variant="outline" size="sm"
+                    onClick={() => { setWithdrawAmount(amt); setWithdrawOpen(true); }}>
+                    ${amt}
+                  </Button>
+                ))}
+              </div>
+              <Button variant="outline" className="w-full gap-2" onClick={() => setWithdrawOpen(true)}>
+                <ArrowUpRight className="h-4 w-4" />
+                Custom withdrawal
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Fee tiers */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Percent className="h-4 w-4 text-primary" />
+                Realized-profit fee tiers
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {PROFIT_FEE_TIERS.map((tier) => (
+                  <div key={tier.range} className="rounded-md border bg-muted/30 p-2 text-center">
+                    <div className="text-xl font-bold text-primary">{tier.fee}</div>
+                    <div className="text-[11px] text-muted-foreground">{tier.range}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                No profit from a bot = no fee. Deducted automatically from your USD balance.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Profit fee history */}
+        {user && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Profit Fee History
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Platform fees collected from your winning trades (most recent 20)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {feeLoading ? (
+                <div className="flex items-center gap-2 py-4 text-muted-foreground text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
                 </div>
-              ))}
-            </div>
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>• <strong>Strategy bots:</strong> $0 to initiate; fees apply only to realized profits.</p>
-              <p>• <strong>Deposits:</strong> Stripe is used only to fund the user's USD balance. Deposits are not subscription products.</p>
-              <p>• <strong>Minimum:</strong> $20 investment minimum; network, gas, and transfer fees apply at actual cost.</p>
-            </div>
-          </CardContent>
-        </Card>
+              ) : feeEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No fee events yet — fees are collected after your first profitable trade.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {feeEvents.map(ev => (
+                    <div key={ev.id} className="flex items-center justify-between p-2 rounded bg-muted/20 text-xs">
+                      <div className="flex items-center gap-3">
+                        <DollarSign className="h-3 w-3 text-green-400 shrink-0" />
+                        <div>
+                          <p className="font-medium">
+                            Profit: <span className="text-green-400">${ev.gross_profit_usd.toFixed(2)}</span>
+                            {ev.symbol && <span className="text-muted-foreground ml-1">({ev.symbol})</span>}
+                          </p>
+                          <p className="text-muted-foreground">{new Date(ev.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-destructive">-${ev.platform_fee_usd.toFixed(2)}</p>
+                        <Badge variant="outline" className={`text-[10px] ${
+                          ev.status === "collected" ? "border-green-500/30 text-green-400" :
+                          ev.status === "admin_exempt" ? "border-blue-500/30 text-blue-400" :
+                          "border-destructive/30 text-destructive"
+                        }`}>
+                          {(ev.fee_rate * 100).toFixed(0)}% · {ev.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </main>
       <Footer />
 
@@ -187,20 +328,45 @@ export default function Billing() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="deposit-amount">Amount in USD</Label>
-              <Input
-                id="deposit-amount"
-                type="number"
-                min={20}
-                max={10000}
-                step="0.01"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                placeholder="20.00"
-              />
+              <Input id="deposit-amount" type="number" min={20} max={10000} step="0.01"
+                value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="20.00" />
               <p className="text-xs text-muted-foreground">Min $20, max $10,000.</p>
             </div>
-            <Button onClick={handleDeposit} className="w-full">
-              Continue to checkout
+            <Button onClick={handleDeposit} className="w-full">Continue to checkout</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Withdrawal dialog */}
+      <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Withdraw Funds</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Amount (USD)</Label>
+              <Input type="number" min={20} step="0.01"
+                value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} placeholder="20.00" />
+            </div>
+            <div className="space-y-2">
+              <Label>Destination</Label>
+              <Select value={withdrawType} onValueChange={setWithdrawType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_ach">Bank ACH Transfer</SelectItem>
+                  <SelectItem value="stripe_payout">Stripe Payout</SelectItem>
+                  <SelectItem value="crypto">Crypto Wallet</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Minimum $20. Admin reviews and processes withdrawals within 1–3 business days.
+            </p>
+            <Button onClick={handleWithdraw} disabled={withdrawLoading} className="w-full gap-2">
+              {withdrawLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUpRight className="h-4 w-4" />}
+              Submit Withdrawal Request
             </Button>
           </div>
         </DialogContent>
