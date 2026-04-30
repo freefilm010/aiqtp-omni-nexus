@@ -15,7 +15,6 @@ import { User, Save, Trophy, Flame, Link2, Twitter, Github, Globe, Upload } from
 
 interface Profile {
   username: string;
-  full_name: string;
   avatar_url: string;
   bio: string;
   social_links: { twitter?: string; github?: string; website?: string };
@@ -25,7 +24,7 @@ interface Profile {
 const ProfilePage = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile>({
-    username: "", full_name: "", avatar_url: "", bio: "",
+    username: "", avatar_url: "", bio: "",
     social_links: {}, display_badge: "",
   });
   const [saving, setSaving] = useState(false);
@@ -38,7 +37,6 @@ const ProfilePage = () => {
       if (data) {
         setProfile({
           username: data.username || "",
-          full_name: data.full_name || "",
           avatar_url: data.avatar_url || "",
           bio: data.bio || "",
           social_links: (typeof data.social_links === 'object' && data.social_links) || {},
@@ -77,7 +75,7 @@ const ProfilePage = () => {
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
       username: profile.username || null,
-      full_name: profile.full_name || null,
+      full_name: null,
       avatar_url: profile.avatar_url || null,
       bio: profile.bio || "",
       social_links: profile.social_links,
@@ -120,7 +118,7 @@ const ProfilePage = () => {
                 <div className="relative group">
                   <Avatar className="h-16 w-16">
                     <AvatarImage src={profile.avatar_url} />
-                    <AvatarFallback className="text-lg">{(profile.username || profile.full_name || "?")[0]?.toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="text-lg">{(profile.username || "?")[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                     <Upload className="h-5 w-5 text-white" />
@@ -129,14 +127,10 @@ const ProfilePage = () => {
                 </div>
                 <div className="flex-1 space-y-2">
                   <div>
-                    <Label>Username (public)</Label>
-                    <Input value={profile.username} onChange={e => setProfile(p => ({ ...p, username: e.target.value }))} placeholder="TokenMac1" />
+                    <Label>Profile Name</Label>
+                    <Input value={profile.username} onChange={e => setProfile(p => ({ ...p, username: e.target.value }))} placeholder="profile-name" />
                   </div>
                 </div>
-              </div>
-              <div>
-                <Label>Full Name</Label>
-                <Input value={profile.full_name} onChange={e => setProfile(p => ({ ...p, full_name: e.target.value }))} placeholder="Your name" />
               </div>
               <div>
                 <Label>Bio</Label>
