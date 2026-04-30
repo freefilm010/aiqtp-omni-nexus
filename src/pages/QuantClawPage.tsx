@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2, Play, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2, Play, CheckCircle2, XCircle, Clock, Send, TrendingUp } from "lucide-react";
 import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
 import { useState, useEffect } from "react";
@@ -54,9 +54,22 @@ const WORKER_TOOLS = new Set([
   "freqtrade_backtest",
   "freqtrade_optimize",
   "ccxt_sim_order",
-  "ccxt_live_order",
   "factor_generation",
 ]);
+
+// RAG search tools — invoke qaqi-agent edge function directly (OpenClaw gateway)
+const RAG_TOOLS = new Set([
+  "search_trading_code",
+  "search_quant_research",
+  "search_onchain",
+]);
+
+// Tier filter for each RAG tool
+const RAG_TIER: Record<string, string> = {
+  search_trading_code:  "tier1_tier2",
+  search_quant_research: "tier1_tier3",
+  search_onchain:        "tier2_onchain",
+};
 
 // Default params template per tool (shown in the dispatch panel)
 const DEFAULT_PARAMS: Record<string, Record<string, unknown>> = {
@@ -84,10 +97,20 @@ const QuantClawPage = () => {
   const [marketingPlatform, setMarketingPlatform] = useState("twitter");
   const [marketingAction, setMarketingAction] = useState<"generate_post" | "generate_campaign" | "generate_content">("generate_post");
 
-  // Directive dispatch state
+  // Directive dispatch state (worker tools)
   const [dispatchingTool, setDispatchingTool] = useState<string | null>(null);
   const [dispatchParams, setDispatchParams] = useState<string>("");
   const [activeDirectives, setActiveDirectives] = useState<DirectiveRow[]>([]);
+
+  // RAG search state (OpenClaw qaqi-agent)
+  const [ragTool, setRagTool] = useState<string | null>(null);
+  const [ragQuery, setRagQuery] = useState("");
+  const [ragLoading, setRagLoading] = useState(false);
+  const [ragResult, setRagResult] = useState("");
+
+  // Live order state (alpaca-trading edge function)
+  const [alpacaLoading, setAlpacaLoading] = useState(false);
+  const [alpacaResult, setAlpacaResult] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     // Load recent directives for the current user
@@ -123,12 +146,13 @@ const QuantClawPage = () => {
 
   const submitDirective = async () => {
     if (!dispatchingTool) return;
-    if (dispatchingTool === "ccxt_live_order" && activeAgent !== "prod") {
-      toast.error("ccxt_live_order requires QuantClaw-Prod agent", {
-        description: "Switch to the Prod agent before dispatching live orders.",
-      });
+
+    // ccxt_live_order → alpaca-trading edge function (direct, immediate)
+    if (dispatchingTool === "ccxt_live_order") {
+      await invokeLiveOrder();
       return;
     }
+
     let params: Record<string, unknown> = {};
     try {
       params = JSON.parse(dispatchParams);
@@ -151,6 +175,85 @@ const QuantClawPage = () => {
     } else {
       toast.success(`${dispatchingTool} dispatched to Render Worker`);
       setDispatchingTool(null);
+    }
+  };
+
+  // OpenClaw RAG search — routes through qaqi-agent edge function
+  const invokeRagSearch = async () => {
+    if (!ragTool || !ragQuery.trim()) return;
+    setRagLoading(true);
+    setRagResult("");
+    try {
+      const { data, error } = await supabase.functions.invoke("qaqi-agent", {
+        body: {
+          action: "chat",
+          messages: [{ role: "user", content: ragQuery }],
+          context: {
+            module: "rag_search",
+            tier: RAG_TIER[ragTool],
+            tool: ragTool,
+            permissions: ["read"],
+          },
+        },
+      });
+      if (error) throw error;
+      const content = data?.response || data?.message || data?.content || JSON.stringify(data, null, 2);
+      setRagResult(content);
+      toast.success("QAQI search complete");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setRagResult(`Error: ${msg}`);
+      toast.error("QAQI search failed", { description: msg });
+    } finally {
+      setRagLoading(false);
+    }
+  };
+
+  // Live order — routes through existing alpaca-trading edge function directly
+  const invokeLiveOrder = async () => {
+    if (activeAgent !== "prod") {
+      toast.error("Switch to QuantClaw-Prod before submitting live orders.");
+      return;
+    }
+    let params: Record<string, unknown> = {};
+    try {
+      params = JSON.parse(dispatchParams);
+    } catch {
+      toast.error("Invalid JSON in params");
+      return;
+    }
+    if (!params.approved) {
+      toast.error("Set approved: true in params to confirm this live order.");
+      return;
+    }
+    setAlpacaLoading(true);
+    setAlpacaResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("alpaca-trading", {
+        body: {
+          action: "place_order",
+          mode: "live",
+          params: {
+            symbol:      params.symbol,
+            side:        params.side,
+            quantity:    params.qty ?? undefined,
+            notional:    params.notional ?? undefined,
+            type:        "market",
+            timeInForce: "gtc",
+          },
+        },
+      });
+      if (error) throw error;
+      setAlpacaResult(data);
+      toast.success("Live order submitted via Alpaca", {
+        description: `${params.side} ${params.symbol}`,
+      });
+      setDispatchingTool(null);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error("Alpaca order failed", { description: msg });
+    } finally {
+      setAlpacaLoading(false);
     }
   };
 
@@ -218,8 +321,8 @@ const QuantClawPage = () => {
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-[hsl(223,18%,9%)] border border-[hsl(222,14%,17%)] flex-wrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="qaqi">QAQI Agent</TabsTrigger>
             <TabsTrigger value="marketing">Marketing</TabsTrigger>
-            
             <TabsTrigger value="rag">RAG Corpus</TabsTrigger>
             <TabsTrigger value="tools">Agent Tools</TabsTrigger>
             <TabsTrigger value="backtest">Backtest</TabsTrigger>
@@ -291,6 +394,106 @@ const QuantClawPage = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ── QAQI Agent Tab — OpenClaw gateway direct interface ──────── */}
+          <TabsContent value="qaqi">
+            <div className="grid gap-4">
+              <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-primary" />
+                    QAQI — Quantum Artificial Qubit Intelligent Agent
+                  </CardTitle>
+                  <CardDescription>
+                    OpenClaw gateway with full platform control · RAG search · market analysis · autonomous execution
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* RAG Search Tools */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {["search_trading_code", "search_quant_research", "search_onchain"].map(tool => (
+                      <Button
+                        key={tool}
+                        variant={ragTool === tool ? "default" : "outline"}
+                        size="sm"
+                        className="gap-1 text-xs justify-start"
+                        onClick={() => { setRagTool(tool); setRagResult(""); }}
+                      >
+                        <Search className="h-3 w-3" />
+                        {tool}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {ragTool && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Searching via <code className="bg-muted px-1 rounded">qaqi-agent</code> ·{" "}
+                        tier: <span className="text-primary">{RAG_TIER[ragTool]}</span>
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder={`e.g. "RSI crossover strategy in freqtrade-strategies"`}
+                          value={ragQuery}
+                          onChange={e => setRagQuery(e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && invokeRagSearch()}
+                          className="bg-background/50 text-sm"
+                        />
+                        <Button size="sm" onClick={invokeRagSearch} disabled={ragLoading} className="shrink-0 gap-1">
+                          {ragLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                          Search
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {ragResult && (
+                    <div className="p-3 rounded-lg bg-background/50 border border-border/50 max-h-80 overflow-y-auto">
+                      <p className="text-xs font-semibold text-primary mb-2">QAQI Response</p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{ragResult}</p>
+                    </div>
+                  )}
+
+                  {/* Direct Alpaca account view */}
+                  <div className="border-t border-border/50 pt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3 text-green-400" />
+                        Alpaca Account (via alpaca-trading edge function)
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 px-2 text-[11px]"
+                        disabled={alpacaLoading}
+                        onClick={async () => {
+                          setAlpacaLoading(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke("alpaca-trading", {
+                              body: { action: "get_account", mode: activeAgent === "prod" ? "live" : "paper" },
+                            });
+                            if (error) throw error;
+                            setAlpacaResult(data);
+                          } catch (e: unknown) {
+                            toast.error("Alpaca account fetch failed", { description: e instanceof Error ? e.message : String(e) });
+                          } finally {
+                            setAlpacaLoading(false);
+                          }
+                        }}
+                      >
+                        {alpacaLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Refresh"}
+                      </Button>
+                    </div>
+                    {alpacaResult && (
+                      <pre className="text-[11px] text-muted-foreground bg-background/50 border border-border/50 rounded p-3 overflow-x-auto max-h-48">
+                        {JSON.stringify(alpacaResult, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="marketing">
@@ -412,19 +615,19 @@ const QuantClawPage = () => {
                 <CardContent>
                   <div className="space-y-2 text-sm">
                     {[
-                      { tool: "search_trading_code",  service: "qaqi-agent edge function (Tier 1+2 RAG)",            worker: false },
-                      { tool: "search_quant_research", service: "aiqtp-agent edge function (Tier 1+3 RAG)",           worker: false },
-                      { tool: "search_onchain",        service: "qaqi-agent edge function (on-chain RAG)",            worker: false },
+                      { tool: "search_trading_code",  service: "qaqi-agent (OpenClaw) → Tier 1+2 RAG",               rag: true  },
+                      { tool: "search_quant_research", service: "qaqi-agent (OpenClaw) → Tier 1+3 RAG",              rag: true  },
+                      { tool: "search_onchain",        service: "qaqi-agent (OpenClaw) → on-chain RAG",               rag: true  },
                       { tool: "freqtrade_backtest",    service: "Render Worker ← agent_directives",                   worker: true  },
                       { tool: "freqtrade_optimize",    service: "Render Worker ← agent_directives",                   worker: true  },
                       { tool: "ccxt_sim_order",        service: "Render Worker ← agent_directives (paper, no broker)", worker: true  },
-                      { tool: "ccxt_live_order",       service: "Render Worker ← agent_directives → Alpaca REST API", worker: true, prod: true },
+                      { tool: "ccxt_live_order",       service: "alpaca-trading edge function → Alpaca live API",     alpaca: true, prod: true },
                       { tool: "social_media_post",     service: "quantclaw-marketing edge function",                  worker: false },
                       { tool: "marketing_campaign",    service: "quantclaw-marketing edge function",                  worker: false },
                       { tool: "content_generator",     service: "quantclaw-marketing edge function",                  worker: false },
                       { tool: "factor_generation",     service: "Render Worker ← agent_directives",                   worker: true  },
                       { tool: "portfolio_optimize",    service: "portfolio/optimization.ts (client-side lib)",        worker: false },
-                    ].map(({ tool, service, worker, prod }) => (
+                    ].map(({ tool, service, worker, rag, alpaca, prod }) => (
                       <div key={tool} className="flex items-center justify-between p-2 rounded bg-background/30 gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <code className="text-primary text-xs shrink-0">{tool}</code>
@@ -436,6 +639,17 @@ const QuantClawPage = () => {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-muted-foreground text-xs hidden sm:inline">{service}</span>
+                          {rag && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-[11px] gap-1 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                              onClick={() => { setRagTool(tool); setRagResult(""); (document.querySelector('[data-value="qaqi"]') as HTMLElement)?.click(); }}
+                            >
+                              <Search className="h-3 w-3" />
+                              Search
+                            </Button>
+                          )}
                           {worker && (
                             <Button
                               size="sm"
@@ -445,6 +659,17 @@ const QuantClawPage = () => {
                             >
                               <Play className="h-3 w-3" />
                               Dispatch
+                            </Button>
+                          )}
+                          {alpaca && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-[11px] gap-1 border-green-500/30 text-green-400 hover:bg-green-500/10"
+                              onClick={() => openDispatch(tool)}
+                            >
+                              <TrendingUp className="h-3 w-3" />
+                              Trade
                             </Button>
                           )}
                         </div>
