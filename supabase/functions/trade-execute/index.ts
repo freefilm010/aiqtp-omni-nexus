@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 interface TradeRequest {
-  action: 'place_order' | 'cancel_order' | 'get_orders' | 'get_positions';
+  action: 'place_order' | 'cancel_order' | 'get_orders' | 'get_positions' | 'settle_trade';
   params: {
     symbol?: string;
     side?: 'buy' | 'sell';
@@ -19,6 +19,9 @@ interface TradeRequest {
     mode?: 'paper' | 'live';
     exchangeAccountId?: string;
     orderId?: string;
+    realizedPnlUsd?: number;
+    rentalId?: string;
+    tradeRef?: string;
   };
 }
 
@@ -264,6 +267,59 @@ serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, positions: positions || [], mode: 'live' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'settle_trade': {
+        // Record a realized close. If profit > 0, invoke record_profit_fee
+        // which debits the user's USD balance for the tiered platform fee
+        // (9/6/3/1%) and credits 25% to the strategy creator (when rented).
+        const { symbol, realizedPnlUsd, rentalId, tradeRef } = params;
+
+        if (typeof realizedPnlUsd !== 'number') {
+          return new Response(
+            JSON.stringify({ success: false, error: 'realizedPnlUsd is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Always log the close
+        await supabase.from('trade_logs').insert({
+          user_id: user.id,
+          action: 'settle_trade',
+          symbol: symbol ?? null,
+          status: 'success',
+          realized_pnl_usd: realizedPnlUsd,
+          exchange_order_id: tradeRef ?? null,
+          created_at: new Date().toISOString(),
+        });
+
+        if (realizedPnlUsd <= 0) {
+          return new Response(
+            JSON.stringify({ success: true, fee_charged: 0, message: 'No profit — no fee' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const { data: feeId, error: feeErr } = await supabase.rpc('record_profit_fee', {
+          p_user_id: user.id,
+          p_rental_id: rentalId ?? null,
+          p_gross_profit_usd: realizedPnlUsd,
+          p_trade_ref: tradeRef ?? null,
+          p_symbol: symbol ?? null,
+        });
+
+        if (feeErr) {
+          console.error('record_profit_fee failed:', feeErr);
+          return new Response(
+            JSON.stringify({ success: false, error: feeErr.message }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, fee_event_id: feeId, realized_pnl_usd: realizedPnlUsd }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

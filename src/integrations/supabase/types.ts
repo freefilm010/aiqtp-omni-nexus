@@ -8721,6 +8721,7 @@ export type Database = {
           id: string
           price: number | null
           quantity: number | null
+          realized_pnl_usd: number | null
           side: string | null
           slippage_pct: number
           status: string
@@ -8737,6 +8738,7 @@ export type Database = {
           id?: string
           price?: number | null
           quantity?: number | null
+          realized_pnl_usd?: number | null
           side?: string | null
           slippage_pct?: number
           status: string
@@ -8753,6 +8755,7 @@ export type Database = {
           id?: string
           price?: number | null
           quantity?: number | null
+          realized_pnl_usd?: number | null
           side?: string | null
           slippage_pct?: number
           status?: string
