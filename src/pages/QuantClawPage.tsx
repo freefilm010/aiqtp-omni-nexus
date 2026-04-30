@@ -93,7 +93,7 @@ const QuantClawPage = () => {
     // Load recent directives for the current user
     const load = async () => {
       const { data } = await supabase
-        .from("agent_directives" as "system_status") // cast until types.ts is updated
+        .from("agent_directives")
         .select("id, tool, status, result, error_msg, created_at")
         .order("created_at", { ascending: false })
         .limit(10);
@@ -139,7 +139,7 @@ const QuantClawPage = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Not authenticated"); return; }
 
-    const { error } = await (supabase.from("agent_directives" as "system_status") as any).insert({
+    const { error } = await supabase.from("agent_directives").insert({
       user_id: user.id,
       tool: dispatchingTool,
       agent_type: activeAgent,

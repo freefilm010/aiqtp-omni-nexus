@@ -245,6 +245,53 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_directives: {
+        Row: {
+          agent_type: string
+          created_at: string
+          error_msg: string | null
+          id: string
+          params: Json
+          result: Json | null
+          status: string
+          tool: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string
+          created_at?: string
+          error_msg?: string | null
+          id?: string
+          params?: Json
+          result?: Json | null
+          status?: string
+          tool: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          error_msg?: string | null
+          id?: string
+          params?: Json
+          result?: Json | null
+          status?: string
+          tool?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_directives_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_factors: {
         Row: {
           category: string | null
