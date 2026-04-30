@@ -18,7 +18,7 @@ const authSchema = z.object({
     .string()
     .min(6, "Password must be at least 6 characters")
     .max(72, "Password must be less than 72 characters"),
-  fullName: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters").optional(),
+  profileName: z.string().min(2, "Profile name must be at least 2 characters").max(50, "Profile name must be less than 50 characters").optional(),
 });
 
 const Auth = () => {
@@ -29,7 +29,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [profileName, setProfileName] = useState("");
   const [passwordResetSentTo, setPasswordResetSentTo] = useState<string | null>(null);
 
   const [recoveryMode, setRecoveryMode] = useState(false);
@@ -76,7 +76,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const validated = authSchema.parse({ email, password, fullName });
+      const validated = authSchema.parse({ email, password, profileName });
 
       const { data, error } = await supabase.auth.signUp({
         email: validated.email,
@@ -84,7 +84,7 @@ const Auth = () => {
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            full_name: validated.fullName,
+            username: validated.profileName,
           },
         },
       });
@@ -414,13 +414,13 @@ const Auth = () => {
                   <TabsContent value="signup">
                     <form onSubmit={handleSignUp} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="signup-name">Full Name</Label>
+                        <Label htmlFor="signup-name">Profile Name</Label>
                         <Input
                           id="signup-name"
                           type="text"
-                          placeholder="John Doe"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="profile-name"
+                          value={profileName}
+                          onChange={(e) => setProfileName(e.target.value)}
                           required
                           disabled={isLoading}
                         />
