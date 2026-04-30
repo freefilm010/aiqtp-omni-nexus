@@ -246,10 +246,10 @@ const FeesPage = () => {
                       <td className="py-3 px-4">
                         ${tier.min.toLocaleString()} - {tier.max === Infinity ? "∞" : `$${tier.max.toLocaleString()}`}
                       </td>
-                      <td className="py-3 px-4 font-bold text-primary">{tier.rate}%</td>
-                      <td className="py-3 px-4 text-success">{100 - tier.rate}%</td>
+                      <td className="py-3 px-4 font-bold text-primary">{(tier.rate * 100).toFixed(0)}%</td>
+                      <td className="py-3 px-4 text-success">{(100 - tier.rate * 100).toFixed(0)}%</td>
                       <td className="py-3 px-4 text-muted-foreground text-sm">
-                        $10K profit → ${(10000 * tier.rate / 100).toFixed(0)} fee
+                        $10K profit → ${(10000 * tier.rate).toFixed(0)} fee
                       </td>
                     </tr>
                   ))}
