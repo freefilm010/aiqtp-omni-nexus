@@ -67,12 +67,12 @@ const ComputerVisionLab = () => {
   useEffect(() => {
     const loadDetections = async () => {
       const user = await getCachedUser();
-      if (!user?.user?.id) return;
+      if (!user?.id) return;
 
       const { data } = await supabase
         .from('cv_detections')
         .select('*')
-        .eq('user_id', user.user.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
