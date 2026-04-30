@@ -69,7 +69,7 @@ const CopyTradingLeaderboard = () => {
 
       const mapped: Trader[] = (data || []).map(t => ({
         id: t.id,
-        name: toSafePublicName({ displayName: t.display_name, fallbackId: t.id }),
+        name: toSafePublicName({ username: t.user_id, fallbackId: t.id }),
         avatar: t.avatar || '👤',
         tier: t.tier as 'elite' | 'pro' | 'rising',
         verified: t.is_verified || false,
