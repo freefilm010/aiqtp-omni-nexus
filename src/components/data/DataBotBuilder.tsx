@@ -128,8 +128,7 @@ const DataBotBuilder = () => {
 
     setUserId(currentUser.id);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from('strategy_registry')
       .select('*')
       .eq('user_id', currentUser.id)
@@ -160,8 +159,7 @@ const DataBotBuilder = () => {
 
     setUserId(userData.user.id);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from('strategy_registry').insert({
+    const { error } = await supabase.from('strategy_registry').insert({
       user_id: userData.user.id,
       name: botName,
       description: botDescription,
@@ -201,8 +199,7 @@ const DataBotBuilder = () => {
   };
 
   const toggleConfig = async (configId: string, isActive: boolean) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    await supabase
       .from('strategy_registry')
       .update({ is_active: isActive })
       .eq('id', configId);
@@ -216,8 +213,7 @@ const DataBotBuilder = () => {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any)
+    await supabase
       .from('strategy_registry')
       .update({ pending_graduation: true })
       .eq('id', config.id);

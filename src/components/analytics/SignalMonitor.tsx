@@ -253,8 +253,7 @@ const SignalMonitor = () => {
       .subscribe();
 
     // performance_evaluator subscription (graceful — table populated by Python worker)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const perfChannel = (supabase as any)
+    const perfChannel = supabase
       .channel(`perf-eval-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'performance_evaluator' }, () => loadTradeLogs())
       .subscribe();
