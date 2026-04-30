@@ -371,15 +371,7 @@ const CryptoFaucet = () => {
 
     await supabase.functions.invoke('faucet-credit', {
       body: {
-        // No-op credit (zero amount blocked) — instead use a dedicated tick:
-        // We still need to bump engine totals; reuse the same edge function
-        // with engineId-only path by passing a dummy claim is wrong. Use
-        // a separate RPC path: post symbol/amount that already happened
-        // server-side is unsafe. Skip incrementing here; the edge function
-        // does it as part of every claim now.
-        symbol: 'USD',
-        amount: 0.0001,
-        chain: 'engine-tick',
+        action: 'increment_engine',
         engineId: compoundEngine.id,
         capitalDelta: deployAmount,
         deployedDelta: deployAmount,
@@ -426,14 +418,18 @@ const CryptoFaucet = () => {
     });
     if (error) return error;
 
-    // Credit portfolio_holdings via DB function
-    const { error: creditError } = await supabase.rpc('credit_faucet_claim', {
-      p_user_id: userId,
-      p_symbol: token.symbol,
-      p_amount: token.claimAmount,
-      p_chain: token.id,
+    // Credit portfolio_holdings via privileged edge function (service role).
+    const { data: creditRes, error: creditError } = await supabase.functions.invoke('faucet-credit', {
+      body: {
+        action: 'claim',
+        symbol: token.symbol,
+        amount: token.claimAmount,
+        chain: token.id,
+      },
     });
-    if (creditError) console.error('Credit error:', creditError);
+    if (creditError || creditRes?.error) {
+      console.error('Credit error:', creditError ?? creditRes?.error);
+    }
     return null;
   };
 
