@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2 } from "lucide-react";
+import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2, Play, CheckCircle2, XCircle, Clock } from "lucide-react";
 import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -38,6 +38,44 @@ const TIER_DATA = [
   { tier: 3, label: "Frameworks & Research", count: 30, color: "text-muted-foreground", desc: "Opt-in only — LLMs, quantum, deep learning" },
 ];
 
+type DirectiveStatus = "pending" | "running" | "done" | "error";
+
+type DirectiveRow = {
+  id: string;
+  tool: string;
+  status: DirectiveStatus;
+  result: Record<string, unknown> | null;
+  error_msg: string | null;
+  created_at: string;
+};
+
+// Tools that dispatch to the Render Worker via agent_directives
+const WORKER_TOOLS = new Set([
+  "freqtrade_backtest",
+  "freqtrade_optimize",
+  "ccxt_sim_order",
+  "ccxt_live_order",
+  "factor_generation",
+]);
+
+// Default params template per tool (shown in the dispatch panel)
+const DEFAULT_PARAMS: Record<string, Record<string, unknown>> = {
+  freqtrade_backtest:  { symbol: "BTC/USDT", timeframe: "1h", strategy: "RSI_EMA_Cross", days: 90 },
+  freqtrade_optimize:  { strategy: "RSI_EMA_Cross", optimization_target: "sharpe_ratio", n_trials: 50 },
+  ccxt_sim_order:      { symbol: "BTC/USDT", side: "buy", quantity: 0.001 },
+  ccxt_live_order:     { symbol: "BTCUSD", side: "buy", notional: 100, approved: false },
+  factor_generation:   { factors: ["RSI", "MACD", "Volume_Profile"], symbol: "BTC/USDT" },
+};
+
+const StatusIcon = ({ status }: { status: DirectiveStatus | null }) => {
+  if (!status) return null;
+  if (status === "pending" || status === "running")
+    return <Loader2 className="h-4 w-4 animate-spin text-yellow-400" />;
+  if (status === "done")
+    return <CheckCircle2 className="h-4 w-4 text-green-400" />;
+  return <XCircle className="h-4 w-4 text-destructive" />;
+};
+
 const QuantClawPage = () => {
   const [activeAgent, setActiveAgent] = useState<"dev" | "prod">("dev");
   const [marketingLoading, setMarketingLoading] = useState(false);
@@ -45,6 +83,76 @@ const QuantClawPage = () => {
   const [marketingTopic, setMarketingTopic] = useState("");
   const [marketingPlatform, setMarketingPlatform] = useState("twitter");
   const [marketingAction, setMarketingAction] = useState<"generate_post" | "generate_campaign" | "generate_content">("generate_post");
+
+  // Directive dispatch state
+  const [dispatchingTool, setDispatchingTool] = useState<string | null>(null);
+  const [dispatchParams, setDispatchParams] = useState<string>("");
+  const [activeDirectives, setActiveDirectives] = useState<DirectiveRow[]>([]);
+
+  useEffect(() => {
+    // Load recent directives for the current user
+    const load = async () => {
+      const { data } = await supabase
+        .from("agent_directives" as "system_status") // cast until types.ts is updated
+        .select("id, tool, status, result, error_msg, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (data) setActiveDirectives(data as unknown as DirectiveRow[]);
+    };
+    load();
+
+    const channel = supabase
+      .channel(`agent-directives-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "agent_directives" }, (payload) => {
+        const row = payload.new as DirectiveRow;
+        setActiveDirectives(prev => {
+          const exists = prev.find(d => d.id === row.id);
+          if (exists) return prev.map(d => d.id === row.id ? row : d);
+          return [row, ...prev].slice(0, 10);
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const openDispatch = (toolName: string) => {
+    setDispatchingTool(toolName);
+    setDispatchParams(JSON.stringify(DEFAULT_PARAMS[toolName] ?? {}, null, 2));
+  };
+
+  const submitDirective = async () => {
+    if (!dispatchingTool) return;
+    if (dispatchingTool === "ccxt_live_order" && activeAgent !== "prod") {
+      toast.error("ccxt_live_order requires QuantClaw-Prod agent", {
+        description: "Switch to the Prod agent before dispatching live orders.",
+      });
+      return;
+    }
+    let params: Record<string, unknown> = {};
+    try {
+      params = JSON.parse(dispatchParams);
+    } catch {
+      toast.error("Invalid JSON in params");
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Not authenticated"); return; }
+
+    const { error } = await (supabase.from("agent_directives" as "system_status") as any).insert({
+      user_id: user.id,
+      tool: dispatchingTool,
+      agent_type: activeAgent,
+      params,
+      status: "pending",
+    });
+    if (error) {
+      toast.error("Dispatch failed", { description: error.message });
+    } else {
+      toast.success(`${dispatchingTool} dispatched to Render Worker`);
+      setDispatchingTool(null);
+    }
+  };
 
   const handleMarketing = async () => {
     setMarketingLoading(true);
@@ -296,32 +404,139 @@ const QuantClawPage = () => {
               <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
                 <CardHeader>
                   <CardTitle>Tool → Service Mapping</CardTitle>
-                  <CardDescription>Every QuantClaw tool maps to an existing platform service</CardDescription>
+                  <CardDescription>
+                    Worker tools dispatch via <code className="text-xs bg-muted px-1 rounded">agent_directives</code> table → Render Python Worker.
+                    RAG tools call edge functions directly.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 text-sm">
                     {[
-                      ["search_trading_code", "qaqi-agent edge function"],
-                      ["search_quant_research", "aiqtp-agent edge function"],
-                      ["freqtrade_backtest", "Strategy Studio + generate-strategy"],
-                      ["freqtrade_optimize", "ml-predictions + factor engine"],
-                      ["ccxt_sim_order", "ccxt-trading (paper mode)"],
-                      ["ccxt_live_order", "ccxt-trading (live, admin-gated)"],
-                      ["social_media_post", "quantclaw-marketing (Lovable AI)"],
-                      ["marketing_campaign", "quantclaw-marketing (campaign engine)"],
-                      ["content_generator", "quantclaw-marketing (content AI)"],
-                      ["campaign_scheduler", "automation_templates + webhooks"],
-                      ["factor_generation", "generate-factors edge function"],
-                      ["portfolio_optimize", "portfolio/optimization.ts"],
-                    ].map(([tool, service]) => (
-                      <div key={tool} className="flex items-center justify-between p-2 rounded bg-background/30">
-                        <code className="text-primary text-xs">{tool}</code>
-                        <span className="text-muted-foreground text-xs">{service}</span>
+                      { tool: "search_trading_code",  service: "qaqi-agent edge function (Tier 1+2 RAG)",            worker: false },
+                      { tool: "search_quant_research", service: "aiqtp-agent edge function (Tier 1+3 RAG)",           worker: false },
+                      { tool: "search_onchain",        service: "qaqi-agent edge function (on-chain RAG)",            worker: false },
+                      { tool: "freqtrade_backtest",    service: "Render Worker ← agent_directives",                   worker: true  },
+                      { tool: "freqtrade_optimize",    service: "Render Worker ← agent_directives",                   worker: true  },
+                      { tool: "ccxt_sim_order",        service: "Render Worker ← agent_directives (paper, no broker)", worker: true  },
+                      { tool: "ccxt_live_order",       service: "Render Worker ← agent_directives → Alpaca REST API", worker: true, prod: true },
+                      { tool: "social_media_post",     service: "quantclaw-marketing edge function",                  worker: false },
+                      { tool: "marketing_campaign",    service: "quantclaw-marketing edge function",                  worker: false },
+                      { tool: "content_generator",     service: "quantclaw-marketing edge function",                  worker: false },
+                      { tool: "factor_generation",     service: "Render Worker ← agent_directives",                   worker: true  },
+                      { tool: "portfolio_optimize",    service: "portfolio/optimization.ts (client-side lib)",        worker: false },
+                    ].map(({ tool, service, worker, prod }) => (
+                      <div key={tool} className="flex items-center justify-between p-2 rounded bg-background/30 gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <code className="text-primary text-xs shrink-0">{tool}</code>
+                          {prod && (
+                            <Badge variant="outline" className="text-[10px] border-destructive/30 text-destructive shrink-0">
+                              Prod-only
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-muted-foreground text-xs hidden sm:inline">{service}</span>
+                          {worker && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-[11px] gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                              onClick={() => openDispatch(tool)}
+                            >
+                              <Play className="h-3 w-3" />
+                              Dispatch
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Dispatch panel — appears when a tool's Dispatch button is clicked */}
+              {dispatchingTool && (
+                <Card className="bg-[hsl(223,18%,9%)] border-primary/30">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Play className="h-4 w-4 text-primary" />
+                      Dispatch: <code className="text-primary">{dispatchingTool}</code>
+                      {dispatchingTool === "ccxt_live_order" && (
+                        <Badge variant="outline" className="border-destructive/30 text-destructive text-[10px]">
+                          Prod-only — requires approved: true in params
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      Edit params JSON then click Send. The Render Worker picks this up within one cycle (~60s).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Textarea
+                      className="font-mono text-xs min-h-[120px] bg-background/50"
+                      value={dispatchParams}
+                      onChange={e => setDispatchParams(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={submitDirective} className="gap-1">
+                        <Play className="h-3 w-3" />
+                        Send to Worker
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setDispatchingTool(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recent directives — live status from Supabase realtime */}
+              {activeDirectives.length > 0 && (
+                <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      Recent Directives
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {activeDirectives.map(d => (
+                        <div key={d.id} className="flex items-start gap-3 p-2 rounded bg-background/30 text-xs">
+                          <StatusIcon status={d.status} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <code className="text-primary">{d.tool}</code>
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] ${
+                                  d.status === "done"    ? "border-green-500/30 text-green-400"   :
+                                  d.status === "error"   ? "border-destructive/30 text-destructive" :
+                                  d.status === "running" ? "border-yellow-500/30 text-yellow-400" :
+                                                           "border-border text-muted-foreground"
+                                }`}
+                              >
+                                {d.status}
+                              </Badge>
+                              <span className="text-muted-foreground ml-auto">
+                                {new Date(d.created_at).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            {d.status === "done" && d.result && (
+                              <pre className="mt-1 text-muted-foreground whitespace-pre-wrap break-all max-h-24 overflow-y-auto">
+                                {JSON.stringify(d.result, null, 2)}
+                              </pre>
+                            )}
+                            {d.status === "error" && d.error_msg && (
+                              <p className="mt-1 text-destructive">{d.error_msg}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
