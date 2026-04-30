@@ -15,7 +15,7 @@ import {
   Play,
   Code2,
   Camera,
-  Facebook as MaybeFacebook, // tree-shaken if absent
+  Users,
   Tv,
 } from "lucide-react";
 
@@ -24,5 +24,5 @@ export const Linkedin = Briefcase;
 export const Youtube = Play;
 export const Github = Code2;
 export const Instagram = Camera;
-export const Facebook = (MaybeFacebook as typeof Bird) ?? Bird;
+export const Facebook = Users;
 export const Twitch = Tv;
