@@ -33,7 +33,7 @@ export async function getUserFaucetClaims(limit = 50): Promise<ServiceResult<Fau
   return { data: (data ?? []).map(toFaucetClaim), error: null };
 }
 
-/** Execute a faucet claim via the database RPC. */
+/** Execute a faucet claim via the privileged edge function (service role). */
 export async function claimFaucetToken(
   symbol: string,
   amount: number,
@@ -42,13 +42,10 @@ export async function claimFaucetToken(
   const user = await getCachedUser();
   if (!user) return { data: null, error: "Not authenticated" };
 
-  const { error } = await supabase.rpc("credit_faucet_claim", {
-    p_user_id: user.id,
-    p_symbol: symbol,
-    p_amount: amount,
-    p_chain: chain,
+  const { data, error } = await supabase.functions.invoke("faucet-credit", {
+    body: { symbol, amount, chain },
   });
-
   if (error) return { data: null, error: error.message };
+  if (data?.error) return { data: null, error: data.error };
   return { data: null, error: null };
 }
