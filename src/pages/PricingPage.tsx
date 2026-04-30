@@ -119,61 +119,51 @@ const PricingPage = () => {
           <QuickPayment />
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {PRICING_TIERS.map((tier) => (
-            <Card 
-              key={tier.name}
-              className={`relative ${tier.popular ? 'border-primary ring-2 ring-primary/20' : ''}`}
-            >
-              {tier.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Most Popular
-                </Badge>
-              )}
-              <CardHeader className="text-center pb-2">
-                <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 text-primary">
-                  {tier.icon}
+        {/* How It Works */}
+        <Card className="mb-16 border-2 border-success/30 bg-gradient-to-br from-success/5 to-primary/5">
+          <CardHeader className="text-center">
+            <Badge className="mx-auto mb-2 bg-success/20 text-success border-success/30 w-fit">
+              <Gift className="h-3 w-3 mr-1" />
+              How Pricing Works
+            </Badge>
+            <CardTitle className="text-2xl">$0 Platform Access. $0 Bot Rentals.</CardTitle>
+            <CardDescription className="text-base max-w-2xl mx-auto">
+              The platform and every AI agent are free to use. You only pay a tiered profit-share fee on realized gains from rented strategy bots — and 25% of that fee goes back to the strategy creator.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl border border-border text-center">
+                <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2 text-primary">
+                  <DollarSign className="h-5 w-5" />
                 </div>
-                <CardTitle>{tier.name}</CardTitle>
-                <CardDescription>{tier.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center mb-6">
-                  <div className="text-xl sm:text-4xl font-bold text-success">FREE</div>
-                  <div className="text-sm text-muted-foreground">No subscription required</div>
+                <div className="font-semibold">1. Deposit USD</div>
+                <p className="text-sm text-muted-foreground mt-1">Fund your trading balance ({`$${MIN_INVESTMENT}`} minimum) via secure checkout.</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border text-center">
+                <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2 text-primary">
+                  <Bot className="h-5 w-5" />
                 </div>
-
-                <div className="space-y-3 mb-6">
-                  {tier.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
+                <div className="font-semibold">2. Rent a Strategy Bot</div>
+                <p className="text-sm text-muted-foreground mt-1">$0 upfront. Pick any graduated bot from the marketplace and activate it.</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border text-center">
+                <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2 text-primary">
+                  <Percent className="h-5 w-5" />
                 </div>
-
-                <div className="border-t pt-4 mb-4">
-                  <div className="text-xs text-muted-foreground mb-2 font-semibold">LIMITS</div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>Trades: <span className="font-medium">{tier.limits.trades}</span></div>
-                    <div>Strategies: <span className="font-medium">{tier.limits.strategies}</span></div>
-                    <div>Bots: <span className="font-medium">{tier.limits.bots}</span></div>
-                    <div>API: <span className="font-medium">{tier.limits.api}</span></div>
-                  </div>
-                </div>
-
-                <Button 
-                  className="w-full" 
-                  variant={tier.popular ? "default" : "outline"}
-                >
-                  Start Free
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <div className="font-semibold">3. Pay Only on Profit</div>
+                <p className="text-sm text-muted-foreground mt-1">9 / 6 / 3 / 1% tiered fee on realized gains. No profit = no fee.</p>
+              </div>
+            </div>
+            <div className="text-center mt-6">
+              <Button asChild size="lg">
+                <Link to="/strategy-marketplace">
+                  Browse Strategy Bots <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Marketplace Fee Comparisons */}
         <div className="mb-16">
