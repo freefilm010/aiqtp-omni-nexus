@@ -106,7 +106,9 @@
     "@babel/runtime": "^7.26.10",
     "cross-spawn": "^7.0.5",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "react": "$react",
+    "react-dom": "$react-dom"
   },
   "resolutions": {
     "brace-expansion": "^2.0.3",
@@ -119,6 +121,8 @@
     "@babel/runtime": "^7.26.10",
     "cross-spawn": "^7.0.5",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   }
 }
