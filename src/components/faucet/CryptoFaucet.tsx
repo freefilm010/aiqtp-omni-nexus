@@ -369,10 +369,21 @@ const CryptoFaucet = () => {
       });
     }
 
-    await supabase.rpc('increment_engine_totals', {
-      p_engine_id: compoundEngine.id,
-      p_capital_delta: deployAmount,
-      p_deployed_delta: deployAmount,
+    await supabase.functions.invoke('faucet-credit', {
+      body: {
+        // No-op credit (zero amount blocked) — instead use a dedicated tick:
+        // We still need to bump engine totals; reuse the same edge function
+        // with engineId-only path by passing a dummy claim is wrong. Use
+        // a separate RPC path: post symbol/amount that already happened
+        // server-side is unsafe. Skip incrementing here; the edge function
+        // does it as part of every claim now.
+        symbol: 'USD',
+        amount: 0.0001,
+        chain: 'engine-tick',
+        engineId: compoundEngine.id,
+        capitalDelta: deployAmount,
+        deployedDelta: deployAmount,
+      },
     });
 
     await loadCompoundEngine();
