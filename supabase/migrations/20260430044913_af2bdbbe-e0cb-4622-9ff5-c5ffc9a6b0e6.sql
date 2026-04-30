@@ -1,0 +1,1 @@
+ALTER TABLE public.trade_logs ADD COLUMN IF NOT EXISTS realized_pnl_usd numeric;
