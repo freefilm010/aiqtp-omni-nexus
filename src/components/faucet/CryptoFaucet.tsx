@@ -369,10 +369,13 @@ const CryptoFaucet = () => {
       });
     }
 
-    await supabase.rpc('increment_engine_totals', {
-      p_engine_id: compoundEngine.id,
-      p_capital_delta: deployAmount,
-      p_deployed_delta: deployAmount,
+    await supabase.functions.invoke('faucet-credit', {
+      body: {
+        action: 'increment_engine',
+        engineId: compoundEngine.id,
+        capitalDelta: deployAmount,
+        deployedDelta: deployAmount,
+      },
     });
 
     await loadCompoundEngine();
@@ -415,14 +418,18 @@ const CryptoFaucet = () => {
     });
     if (error) return error;
 
-    // Credit portfolio_holdings via DB function
-    const { error: creditError } = await supabase.rpc('credit_faucet_claim', {
-      p_user_id: userId,
-      p_symbol: token.symbol,
-      p_amount: token.claimAmount,
-      p_chain: token.id,
+    // Credit portfolio_holdings via privileged edge function (service role).
+    const { data: creditRes, error: creditError } = await supabase.functions.invoke('faucet-credit', {
+      body: {
+        action: 'claim',
+        symbol: token.symbol,
+        amount: token.claimAmount,
+        chain: token.id,
+      },
     });
-    if (creditError) console.error('Credit error:', creditError);
+    if (creditError || creditRes?.error) {
+      console.error('Credit error:', creditError ?? creditRes?.error);
+    }
     return null;
   };
 
