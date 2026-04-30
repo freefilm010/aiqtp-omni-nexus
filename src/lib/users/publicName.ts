@@ -26,11 +26,6 @@ export function toSafePublicName({
   const safeUsername = username?.trim();
   if (safeUsername) return safeUsername;
 
-  const safeDisplayName = displayName?.trim();
-  if (safeDisplayName && !looksLikeRealName(safeDisplayName)) {
-    return safeDisplayName;
-  }
-
   if (fallbackId) return `User ${fallbackId.slice(0, 6)}`;
   if (fallbackRank) return `Player #${fallbackRank}`;
   return "Platform User";
