@@ -1,9 +1,23 @@
+/**
+ * Market price module.
+ *
+ * All live price fetching is now routed through the `get-market-prices`
+ * Supabase Edge Function. The Python worker on Render is the only process
+ * that calls CoinGecko directly. The edge function acts as the server-side
+ * proxy so no third-party API keys are ever exposed to the browser.
+ *
+ * Static symbol/ID mappings and utility functions are preserved here for
+ * use by other modules (pair generation, display helpers, etc.).
+ */
+
+import { supabase } from "@/integrations/supabase/client";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 // CryptoSymbol kept minimal for backward compatibility
-// Full symbol list available via getSupportedSymbols()
 export type CryptoSymbol =
   | "BTC" | "ETH" | "USDC" | "SOL" | "PEPE" | "WIF" | "UNI" | "AAVE" | "ARB" | "BONK";
 
-// Extended symbol type for full coverage
 export type ExtendedCryptoSymbol = CryptoSymbol
   | "BNB" | "XRP" | "ADA" | "DOGE" | "AVAX"
   | "DOT" | "LINK" | "MATIC" | "OP"
@@ -21,9 +35,9 @@ export type CryptoQuote = {
   volume24h?: number;
 };
 
-// Complete CoinGecko ID mapping
+// ─── Symbol / ID mappings (static — no network calls) ────────────────────────
+
 const COINGECKO_ID_BY_SYMBOL: Record<string, string> = {
-  // Major L1s
   BTC: "bitcoin",
   ETH: "ethereum",
   SOL: "solana",
@@ -44,24 +58,16 @@ const COINGECKO_ID_BY_SYMBOL: Record<string, string> = {
   APT: "aptos",
   SEI: "sei-network",
   INJ: "injective-protocol",
-  
-  // L2s
   ARB: "arbitrum",
   OP: "optimism",
   STRK: "starknet",
   BASE: "base-protocol",
-  
-  // Alt L1s
   XLM: "stellar",
   ALGO: "algorand",
   RVN: "ravencoin",
-  
-  // Privacy coins
   XMR: "monero",
   ZEC: "zcash",
   DASH: "dash",
-  
-  // DeFi
   UNI: "uniswap",
   AAVE: "aave",
   MKR: "maker",
@@ -70,8 +76,6 @@ const COINGECKO_ID_BY_SYMBOL: Record<string, string> = {
   RPL: "rocket-pool",
   CRV: "curve-dao-token",
   CVX: "convex-finance",
-  
-  // AI & Data
   RNDR: "render-token",
   FET: "fetch-ai",
   OCEAN: "ocean-protocol",
@@ -81,22 +85,17 @@ const COINGECKO_ID_BY_SYMBOL: Record<string, string> = {
   AR: "arweave",
   HNT: "helium",
   AKT: "akash-network",
-  
-  // Meme coins
   PEPE: "pepe",
   WIF: "dogwifcoin",
   BONK: "bonk",
   SHIB: "shiba-inu",
   FLOKI: "floki",
-  
-  // Stablecoins
   USDC: "usd-coin",
   USDT: "tether",
   DAI: "dai",
   FRAX: "frax",
 };
 
-// Reverse mapping for lookup
 const SYMBOL_BY_COINGECKO_ID: Record<string, string> = Object.fromEntries(
   Object.entries(COINGECKO_ID_BY_SYMBOL).map(([k, v]) => [v, k])
 );
@@ -109,91 +108,43 @@ export function getSymbolFromCoingeckoId(id: string): string | undefined {
   return SYMBOL_BY_COINGECKO_ID[id];
 }
 
-export async function fetchCoinGeckoUsdQuotes(
-  symbols: string[],
-  signal?: AbortSignal
-): Promise<Partial<Record<string, CryptoQuote>>> {
-  const ids = Array.from(
-    new Set(symbols.map((s) => COINGECKO_ID_BY_SYMBOL[s.toUpperCase()]).filter(Boolean))
-  );
-
-  if (ids.length === 0) return {};
-
-  const url = new URL("https://api.coingecko.com/api/v3/simple/price");
-  url.searchParams.set("ids", ids.join(","));
-  url.searchParams.set("vs_currencies", "usd");
-  url.searchParams.set("include_24hr_change", "true");
-  url.searchParams.set("include_market_cap", "true");
-  url.searchParams.set("include_24hr_vol", "true");
-
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    headers: { accept: "application/json" },
-    signal,
-  });
-
-  if (!res.ok) {
-    throw new Error(`Price feed error (${res.status})`);
-  }
-
-  const json = (await res.json()) as Record<
-    string,
-    { usd?: number; usd_24h_change?: number; usd_market_cap?: number; usd_24h_vol?: number }
-  >;
-
-  const out: Partial<Record<string, CryptoQuote>> = {};
-
-  for (const symbol of symbols) {
-    const id = COINGECKO_ID_BY_SYMBOL[symbol.toUpperCase()];
-    const row = json?.[id];
-
-    if (!row || typeof row.usd !== "number") continue;
-
-    out[symbol.toUpperCase()] = {
-      priceUsd: row.usd,
-      change24hPercent: typeof row.usd_24h_change === "number" ? row.usd_24h_change : null,
-      marketCap: row.usd_market_cap,
-      volume24h: row.usd_24h_vol,
-    };
-  }
-
-  return out;
-}
-
-// Batch fetch for many symbols
-export async function fetchAllPrices(
-  signal?: AbortSignal
-): Promise<Partial<Record<string, CryptoQuote>>> {
-  const allSymbols = Object.keys(COINGECKO_ID_BY_SYMBOL);
-  
-  // Split into batches of 50 to avoid API limits
-  const batches: string[][] = [];
-  for (let i = 0; i < allSymbols.length; i += 50) {
-    batches.push(allSymbols.slice(i, i + 50));
-  }
-
-  const results: Partial<Record<string, CryptoQuote>> = {};
-  
-  for (const batch of batches) {
-    try {
-      const batchResults = await fetchCoinGeckoUsdQuotes(batch, signal);
-      Object.assign(results, batchResults);
-      // Rate limit delay
-      await new Promise(r => setTimeout(r, 500));
-    } catch (e) {
-      console.error('Batch fetch failed:', e);
-    }
-  }
-
-  return results;
-}
-
-// Get supported symbols
 export function getSupportedSymbols(): string[] {
   return Object.keys(COINGECKO_ID_BY_SYMBOL);
 }
 
-// Exchange pair utilities
+// ─── Price fetching — proxied via Supabase Edge Function ─────────────────────
+//
+// The edge function `get-market-prices` is responsible for calling CoinGecko
+// (or reading a cached price table) server-side. No direct CoinGecko calls
+// are made from the browser.
+
+export async function fetchCoinGeckoUsdQuotes(
+  symbols: string[],
+  // AbortSignal kept for API compatibility but unused at edge function level
+  _signal?: AbortSignal
+): Promise<Partial<Record<string, CryptoQuote>>> {
+  if (symbols.length === 0) return {};
+
+  const { data, error } = await supabase.functions.invoke('get-market-prices', {
+    body: { symbols: symbols.map(s => s.toUpperCase()) },
+  });
+
+  if (error || !data) {
+    console.warn('[coingecko] Edge function unavailable:', error?.message ?? 'no data');
+    return {};
+  }
+
+  return data as Partial<Record<string, CryptoQuote>>;
+}
+
+export async function fetchAllPrices(
+  _signal?: AbortSignal
+): Promise<Partial<Record<string, CryptoQuote>>> {
+  return fetchCoinGeckoUsdQuotes(getSupportedSymbols());
+}
+
+// ─── Exchange pair utilities (pure — no network calls) ───────────────────────
+
 export interface TradingPair {
   base: string;
   quote: string;
@@ -201,21 +152,17 @@ export interface TradingPair {
   exchange: string;
 }
 
-export function generateTradingPairs(baseSymbols: string[], quoteSymbols = ['USDT', 'USD', 'BTC', 'ETH']): TradingPair[] {
+export function generateTradingPairs(
+  baseSymbols: string[],
+  quoteSymbols = ['USDT', 'USD', 'BTC', 'ETH']
+): TradingPair[] {
   const pairs: TradingPair[] = [];
-  
   for (const base of baseSymbols) {
     for (const quote of quoteSymbols) {
       if (base !== quote) {
-        pairs.push({
-          base,
-          quote,
-          symbol: `${base}/${quote}`,
-          exchange: 'internal'
-        });
+        pairs.push({ base, quote, symbol: `${base}/${quote}`, exchange: 'internal' });
       }
     }
   }
-  
   return pairs;
 }
