@@ -67,7 +67,7 @@ const AdminUsersManagement = () => {
   const exportUsers = () => {
     const data = filteredUsers.map((u) => ({
       id: u.id,
-      name: u.full_name,
+      profileName: u.username,
       username: u.username,
       roles: u.roles.join(", "),
       joined: u.created_at,
@@ -86,7 +86,6 @@ const AdminUsersManagement = () => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      u.full_name?.toLowerCase().includes(q) ||
       u.username?.toLowerCase().includes(q) ||
       u.id.toLowerCase().includes(q) ||
       u.roles.some((r) => r.includes(q))
@@ -199,7 +198,7 @@ const AdminUsersManagement = () => {
                             {user.full_name?.charAt(0)?.toUpperCase() || "?"}
                           </div>
                           <div>
-                            <p className="font-medium text-sm">{user.full_name || "Anonymous"}</p>
+                            <p className="font-medium text-sm">{user.username || `User ${user.id.slice(0, 6)}`}</p>
                             <p className="text-[10px] text-muted-foreground font-mono">{user.id.slice(0, 12)}…</p>
                           </div>
                         </div>
