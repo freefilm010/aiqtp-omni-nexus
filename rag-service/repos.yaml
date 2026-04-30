@@ -1,0 +1,280 @@
+repos:
+  # --- Tier 1: My trading brain / platforms ---
+  - url: https://github.com/freefilm010/aiquanttradeplat
+    tier: 1
+    tags: [trading, platform, aiqtp]
+  - url: https://github.com/freefilm010/aiqtp-omni-nexus
+    tier: 1
+    tags: [trading, platform, omni]
+  - url: https://github.com/freefilm010/DYNAMIC-QUANT-ASSET-PLATFORM
+    tier: 1
+    tags: [trading, quant, platform]
+  - url: https://github.com/freefilm010/DYNAMIC-QUANT-PLAT-RENDERROOT-FIXED-
+    tier: 1
+    tags: [trading, quant, renderroot]
+  - url: https://github.com/freefilm010/DQuatut
+    tier: 1
+    tags: [trading, quant]
+  - url: https://github.com/freefilm010/aiqtp.org
+    tier: 1
+    tags: [trading, platform, website]
+  - url: https://github.com/freefilm010/freefilm
+    tier: 1
+    tags: [personal, misc, meta]
+  - url: https://github.com/freefilm010/FORALL_DYNAMICS_EXT
+    tier: 1
+    tags: [dynamics, platform]
+  - url: https://github.com/freefilm010/ai-evolution-platform
+    tier: 1
+    tags: [ai, platform]
+  - url: https://github.com/freefilm010/aiqtpreprepo
+    tier: 1
+    tags: [aiqtp, staging]
+  - url: https://github.com/freefilm010/resdevgent
+    tier: 1
+    tags: [research, dev, agent]
+  - url: https://github.com/freefilm010/RD-Agent
+    tier: 1
+    tags: [agent, research]
+  - url: https://github.com/freefilm010/Quantum-SDR-RF-AI-LAB
+    tier: 1
+    tags: [quantum, sdr, rf, ai]
+  - url: https://github.com/freefilm010/QuantumKeep
+    tier: 1
+    tags: [quant, notes]
+  - url: https://github.com/freefilm010/QuantMuse
+    tier: 1
+    tags: [quant, research]
+  - url: https://github.com/freefilm010/freqtrade
+    tier: 1
+    tags: [freqtrade, framework]
+  - url: https://github.com/freefilm010/freqtrade-strategies
+    tier: 1
+    tags: [freqtrade, strategies]
+  - url: https://github.com/freefilm010/Gekko-Strategies
+    tier: 1
+    tags: [gekko, strategies]
+  - url: https://github.com/freefilm010/gekko
+    tier: 1
+    tags: [gekko, framework]
+  - url: https://github.com/freefilm010/strategies
+    tier: 1
+    tags: [strategies, generic]
+  - url: https://github.com/freefilm010/crypto-trading-bot
+    tier: 1
+    tags: [trading, bot]
+  - url: https://github.com/freefilm010/awesome-crypto-trading-bots
+    tier: 1
+    tags: [trading, bots, curated]
+  - url: https://github.com/freefilm010/machine-learning-for-trading
+    tier: 1
+    tags: [ml, trading, book]
+  - url: https://github.com/freefilm010/Machine-Learning-for-Algorithmic-Trading-Bots-with-Python
+    tier: 1
+    tags: [ml, trading, bots, book]
+  - url: https://github.com/freefilm010/FinRL
+    tier: 1
+    tags: [reinforcement-learning, trading]
+  - url: https://github.com/freefilm010/mindsdb
+    tier: 1
+    tags: [mindsdb, ml, automation]
+  - url: https://github.com/freefilm010/Market-Overview-Indexes-Forex-Metals-Crypto
+    tier: 1
+    tags: [market, overview, data]
+
+  # --- Tier 2: Infra, on-chain, APIs ---
+  - url: https://github.com/freefilm010/ccxt
+    tier: 2
+    tags: [ccxt, exchanges, api]
+  - url: https://github.com/freefilm010/TradingView-API
+    tier: 2
+    tags: [tradingview, api]
+  - url: https://github.com/freefilm010/openzeppelin-contracts
+    tier: 2
+    tags: [openzeppelin, contracts]
+  - url: https://github.com/freefilm010/build-blockchain-insurance-app
+    tier: 2
+    tags: [blockchain, insurance]
+  - url: https://github.com/freefilm010/token_sale
+    tier: 2
+    tags: [token, sale, ico]
+  - url: https://github.com/freefilm010/solana-pumpfun-smart-contract
+    tier: 2
+    tags: [solana, contract]
+  - url: https://github.com/freefilm010/solana-raydium-sniper-bot
+    tier: 2
+    tags: [solana, sniper]
+  - url: https://github.com/freefilm010/solana-trading-bot
+    tier: 2
+    tags: [solana, trading, bot]
+  - url: https://github.com/freefilm010/solana
+    tier: 2
+    tags: [solana, core]
+  - url: https://github.com/freefilm010/cairo-contracts
+    tier: 2
+    tags: [starknet, cairo]
+  - url: https://github.com/freefilm010/EIPs
+    tier: 2
+    tags: [ethereum, eips]
+  - url: https://github.com/freefilm010/nft
+    tier: 2
+    tags: [nft, onchain]
+  - url: https://github.com/freefilm010/cryptoviz
+    tier: 2
+    tags: [visualization, crypto]
+  - url: https://github.com/freefilm010/zbd-docs
+    tier: 2
+    tags: [zbd, docs]
+  - url: https://github.com/freefilm010/ibm.github.io
+    tier: 2
+    tags: [ibm, docs]
+  - url: https://github.com/freefilm010/exploit-uniswap
+    tier: 2
+    tags: [uniswap, exploit, reference_only]
+    reference_only: true
+
+  # --- Tier 3: Frameworks, LLMs, quantum (opt-in only) ---
+  - url: https://github.com/freefilm010/transformers
+    tier: 3
+    tags: [llm, transformers]
+  - url: https://github.com/freefilm010/DeepSeek-V3
+    tier: 3
+    tags: [deepseek, llm]
+  - url: https://github.com/freefilm010/DeepSeek-Coder
+    tier: 3
+    tags: [deepseek, coder]
+  - url: https://github.com/freefilm010/DeepSeek-Math
+    tier: 3
+    tags: [deepseek, math]
+  - url: https://github.com/freefilm010/NeMo
+    tier: 3
+    tags: [nemo, llm]
+  - url: https://github.com/freefilm010/DeepSpeed
+    tier: 3
+    tags: [deepspeed, training]
+  - url: https://github.com/freefilm010/self-adaptive-llms
+    tier: 3
+    tags: [llm, research]
+  - url: https://github.com/freefilm010/qdrant
+    tier: 3
+    tags: [vector-db, qdrant]
+  - url: https://github.com/freefilm010/langgraph
+    tier: 3
+    tags: [agents, orchestration]
+  - url: https://github.com/freefilm010/langchainjs
+    tier: 3
+    tags: [langchain, js]
+  - url: https://github.com/freefilm010/ollama
+    tier: 3
+    tags: [ollama]
+  - url: https://github.com/freefilm010/sglang
+    tier: 3
+    tags: [llm, sglang]
+  - url: https://github.com/freefilm010/opencv
+    tier: 3
+    tags: [opencv, vision]
+  - url: https://github.com/freefilm010/automl
+    tier: 3
+    tags: [automl]
+  - url: https://github.com/freefilm010/Awesome-AutoDL
+    tier: 3
+    tags: [autodl, awesome]
+  - url: https://github.com/freefilm010/autokeras
+    tier: 3
+    tags: [autokeras]
+  - url: https://github.com/freefilm010/FfDL
+    tier: 3
+    tags: [ffdl]
+  - url: https://github.com/freefilm010/differential-privacy-library
+    tier: 3
+    tags: [differential-privacy]
+  - url: https://github.com/freefilm010/liboqs
+    tier: 3
+    tags: [post-quantum, crypto]
+  - url: https://github.com/freefilm010/FourQlib
+    tier: 3
+    tags: [ecc]
+  - url: https://github.com/freefilm010/xmrig
+    tier: 3
+    tags: [mining, xmrig]
+  - url: https://github.com/freefilm010/system-prompts-and-models-of-ai-tools
+    tier: 3
+    tags: [prompts, meta]
+  - url: https://github.com/freefilm010/qiskit-textbook
+    tier: 3
+    tags: [qiskit, textbook]
+  - url: https://github.com/freefilm010/qiskit-experiments
+    tier: 3
+    tags: [qiskit, experiments]
+  - url: https://github.com/freefilm010/qiskit-nature
+    tier: 3
+    tags: [qiskit, nature]
+  - url: https://github.com/freefilm010/qiskit-algorithms
+    tier: 3
+    tags: [qiskit, algorithms]
+  - url: https://github.com/freefilm010/qiskit-machine-learning
+    tier: 3
+    tags: [qiskit, ml]
+  - url: https://github.com/freefilm010/Substrate
+    tier: 3
+    tags: [substrate, blockchain]
+  - url: https://github.com/freefilm010/Telos
+    tier: 3
+    tags: [telos, chain]
+  - url: https://github.com/freefilm010/fabric
+    tier: 3
+    tags: [fabric, hyperledger]
+  - url: https://github.com/freefilm010/kyber-k2so
+    tier: 3
+    tags: [kyber, crypto]
+  - url: https://github.com/freefilm010/QUANTUM-ASSET-PLATFORM
+    tier: 3
+    tags: [quantum, asset, platform]
+  - url: https://github.com/freefilm010/AI-EQGC-
+    tier: 3
+    tags: [ai, quantum, general-computing]
+  - url: https://github.com/freefilm010/mcp-context-forge
+    tier: 3
+    tags: [mcp, context, ai]
+  - url: https://github.com/freefilm010/plex
+    tier: 3
+    tags: [plex, media]
+  - url: https://github.com/freefilm010/SuperAGI
+    tier: 3
+    tags: [agi, agents, superagi]
+  - url: https://github.com/freefilm010/frequi
+    tier: 3
+    tags: [freqtrade, ui]
+  - url: https://github.com/freefilm010/trading-strategy
+    tier: 3
+    tags: [trading, strategy, defi]
+  - url: https://github.com/freefilm010/Stock-Prediction-Models
+    tier: 3
+    tags: [stock, prediction, ml]
+  - url: https://github.com/freefilm010/trax
+    tier: 3
+    tags: [trax, ml, google]
+  - url: https://github.com/freefilm010/ibmqx-user-guides
+    tier: 3
+    tags: [ibm, quantum, guides]
+  - url: https://github.com/freefilm010/zk-circuit-education-module
+    tier: 3
+    tags: [zk, circuits, education]
+  - url: https://github.com/freefilm010/qlib
+    tier: 3
+    tags: [qlib, quant, microsoft]
+  - url: https://github.com/freefilm010/BespokeSynth
+    tier: 3
+    tags: [synth, audio, dsp]
+  - url: https://github.com/freefilm010/Tokenicer
+    tier: 3
+    tags: [tokenizer, nlp]
+  - url: https://github.com/freefilm010/quwallet
+    tier: 1
+    tags: [quwallet, wallet, post-quantum, qtc]
+
+rag_rules:
+  tier1_default: true
+  tier2_on_infra_api_onchain: true
+  tier3_opt_in_only: true
+  reference_only_repos: [exploit-uniswap]
