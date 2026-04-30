@@ -8,25 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from "recharts";
 import { 
-  MessageSquare, 
-  TrendingUp, 
-  TrendingDown,
-  Twitter,
-  Newspaper,
-  Users,
-  AlertCircle,
-  ThumbsUp,
-  ThumbsDown,
-  Meh,
-  RefreshCw,
-  Volume2,
-  Activity
-} from "lucide-react";
+  MessageSquare, TrendingUp, TrendingDown, Newspaper, Users, AlertCircle, ThumbsUp, ThumbsDown, Meh, RefreshCw, Volume2, Activity } from "lucide-react";
+import { Twitter } from "@/lib/icons/brand-icons";
 
 const COLORS = ['hsl(142, 71%, 45%)', 'hsl(0, 84%, 60%)', 'hsl(45, 96%, 53%)'];
 

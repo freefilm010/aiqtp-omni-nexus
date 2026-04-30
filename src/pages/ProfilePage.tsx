@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { User, Save, Trophy, Flame, Link2, Twitter, Github, Globe, Upload } from "lucide-react";
+import { User, Save, Trophy, Flame, Link2, Globe, Upload } from "lucide-react";
+import { Twitter, Github } from "@/lib/icons/brand-icons";
 
 interface Profile {
   username: string;

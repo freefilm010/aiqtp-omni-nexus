@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Diamond, Flame, Clock, Eye, Gem, Star, Sparkles,
-  Twitter, MessageCircle, Copy, ExternalLink
-} from "lucide-react";
+  Diamond, Flame, Clock, Eye, Gem, Star, Sparkles, MessageCircle, Copy, ExternalLink } from "lucide-react";
+import { Twitter } from "@/lib/icons/brand-icons";
 import { toast } from "sonner";
 
 const COLLECTION = {

@@ -6,26 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Globe,
-  ExternalLink,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Copy,
-  Plus,
-  Twitter,
-  MessageCircle,
-  Youtube,
-  Github,
-  Linkedin,
-  Instagram,
-  Send,
-  Music2,
-  Twitch,
-  Search,
-  Shield,
-  Wallet
-} from "lucide-react";
+  Globe, ExternalLink, CheckCircle2, Clock, AlertTriangle, Copy, Plus, MessageCircle, Send, Music2, Search, Shield, Wallet } from "lucide-react";
+import { Twitter, Youtube, Github, Linkedin, Instagram, Twitch } from "@/lib/icons/brand-icons";
 import { toast } from "sonner";
 
 interface DomainEntry {
