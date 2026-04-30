@@ -39,7 +39,7 @@ interface Post {
   comments_count: number;
   is_pinned: boolean;
   created_at: string;
-  profiles?: { full_name: string | null; avatar_url: string | null } | null;
+  profiles?: { username: string | null; avatar_url: string | null } | null;
 }
 
 interface Comment {
@@ -49,7 +49,7 @@ interface Comment {
   content: string;
   likes_count: number;
   created_at: string;
-  profiles?: { full_name: string | null; avatar_url: string | null } | null;
+  profiles?: { username: string | null; avatar_url: string | null } | null;
 }
 
 const POST_TYPES = [
@@ -93,15 +93,15 @@ const CapitolCommunity = () => {
 
     // Fetch profile names for post authors
     const userIds = [...new Set((data || []).map((p) => p.user_id))];
-    let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+    let profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, username, avatar_url")
         .in("id", userIds);
       if (profiles) {
         for (const p of profiles) {
-          profileMap[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+          profileMap[p.id] = { username: p.username, avatar_url: p.avatar_url };
         }
       }
     }
@@ -154,15 +154,15 @@ const CapitolCommunity = () => {
     if (!data) return;
 
     const userIds = [...new Set(data.map((c) => c.user_id))];
-    let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+    let profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, username, avatar_url")
         .in("id", userIds);
       if (profiles) {
         for (const p of profiles) {
-          profileMap[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+          profileMap[p.id] = { username: p.username, avatar_url: p.avatar_url };
         }
       }
     }
