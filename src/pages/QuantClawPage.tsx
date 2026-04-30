@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2, Play, CheckCircle2, XCircle, Clock, Send, TrendingUp } from "lucide-react";
 import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -89,6 +89,25 @@ const StatusIcon = ({ status }: { status: DirectiveStatus | null }) => {
   return <XCircle className="h-4 w-4 text-destructive" />;
 };
 
+type ChatMessage = { role: "user" | "assistant"; content: string; ts: number };
+
+const CHAT_STORAGE_KEY = "qaqi_chat_history_v1";
+
+const loadChatHistory = (): ChatMessage[] => {
+  try {
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveChatHistory = (msgs: ChatMessage[]) => {
+  try {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(msgs.slice(-100)));
+  } catch { /* storage quota — silently ignore */ }
+};
+
 const QuantClawPage = () => {
   const [activeAgent, setActiveAgent] = useState<"dev" | "prod">("dev");
   const [marketingLoading, setMarketingLoading] = useState(false);
@@ -106,7 +125,10 @@ const QuantClawPage = () => {
   const [ragTool, setRagTool] = useState<string | null>(null);
   const [ragQuery, setRagQuery] = useState("");
   const [ragLoading, setRagLoading] = useState(false);
-  const [ragResult, setRagResult] = useState("");
+
+  // Persistent QAQI chat history (survives page reload via localStorage)
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>(loadChatHistory);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Live order state (alpaca-trading edge function)
   const [alpacaLoading, setAlpacaLoading] = useState(false);
@@ -116,6 +138,12 @@ const QuantClawPage = () => {
   const [alpacaKeyInput, setAlpacaKeyInput] = useState("");
   const [alpacaSecretInput, setAlpacaSecretInput] = useState("");
   const [savingCreds, setSavingCreds] = useState(false);
+
+  // Persist chat history to localStorage whenever it changes
+  useEffect(() => {
+    saveChatHistory(chatHistory);
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory]);
 
   useEffect(() => {
     // Load recent directives for the current user
@@ -224,30 +252,35 @@ const QuantClawPage = () => {
   };
 
   // OpenClaw RAG search — routes through qaqi-agent edge function
+  // Appends to persistent chat history
   const invokeRagSearch = async () => {
-    if (!ragTool || !ragQuery.trim()) return;
+    if (!ragQuery.trim()) return;
+    const userMsg: ChatMessage = { role: "user", content: ragQuery.trim(), ts: Date.now() };
+    setChatHistory(prev => [...prev, userMsg]);
+    const query = ragQuery.trim();
+    setRagQuery("");
     setRagLoading(true);
-    setRagResult("");
     try {
       const { data, error } = await supabase.functions.invoke("qaqi-agent", {
         body: {
           action: "chat",
-          messages: [{ role: "user", content: ragQuery }],
+          messages: [{ role: "user", content: query }],
           context: {
             module: "rag_search",
-            tier: RAG_TIER[ragTool],
-            tool: ragTool,
+            tier: ragTool ? RAG_TIER[ragTool] : "tier1_tier2",
+            tool: ragTool ?? "search_trading_code",
             permissions: ["read"],
           },
         },
       });
       if (error) throw error;
       const content = data?.response || data?.message || data?.content || JSON.stringify(data, null, 2);
-      setRagResult(content);
-      toast.success("QAQI search complete");
+      const assistantMsg: ChatMessage = { role: "assistant", content, ts: Date.now() };
+      setChatHistory(prev => [...prev, assistantMsg]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      setRagResult(`Error: ${msg}`);
+      const errMsg: ChatMessage = { role: "assistant", content: `Error: ${msg}`, ts: Date.now() };
+      setChatHistory(prev => [...prev, errMsg]);
       toast.error("QAQI search failed", { description: msg });
     } finally {
       setRagLoading(false);
@@ -441,132 +474,207 @@ const QuantClawPage = () => {
             </Card>
           </TabsContent>
 
-          {/* ── QAQI Agent Tab — OpenClaw gateway direct interface ──────── */}
+          {/* ── QAQI Agent Tab — full persistent chat + RAG + Alpaca ─────── */}
           <TabsContent value="qaqi">
             <div className="grid gap-4">
-              <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="h-5 w-5 text-primary" />
-                    QAQI — Quantum Artificial Qubit Intelligent Agent
-                  </CardTitle>
+              {/* Chat window */}
+              <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)] flex flex-col">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Brain className="h-5 w-5 text-primary" />
+                      QAQI — Quantum Artificial Qubit Intelligent Agent
+                    </CardTitle>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        setChatHistory([]);
+                        localStorage.removeItem(CHAT_STORAGE_KEY);
+                        toast.success("Chat history cleared");
+                      }}
+                    >
+                      Clear history
+                    </Button>
+                  </div>
                   <CardDescription>
-                    OpenClaw gateway with full platform control · RAG search · market analysis · autonomous execution
+                    OpenClaw RAG gateway · Tier 1+2 repos · persistent chat history
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* RAG Search Tools */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+
+                {/* RAG tool selector */}
+                <div className="px-6 pb-2">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-muted-foreground self-center">Context:</span>
                     {["search_trading_code", "search_quant_research", "search_onchain"].map(tool => (
                       <Button
                         key={tool}
                         variant={ragTool === tool ? "default" : "outline"}
                         size="sm"
-                        className="gap-1 text-xs justify-start"
-                        onClick={() => { setRagTool(tool); setRagResult(""); }}
+                        className="gap-1 text-xs h-7 px-2"
+                        onClick={() => setRagTool(tool)}
                       >
                         <Search className="h-3 w-3" />
-                        {tool}
+                        {tool.replace("search_", "")}
                       </Button>
                     ))}
-                  </div>
-
-                  {ragTool && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        Searching via <code className="bg-muted px-1 rounded">qaqi-agent</code> ·{" "}
+                    {ragTool && (
+                      <span className="text-[10px] text-muted-foreground self-center">
                         tier: <span className="text-primary">{RAG_TIER[ragTool]}</span>
-                      </p>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder={`e.g. "RSI crossover strategy in freqtrade-strategies"`}
-                          value={ragQuery}
-                          onChange={e => setRagQuery(e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && invokeRagSearch()}
-                          className="bg-background/50 text-sm"
-                        />
-                        <Button size="sm" onClick={invokeRagSearch} disabled={ragLoading} className="shrink-0 gap-1">
-                          {ragLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                          Search
-                        </Button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Message history — scrollable, does not overlap input */}
+                <CardContent className="flex-1 px-6 pb-0">
+                  <div className="h-80 overflow-y-auto rounded-lg border border-border/50 bg-background/30 p-3 space-y-3 flex flex-col">
+                    {chatHistory.length === 0 && (
+                      <div className="flex-1 flex items-center justify-center">
+                        <p className="text-xs text-muted-foreground text-center">
+                          QAQI is ready. Select a search context above and ask anything about the RAG corpus.
+                        </p>
                       </div>
-                    </div>
-                  )}
+                    )}
+                    {chatHistory.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                      >
+                        {msg.role === "assistant" && (
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <Brain className="h-3 w-3 text-primary" />
+                          </div>
+                        )}
+                        <div
+                          className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${
+                            msg.role === "user"
+                              ? "bg-primary/20 text-foreground ml-auto"
+                              : "bg-background/50 border border-border/50 text-muted-foreground"
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                          <p className="text-[10px] opacity-50 mt-1 text-right">
+                            {new Date(msg.ts).toLocaleTimeString()}
+                          </p>
+                        </div>
+                        {msg.role === "user" && (
+                          <div className="w-6 h-6 rounded-full bg-background/50 border border-border/50 flex items-center justify-center shrink-0 mt-0.5">
+                            <span className="text-[10px]">U</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {ragLoading && (
+                      <div className="flex gap-2 justify-start">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                          <Loader2 className="h-3 w-3 text-primary animate-spin" />
+                        </div>
+                        <div className="bg-background/50 border border-border/50 rounded-lg px-3 py-2 text-xs text-muted-foreground">
+                          QAQI is searching the codebase...
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                </CardContent>
 
-                  {ragResult && (
-                    <div className="p-3 rounded-lg bg-background/50 border border-border/50 max-h-80 overflow-y-auto">
-                      <p className="text-xs font-semibold text-primary mb-2">QAQI Response</p>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{ragResult}</p>
-                    </div>
-                  )}
+                {/* Input area — always at bottom, never overlapped */}
+                <div className="px-6 pt-3 pb-4">
+                  <div className="flex gap-2 items-end">
+                    <Textarea
+                      placeholder={ragTool
+                        ? `Ask QAQI about ${ragTool.replace("search_", "")} (Enter to send, Shift+Enter for newline)`
+                        : "Select a context above, then ask anything..."}
+                      value={ragQuery}
+                      onChange={e => setRagQuery(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          invokeRagSearch();
+                        }
+                      }}
+                      className="bg-background/50 text-sm resize-none min-h-[44px] max-h-32"
+                      rows={1}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={invokeRagSearch}
+                      disabled={ragLoading || !ragQuery.trim()}
+                      className="gap-1 shrink-0 h-11"
+                    >
+                      {ragLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
 
-                  {/* Alpaca credentials vault */}
-                  <div className="border-t border-border/50 pt-4">
-                    <p className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1">
-                      <Lock className="h-3 w-3 text-yellow-400" />
-                      Alpaca Credentials — saved to Supabase vault (worker loads automatically)
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                      <Input
-                        placeholder="Alpaca API Key ID"
-                        type="password"
-                        value={alpacaKeyInput}
-                        onChange={e => setAlpacaKeyInput(e.target.value)}
-                        className="bg-background/50 text-xs font-mono"
-                      />
-                      <Input
-                        placeholder="Alpaca Secret Key"
-                        type="password"
-                        value={alpacaSecretInput}
-                        onChange={e => setAlpacaSecretInput(e.target.value)}
-                        className="bg-background/50 text-xs font-mono"
-                      />
-                    </div>
+              {/* Alpaca credentials vault */}
+              <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-yellow-400" />
+                    Alpaca Credentials Vault
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Stored in Supabase — the Render Worker loads them automatically at startup
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Alpaca API Key ID"
+                      type="password"
+                      value={alpacaKeyInput}
+                      onChange={e => setAlpacaKeyInput(e.target.value)}
+                      className="bg-background/50 text-xs font-mono"
+                    />
+                    <Input
+                      placeholder="Alpaca Secret Key"
+                      type="password"
+                      value={alpacaSecretInput}
+                      onChange={e => setAlpacaSecretInput(e.target.value)}
+                      className="bg-background/50 text-xs font-mono"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
                     <Button size="sm" onClick={saveAlpacaCreds} disabled={savingCreds} className="gap-1">
                       {savingCreds ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
                       Save to Vault
                     </Button>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Keys are stored in Supabase — never in code or Render env vars.
-                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 h-8 px-3 text-xs"
+                      disabled={alpacaLoading}
+                      onClick={async () => {
+                        setAlpacaLoading(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke("alpaca-trading", {
+                            body: { action: "get_account", mode: activeAgent === "prod" ? "live" : "paper" },
+                          });
+                          if (error) throw error;
+                          setAlpacaResult(data);
+                        } catch (e: unknown) {
+                          toast.error("Alpaca fetch failed", { description: e instanceof Error ? e.message : String(e) });
+                        } finally {
+                          setAlpacaLoading(false);
+                        }
+                      }}
+                    >
+                      {alpacaLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <TrendingUp className="h-3 w-3" />}
+                      View Account
+                    </Button>
                   </div>
-
-                  {/* Direct Alpaca account view */}
-                  <div className="border-t border-border/50 pt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-foreground flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-green-400" />
-                        Alpaca Account (via alpaca-trading edge function)
-                      </p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-6 px-2 text-[11px]"
-                        disabled={alpacaLoading}
-                        onClick={async () => {
-                          setAlpacaLoading(true);
-                          try {
-                            const { data, error } = await supabase.functions.invoke("alpaca-trading", {
-                              body: { action: "get_account", mode: activeAgent === "prod" ? "live" : "paper" },
-                            });
-                            if (error) throw error;
-                            setAlpacaResult(data);
-                          } catch (e: unknown) {
-                            toast.error("Alpaca account fetch failed", { description: e instanceof Error ? e.message : String(e) });
-                          } finally {
-                            setAlpacaLoading(false);
-                          }
-                        }}
-                      >
-                        {alpacaLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Refresh"}
-                      </Button>
-                    </div>
-                    {alpacaResult && (
-                      <pre className="text-[11px] text-muted-foreground bg-background/50 border border-border/50 rounded p-3 overflow-x-auto max-h-48">
-                        {JSON.stringify(alpacaResult, null, 2)}
-                      </pre>
-                    )}
-                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Keys are never stored in code or Render env vars.
+                  </p>
+                  {alpacaResult && (
+                    <pre className="text-[11px] text-muted-foreground bg-background/50 border border-border/50 rounded p-3 overflow-x-auto max-h-48">
+                      {JSON.stringify(alpacaResult, null, 2)}
+                    </pre>
+                  )}
                 </CardContent>
               </Card>
             </div>
