@@ -272,6 +272,13 @@ repos:
   - url: https://github.com/freefilm010/quwallet
     tier: 1
     tags: [quwallet, wallet, post-quantum, qtc]
+  # Packt algo-trading course: Buy&Hold, Random Forests, Scalpers, VaR, AutoCorrelation
+  - url: https://github.com/PacktPublishing/Machine-Learning-for-Algorithmic-Trading-Second-Edition
+    tier: 1
+    tags: [ml, trading, strategies, packt, random-forests, var, scalper]
+  - url: https://github.com/PacktPublishing/Algorithmic-Trading-with-Python
+    tier: 1
+    tags: [trading, strategies, backtesting, packt]
 
 rag_rules:
   tier1_default: true
