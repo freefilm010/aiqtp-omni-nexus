@@ -67,9 +67,23 @@ const CopyTradingLeaderboard = () => {
 
       if (fetchError) throw fetchError;
 
+      const userIds = [...new Set((data || []).map((t) => t.user_id).filter(Boolean))];
+      const usernameMap = new Map<string, string>();
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', userIds);
+
+        for (const profile of profiles || []) {
+          if (profile.username) usernameMap.set(profile.id, profile.username);
+        }
+      }
+
       const mapped: Trader[] = (data || []).map(t => ({
         id: t.id,
-        name: toSafePublicName({ displayName: t.display_name, fallbackId: t.id }),
+        name: toSafePublicName({ username: usernameMap.get(t.user_id), fallbackId: t.user_id || t.id }),
         avatar: t.avatar || '👤',
         tier: t.tier as 'elite' | 'pro' | 'rising',
         verified: t.is_verified || false,

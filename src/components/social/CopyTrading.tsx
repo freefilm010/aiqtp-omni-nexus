@@ -60,9 +60,23 @@ const CopyTrading = () => {
         .order("pnl_all_time", { ascending: false });
 
       if (!error && data && data.length > 0) {
+        const userIds = [...new Set(data.map((d) => d.user_id).filter(Boolean))];
+        const usernameMap = new Map<string, string>();
+
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, username")
+            .in("id", userIds);
+
+          for (const profile of profiles || []) {
+            if (profile.username) usernameMap.set(profile.id, profile.username);
+          }
+        }
+
         setTraders(data.map(d => ({
           id: d.id,
-          name: toSafePublicName({ displayName: d.display_name, fallbackId: d.id }),
+          name: toSafePublicName({ username: usernameMap.get(d.user_id), fallbackId: d.user_id || d.id }),
           avatar: d.avatar || "",
           followers: d.copiers_count || 0,
           pnl30d: d.pnl_30d || 0,

@@ -39,7 +39,7 @@ interface Post {
   comments_count: number;
   is_pinned: boolean;
   created_at: string;
-  profiles?: { full_name: string | null; avatar_url: string | null } | null;
+  profiles?: { username: string | null; avatar_url: string | null } | null;
 }
 
 interface Comment {
@@ -49,7 +49,7 @@ interface Comment {
   content: string;
   likes_count: number;
   created_at: string;
-  profiles?: { full_name: string | null; avatar_url: string | null } | null;
+  profiles?: { username: string | null; avatar_url: string | null } | null;
 }
 
 const POST_TYPES = [
@@ -93,15 +93,15 @@ const CapitolCommunity = () => {
 
     // Fetch profile names for post authors
     const userIds = [...new Set((data || []).map((p) => p.user_id))];
-    let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+    let profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, username, avatar_url")
         .in("id", userIds);
       if (profiles) {
         for (const p of profiles) {
-          profileMap[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+          profileMap[p.id] = { username: p.username, avatar_url: p.avatar_url };
         }
       }
     }
@@ -154,15 +154,15 @@ const CapitolCommunity = () => {
     if (!data) return;
 
     const userIds = [...new Set(data.map((c) => c.user_id))];
-    let profileMap: Record<string, { full_name: string | null; avatar_url: string | null }> = {};
+    let profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, username, avatar_url")
         .in("id", userIds);
       if (profiles) {
         for (const p of profiles) {
-          profileMap[p.id] = { full_name: p.full_name, avatar_url: p.avatar_url };
+          profileMap[p.id] = { username: p.username, avatar_url: p.avatar_url };
         }
       }
     }
@@ -244,7 +244,7 @@ const CapitolCommunity = () => {
   };
 
   const getPostTypeInfo = (type: string) => POST_TYPES.find((t) => t.value === type) || POST_TYPES[0];
-  const getInitials = (name: string | null | undefined) => (name ? name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : "??");
+  const getInitials = (name: string | null | undefined) => (name ? name.slice(0, 2).toUpperCase() : "??");
 
   return (
     <div className="space-y-4">
@@ -333,7 +333,7 @@ const CapitolCommunity = () => {
             const TypeIcon = typeInfo.icon;
             const isExpanded = expandedPost === post.id;
             const postComments = comments[post.id] || [];
-            const profileData = post.profiles as { full_name: string | null; avatar_url: string | null } | null;
+            const profileData = post.profiles as { username: string | null; avatar_url: string | null } | null;
 
             return (
               <Card key={post.id} className="border-border/50 bg-card hover:border-border transition-colors">
@@ -342,11 +342,11 @@ const CapitolCommunity = () => {
                   <div className="flex items-center gap-2">
                     <Avatar className="h-7 w-7">
                       <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                        {getInitials(profileData?.full_name)}
+                        {getInitials(profileData?.username)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-xs font-medium text-foreground">
-                      {profileData?.full_name || "Anonymous"}
+                      {profileData?.username || `User ${post.user_id.slice(0, 6)}`}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
                       {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
@@ -412,18 +412,18 @@ const CapitolCommunity = () => {
                   {isExpanded && (
                     <div className="border-t border-border/40 pt-2 mt-1 space-y-2">
                       {postComments.map((c) => {
-                        const cProfile = c.profiles as { full_name: string | null } | null;
+                        const cProfile = c.profiles as { username: string | null } | null;
                         return (
                           <div key={c.id} className="flex items-start gap-2 pl-2">
                             <Avatar className="h-5 w-5 mt-0.5">
                               <AvatarFallback className="text-[8px] bg-accent text-accent-foreground">
-                                {getInitials(cProfile?.full_name)}
+                                {getInitials(cProfile?.username)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-[11px] font-medium text-foreground">
-                                  {cProfile?.full_name || "Anonymous"}
+                                  {cProfile?.username || `User ${c.user_id.slice(0, 6)}`}
                                 </span>
                                 <span className="text-[9px] text-muted-foreground">
                                   {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
