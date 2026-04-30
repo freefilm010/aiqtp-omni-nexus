@@ -1,5 +1,7 @@
 # Welcome to your Lovable project
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/freefilm010/aiqtp-omni-nexus)
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/d588a2ef-0d53-4c77-8d2f-41dfd18dd47e
