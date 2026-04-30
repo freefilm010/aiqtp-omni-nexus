@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useRentStrategy } from "@/hooks/useRentStrategy";
 import { toast } from "sonner";
 import { Explain, ExplainerTooltip } from "@/components/ui/explainer-tooltip";
 import { PROFIT_TIERS, MIN_INVESTMENT, STRATEGY_FEES } from "@/lib/fees/platformFees";
@@ -71,6 +72,7 @@ const DEFAULT_MONTHLY_RENTAL_PRICE = STRATEGY_FEES.defaultMonthlyRentalPrice;
 const StrategyMarketplace = () => {
   const { user } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { rentStrategy: rentStrategyRpc, loading: renting } = useRentStrategy();
   const [strategies, setStrategies] = useState<GraduatedStrategy[]>([]);
   const [myRentals, setMyRentals] = useState<StrategyRental[]>([]);
   const [myStrategies, setMyStrategies] = useState<GraduatedStrategy[]>([]);
@@ -134,32 +136,14 @@ const StrategyMarketplace = () => {
       return;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('strategy_rentals')
-        .insert({
-          strategy_id: strategy.id,
-          renter_user_id: user.id,
-          creator_user_id: strategy.user_id,
-          monthly_price: strategy.rental_price_monthly,
-          status: 'active'
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Update rental count
+    const rentalId = await rentStrategyRpc(strategy.id);
+    if (rentalId) {
+      // Refresh rental count + lists
       await supabase
         .from('ai_strategies')
         .update({ total_rentals: (strategy.total_rentals || 0) + 1 })
         .eq('id', strategy.id);
-
-      toast.success(`Successfully rented "${strategy.name}"!`);
       fetchMarketplaceData();
-    } catch (err) {
-      toast.error("Failed to rent strategy");
-      console.error(err);
     }
   };
 
