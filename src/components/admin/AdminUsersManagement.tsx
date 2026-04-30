@@ -195,7 +195,7 @@ const AdminUsersManagement = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
-                            {user.full_name?.charAt(0)?.toUpperCase() || "?"}
+                            {user.username?.charAt(0)?.toUpperCase() || "?"}
                           </div>
                           <div>
                             <p className="font-medium text-sm">{user.username || `User ${user.id.slice(0, 6)}`}</p>
