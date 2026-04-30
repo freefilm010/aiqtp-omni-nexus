@@ -112,6 +112,11 @@ const QuantClawPage = () => {
   const [alpacaLoading, setAlpacaLoading] = useState(false);
   const [alpacaResult, setAlpacaResult] = useState<Record<string, unknown> | null>(null);
 
+  // Credentials vault state
+  const [alpacaKeyInput, setAlpacaKeyInput] = useState("");
+  const [alpacaSecretInput, setAlpacaSecretInput] = useState("");
+  const [savingCreds, setSavingCreds] = useState(false);
+
   useEffect(() => {
     // Load recent directives for the current user
     const load = async () => {
@@ -175,6 +180,46 @@ const QuantClawPage = () => {
     } else {
       toast.success(`${dispatchingTool} dispatched to Render Worker`);
       setDispatchingTool(null);
+    }
+  };
+
+  // Save Alpaca credentials to Supabase account_key_vault
+  // Worker reads from here at startup if env vars are not set
+  const saveAlpacaCreds = async () => {
+    if (!alpacaKeyInput.trim() || !alpacaSecretInput.trim()) {
+      toast.error("Both Alpaca API key and secret are required.");
+      return;
+    }
+    setSavingCreds(true);
+    try {
+      const upsert = async (accountId: string, value: string) => {
+        const existing = await supabase
+          .from("account_key_vault")
+          .select("id")
+          .eq("account_id", accountId)
+          .maybeSingle();
+        if (existing.data) {
+          await supabase
+            .from("account_key_vault")
+            .update({ api_key_encrypted: value })
+            .eq("account_id", accountId);
+        } else {
+          await supabase
+            .from("account_key_vault")
+            .insert({ account_id: accountId, api_key_encrypted: value });
+        }
+      };
+      await upsert("alpaca_api_key", alpacaKeyInput.trim());
+      await upsert("alpaca_secret_key", alpacaSecretInput.trim());
+      toast.success("Alpaca credentials saved to vault", {
+        description: "The Render Worker will load them automatically on next restart.",
+      });
+      setAlpacaKeyInput("");
+      setAlpacaSecretInput("");
+    } catch (e: unknown) {
+      toast.error("Failed to save credentials", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setSavingCreds(false);
     }
   };
 
@@ -454,6 +499,37 @@ const QuantClawPage = () => {
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">{ragResult}</p>
                     </div>
                   )}
+
+                  {/* Alpaca credentials vault */}
+                  <div className="border-t border-border/50 pt-4">
+                    <p className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1">
+                      <Lock className="h-3 w-3 text-yellow-400" />
+                      Alpaca Credentials — saved to Supabase vault (worker loads automatically)
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                      <Input
+                        placeholder="Alpaca API Key ID"
+                        type="password"
+                        value={alpacaKeyInput}
+                        onChange={e => setAlpacaKeyInput(e.target.value)}
+                        className="bg-background/50 text-xs font-mono"
+                      />
+                      <Input
+                        placeholder="Alpaca Secret Key"
+                        type="password"
+                        value={alpacaSecretInput}
+                        onChange={e => setAlpacaSecretInput(e.target.value)}
+                        className="bg-background/50 text-xs font-mono"
+                      />
+                    </div>
+                    <Button size="sm" onClick={saveAlpacaCreds} disabled={savingCreds} className="gap-1">
+                      {savingCreds ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                      Save to Vault
+                    </Button>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Keys are stored in Supabase — never in code or Render env vars.
+                    </p>
+                  </div>
 
                   {/* Direct Alpaca account view */}
                   <div className="border-t border-border/50 pt-4">

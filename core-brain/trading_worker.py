@@ -56,31 +56,57 @@ COINGECKO_API_KEY: Optional[str] = os.getenv("COINGECKO_API_KEY")
 LOOP_INTERVAL_SECONDS: int = int(os.getenv("LOOP_INTERVAL_SECONDS", "60"))
 
 # ── Alpaca brokerage (QuantClaw-Prod live order execution) ────────────────────
+# Keys are read from env vars if set, otherwise fetched from Supabase
+# account_key_vault at startup so the user can configure them via the UI.
 ALPACA_API_KEY: Optional[str]    = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET_KEY: Optional[str] = os.getenv("ALPACA_SECRET_KEY")
 ALPACA_BASE_URL: str             = os.getenv(
-    "ALPACA_BASE_URL", "https://paper-api.alpaca.markets"
+    "ALPACA_BASE_URL", "https://api.alpaca.markets"
 )
-# Hard safety flag: must be explicitly set to 'false' in the Render env to
-# allow live order submission. Paper mode is the safe default.
 ALPACA_PAPER_MODE: bool = os.getenv("ALPACA_PAPER_MODE", "true").lower() != "false"
 
-# Symbol whitelist for live orders (Alpaca symbol format, not CoinGecko)
 ALPACA_SYMBOL_WHITELIST: set[str] = {
     s.strip() for s in os.getenv("ALPACA_SYMBOL_WHITELIST", "BTCUSD,ETHUSD").split(",")
     if s.strip()
 }
 
-# Rate-limit: max 5 live order submissions per rolling hour per user_id
-# Keyed by user_id → deque of epoch timestamps
 _alpaca_order_times: dict[str, collections.deque] = {}
 
 # ─── Supabase client ──────────────────────────────────────────────────────────
-# Service-role key is mandatory: the RLS policies on trade_logs and
-# performance_evaluator only permit writes from auth.role() = 'service_role'.
-# Never substitute the anon key here.
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+
+def _load_alpaca_keys_from_vault() -> None:
+    """
+    If ALPACA_API_KEY / ALPACA_SECRET_KEY are not set as env vars, attempt to
+    read them from the account_key_vault table in Supabase. The UI stores them
+    there when the user enters them in the QuantClaw QAQI credentials panel.
+
+    Expected rows:
+      account_id = 'alpaca_api_key'    → api_key_encrypted = <key ID>
+      account_id = 'alpaca_secret_key' → api_key_encrypted = <secret>
+    """
+    global ALPACA_API_KEY, ALPACA_SECRET_KEY
+    if ALPACA_API_KEY and ALPACA_SECRET_KEY:
+        return  # env vars already set — nothing to do
+
+    try:
+        result = (
+            supabase.table("account_key_vault")
+            .select("account_id, api_key_encrypted")
+            .in_("account_id", ["alpaca_api_key", "alpaca_secret_key"])
+            .execute()
+        )
+        for row in result.data or []:
+            if row["account_id"] == "alpaca_api_key" and not ALPACA_API_KEY:
+                ALPACA_API_KEY = row["api_key_encrypted"]
+                log.info("Alpaca API key loaded from Supabase vault.")
+            elif row["account_id"] == "alpaca_secret_key" and not ALPACA_SECRET_KEY:
+                ALPACA_SECRET_KEY = row["api_key_encrypted"]
+                log.info("Alpaca secret key loaded from Supabase vault.")
+    except Exception as exc:
+        log.warning("Could not load Alpaca keys from vault: %s", exc)
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -720,6 +746,9 @@ def poll_and_execute_directives() -> int:
 # ─── Main loop ────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    # Load Alpaca keys from Supabase vault if not set via env vars
+    _load_alpaca_keys_from_vault()
+
     log.info("=" * 64)
     log.info("AIQTP Omni-Nexus Core Brain — starting up")
     log.info("  Supabase URL   : %s", SUPABASE_URL)

@@ -6,21 +6,23 @@ services:
     buildCommand: pip install -r ../requirements.txt
     startCommand: python trading_worker.py
     envVars:
-      - key: SUPABASE_URL
-        sync: false
+      # ── Only this one requires manual input ──────────────────────────────
+      # Find it: lovable.dev/projects/d588a2ef-0d53-4c77-8d2f-41dfd18dd47e
+      #          → Settings → Supabase → service_role secret
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: ALPACA_API_KEY
-        sync: false
-      - key: ALPACA_SECRET_KEY
-        sync: false
+
+      # ── Pre-filled — no action needed ────────────────────────────────────
+      - key: SUPABASE_URL
+        value: https://rueaxiyvseaxkysnoock.supabase.co
       - key: ALPACA_BASE_URL
         value: https://api.alpaca.markets
       - key: ALPACA_PAPER_MODE
         value: false
       - key: ALPACA_SYMBOL_WHITELIST
         value: BTCUSD,ETHUSD
-      - key: COINGECKO_API_KEY
-        sync: false
       - key: LOOP_INTERVAL_SECONDS
         value: 60
+      # Alpaca API key + secret are read from Supabase account_key_vault
+      # by the worker at startup — set them in the QuantClaw QAQI tab UI.
+      # COINGECKO_API_KEY is optional; free-tier used if not set.
