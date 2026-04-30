@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
-import {
-  Twitter, MessageCircle, Send, ExternalLink, Rocket, BookOpen, Wallet, Globe } from "lucide-react";
-import { Youtube, Github, Linkedin } from "@/lib/icons/brand-icons";
+import { MessageCircle, Send, ExternalLink, Rocket, BookOpen, Wallet, Globe } from "lucide-react";
+import { Twitter, Youtube, Github, Linkedin } from "@/lib/icons/brand-icons";
 
 interface SocialLink {
   name: string;
