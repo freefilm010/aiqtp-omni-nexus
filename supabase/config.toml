@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.record-profit-fee]
 verify_jwt = false
+
+[functions.get-market-prices]
+verify_jwt = false

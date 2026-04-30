@@ -5600,6 +5600,44 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_evaluator: {
+        Row: {
+          id: string
+          strategy_id: string | null
+          win_rate: number
+          max_drawdown: number
+          profit_factor: number
+          total_trades: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          strategy_id?: string | null
+          win_rate?: number
+          max_drawdown?: number
+          profit_factor?: number
+          total_trades?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          strategy_id?: string | null
+          win_rate?: number
+          max_drawdown?: number
+          profit_factor?: number
+          total_trades?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_evaluator_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_fee_events: {
         Row: {
           created_at: string
@@ -7965,6 +8003,69 @@ export type Database = {
           },
         ]
       }
+      strategy_registry: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string | null
+          bot_type: string
+          data_category: string
+          collection_frequency: string
+          sources: Json
+          creator_profit_share: number
+          aggregation_rules: Json
+          is_active: boolean
+          pending_graduation: boolean
+          is_graduated: boolean
+          quality_score: number
+          reliability_score: number
+          total_records_collected: number
+          total_earnings: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          description?: string | null
+          bot_type: string
+          data_category: string
+          collection_frequency: string
+          sources?: Json
+          creator_profit_share?: number
+          aggregation_rules?: Json
+          is_active?: boolean
+          pending_graduation?: boolean
+          is_graduated?: boolean
+          quality_score?: number
+          reliability_score?: number
+          total_records_collected?: number
+          total_earnings?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          description?: string | null
+          bot_type?: string
+          data_category?: string
+          collection_frequency?: string
+          sources?: Json
+          creator_profit_share?: number
+          aggregation_rules?: Json
+          is_active?: boolean
+          pending_graduation?: boolean
+          is_graduated?: boolean
+          quality_score?: number
+          reliability_score?: number
+          total_records_collected?: number
+          total_earnings?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -8254,6 +8355,27 @@ export type Database = {
           streak?: number
           updated_at?: string
           vote?: string
+        }
+        Relationships: []
+      }
+      system_status: {
+        Row: {
+          key: string
+          active: boolean
+          updated_at: string
+          reason: string | null
+        }
+        Insert: {
+          key: string
+          active?: boolean
+          updated_at?: string
+          reason?: string | null
+        }
+        Update: {
+          key?: string
+          active?: boolean
+          updated_at?: string
+          reason?: string | null
         }
         Relationships: []
       }
@@ -8713,10 +8835,14 @@ export type Database = {
       trade_logs: {
         Row: {
           action: string
+          closed_at: string | null
           created_at: string
+          direction: string | null
+          entry_price: number | null
           error_message: string | null
           exchange_account_id: string | null
           exchange_order_id: string | null
+          exit_price: number | null
           fee: number
           id: string
           price: number | null
@@ -8725,15 +8851,20 @@ export type Database = {
           side: string | null
           slippage_pct: number
           status: string
+          strategy_id: string | null
           symbol: string | null
           user_id: string
         }
         Insert: {
           action: string
+          closed_at?: string | null
           created_at?: string
+          direction?: string | null
+          entry_price?: number | null
           error_message?: string | null
           exchange_account_id?: string | null
           exchange_order_id?: string | null
+          exit_price?: number | null
           fee?: number
           id?: string
           price?: number | null
@@ -8742,15 +8873,20 @@ export type Database = {
           side?: string | null
           slippage_pct?: number
           status: string
+          strategy_id?: string | null
           symbol?: string | null
           user_id: string
         }
         Update: {
           action?: string
+          closed_at?: string | null
           created_at?: string
+          direction?: string | null
+          entry_price?: number | null
           error_message?: string | null
           exchange_account_id?: string | null
           exchange_order_id?: string | null
+          exit_price?: number | null
           fee?: number
           id?: string
           price?: number | null
@@ -8759,10 +8895,19 @@ export type Database = {
           side?: string | null
           slippage_pct?: number
           status?: string
+          strategy_id?: string | null
           symbol?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trade_logs_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_registry"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trades: {
         Row: {
