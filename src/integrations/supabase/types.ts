@@ -5600,6 +5600,76 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_fee_events: {
+        Row: {
+          created_at: string
+          creator_share_usd: number
+          fee_rate: number
+          gross_profit_usd: number
+          id: string
+          platform_fee_usd: number
+          platform_share_usd: number
+          rental_id: string | null
+          status: string
+          strategy_id: string | null
+          symbol: string | null
+          trade_ref: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_share_usd?: number
+          fee_rate: number
+          gross_profit_usd: number
+          id?: string
+          platform_fee_usd: number
+          platform_share_usd: number
+          rental_id?: string | null
+          status?: string
+          strategy_id?: string | null
+          symbol?: string | null
+          trade_ref?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_share_usd?: number
+          fee_rate?: number
+          gross_profit_usd?: number
+          id?: string
+          platform_fee_usd?: number
+          platform_share_usd?: number
+          rental_id?: string | null
+          status?: string
+          strategy_id?: string | null
+          symbol?: string | null
+          trade_ref?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_fee_events_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "strategy_rentals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_fee_events_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_fee_events_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_investments: {
         Row: {
           asset_symbol: string
@@ -9376,6 +9446,48 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_requests: {
+        Row: {
+          admin_notes: string | null
+          amount_usd: number
+          created_at: string
+          destination_details: Json
+          destination_type: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount_usd: number
+          created_at?: string
+          destination_details?: Json
+          destination_type: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount_usd?: number
+          created_at?: string
+          destination_details?: Json
+          destination_type?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       ai_strategies_public: {
@@ -9911,6 +10023,7 @@ export type Database = {
           is_protected: boolean
         }[]
       }
+      get_user_usd_balance: { Args: { p_user_id?: string }; Returns: number }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
@@ -9956,6 +10069,25 @@ export type Database = {
           p_reference_type?: string
           p_to_operator_id: string
           p_transaction_type: string
+        }
+        Returns: string
+      }
+      record_profit_fee: {
+        Args: {
+          p_gross_profit_usd: number
+          p_rental_id: string
+          p_symbol?: string
+          p_trade_ref?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      rent_strategy: { Args: { p_strategy_id: string }; Returns: string }
+      request_withdrawal: {
+        Args: {
+          p_amount_usd: number
+          p_destination_details?: Json
+          p_destination_type: string
         }
         Returns: string
       }

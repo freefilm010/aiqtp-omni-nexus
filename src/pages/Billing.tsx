@@ -10,6 +10,7 @@ import { Check, Wallet, Percent, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { toast } from "sonner";
+import { AccountBalance } from "@/components/billing/AccountBalance";
 
 const PLATFORM_ACCESS_FEATURES = [
   "Full platform access is free",
@@ -68,6 +69,8 @@ export default function Billing() {
             Access and agents are free. Card checkout only adds USD funds to your account.
           </p>
         </div>
+
+        {user && <AccountBalance userId={user.id} />}
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Free Access */}
