@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { 
   Brain, TrendingUp, Target, Zap, Loader2, Sparkles, Clock, Search, 
   SortAsc, SortDesc, FlaskConical, Trash2, Copy, Play, Archive,
@@ -325,7 +326,7 @@ const AIResearchLab = () => {
   // Duplicate strategy mutation
   const duplicateStrategyMutation = useMutation({
     mutationFn: async (strategy: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCachedUser();
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase

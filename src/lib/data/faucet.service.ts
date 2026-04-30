@@ -3,6 +3,7 @@
  * Handles faucet_claims and credit_faucet_claim RPC.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import type { ServiceResult, FaucetClaim, FaucetClaimRow } from "./types";
 
 function toFaucetClaim(row: FaucetClaimRow): FaucetClaim {
@@ -18,7 +19,7 @@ function toFaucetClaim(row: FaucetClaimRow): FaucetClaim {
 
 /** Get faucet claim history for the current user. */
 export async function getUserFaucetClaims(limit = 50): Promise<ServiceResult<FaucetClaim[]>> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return { data: null, error: "Not authenticated" };
 
   const { data, error } = await supabase
@@ -38,7 +39,7 @@ export async function claimFaucetToken(
   amount: number,
   chain: string
 ): Promise<ServiceResult<null>> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return { data: null, error: "Not authenticated" };
 
   const { error } = await supabase.rpc("credit_faucet_claim", {

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, Wallet, Percent, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { toast } from "sonner";
 import { AccountBalance } from "@/components/billing/AccountBalance";
@@ -34,7 +35,7 @@ export default function Billing() {
   const [depositOpen, setDepositOpen] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    Promise.resolve(getCachedUser()).then((user) => { const data = { user };
       if (data.user) setUser({ id: data.user.id, email: data.user.email ?? undefined });
     });
   }, []);

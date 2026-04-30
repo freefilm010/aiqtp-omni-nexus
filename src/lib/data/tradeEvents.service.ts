@@ -3,6 +3,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 export interface TradeEvent {
   id: string;
   userId: string;
@@ -27,7 +28,7 @@ export async function appendTradeEvent(params: {
   feeCurrency?: string;
   slippagePct?: number;
 }) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase.from("trade_events").insert({

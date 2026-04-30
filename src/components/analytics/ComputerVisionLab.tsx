@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,7 +66,7 @@ const ComputerVisionLab = () => {
 
   useEffect(() => {
     const loadDetections = async () => {
-      const { data: user } = await supabase.auth.getUser();
+      const user = await getCachedUser();
       if (!user?.user?.id) return;
 
       const { data } = await supabase
