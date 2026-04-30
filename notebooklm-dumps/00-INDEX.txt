@@ -1,0 +1,153 @@
+================================================================
+AIQTP OMNI-NEXUS — NOTEBOOKLM SOURCE PACKAGE
+================================================================
+Complete repository source dump, split into 10 parts for upload
+as individual NotebookLM sources. Upload all 10 parts to get
+full cross-file context across the entire codebase.
+
+Total coverage: ~5.7MB  |  720 source files  |  148,766 lines
+
+UPLOAD ORDER & CONTENTS
+────────────────────────────────────────────────────────────────
+
+PART 01 — part-01-config-types-core-brain.txt                330KB
+  Start here. The full architecture is explained in the header.
+  • requirements.txt, package.json, supabase/config.toml
+  • src/integrations/supabase/types.ts  (complete DB type defs)
+  • src/integrations/supabase/client.ts
+  • core-brain/trading_worker.py        (Python autonomous worker)
+
+PART 02 — part-02-supabase-migrations.txt                    552KB
+  Full database schema history — 185 SQL migration files from
+  project inception through the Control Panel refactor, including
+  the new strategy_registry, system_status, performance_evaluator
+  tables and the trade_logs ALTER.
+
+PART 03 — part-03-supabase-edge-functions.txt                461KB
+  All 45 Deno/TypeScript Supabase Edge Functions:
+  trade execution, market data sync, AI copilot, strategy
+  management, payments, and the new get-market-prices
+  CoinGecko proxy function.
+
+PART 04 — part-04-components-analytics-trading-strategy.txt  784KB
+  Core trading UI components (55 files):
+  • analytics/   SignalMonitor (Live PnL + System Health dashboard)
+  • data/        DataBotBuilder (strategy_registry Control Panel)
+  • trading/     MasterKillSwitch, order entry, charts, watchlist
+  • home/        Dashboard widgets (heatmap, AI panel, portfolio)
+  • strategy/    Strategy builder, backtest, marketplace, templates
+  • portfolio/   Portfolio analytics dashboard
+
+PART 05 — part-05-components-ai-admin-exchange-defi.txt      970KB
+  Institutional & advanced components (70 files):
+  • ai/          AI assistant, copilot, model selection
+  • admin/       Admin dashboard, revenue automation, treasury
+  • exchange/    Multi-exchange aggregator, order books
+  • defi/        DeFi sniper, liquidity, yield protocols
+  • ml/          ML training interface, predictions lab
+  • quantum/     Quantum lab
+  • risk/        Risk analytics, circuit breaker UI
+  • screener/    Asset screener
+  • alerts/      Alert feed
+  • research/    Market research tools
+  • connections/ Wallet & exchange connection management
+  • connectors/  Exchange connector configuration UI
+
+PART 06 — part-06-components-ui-nft-faucet-misc1.txt         827KB
+  Marketplace & ecosystem components (102 files):
+  • ui/          Complete Shadcn/Radix component library layer
+  • nft/         NFT studio, minting, gallery
+  • faucet/      Crypto faucet and reward system
+  • intelligence/ Market intelligence & crawler analytics
+  • capitol/     Capitol trades tracker
+  • qaqi/        QAQI agent interface
+  • token/       Token launchpad & ecosystem
+  • payments/    Payment flows
+  • workspace/   User workspace & dashboard layout
+  • social/      Social trading, copy-trading leaderboards
+  • marketplace/ Strategy marketplace UI
+
+PART 07 — part-07-components-misc2-root-files.txt            427KB
+  Utility & infrastructure components (47 files):
+  • competitive, chat, freqtrade, broadcast, institutional
+  • derivatives, notifications, achievements, standards
+  • self-help, forensics, billing, floating, settings
+  • charter, news, feedback, staking, legal, onboarding
+  • github, affiliate, accessibility
+  • Root-level: Header, Hero, Footer, ProtectedRoute,
+    WidgetErrorBoundary, ErrorBoundary, LazySection
+
+PART 08 — part-08-pages-hooks-contexts.txt                   728KB
+  Application shell (102 files):
+  • src/pages/    All 67 route-level page components
+  • src/hooks/    All 29 custom React hooks
+    (PnL streaming, market prices, portfolio valuation,
+     WebSocket prices, auth, trading execution, etc.)
+  • src/contexts/ React context providers
+
+PART 09 — part-09-lib-part-a.txt                             414KB
+  Core business logic — Part A (44 files, heavy modules):
+  • ml/           ML framework, RL agent, pattern recognition,
+                  regime detection, self-training, world model
+  • standards/    EIP, OpenZeppelin, PQC, RWA compliance
+  • infra/        Telemetry, circuit breaker, event bus/store,
+                  execution router, safety cluster
+  • portfolio/    PnL engine, tax lots, FIFO/LIFO/HIFO matching
+  • factors/      Factor library & signal analysis
+  • fees/         Fee calculation & normalization
+  • input/        Input adapters & core input system
+  • automation/   Automation hub logic
+  • nft/          NFT generation & pricing utilities
+  • worldModel/   World model agent system
+
+PART 10 — part-10-lib-part-b.txt                             312KB
+  Core business logic — Part B (64 files, utility modules):
+  • backtesting/  Engine, replay, order book simulator
+  • market/       CoinGecko module, order book simulator
+  • resilience/   Circuit breaker, stale-while-revalidate
+  • risk/         Risk engine
+  • data/         Data service layer (7 service files)
+  • exchange/     Exchange adapter layer
+  • crypto/       Crypto primitives
+  • hft/          HFT simulator
+  • dex/          DEX utilities
+  • quantum/      IBM Quantum integration
+  • forensics/    On-chain forensics & wallet analysis
+  • auth/         Auth helpers
+  • stripe/       Stripe config & payment utilities
+  • pnlStream, pnlFormat, taxLots, lotStrategy,
+    normalizeFee, taxReportGenerator, exportTradesCSV
+  • utils, fxHistory, fund, collective, macro, evolution
+
+════════════════════════════════════════════════════════════════
+ARCHITECTURE SUMMARY (for NotebookLM context)
+════════════════════════════════════════════════════════════════
+
+FRONTEND (React 19 / Vite / TypeScript)
+  Strict "Control Panel" — no direct exchange connections,
+  no market data fetch loops, no trading execution logic.
+  Communicates exclusively through Supabase.
+
+SUPABASE (Data & Serverless Layer)
+  strategy_registry      ← frontend writes bot configs
+  system_status          ← frontend writes kill-switch flag
+  trade_logs             ← worker writes; frontend reads realtime
+  performance_evaluator  ← worker writes; frontend reads realtime
+  45 Edge Functions      ← Deno workers for secure server-side ops
+
+CORE BRAIN (Python / Render Background Worker)
+  core-brain/trading_worker.py
+  Continuous while-True loop (default 60s):
+    1. Read system_status.active — halt immediately if false
+    2. Read strategy_registry WHERE is_active = true
+    3. Fetch live prices from CoinGecko (one call per cycle)
+    4. Per-strategy frequency gate (realtime/minute/hourly/daily)
+    5. Simulate trade → insert into trade_logs
+    6. Recalculate metrics → upsert performance_evaluator
+
+KEY DEPENDENCIES
+  Frontend:  react@19, @supabase/supabase-js@2, recharts@3,
+             @tanstack/react-query@5, tailwindcss@3, radix-ui
+  Worker:    supabase-py, requests, pandas, python-dotenv
+
+════════════════════════════════════════════════════════════════
