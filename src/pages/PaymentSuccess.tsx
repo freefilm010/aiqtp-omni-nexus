@@ -4,43 +4,26 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Rocket, ArrowRight, PartyPopper } from "lucide-react";
+import { CheckCircle, Wallet, ArrowRight, PartyPopper } from "lucide-react";
 import confetti from "canvas-confetti";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
-  const plan = searchParams.get("plan") || "premium";
+  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
-    // Trigger confetti on mount
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
-    function randomInRange(min: number, max: number) {
-      return Math.random() * (max - min) + min;
-    }
-
-    const interval: ReturnType<typeof setInterval> = setInterval(function() {
+    const interval: ReturnType<typeof setInterval> = setInterval(function () {
       const timeLeft = animationEnd - Date.now();
-
-      if (timeLeft <= 0) {
-        return clearInterval(interval);
-      }
-
+      if (timeLeft <= 0) return clearInterval(interval);
       const particleCount = 50 * (timeLeft / duration);
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
-      });
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
-      });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -55,54 +38,51 @@ const PaymentSuccess = () => {
                 <CheckCircle className="h-12 w-12 text-green-500" />
               </div>
               <CardTitle className="text-3xl flex items-center justify-center gap-2">
-                Payment Successful! <PartyPopper className="h-8 w-8 text-yellow-500" />
+                Deposit Received <PartyPopper className="h-8 w-8 text-yellow-500" />
               </CardTitle>
               <CardDescription className="text-lg">
-                Welcome to AIQTP {plan.replace("-", " ").replace(/\b\w/g, l => l.toUpperCase())}
+                Your USD trading balance has been credited.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="p-4 bg-muted/50 rounded-lg text-left">
                 <h3 className="font-semibold mb-2">What happens next?</h3>
-                <ul className="text-sm text-muted-foreground space-y-2 text-left">
+                <ul className="text-sm text-muted-foreground space-y-2">
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Your account has been upgraded instantly</span>
+                    <span>Funds are available immediately in your USD wallet</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>All premium features are now unlocked</span>
+                    <span>Rent any strategy bot at $0 — fees only apply to realized profits</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>A confirmation email has been sent to you</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Revenue is being automatically reinvested</span>
+                    <span>Withdraw anytime from the Billing page (min $20)</span>
                   </li>
                 </ul>
               </div>
 
+              {sessionId && (
+                <p className="text-xs text-muted-foreground break-all">
+                  Reference: {sessionId}
+                </p>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg">
-                  <Link to="/trading">
-                    <Rocket className="h-4 w-4 mr-2" />
-                    Start Trading
+                  <Link to="/billing">
+                    <Wallet className="h-4 w-4 mr-2" />
+                    View Balance
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link to="/strategy-lab">
-                    Explore Strategies
+                    Browse Strategies
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>
               </div>
-
-              <p className="text-xs text-muted-foreground">
-                Your payment contributes directly to platform growth and automated reinvestment.
-                Thank you for supporting AIQTP!
-              </p>
             </CardContent>
           </Card>
         </div>
