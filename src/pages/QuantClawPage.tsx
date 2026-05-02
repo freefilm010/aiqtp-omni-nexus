@@ -13,6 +13,7 @@ import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import * as renderApi from "@/integrations/renderApi";
 import { toast } from "sonner";
 
 const AGENT_TOOLS_DEV = [
@@ -146,30 +147,15 @@ const QuantClawPage = () => {
   }, [chatHistory]);
 
   useEffect(() => {
-    // Load recent directives for the current user
-    const load = async () => {
-      const { data } = await supabase
-        .from("agent_directives")
-        .select("id, tool, status, result, error_msg, created_at")
-        .order("created_at", { ascending: false })
-        .limit(10);
-      if (data) setActiveDirectives(data as unknown as DirectiveRow[]);
-    };
-    load();
-
-    const channel = supabase
-      .channel(`agent-directives-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "agent_directives" }, (payload) => {
-        const row = payload.new as DirectiveRow;
-        setActiveDirectives(prev => {
-          const exists = prev.find(d => d.id === row.id);
-          if (exists) return prev.map(d => d.id === row.id ? row : d);
-          return [row, ...prev].slice(0, 10);
-        });
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const cleanup = renderApi.pollDirectives(
+        user.id,
+        (rows) => setActiveDirectives(rows as DirectiveRow[]),
+        5000,
+      );
+      return cleanup;
+    });
   }, []);
 
   const openDispatch = (toolName: string) => {
@@ -196,18 +182,12 @@ const QuantClawPage = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Not authenticated"); return; }
 
-    const { error } = await supabase.from("agent_directives").insert({
-      user_id: user.id,
-      tool: dispatchingTool,
-      agent_type: activeAgent,
-      params,
-      status: "pending",
-    });
-    if (error) {
-      toast.error("Dispatch failed", { description: error.message });
-    } else {
+    try {
+      await renderApi.createDirective(user.id, dispatchingTool, activeAgent, params);
       toast.success(`${dispatchingTool} dispatched to Render Worker`);
       setDispatchingTool(null);
+    } catch (err) {
+      toast.error("Dispatch failed", { description: String(err) });
     }
   };
 

@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
+import * as renderApi from "@/integrations/renderApi";
 import { getCachedUser } from "@/lib/auth/getCachedUser";
 
 interface StrategyConfig {
@@ -128,13 +128,12 @@ const DataBotBuilder = () => {
 
     setUserId(currentUser.id);
 
-    const { data } = await supabase
-      .from('strategy_registry')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('created_at', { ascending: false });
-
-    if (data) setConfigs(data as StrategyConfig[]);
+    try {
+      const data = await renderApi.getStrategies(currentUser.id);
+      setConfigs(data as unknown as StrategyConfig[]);
+    } catch {
+      setConfigs([]);
+    }
     setLoading(false);
   };
 
@@ -159,25 +158,19 @@ const DataBotBuilder = () => {
 
     setUserId(userData.user.id);
 
-    const { error } = await supabase.from('strategy_registry').insert({
-      user_id: userData.user.id,
-      name: botName,
-      description: botDescription,
-      bot_type: botType,
-      data_category: dataCategory,
-      collection_frequency: frequency,
-      sources: sources,
-      creator_profit_share: profitShare[0],
-      aggregation_rules: {
-        deduplicate: true,
-        normalize: true,
-        validate: true
-      },
-      is_active: false,
-    });
-
-    if (error) {
-      toast.error('Failed to register strategy: ' + error.message);
+    try {
+      await renderApi.createStrategy(userData.user.id, {
+        name: botName,
+        description: botDescription,
+        bot_type: botType,
+        data_category: dataCategory,
+        collection_frequency: frequency,
+        sources,
+        creator_profit_share: profitShare[0],
+        is_active: false,
+      });
+    } catch (err) {
+      toast.error('Failed to register strategy: ' + String(err));
       return;
     }
 
@@ -199,10 +192,11 @@ const DataBotBuilder = () => {
   };
 
   const toggleConfig = async (configId: string, isActive: boolean) => {
-    await supabase
-      .from('strategy_registry')
-      .update({ is_active: isActive })
-      .eq('id', configId);
+    const user = await getCachedUser();
+    if (!user) return;
+    try {
+      await renderApi.updateStrategy(user.id, configId, { is_active: isActive });
+    } catch { /* non-fatal */ }
     toast.success(`Strategy ${isActive ? 'enabled' : 'paused'} — the worker will ${isActive ? 'activate' : 'deactivate'} within its next cycle.`);
     loadConfigs();
   };
@@ -212,11 +206,11 @@ const DataBotBuilder = () => {
       toast.error('Strategy needs higher quality and reliability scores to graduate');
       return;
     }
-
-    await supabase
-      .from('strategy_registry')
-      .update({ pending_graduation: true })
-      .eq('id', config.id);
+    const user = await getCachedUser();
+    if (!user) return;
+    try {
+      await renderApi.updateStrategy(user.id, config.id, { pending_graduation: true });
+    } catch { /* non-fatal */ }
 
     toast.success('Graduation requested!', {
       description: 'The worker will review and promote this strategy to the marketplace.',
