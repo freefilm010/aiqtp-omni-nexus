@@ -87,6 +87,11 @@ const MemeCoinLaunch = lazy(() => import("./pages/Launch"));
 const NFTDrop = lazy(() => import("./pages/NFTDrop"));
 const ViralLanding = lazy(() => import("./pages/ViralLanding"));
 const VerifiedLedger = lazy(() => import("./pages/VerifiedLedger"));
+const QuWalletPage = lazy(() => import("./pages/QuWalletPage"));
+const StakingPage = lazy(() => import("./pages/StakingPage"));
+const DEXPage = lazy(() => import("./pages/DEXPage"));
+const TradingCommandCenter = lazy(() => import("./pages/TradingCommandCenter"));
+const StrategyNFTMarketplace = lazy(() => import("./pages/StrategyNFTMarketplace"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -525,6 +530,11 @@ const App = () => (
                       <Route path="/launch" element={<MemeCoinLaunch />} />
                       <Route path="/nft-drop" element={<NFTDrop />} />
                       <Route path="/go" element={<ViralLanding />} />
+                      <Route path="/quwallet" element={<ProtectedRoute><QuWalletPage /></ProtectedRoute>} />
+                      <Route path="/staking" element={<ProtectedRoute><StakingPage /></ProtectedRoute>} />
+                      <Route path="/dex" element={<ProtectedRoute><DEXPage /></ProtectedRoute>} />
+                      <Route path="/trading-bots" element={<ProtectedRoute><TradingCommandCenter /></ProtectedRoute>} />
+                      <Route path="/strategy-nft" element={<StrategyNFTMarketplace />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>

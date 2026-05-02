@@ -173,7 +173,7 @@ const NFTWallet = () => {
                       >
                         <div className="aspect-square bg-muted flex items-center justify-center">
                           {nft.image_url ? (
-                            <img src={nft.image_url} alt={nft.name} className="w-full h-full object-cover" />
+                            <img src={nft.image_url} alt={nft.name} className="w-full h-full object-cover" loading="lazy" />
                           ) : (
                             <Image className="h-12 w-12 text-muted-foreground" />
                           )}
@@ -204,7 +204,7 @@ const NFTWallet = () => {
                         <div className="flex items-center gap-4">
                           <div className="h-16 w-16 rounded bg-muted flex items-center justify-center shrink-0">
                             {nft.image_url ? (
-                              <img src={nft.image_url} alt={nft.name} className="w-full h-full object-cover rounded" />
+                              <img src={nft.image_url} alt={nft.name} className="w-full h-full object-cover rounded" loading="lazy" />
                             ) : (
                               <Image className="h-8 w-8 text-muted-foreground" />
                             )}
@@ -236,7 +236,7 @@ const NFTWallet = () => {
               <div className="space-y-4">
                 <div className="aspect-square rounded-lg bg-muted flex items-center justify-center">
                   {selectedNFT.image_url ? (
-                    <img src={selectedNFT.image_url} alt={selectedNFT.name} className="w-full h-full object-cover rounded-lg" />
+                    <img src={selectedNFT.image_url} alt={selectedNFT.name} className="w-full h-full object-cover rounded-lg" loading="lazy" />
                   ) : (
                     <Image className="h-24 w-24 text-muted-foreground" />
                   )}

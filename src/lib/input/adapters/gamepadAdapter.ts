@@ -106,11 +106,11 @@ export function attachGamepadAdapter(
   
   // Listen for gamepad connection
   const onConnect = (e: GamepadEvent) => {
-    console.log(`Gamepad connected: ${e.gamepad.id}`);
+    if (import.meta.env.DEV) console.log(`Gamepad connected: ${e.gamepad.id}`);
   };
   
   const onDisconnect = (e: GamepadEvent) => {
-    console.log(`Gamepad disconnected: ${e.gamepad.id}`);
+    if (import.meta.env.DEV) console.log(`Gamepad disconnected: ${e.gamepad.id}`);
     previousState = {};
   };
   

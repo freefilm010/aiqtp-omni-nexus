@@ -196,7 +196,7 @@ export class SwitchScanningAdapter {
     // Listen for keyboard triggers (Space/Enter for switch simulation)
     this.setupKeyboardTriggers();
     
-    console.log(`Switch scanning started in ${this.options.mode} mode`);
+    if (import.meta.env.DEV) console.log(`Switch scanning started in ${this.options.mode} mode`);
   }
   
   private setupKeyboardTriggers() {
@@ -236,7 +236,7 @@ export class SwitchScanningAdapter {
       window.removeEventListener('keydown', (this as any)._keyboardHandler);
     }
     
-    console.log('Switch scanning stopped');
+    if (import.meta.env.DEV) console.log('Switch scanning stopped');
   }
   
   setMode(mode: ScanMode) {

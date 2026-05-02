@@ -133,7 +133,7 @@ export class ProxyClusterHunter {
     for (const tx of transactions) {
       this.graph.addTransaction(tx);
     }
-    console.log(`[HUNTER] Loaded ${transactions.length} transactions`);
+    if (import.meta.env.DEV) console.log(`[HUNTER] Loaded ${transactions.length} transactions`);
   }
 
   // Detect Peel Chains - common laundering technique
@@ -406,7 +406,7 @@ export class ProxyClusterHunter {
       }
     }
     
-    console.log(`[CIOH] Identified ${entityClusters.size} entities from ${nodes.length} addresses`);
+    if (import.meta.env.DEV) console.log(`[CIOH] Identified ${entityClusters.size} entities from ${nodes.length} addresses`);
     return entityClusters;
   }
 

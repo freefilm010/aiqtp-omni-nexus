@@ -47,7 +47,7 @@ export function useInputSystem(options: InputSystemOptions = {}) {
         break;
       case "VOICE":
         // Handle voice text
-        console.log("Voice input:", intent.text);
+        if (import.meta.env.DEV) console.log("Voice input:", intent.text);
         break;
     }
   }, [navigate, speak, announce]);

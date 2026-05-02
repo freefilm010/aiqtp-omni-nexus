@@ -47,7 +47,7 @@ export class WebMIDIAdapter {
         }
       };
       
-      console.log(`WebMIDI connected with ${this.access.inputs.size} input(s)`);
+      if (import.meta.env.DEV) console.log(`WebMIDI connected with ${this.access.inputs.size} input(s)`);
     } catch (error) {
       console.error("Failed to start WebMIDI:", error);
       throw error;

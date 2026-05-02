@@ -87,7 +87,7 @@ export async function withCircuitBreaker<T>(
       // Transition to half-open, allow one test request
       circuit.state = 'HALF_OPEN';
       circuit.lastAttemptTime = now;
-      console.log(`[CircuitBreaker:${name}] HALF_OPEN — testing recovery`);
+      if (import.meta.env.DEV) console.log(`[CircuitBreaker:${name}] HALF_OPEN — testing recovery`);
     } else {
       console.warn(`[CircuitBreaker:${name}] OPEN — rejecting request`);
       if (fallback) return fallback() as T;
@@ -100,7 +100,7 @@ export async function withCircuitBreaker<T>(
 
     // Success — close circuit
     if (circuit.state === 'HALF_OPEN') {
-      console.log(`[CircuitBreaker:${name}] Service recovered → CLOSED`);
+      if (import.meta.env.DEV) console.log(`[CircuitBreaker:${name}] Service recovered → CLOSED`);
     }
     circuit.state = 'CLOSED';
     circuit.failures = 0;

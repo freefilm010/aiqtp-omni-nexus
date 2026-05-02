@@ -82,7 +82,7 @@ export class WebHIDAdapter {
       });
       
       if (!devices?.length) {
-        console.log("No HID device selected");
+        if (import.meta.env.DEV) console.log("No HID device selected");
         return null;
       }
       
@@ -93,7 +93,7 @@ export class WebHIDAdapter {
       // Set up input report handler
       this.device.addEventListener("inputreport", this.handleInputReport.bind(this));
       
-      console.log(`Connected to HID device: ${this.device.productName}`);
+      if (import.meta.env.DEV) console.log(`Connected to HID device: ${this.device.productName}`);
       return this.device;
     } catch (error) {
       console.error("Failed to connect to HID device:", error);

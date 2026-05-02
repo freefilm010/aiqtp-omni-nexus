@@ -920,7 +920,7 @@ const AIResearchLab = () => {
               <BacktestPanel 
                 strategies={strategies || []}
                 onBacktestComplete={(result) => {
-                  console.log('Backtest completed:', result);
+                  if (import.meta.env.DEV) console.log('Backtest completed:', result);
                   toast.success(`Backtest complete: ${result.totalReturn >= 0 ? '+' : ''}${(result.totalReturn * 100).toFixed(2)}% return`);
                 }}
               />
