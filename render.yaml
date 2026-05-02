@@ -61,3 +61,16 @@ services:
         value: BTCUSD,ETHUSD
       - key: LOOP_INTERVAL_SECONDS
         value: "60"
+
+  # ── Quantum AI Agent ──────────────────────────────────────────────────────
+  - type: web
+    name: aiqtp-quantum-agent
+    runtime: python
+    rootDir: core-brain
+    buildCommand: pip install fastapi uvicorn[standard] httpx pydantic
+    startCommand: python quantum_ai_agent.py
+    envVars:
+      - key: IBM_QUANTUM_API_KEY
+        sync: false
+      - key: IBM_QUANTUM_CRN
+        sync: false

@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import * as quantumApi from "@/integrations/quantumApi";
 import { useAuth } from "@/hooks/useAuth";
 
 interface QuantumJob {
@@ -115,23 +116,28 @@ const QuantumResearchLab = () => {
       setJobs(prev => [newJob, ...prev]);
       toast.success(`Quantum job "${jobName}" submitted to ${selectedBackend}`);
 
-      // Call edge function for actual execution
-      supabase.functions.invoke("quantum-compute", {
-        body: { jobId: data.id, backend: selectedBackend, qubits: qubits[0], shots: shots[0], jobName },
-      }).then(({ data: result }) => {
-        if (result?.status === 'completed') {
-          setJobs(prev => prev.map(j => j.id === data.id ? { ...j, status: 'completed', result: result.result } : j));
-          toast.success(`Quantum job "${jobName}" completed!`);
+      // Try Render quantum agent, then Supabase edge function, then local simulation
+      const executeJob = async () => {
+        let result: quantumApi.QuantumRunResult;
+        try {
+          result = await quantumApi.runCircuit({ circuit: "OPENQASM 2.0;", backend: selectedBackend, qubits: qubits[0], shots: shots[0], job_name: jobName });
+        } catch {
+          try {
+            const { data: edgeResult } = await supabase.functions.invoke("quantum-compute", {
+              body: { jobId: data.id, backend: selectedBackend, qubits: qubits[0], shots: shots[0], jobName },
+            });
+            result = edgeResult?.result ?? quantumApi.localSimulate(qubits[0], shots[0]);
+          } catch {
+            result = quantumApi.localSimulate(qubits[0], shots[0]);
+          }
         }
-      }).catch(() => {
-        // Fallback: mark as completed with simulated result after timeout
-        setTimeout(() => {
-          const simResult = { counts: { '0000': 412, '0001': 203, '1111': 312, '1010': 97 }, executionTime: 89.4 };
-          supabase.from("quantum_jobs").update({ status: 'completed', result: simResult as any, completed_at: new Date().toISOString() }).eq("id", data.id);
-          setJobs(prev => prev.map(j => j.id === data.id ? { ...j, status: 'completed', result: simResult } : j));
-          toast.success(`Quantum job "${jobName}" completed!`);
-        }, 5000);
-      });
+        supabase.from("quantum_jobs")
+          .update({ status: "completed", result: result as never, completed_at: new Date().toISOString() })
+          .eq("id", data.id);
+        setJobs(prev => prev.map(j => j.id === data.id ? { ...j, status: "completed", result } : j));
+        toast.success(`Quantum job "${jobName}" completed!${result.simulated ? " (simulated)" : ""}`);
+      };
+      executeJob();
       
     } catch (error) {
       toast.error('Failed to submit quantum job');

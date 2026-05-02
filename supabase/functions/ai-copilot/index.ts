@@ -109,7 +109,7 @@ serve(async (req) => {
 
     console.log(`AI Copilot request from ${user.id}: ${message.substring(0, 50)}...`);
 
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY') ?? Deno.env.get('ANTHROPIC_API_KEY');
     
     if (!lovableApiKey) {
       const response = generateLocalResponse(message, context);
