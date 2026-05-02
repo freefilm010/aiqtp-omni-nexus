@@ -35,7 +35,36 @@ from typing import Any, Optional
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-from supabase import Client, create_client
+
+# ─── Database backend selection ───────────────────────────────────────────────
+# If DATABASE_URL is set (Render PostgreSQL), use the psycopg2 adapter.
+# Otherwise fall back to the supabase-py client for backward compatibility.
+
+def _init_db_backend():
+    db_url = os.getenv("DATABASE_URL")
+    if db_url:
+        try:
+            import render_db
+            log_placeholder = logging.getLogger("core-brain")
+            log_placeholder.info("Using Render PostgreSQL (DATABASE_URL)")
+            return render_db
+        except Exception as exc:
+            logging.getLogger("core-brain").warning(
+                "render_db import failed (%s) — falling back to Supabase", exc
+            )
+    # supabase-py fallback
+    from supabase import create_client
+
+    class _SupabaseAdapter:
+        def __init__(self):
+            url = os.environ.get("SUPABASE_URL", "")
+            key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+            self._client = create_client(url, key)
+
+        def table(self, name: str):
+            return self._client.table(name)
+
+    return _SupabaseAdapter()
 
 # ─── Logging ──────────────────────────────────────────────────────────────────
 
@@ -50,8 +79,8 @@ log = logging.getLogger("core-brain")
 
 load_dotenv()
 
-SUPABASE_URL: str = os.environ["SUPABASE_URL"]
-SUPABASE_SERVICE_ROLE_KEY: str = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+SUPABASE_URL: str = os.environ.get("SUPABASE_URL", "")
+SUPABASE_SERVICE_ROLE_KEY: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 COINGECKO_API_KEY: Optional[str] = os.getenv("COINGECKO_API_KEY")
 LOOP_INTERVAL_SECONDS: int = int(os.getenv("LOOP_INTERVAL_SECONDS", "60"))
 
@@ -75,9 +104,9 @@ ALPACA_SYMBOL_WHITELIST: set[str] = {
 
 _alpaca_order_times: dict[str, collections.deque] = {}
 
-# ─── Supabase client ──────────────────────────────────────────────────────────
+# ─── Database backend ─────────────────────────────────────────────────────────
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+db = _init_db_backend()
 
 
 def _load_alpaca_keys_from_vault() -> None:
@@ -95,13 +124,16 @@ def _load_alpaca_keys_from_vault() -> None:
         return  # env vars already set — nothing to do
 
     try:
-        result = (
-            supabase.table("account_key_vault")
-            .select("account_id, api_key_encrypted")
-            .in_("account_id", ["alpaca_api_key", "alpaca_secret_key"])
-            .execute()
-        )
-        for row in result.data or []:
+        rows: list[dict] = []
+        for aid in ("alpaca_api_key", "alpaca_secret_key"):
+            r = (
+                db.table("account_key_vault")
+                .select("account_id, api_key_encrypted")
+                .eq("account_id", aid)
+                .execute()
+            )
+            rows.extend(r.data or [])
+        for row in rows:
             if row["account_id"] == "alpaca_api_key" and not ALPACA_API_KEY:
                 ALPACA_API_KEY = row["api_key_encrypted"]
                 log.info("Alpaca API key loaded from Supabase vault.")
@@ -228,7 +260,7 @@ def check_system_status() -> bool:
     """
     try:
         result = (
-            supabase.table("system_status")
+            db.table("system_status")
             .select("active")
             .eq("key", "main")
             .limit(1)
@@ -249,7 +281,7 @@ def fetch_active_strategies() -> list[dict]:
     """
     try:
         result = (
-            supabase.table("strategy_registry")
+            db.table("strategy_registry")
             .select(
                 "id, user_id, name, bot_type, data_category,"
                 " collection_frequency, sources"
@@ -369,7 +401,7 @@ def log_trade(trade: dict) -> bool:
     update performance metrics).
     """
     try:
-        supabase.table("trade_logs").insert(trade).execute()
+        db.table("trade_logs").insert(trade).execute()
         return True
     except Exception as exc:
         log.error("trade_logs insert failed: %s | row=%s", exc, trade)
@@ -439,7 +471,7 @@ def update_performance(strategy_id: str) -> None:
     """
     try:
         result = (
-            supabase.table("trade_logs")
+            db.table("trade_logs")
             .select("realized_pnl_usd")
             .eq("strategy_id", strategy_id)
             .eq("status", "closed")
@@ -491,19 +523,19 @@ def update_performance(strategy_id: str) -> None:
 
         # Check for an existing row so we UPDATE rather than INSERT a duplicate
         existing = (
-            supabase.table("performance_evaluator")
+            db.table("performance_evaluator")
             .select("id")
             .eq("strategy_id", strategy_id)
             .limit(1)
             .execute()
         )
         if existing.data:
-            supabase.table("performance_evaluator") \
+            db.table("performance_evaluator") \
                 .update(metrics) \
                 .eq("strategy_id", strategy_id) \
                 .execute()
         else:
-            supabase.table("performance_evaluator").insert(metrics).execute()
+            db.table("performance_evaluator").insert(metrics).execute()
 
     except Exception as exc:
         log.error(
@@ -521,7 +553,7 @@ def _mark_directive(directive_id: str, status: str, result: Optional[dict] = Non
     if error_msg is not None:
         payload["error_msg"] = error_msg
     try:
-        supabase.table("agent_directives").update(payload).eq("id", directive_id).execute()
+        db.table("agent_directives").update(payload).eq("id", directive_id).execute()
     except Exception as exc:
         log.error("Failed to update directive %s → %s: %s", directive_id, status, exc)
 
@@ -724,7 +756,7 @@ def poll_and_execute_directives() -> int:
     """
     try:
         result = (
-            supabase.table("agent_directives")
+            db.table("agent_directives")
             .select("id, user_id, tool, agent_type, params")
             .eq("status", "pending")
             .order("created_at", desc=False)

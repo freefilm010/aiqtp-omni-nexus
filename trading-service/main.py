@@ -1,17 +1,26 @@
 """
 AIQTP Trading Tools Service
 ============================
-FastAPI service wrapping Freqtrade (backtesting) and ccxt (exchange orders).
+FastAPI service wrapping Freqtrade (backtesting), ccxt (exchange orders),
+and direct Render PostgreSQL CRUD for agent_directives + strategy_registry.
 
 Endpoints:
-  POST /freqtrade/backtest    Run strategy backtest simulation
-  POST /freqtrade/hyperopt    Run hyperopt parameter optimization
-  POST /ccxt/sim_order        Simulate an order (dry-run, no real money)
-  POST /ccxt/live_order       Place a real live order via ccxt
-  GET  /health                Health check
+  POST /freqtrade/backtest         Run strategy backtest simulation
+  POST /freqtrade/hyperopt         Run hyperopt parameter optimization
+  POST /ccxt/sim_order             Simulate an order (dry-run, no real money)
+  POST /ccxt/live_order            Place a real live order via ccxt
+  GET  /health                     Health check
+  GET  /agent-directives           List recent directives for caller
+  POST /agent-directives           Create a new directive
+  GET  /strategy-registry          List strategies for caller
+  POST /strategy-registry          Register a new strategy
+  PATCH /strategy-registry/{id}    Update is_active / pending_graduation
+  POST /bots/start                 Signal worker to run (no-op, logged)
+  POST /bots/stop                  Signal worker to pause (no-op, logged)
 """
 
 import asyncio
+import json
 import logging
 import os
 import random
@@ -20,8 +29,9 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
+import asyncpg
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -43,8 +53,63 @@ SYMBOL_WHITELIST = {
     ).split(",") if s.strip()
 }
 
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+
 app = FastAPI(title="AIQTP Trading Tools", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# ─── Database pool ────────────────────────────────────────────────────────────
+
+_pool: Optional[asyncpg.Pool] = None
+
+
+async def get_pool() -> Optional[asyncpg.Pool]:
+    global _pool
+    if not DATABASE_URL:
+        return None
+    if _pool is None:
+        try:
+            _pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
+        except Exception as exc:
+            log.error("Render PostgreSQL pool failed: %s", exc)
+            return None
+    return _pool
+
+
+@app.on_event("startup")
+async def _startup():
+    await get_pool()
+
+
+@app.on_event("shutdown")
+async def _shutdown():
+    if _pool:
+        await _pool.close()
+
+
+def _require_user(x_user_id: Optional[str]) -> str:
+    if not x_user_id or len(x_user_id) < 10:
+        raise HTTPException(401, "X-User-Id header required")
+    return x_user_id
+
+
+# ─── DB helper ────────────────────────────────────────────────────────────────
+
+async def _query(sql: str, *args) -> list[dict]:
+    pool = await get_pool()
+    if not pool:
+        raise HTTPException(503, "Render PostgreSQL not configured — set DATABASE_URL")
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(sql, *args)
+        return [dict(r) for r in rows]
+
+
+async def _exec(sql: str, *args) -> None:
+    pool = await get_pool()
+    if not pool:
+        raise HTTPException(503, "Render PostgreSQL not configured — set DATABASE_URL")
+    async with pool.acquire() as conn:
+        await conn.execute(sql, *args)
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -273,6 +338,132 @@ async def ccxt_live_order(req: LiveOrderRequest):
     result = await _place_alpaca_order(req)
     log.info("Live order placed: %s %s %s qty=%s", req.side, req.symbol, req.order_type, req.qty)
     return result
+
+
+# ─── Agent Directives ────────────────────────────────────────────────────────
+
+class DirectiveIn(BaseModel):
+    tool: str
+    agent_type: str = "dev"
+    params: dict = {}
+    status: str = "pending"
+
+
+@app.get("/agent-directives")
+async def list_directives(limit: int = 10, x_user_id: Optional[str] = Header(default=None)):
+    user_id = _require_user(x_user_id)
+    rows = await _query(
+        """SELECT id, tool, status, result, error_msg, created_at
+           FROM public.agent_directives
+           WHERE user_id = $1
+           ORDER BY created_at DESC LIMIT $2""",
+        uuid.UUID(user_id), limit,
+    )
+    for r in rows:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+    return rows
+
+
+@app.post("/agent-directives", status_code=201)
+async def create_directive(body: DirectiveIn, x_user_id: Optional[str] = Header(default=None)):
+    user_id = _require_user(x_user_id)
+    await _exec(
+        """INSERT INTO public.agent_directives
+           (user_id, tool, agent_type, params, status)
+           VALUES ($1, $2, $3, $4::jsonb, $5)""",
+        uuid.UUID(user_id), body.tool, body.agent_type,
+        json.dumps(body.params), body.status,
+    )
+    return {"ok": True}
+
+
+# ─── Strategy Registry ───────────────────────────────────────────────────────
+
+class StrategyIn(BaseModel):
+    name: str
+    description: Optional[str] = None
+    bot_type: str
+    data_category: str
+    collection_frequency: str
+    sources: list = []
+    creator_profit_share: int = 30
+    aggregation_rules: dict = {}
+    is_active: bool = False
+
+
+class StrategyPatch(BaseModel):
+    is_active: Optional[bool] = None
+    pending_graduation: Optional[bool] = None
+
+
+@app.get("/strategy-registry")
+async def list_strategies(x_user_id: Optional[str] = Header(default=None)):
+    user_id = _require_user(x_user_id)
+    rows = await _query(
+        """SELECT id, name, description, bot_type, data_category,
+                  collection_frequency, sources, creator_profit_share,
+                  is_active, pending_graduation, is_graduated,
+                  quality_score, reliability_score,
+                  total_records_collected, total_earnings, created_at
+           FROM public.strategy_registry
+           WHERE user_id = $1
+           ORDER BY created_at DESC""",
+        uuid.UUID(user_id),
+    )
+    for r in rows:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+        for k in ("quality_score", "reliability_score", "total_earnings"):
+            if r.get(k) is not None:
+                r[k] = float(r[k])
+    return rows
+
+
+@app.post("/strategy-registry", status_code=201)
+async def create_strategy(body: StrategyIn, x_user_id: Optional[str] = Header(default=None)):
+    user_id = _require_user(x_user_id)
+    await _exec(
+        """INSERT INTO public.strategy_registry
+           (user_id, name, description, bot_type, data_category,
+            collection_frequency, sources, creator_profit_share,
+            aggregation_rules, is_active)
+           VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9::jsonb,$10)""",
+        uuid.UUID(user_id), body.name, body.description, body.bot_type,
+        body.data_category, body.collection_frequency,
+        json.dumps(body.sources), body.creator_profit_share,
+        json.dumps(body.aggregation_rules), body.is_active,
+    )
+    return {"ok": True}
+
+
+@app.patch("/strategy-registry/{strategy_id}")
+async def patch_strategy(strategy_id: str, body: StrategyPatch, x_user_id: Optional[str] = Header(default=None)):
+    user_id = _require_user(x_user_id)
+    updates = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not updates:
+        return {"ok": True}
+    set_clause = ", ".join(f"{k} = ${i+3}" for i, k in enumerate(updates.keys()))
+    vals = [uuid.UUID(strategy_id), uuid.UUID(user_id)] + list(updates.values())
+    await _exec(
+        f"UPDATE public.strategy_registry SET {set_clause} WHERE id=$1 AND user_id=$2",
+        *vals,
+    )
+    return {"ok": True}
+
+
+# ─── Bot control (signals only — actual start/stop is the Render worker) ─────
+
+@app.post("/bots/start")
+async def bots_start():
+    log.info("bots/start signal received")
+    return {"ok": True, "message": "Start signal logged — worker polls continuously"}
+
+
+@app.post("/bots/stop")
+async def bots_stop():
+    log.info("bots/stop signal received")
+    return {"ok": True, "message": "Stop signal logged — set system_status trading_active=false to halt"}
 
 
 if __name__ == "__main__":

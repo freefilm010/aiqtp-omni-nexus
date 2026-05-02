@@ -1,4 +1,41 @@
+databases:
+  - name: aiqtp-postgres
+    plan: free
+    databaseName: aiqtp
+    user: aiqtp
+
 services:
+  # ── Trading Tools API (FastAPI) ───────────────────────────────────────────
+  - type: web
+    name: aiqtp-trading-service
+    runtime: python
+    rootDir: trading-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aiqtp-postgres
+          property: connectionString
+      # Keep Supabase URL for edge-function calls (record-profit-fee)
+      - key: SUPABASE_URL
+        value: https://rueaxiyvseaxkysnoock.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ALPACA_API_KEY
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: ALPACA_BASE_URL
+        value: https://api.alpaca.markets
+      - key: ALPACA_PAPER_MODE
+        value: "false"
+      - key: ALPACA_SYMBOL_WHITELIST
+        value: BTCUSD,ETHUSD
+      - key: CCXT_LIVE_ENABLED
+        value: "false"
+
+  # ── Core Brain Worker (polling loop) ─────────────────────────────────────
   - type: worker
     name: aiqtp-core-brain
     runtime: python
@@ -6,23 +43,21 @@ services:
     buildCommand: pip install -r ../requirements.txt
     startCommand: python trading_worker.py
     envVars:
-      # ── Only this one requires manual input ──────────────────────────────
-      # Find it: lovable.dev/projects/d588a2ef-0d53-4c77-8d2f-41dfd18dd47e
-      #          → Settings → Supabase → service_role secret
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-
-      # ── Pre-filled — no action needed ────────────────────────────────────
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aiqtp-postgres
+          property: connectionString
+      # Supabase still used as fallback when DATABASE_URL is absent,
+      # and for the record-profit-fee edge function call.
       - key: SUPABASE_URL
         value: https://rueaxiyvseaxkysnoock.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
       - key: ALPACA_BASE_URL
         value: https://api.alpaca.markets
       - key: ALPACA_PAPER_MODE
-        value: false
+        value: "false"
       - key: ALPACA_SYMBOL_WHITELIST
         value: BTCUSD,ETHUSD
       - key: LOOP_INTERVAL_SECONDS
-        value: 60
-      # Alpaca API key + secret are read from Supabase account_key_vault
-      # by the worker at startup — set them in the QuantClaw QAQI tab UI.
-      # COINGECKO_API_KEY is optional; free-tier used if not set.
+        value: "60"
