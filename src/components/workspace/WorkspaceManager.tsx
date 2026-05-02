@@ -556,8 +556,8 @@ const WorkspaceManager = () => {
           <div class="widget-container">
             <div class="widget-header">
               <div class="widget-title">
-                <span>${widgetInfo?.name || 'Widget'}</span>
-                ${widget.symbol ? `<span style="color:#8b5cf6;font-size:13px;">${widget.symbol}/USD</span>` : ''}
+                <span id="wgt-name"></span>
+                <span id="wgt-symbol" style="color:#8b5cf6;font-size:13px;display:none;"></span>
               </div>
               <span class="widget-badge">● LIVE</span>
             </div>
@@ -566,26 +566,37 @@ const WorkspaceManager = () => {
             </div>
           </div>
           <script>
+            // Safely set text content (no innerHTML — prevents XSS)
+            document.getElementById('wgt-name').textContent = ${JSON.stringify(widgetInfo?.name || 'Widget')};
+            var sym = ${JSON.stringify(widget.symbol || '')};
+            if (sym) {
+              var symEl = document.getElementById('wgt-symbol');
+              symEl.textContent = sym + '/USD';
+              symEl.style.display = '';
+            }
+            var safeWidgetId = ${JSON.stringify(widget.id)};
+            var basePrice = ${widget.symbol === 'BTC' ? 67500 : widget.symbol === 'ETH' ? 3400 : 142};
+
             // Simulate live data updates
             function updateData() {
-              const bars = document.querySelectorAll('.chart-bar');
-              bars.forEach(bar => {
+              var bars = document.querySelectorAll('.chart-bar');
+              bars.forEach(function(bar) {
                 bar.style.height = (20 + Math.random() * 60) + '%';
               });
-              
-              const priceEl = document.querySelector('.price-value');
+              var priceEl = document.querySelector('.price-value');
               if (priceEl) {
-                const base = ${widget.symbol === 'BTC' ? 67500 : widget.symbol === 'ETH' ? 3400 : 142};
-                const change = (Math.random() - 0.5) * 100;
-                priceEl.textContent = '$' + (base + change).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                var change = (Math.random() - 0.5) * 100;
+                priceEl.textContent = '$' + (basePrice + change).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
               }
             }
-            setInterval(updateData, 2000);
-            
+            // Store interval ID for cleanup
+            var _intervalId = setInterval(updateData, 2000);
+
             // Notify parent when closed (target origin restricted to opener)
-            window.onbeforeunload = () => {
+            window.onbeforeunload = function() {
+              clearInterval(_intervalId);
               try {
-                window.opener?.postMessage({ type: 'WIDGET_CLOSED', widgetId: '${widget.id}' }, window.location.origin);
+                window.opener && window.opener.postMessage({ type: 'WIDGET_CLOSED', widgetId: safeWidgetId }, window.location.origin);
               } catch (_) { /* ignore */ }
             };
           </script>

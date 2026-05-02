@@ -249,10 +249,11 @@ const ComputerVisionLab = () => {
             <div className="relative bg-secondary/30 rounded-lg aspect-video flex items-center justify-center border-2 border-dashed">
               {selectedImage ? (
                 <div className="relative w-full h-full">
-                  <img 
-                    src={selectedImage} 
-                    alt="Chart" 
+                  <img
+                    src={selectedImage}
+                    alt="Chart"
                     className="w-full h-full object-contain"
+                    loading="lazy"
                   />
                   {showOverlay && detectedPatterns.map((pattern) => (
                     <div 

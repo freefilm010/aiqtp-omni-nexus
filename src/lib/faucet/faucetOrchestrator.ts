@@ -184,7 +184,7 @@ export class FaucetOrchestrator {
     this.schedulerInterval = setInterval(async () => {
       const results = await this.claimAll();
       if (results.length > 0) {
-        console.log('[FaucetOrchestrator] Claimed %d faucets', results.length, results);
+        if (import.meta.env.DEV) console.log('[FaucetOrchestrator] Claimed %d faucets', results.length, results);
       }
     }, intervalMs);
   }

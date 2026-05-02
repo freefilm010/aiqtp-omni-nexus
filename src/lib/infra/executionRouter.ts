@@ -80,7 +80,7 @@ export class ExecutionRouter {
       const triggered = this.checkpoint.recordTrade(order.symbol, result.fillPrice);
       result.checkpointTriggered = triggered;
       if (triggered) {
-        console.log(`[ExecutionRouter] 🔄 Checkpoint triggered after ${this.checkpoint.stats.lifetimeTradeCount} lifetime trades — pausing for audit`);
+        if (import.meta.env.DEV) console.log(`[ExecutionRouter] 🔄 Checkpoint triggered after ${this.checkpoint.stats.lifetimeTradeCount} lifetime trades — pausing for audit`);
       }
     }
 
@@ -90,7 +90,7 @@ export class ExecutionRouter {
   /** Run checkpoint audit with current positions, resume if passed */
   auditAndResume(positions: PositionSnapshot[], forceResume = false) {
     const audit = this.checkpoint.runAudit(positions);
-    console.log(`[ExecutionRouter] ${audit.summary}`);
+    if (import.meta.env.DEV) console.log(`[ExecutionRouter] ${audit.summary}`);
 
     if (audit.passed || forceResume) {
       this.checkpoint.resume(forceResume);

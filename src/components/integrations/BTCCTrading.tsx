@@ -76,7 +76,7 @@ const BTCCTrading = () => {
     setIsLoading(true);
     try {
       const loginResult = await callBTCC('login');
-      console.log('BTCC Login:', loginResult);
+      if (import.meta.env.DEV) console.log('BTCC Login:', loginResult);
       setConnectionStatus('connected');
       toast({ title: 'BTCC Connected', description: 'Authenticated with BTCC exchange' });
 

@@ -263,7 +263,7 @@ const NFTCreator = () => {
         <CardContent>
           <div className="aspect-square rounded-lg bg-muted flex items-center justify-center mb-6 overflow-hidden">
             {previewImage ? (
-              <img src={previewImage} alt={name || "NFT Preview"} className="w-full h-full object-cover" />
+              <img src={previewImage} alt={name || "NFT Preview"} className="w-full h-full object-cover" loading="lazy" />
             ) : (
               <Layers className="h-24 w-24 text-muted-foreground" />
             )}

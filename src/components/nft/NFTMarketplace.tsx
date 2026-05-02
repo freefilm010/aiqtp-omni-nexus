@@ -145,7 +145,7 @@ const NFTMarketplace = () => {
               <div className="relative">
                 <div className="aspect-square bg-muted flex items-center justify-center">
                   {listing.image ? (
-                    <img src={listing.image} alt={listing.name} className="w-full h-full object-cover" />
+                    <img src={listing.image} alt={listing.name} className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <Image className="h-16 w-16 text-muted-foreground" />
                   )}

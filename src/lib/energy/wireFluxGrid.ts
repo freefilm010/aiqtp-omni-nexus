@@ -167,8 +167,8 @@ export class GridFlexAI {
     const node = this.nodes.get(nodeId);
     if (!node) throw new Error(`Node ${nodeId} not found`);
 
-    console.log(`[ISLAND MODE] Node ${nodeId} disconnecting from grid`);
-    console.log(`[ISLAND MODE] Priority loads: ${priorityLoads.join(', ')}`);
+    if (import.meta.env.DEV) console.log(`[ISLAND MODE] Node ${nodeId} disconnecting from grid`);
+    if (import.meta.env.DEV) console.log(`[ISLAND MODE] Priority loads: ${priorityLoads.join(', ')}`);
 
     return {
       nodeId,

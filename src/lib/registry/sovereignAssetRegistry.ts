@@ -122,7 +122,7 @@ export class SovereignAssetRegistry {
     }
     this.ownerIndex.get(owner)!.add(tokenId);
 
-    console.log(`[REGISTRY] Minted ${assetType} NFT: ${tokenId} for ${assetValue}`);
+    if (import.meta.env.DEV) console.log(`[REGISTRY] Minted ${assetType} NFT: ${tokenId} for ${assetValue}`);
     return nft;
   }
 
@@ -155,7 +155,7 @@ export class SovereignAssetRegistry {
     nft.owner = to;
     nft.status = 'transferred';
     
-    console.log(`[REGISTRY] Transferred ${tokenId} from ${from} to ${to}`);
+    if (import.meta.env.DEV) console.log(`[REGISTRY] Transferred ${tokenId} from ${from} to ${to}`);
     return true;
   }
 
@@ -214,7 +214,7 @@ export class SovereignAssetRegistry {
     this.disputes.set(disputeId, dispute);
     nft.status = 'disputed';
 
-    console.log(`[REGISTRY] Dispute filed: ${disputeId} for ${assetValue}`);
+    if (import.meta.env.DEV) console.log(`[REGISTRY] Dispute filed: ${disputeId} for ${assetValue}`);
     return dispute;
   }
 
@@ -242,7 +242,7 @@ export class SovereignAssetRegistry {
       nft.status = 'active';
     }
 
-    console.log(`[REGISTRY] Dispute ${disputeId} resolved: ${resolution}`);
+    if (import.meta.env.DEV) console.log(`[REGISTRY] Dispute ${disputeId} resolved: ${resolution}`);
     return true;
   }
 
