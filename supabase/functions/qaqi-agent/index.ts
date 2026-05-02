@@ -909,7 +909,7 @@ serve(async (req) => {
     const requestedModel = request.model || "google/gemini-2.5-pro";
     const isClaudeModel = requestedModel.startsWith("claude-");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!isClaudeModel && !LOVABLE_API_KEY) {

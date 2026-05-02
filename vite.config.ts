@@ -8,6 +8,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/agent-directives": { target: "http://localhost:8002", changeOrigin: true },
+      "/strategy-registry": { target: "http://localhost:8002", changeOrigin: true },
+      "/bots": { target: "http://localhost:8002", changeOrigin: true },
+      "/freqtrade": { target: "http://localhost:8002", changeOrigin: true },
+    },
   },
   plugins: [
     react(),

@@ -151,6 +151,8 @@ const Header = () => {
     { to: "/trading", label: "Trading Dashboard", icon: Activity },
     { to: "/advanced-trading", label: "Advanced Trading", icon: LineChart },
     { to: "/exchange", label: "Exchange Hub", icon: Globe },
+    { to: "/dex", label: "DEX", icon: Coins },
+    { to: "/trading-bots", label: "Trading Bots", icon: Bot },
     { to: "/defi-sniper", label: "DeFi Sniper", icon: Crosshair },
     { to: "/screener", label: "Crypto Screener", icon: TrendingUp },
     { to: "/derivatives", label: "Derivatives", icon: Layers },
@@ -180,10 +182,13 @@ const Header = () => {
     { to: "/strategy-studio", label: "Strategy Studio", icon: Target },
     { to: "/strategy-lab", label: "Strategy Lab", icon: FlaskConical },
     { to: "/marketplace", label: "Strategy Marketplace", icon: ShoppingCart },
+    { to: "/strategy-nft", label: "Strategy NFT Market", icon: ShoppingCart },
     { to: "/risk", label: "Risk Management", icon: Shield },
   ];
 
   const assetLinks = [
+    { to: "/quwallet", label: "QuWallet", icon: Wallet },
+    { to: "/staking", label: "Staking", icon: Coins },
     { to: "/nft-studio", label: "NFT Studio", icon: Layers },
     { to: "/token-launchpad", label: "Token Launchpad", icon: Zap },
     { to: "/faucet", label: "Crypto Faucet", icon: Crosshair },
