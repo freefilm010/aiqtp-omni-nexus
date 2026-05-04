@@ -189,6 +189,7 @@ const Header = () => {
   const assetLinks = [
     { to: "/quwallet", label: "QuWallet", icon: Wallet },
     { to: "/staking", label: "Staking", icon: Coins },
+    { to: "/withdrawal", label: "Withdraw Funds", icon: Wallet },
     { to: "/nft-studio", label: "NFT Studio", icon: Layers },
     { to: "/token-launchpad", label: "Token Launchpad", icon: Zap },
     { to: "/faucet", label: "Crypto Faucet", icon: Crosshair },

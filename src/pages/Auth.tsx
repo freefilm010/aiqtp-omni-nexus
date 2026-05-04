@@ -38,6 +38,20 @@ const Auth = () => {
 
   const redirectedRef = useRef(false);
 
+  // Capture referral code from URL (?ref=CODE) — stored in sessionStorage so it
+  // survives OAuth redirects but doesn't pollute localStorage long-term.
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get("ref");
+    if (refCode) sessionStorage.setItem("aiqtp_ref", refCode);
+    const utmSource = urlParams.get("utm_source");
+    if (utmSource) sessionStorage.setItem("aiqtp_utm_source", utmSource);
+    const utmMedium = urlParams.get("utm_medium");
+    if (utmMedium) sessionStorage.setItem("aiqtp_utm_medium", utmMedium);
+    const utmCampaign = urlParams.get("utm_campaign");
+    if (utmCampaign) sessionStorage.setItem("aiqtp_utm_campaign", utmCampaign);
+  }, []);
+
   useEffect(() => {
     // Parse both search params and hash for recovery token
     const urlParams = new URLSearchParams(window.location.search);
@@ -96,6 +110,26 @@ const Auth = () => {
           toast.error(error.message);
         }
         return;
+      }
+
+      // Record referral if a ref code was present in the URL
+      const userId = data.user?.id;
+      if (userId) {
+        const refCode = sessionStorage.getItem("aiqtp_ref");
+        if (refCode) {
+          supabase.rpc("record_affiliate_signup", {
+            p_referred_user_id: userId,
+            p_referral_code: refCode,
+            p_utm_source: sessionStorage.getItem("aiqtp_utm_source") || undefined,
+            p_utm_medium: sessionStorage.getItem("aiqtp_utm_medium") || undefined,
+            p_utm_campaign: sessionStorage.getItem("aiqtp_utm_campaign") || undefined,
+          }).then(() => {
+            sessionStorage.removeItem("aiqtp_ref");
+            sessionStorage.removeItem("aiqtp_utm_source");
+            sessionStorage.removeItem("aiqtp_utm_medium");
+            sessionStorage.removeItem("aiqtp_utm_campaign");
+          });
+        }
       }
 
       // If email confirmation is required, session will be null.

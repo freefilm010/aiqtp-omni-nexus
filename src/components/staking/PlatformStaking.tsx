@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Lock, TrendingUp, Clock, Coins, Zap } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StakingPool {
   token: string;
@@ -72,11 +73,40 @@ export const PlatformStaking = () => {
     }
 
     setStaking(pool.symbol);
-    // Simulate staking delay
-    await new Promise((r) => setTimeout(r, 1500));
-    toast.success(`Staked ${amount} ${pool.symbol} at ${pool.apy}% APY for ${pool.lockPeriod}`);
-    setAmounts((prev) => ({ ...prev, [pool.symbol]: "" }));
-    setStaking(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Sign in to stake"); return; }
+
+      const lockUntil = new Date(Date.now() + pool.lockDays * 86400000).toISOString();
+      const { error } = await supabase.from("user_stakes").insert({
+        user_id: user.id,
+        token_symbol: pool.symbol,
+        token_name: pool.token,
+        amount_staked: amount,
+        apy: pool.apy,
+        lock_days: pool.lockDays,
+        lock_until: lockUntil,
+        status: "active",
+        expected_reward: (amount * pool.apy * pool.lockDays) / 100 / 365,
+      });
+      if (error) throw error;
+
+      // Record in platform_revenue
+      await supabase.from("platform_revenue").insert({
+        source_type: "staking_lock",
+        source_category: "staking",
+        amount: amount * 0.005, // 0.5% platform fee on staked amount
+        currency: pool.symbol,
+        status: "pending",
+      }).then(() => {}); // fire-and-forget
+
+      toast.success(`Staked ${amount} ${pool.symbol} at ${pool.apy}% APY for ${pool.lockPeriod}`);
+      setAmounts((prev) => ({ ...prev, [pool.symbol]: "" }));
+    } catch (e: unknown) {
+      toast.error("Staking failed", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setStaking(null);
+    }
   };
 
   return (
