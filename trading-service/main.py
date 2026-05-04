@@ -1087,6 +1087,383 @@ async def bots_stop(request: Request):
     return {"ok": True, "message": "Stop signal logged — set system_status trading_active=false to halt"}
 
 
+# ─── Payments (Stripe) ────────────────────────────────────────────────────────
+
+STRIPE_SECRET_KEY      = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET  = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+FRONTEND_URL           = os.getenv("FRONTEND_URL", "https://www.aiqtp.com")
+
+
+class CheckoutRequest(BaseModel):
+    amount_usd: float = Field(..., gt=0)
+    user_id: str
+    destination_type: str = "stripe"
+
+
+@app.post("/payments/create-checkout", status_code=201)
+@limiter.limit("10/minute")
+async def create_checkout(
+    request: Request,
+    body: CheckoutRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(503, "STRIPE_SECRET_KEY not configured")
+
+    amount_cents = int(round(body.amount_usd * 100))
+
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            "https://api.stripe.com/v1/checkout/sessions",
+            auth=(STRIPE_SECRET_KEY, ""),
+            data={
+                "mode": "payment",
+                "success_url": f"{FRONTEND_URL}/dashboard?payment=success",
+                "cancel_url":  f"{FRONTEND_URL}/dashboard?payment=cancelled",
+                "line_items[0][price_data][currency]": "usd",
+                "line_items[0][price_data][unit_amount]": str(amount_cents),
+                "line_items[0][price_data][product_data][name]": "AIQTP Deposit",
+                "line_items[0][quantity]": "1",
+                "metadata[user_id]": body.user_id,
+                "metadata[destination_type]": body.destination_type,
+            },
+            timeout=15,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"Stripe checkout: {r.text}")
+        session = r.json()
+
+    session_id = session["id"]
+    checkout_url = session["url"]
+
+    pool = await get_pool()
+    if pool:
+        try:
+            async with pool.acquire() as conn:
+                await conn.execute(
+                    """INSERT INTO public.deposit_requests
+                       (user_id, amount_usd, destination_type, stripe_session_id, status, created_at)
+                       VALUES ($1, $2, $3, $4, 'pending', now())
+                       ON CONFLICT DO NOTHING""",
+                    uuid.UUID(body.user_id),
+                    body.amount_usd,
+                    body.destination_type,
+                    session_id,
+                )
+        except Exception as exc:
+            log.warning("deposit_requests insert failed (non-fatal): %s", exc)
+
+    log.info("Stripe checkout created session=%s user=%s amount=%.2f", session_id, body.user_id, body.amount_usd)
+    return {"checkout_url": checkout_url, "session_id": session_id}
+
+
+@app.post("/payments/webhook")
+async def stripe_webhook(request: Request):
+    """Stripe sends webhook events here — no JWT auth, verified by signature."""
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    if not STRIPE_WEBHOOK_SECRET:
+        log.warning("STRIPE_WEBHOOK_SECRET not set — skipping signature verification")
+    else:
+        # Manual HMAC verification matching Stripe's v1 scheme
+        try:
+            parts = dict(part.split("=", 1) for part in sig_header.split(",") if "=" in part)
+            timestamp = parts.get("t", "")
+            v1_sig = parts.get("v1", "")
+            signed_payload = f"{timestamp}.".encode() + payload
+            expected = hmac.new(STRIPE_WEBHOOK_SECRET.encode(), signed_payload, hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(expected, v1_sig):
+                raise HTTPException(400, "Stripe signature mismatch")
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(400, f"Stripe signature error: {exc}")
+
+    try:
+        event = json.loads(payload)
+    except Exception:
+        return {"ok": True}  # Stripe requirement: always 200
+
+    event_type = event.get("type", "")
+    log.info("Stripe webhook: %s", event_type)
+
+    if event_type == "checkout.session.completed":
+        session_obj = event.get("data", {}).get("object", {})
+        session_id   = session_obj.get("id", "")
+        user_id_str  = (session_obj.get("metadata") or {}).get("user_id", "")
+        amount_total = session_obj.get("amount_total", 0)  # cents
+        amount_usd   = amount_total / 100.0
+
+        pool = await get_pool()
+        if pool and user_id_str:
+            try:
+                async with pool.acquire() as conn:
+                    await conn.execute(
+                        """UPDATE public.deposit_requests
+                           SET status = 'completed', updated_at = now()
+                           WHERE stripe_session_id = $1""",
+                        session_id,
+                    )
+                    await conn.execute(
+                        """INSERT INTO public.user_balances (user_id, balance_usd, updated_at)
+                           VALUES ($1, $2, now())
+                           ON CONFLICT (user_id)
+                           DO UPDATE SET balance_usd = user_balances.balance_usd + $2,
+                                         updated_at  = now()""",
+                        uuid.UUID(user_id_str),
+                        amount_usd,
+                    )
+                log.info("Deposit credited: user=%s amount=%.2f", user_id_str, amount_usd)
+            except Exception as exc:
+                log.error("Stripe webhook DB update failed: %s", exc)
+
+    return {"ok": True}
+
+
+@app.get("/payments/history/{user_id}")
+@limiter.limit("30/minute")
+async def payment_history(
+    request: Request,
+    user_id: str,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    rows = await _query(
+        """SELECT id, amount_usd, destination_type, stripe_session_id,
+                  status, created_at, updated_at
+           FROM public.deposit_requests
+           WHERE user_id = $1
+           ORDER BY created_at DESC
+           LIMIT 20""",
+        uuid.UUID(user_id),
+    )
+    for r in rows:
+        for k in ("created_at", "updated_at"):
+            if isinstance(r.get(k), datetime):
+                r[k] = r[k].isoformat()
+        if r.get("amount_usd") is not None:
+            r["amount_usd"] = float(r["amount_usd"])
+    return rows
+
+
+# ─── AI Proxy (Anthropic) ─────────────────────────────────────────────────────
+
+ANTHROPIC_API_KEY       = os.getenv("ANTHROPIC_API_KEY", "")
+ANTHROPIC_API_URL       = "https://api.anthropic.com/v1/messages"
+AI_DEFAULT_MODEL        = "claude-haiku-4-5-20251001"
+AI_MAX_TOKENS_DEFAULT   = 1024
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: Any  # str or list of content blocks
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
+    tools: Optional[list[dict]] = None
+    tool_choice: Optional[Any] = None
+    model: Optional[str] = None
+    max_tokens: Optional[int] = None
+
+
+@app.post("/ai/chat")
+@limiter.limit("30/minute")
+async def ai_chat(
+    request: Request,
+    body: ChatRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(503, "ANTHROPIC_API_KEY not configured")
+
+    model = body.model or AI_DEFAULT_MODEL
+    max_tokens = body.max_tokens or AI_MAX_TOKENS_DEFAULT
+
+    # Separate system message (Anthropic takes it as a top-level param)
+    system_content: Optional[str] = None
+    messages_filtered = []
+    for msg in body.messages:
+        if msg.role == "system":
+            system_content = msg.content if isinstance(msg.content, str) else json.dumps(msg.content)
+        else:
+            messages_filtered.append({"role": msg.role, "content": msg.content})
+
+    anthropic_payload: dict[str, Any] = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "messages": messages_filtered,
+    }
+    if system_content:
+        anthropic_payload["system"] = system_content
+    if body.tools:
+        anthropic_payload["tools"] = body.tools
+    if body.tool_choice is not None:
+        anthropic_payload["tool_choice"] = body.tool_choice
+
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            ANTHROPIC_API_URL,
+            headers={
+                "x-api-key":         ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type":      "application/json",
+            },
+            json=anthropic_payload,
+            timeout=60,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"Anthropic API: {r.text}")
+        anthropic_resp = r.json()
+
+    # Convert Anthropic response → OpenAI-compatible shape
+    content_blocks = anthropic_resp.get("content", [])
+    # Collapse text blocks into a single string; preserve tool_use blocks
+    text_parts = [b["text"] for b in content_blocks if b.get("type") == "text"]
+    tool_calls = [b for b in content_blocks if b.get("type") == "tool_use"]
+
+    message_out: dict[str, Any] = {
+        "role": "assistant",
+        "content": "\n".join(text_parts) if text_parts else None,
+    }
+    if tool_calls:
+        message_out["tool_calls"] = [
+            {
+                "id":       tc.get("id"),
+                "type":     "function",
+                "function": {
+                    "name":      tc.get("name"),
+                    "arguments": json.dumps(tc.get("input", {})),
+                },
+            }
+            for tc in tool_calls
+        ]
+
+    finish_reason = anthropic_resp.get("stop_reason", "stop")
+    if finish_reason == "end_turn":
+        finish_reason = "stop"
+    elif finish_reason == "tool_use":
+        finish_reason = "tool_calls"
+
+    log.info("AI chat model=%s input_tokens=%d output_tokens=%d",
+             model,
+             anthropic_resp.get("usage", {}).get("input_tokens", 0),
+             anthropic_resp.get("usage", {}).get("output_tokens", 0))
+
+    return {
+        "id":      anthropic_resp.get("id"),
+        "object":  "chat.completion",
+        "model":   anthropic_resp.get("model", model),
+        "choices": [
+            {
+                "index":         0,
+                "message":       message_out,
+                "finish_reason": finish_reason,
+            }
+        ],
+        "usage": {
+            "prompt_tokens":     anthropic_resp.get("usage", {}).get("input_tokens", 0),
+            "completion_tokens": anthropic_resp.get("usage", {}).get("output_tokens", 0),
+        },
+    }
+
+
+# ─── Withdrawals ──────────────────────────────────────────────────────────────
+
+WITHDRAWAL_MIN_USD = 20.0
+
+
+class WithdrawalRequest(BaseModel):
+    amount_usd: float = Field(..., gt=0)
+    destination_type: str
+    user_id: str
+
+
+@app.post("/withdrawals/request", status_code=201)
+@limiter.limit("5/minute")
+async def withdrawal_request(
+    request: Request,
+    body: WithdrawalRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+
+    if body.amount_usd < WITHDRAWAL_MIN_USD:
+        raise HTTPException(400, f"Minimum withdrawal is ${WITHDRAWAL_MIN_USD:.2f} USD")
+
+    pool = await get_pool()
+    if not pool:
+        raise HTTPException(503, "Render PostgreSQL not configured — set DATABASE_URL")
+
+    async with pool.acquire() as conn:
+        # Check balance
+        row = await conn.fetchrow(
+            "SELECT balance_usd FROM public.user_balances WHERE user_id = $1",
+            uuid.UUID(body.user_id),
+        )
+        current_balance = float(row["balance_usd"]) if row else 0.0
+
+        if current_balance < body.amount_usd:
+            raise HTTPException(400, f"Insufficient balance: ${current_balance:.2f} available, "
+                                     f"${body.amount_usd:.2f} requested")
+
+        withdrawal_id = str(uuid.uuid4())
+        await conn.execute(
+            """INSERT INTO public.withdrawal_requests
+               (id, user_id, amount_usd, destination_type, status, created_at)
+               VALUES ($1, $2, $3, $4, 'pending', now())""",
+            uuid.UUID(withdrawal_id),
+            uuid.UUID(body.user_id),
+            body.amount_usd,
+            body.destination_type,
+        )
+        # Reserve the funds immediately (debit balance)
+        await conn.execute(
+            """UPDATE public.user_balances
+               SET balance_usd = balance_usd - $1, updated_at = now()
+               WHERE user_id = $2""",
+            body.amount_usd,
+            uuid.UUID(body.user_id),
+        )
+
+    log.info("Withdrawal requested: id=%s user=%s amount=%.2f dest=%s",
+             withdrawal_id, body.user_id, body.amount_usd, body.destination_type)
+    return {"withdrawal_id": withdrawal_id, "status": "pending"}
+
+
+@app.get("/withdrawals/history/{user_id}")
+@limiter.limit("30/minute")
+async def withdrawal_history(
+    request: Request,
+    user_id: str,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    rows = await _query(
+        """SELECT id, amount_usd, destination_type, status, created_at, updated_at
+           FROM public.withdrawal_requests
+           WHERE user_id = $1
+           ORDER BY created_at DESC
+           LIMIT 20""",
+        uuid.UUID(user_id),
+    )
+    for r in rows:
+        for k in ("created_at", "updated_at"):
+            if isinstance(r.get(k), datetime):
+                r[k] = r[k].isoformat()
+        if r.get("amount_usd") is not None:
+            r["amount_usd"] = float(r["amount_usd"])
+    return rows
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8002)))
