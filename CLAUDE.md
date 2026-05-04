@@ -110,11 +110,19 @@ POST /brokers/ibkr/order?conid=<id>   — IBKR order (conid = contract ID)
 ## Critical User Actions Still Needed
 
 - [ ] Add SUPABASE_ACCESS_TOKEN to GitHub repository secrets
-- [ ] Merge PR: claude/frontend-control-panel-refactor-WCPud → main
+- [x] Merge PR: claude/frontend-control-panel-refactor-WCPud → main (PR #30 merged)
 - [ ] Disconnect Lovable: Lovable Settings → GitHub → Disconnect
 - [ ] Set GitHub branch protection on main (require PR + review)
 - [ ] Add broker API keys to Render dashboard (TRADIER, BINANCE, KRAKEN, IBKR)
-- [ ] Add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET to Render
+- [ ] Add STRIPE_SECRET_KEY to Render dashboard (key recovered — see .env.secrets)
+- [ ] Add STRIPE_WEBHOOK_SECRET to Render dashboard (not yet recovered — get from Stripe dashboard → Webhooks)
+- [ ] Apply pending SQL migrations: scripts/apply-new-migrations.sql against Supabase/Render PostgreSQL
+
+## Recovered Secrets (stored in .env.secrets — do NOT commit)
+
+- **STRIPE_SECRET_KEY**: recovered and stored in `/home/user/aiqtp-omni-nexus/.env.secrets`
+  — must be manually added to Render dashboard env vars for aiqtp-trading-service
+- **STRIPE_PUBLISHABLE_KEY**: also in `.env.secrets` (add as VITE_STRIPE_PUBLISHABLE_KEY on Vercel)
 
 ## MCP Servers (Claude Code local, ~/.claude/mcp.json)
 
