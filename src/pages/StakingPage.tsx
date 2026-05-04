@@ -34,14 +34,18 @@ export default function StakingPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    const { data, error } = await supabase
-      .from("user_stakes")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("user_stakes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-    if (error) toast.error("Failed to load stakes");
-    else setStakes((data as UserStake[]) ?? []);
+      if (error) console.warn("user_stakes unavailable:", error.message);
+      else setStakes((data as UserStake[]) ?? []);
+    } catch (e) {
+      console.warn("user_stakes query failed:", e);
+    }
     setLoading(false);
   };
 

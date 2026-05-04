@@ -94,49 +94,63 @@ export default function TokenFactory() {
   }, []);
 
   const fetchTokens = async () => {
-    const { data, error } = await supabase
-      .from('platform_tokens')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('platform_tokens')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      toast.error('Failed to load tokens');
-      console.error(error);
-    } else {
-      setTokens(data || []);
+      if (error) {
+        console.warn('platform_tokens unavailable:', error.message);
+      } else {
+        setTokens(data || []);
+      }
+    } catch (e) {
+      console.warn('fetchTokens failed:', e);
     }
     setLoading(false);
   };
 
   const fetchDexTokens = async () => {
-    const { data } = await supabase
-      .from("dex_tokens")
-      .select("id, name, symbol, address, chain, status, score, is_verified, created_at")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    setDexTokens((data as DexToken[]) ?? []);
+    try {
+      const { data, error } = await supabase
+        .from("dex_tokens")
+        .select("id, name, symbol, address, chain, status, score, is_verified, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) console.warn("dex_tokens unavailable:", error.message);
+      else setDexTokens((data as DexToken[]) ?? []);
+    } catch (e) {
+      console.warn("fetchDexTokens failed:", e);
+    }
   };
 
   const handleDexApproval = async (id: string, action: "approved" | "rejected") => {
-    const { error } = await supabase
-      .from("dex_tokens")
-      .update({ status: action, is_verified: action === "approved" })
-      .eq("id", id);
-    if (error) toast.error(`Failed to ${action} token`);
-    else { toast.success(`Token ${action}`); fetchDexTokens(); }
+    try {
+      const { error } = await supabase
+        .from("dex_tokens")
+        .update({ status: action, is_verified: action === "approved" })
+        .eq("id", id);
+      if (error) toast.error(`Failed to ${action} token`);
+      else { toast.success(`Token ${action}`); fetchDexTokens(); }
+    } catch (e) {
+      console.warn("handleDexApproval failed:", e);
+      toast.error(`Failed to ${action} token`);
+    }
   };
 
   const fetchClaims = async () => {
-    const { data, error } = await supabase
-      .from('faucet_claims')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
+    try {
+      const { data, error } = await supabase
+        .from('faucet_claims')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-    if (error) {
-      console.error(error);
-    } else {
-      setClaims(data || []);
+      if (error) console.warn('faucet_claims unavailable:', error.message);
+      else setClaims(data || []);
+    } catch (e) {
+      console.warn('fetchClaims failed:', e);
     }
   };
 

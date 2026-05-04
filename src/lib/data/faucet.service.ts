@@ -22,15 +22,23 @@ export async function getUserFaucetClaims(limit = 50): Promise<ServiceResult<Fau
   const user = await getCachedUser();
   if (!user) return { data: null, error: "Not authenticated" };
 
-  const { data, error } = await supabase
-    .from("faucet_claims")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  try {
+    const { data, error } = await supabase
+      .from("faucet_claims")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-  if (error) return { data: null, error: error.message };
-  return { data: (data ?? []).map(toFaucetClaim), error: null };
+    if (error) {
+      console.warn("faucet_claims unavailable:", error.message);
+      return { data: [], error: null };
+    }
+    return { data: (data ?? []).map(toFaucetClaim), error: null };
+  } catch (e) {
+    console.warn("getUserFaucetClaims failed:", e);
+    return { data: [], error: null };
+  }
 }
 
 /** Execute a faucet claim via the privileged edge function (service role). */

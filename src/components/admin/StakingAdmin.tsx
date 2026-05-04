@@ -39,16 +39,22 @@ export default function StakingAdmin() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: poolData }, { data: stakeData }] = await Promise.all([
-      supabase.from("staking_pool_stats").select("*"),
-      supabase
-        .from("user_stakes")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(500),
-    ]);
-    if (poolData) setPools(poolData as PoolStat[]);
-    if (stakeData) setStakes(stakeData as UserStake[]);
+    try {
+      const [poolResult, stakeResult] = await Promise.all([
+        supabase.from("staking_pool_stats").select("*"),
+        supabase
+          .from("user_stakes")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(500),
+      ]);
+      if (poolResult.error) console.warn("staking_pool_stats unavailable:", poolResult.error.message);
+      else if (poolResult.data) setPools(poolResult.data as PoolStat[]);
+      if (stakeResult.error) console.warn("user_stakes unavailable:", stakeResult.error.message);
+      else if (stakeResult.data) setStakes(stakeResult.data as UserStake[]);
+    } catch (e) {
+      console.warn("StakingAdmin load failed:", e);
+    }
     setLoading(false);
   };
 
@@ -72,21 +78,31 @@ export default function StakingAdmin() {
   });
 
   const handleForceComplete = async (stakeId: string) => {
-    const { error } = await supabase
-      .from("user_stakes")
-      .update({ status: "completed", unstaked_at: new Date().toISOString() })
-      .eq("id", stakeId);
-    if (error) toast.error("Failed to complete stake");
-    else { toast.success("Stake marked completed"); load(); }
+    try {
+      const { error } = await supabase
+        .from("user_stakes")
+        .update({ status: "completed", unstaked_at: new Date().toISOString() })
+        .eq("id", stakeId);
+      if (error) toast.error("Failed to complete stake");
+      else { toast.success("Stake marked completed"); load(); }
+    } catch (e) {
+      console.warn("handleForceComplete failed:", e);
+      toast.error("Failed to complete stake");
+    }
   };
 
   const handleCancel = async (stakeId: string) => {
-    const { error } = await supabase
-      .from("user_stakes")
-      .update({ status: "cancelled" })
-      .eq("id", stakeId);
-    if (error) toast.error("Failed to cancel stake");
-    else { toast.success("Stake cancelled"); load(); }
+    try {
+      const { error } = await supabase
+        .from("user_stakes")
+        .update({ status: "cancelled" })
+        .eq("id", stakeId);
+      if (error) toast.error("Failed to cancel stake");
+      else { toast.success("Stake cancelled"); load(); }
+    } catch (e) {
+      console.warn("handleCancel failed:", e);
+      toast.error("Failed to cancel stake");
+    }
   };
 
   const statusColor = (status: string) => {

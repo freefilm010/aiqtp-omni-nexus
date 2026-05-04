@@ -115,11 +115,15 @@ const ProfitDistributionRules = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setRules(data || []);
+      if (error) {
+        console.warn('profit_distribution_rules unavailable:', error.message);
+        setRules([]);
+      } else {
+        setRules(data || []);
+      }
     } catch (error) {
-      console.error('Error fetching rules:', error);
-      toast.error('Failed to load distribution rules');
+      console.warn('Error fetching rules:', error);
+      setRules([]);
     } finally {
       setLoading(false);
     }
@@ -132,10 +136,10 @@ const ProfitDistributionRules = () => {
         .select('id, wallet_type, currency')
         .eq('is_active', true);
 
-      if (error) throw error;
-      setWallets(data || []);
+      if (error) console.warn('platform_wallets unavailable:', error.message);
+      else setWallets(data || []);
     } catch (error) {
-      console.error('Error fetching wallets:', error);
+      console.warn('Error fetching wallets:', error);
     }
   };
 

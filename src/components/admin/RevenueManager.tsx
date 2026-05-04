@@ -59,16 +59,23 @@ const RevenueManager = () => {
         .order("executed_at", { ascending: false })
         .limit(50);
 
-      // Fetch distribution rules for current split
-      const { data: rules } = await supabase
-        .from("profit_distribution_rules")
-        .select("*")
-        .eq("is_active", true);
+      // Fetch distribution rules for current split (table may not exist yet)
+      let rules: { distribution_type: string; percentage: number }[] | null = null;
+      try {
+        const { data: rulesData, error: rulesError } = await supabase
+          .from("profit_distribution_rules")
+          .select("*")
+          .eq("is_active", true);
+        if (rulesError) console.warn("profit_distribution_rules unavailable:", rulesError.message);
+        else rules = rulesData;
+      } catch (e) {
+        console.warn("profit_distribution_rules query failed:", e);
+      }
 
       // Populate distribution state from DB rules
       if (rules && rules.length > 0) {
         const find = (type: string) =>
-          rules.find((r: { distribution_type: string; percentage: number }) => r.distribution_type === type)?.percentage ?? 0;
+          rules!.find((r) => r.distribution_type === type)?.percentage ?? 0;
         setDistribution({
           reinvest: Number(find("reinvest")),
           reserve: Number(find("reserve")),
@@ -120,18 +127,23 @@ const RevenueManager = () => {
       is_active: true,
       execution_frequency: "immediate",
     }));
-    const upserts = await Promise.all(
-      rules.map((rule) =>
-        supabase
-          .from("profit_distribution_rules")
-          .upsert(rule, { onConflict: "rule_name" })
-      )
-    );
-    const failed = upserts.filter((r) => r.error);
-    if (failed.length > 0) {
-      toast.error("Failed to save some rules", { description: failed[0].error?.message });
-    } else {
-      toast.success("Distribution settings saved");
+    try {
+      const upserts = await Promise.all(
+        rules.map((rule) =>
+          supabase
+            .from("profit_distribution_rules")
+            .upsert(rule, { onConflict: "rule_name" })
+        )
+      );
+      const failed = upserts.filter((r) => r.error);
+      if (failed.length > 0) {
+        toast.error("Failed to save some rules", { description: failed[0].error?.message });
+      } else {
+        toast.success("Distribution settings saved");
+      }
+    } catch (e) {
+      console.warn("handleSaveDistribution failed:", e);
+      toast.error("Failed to save distribution settings");
     }
   };
 
