@@ -7,10 +7,11 @@
 #
 # Prerequisites — add to .env (never commit):
 #   VERCEL_TOKEN=<your token from vercel.com/account/tokens>
-#   VERCEL_PROJECT_ID=<project ID from .vercel/project.json or dashboard>
-#   VERCEL_ORG_ID=<org/team ID>
 #   VITE_RENDER_WORKER_URL=<https://aiqtp-trading-service.onrender.com>
 #   VITE_QUANTUM_AGENT_URL=<https://aiqtp-quantum-agent.onrender.com>
+#
+# Project is resolved from .vercel/project.json (committed in this repo).
+# Optionally set VERCEL_ORG_ID in .env if your project is under a team.
 # =============================================================================
 set -euo pipefail
 
@@ -25,7 +26,7 @@ if [ -f "$REPO_ROOT/.env" ]; then
 fi
 
 MISSING=0
-for VAR in VERCEL_TOKEN VERCEL_PROJECT_ID VITE_RENDER_WORKER_URL VITE_QUANTUM_AGENT_URL; do
+for VAR in VERCEL_TOKEN VITE_RENDER_WORKER_URL VITE_QUANTUM_AGENT_URL; do
   if [ -z "${!VAR:-}" ]; then
     echo "⚠  $VAR not set — skipping Vercel injection"
     MISSING=1
@@ -35,34 +36,39 @@ done
 if [ "$MISSING" -eq 0 ]; then
   echo "→ Injecting Vercel env vars..."
 
+  SCOPE_FLAG=""
+  if [ -n "${VERCEL_ORG_ID:-}" ]; then
+    SCOPE_FLAG="--scope $VERCEL_ORG_ID"
+  fi
+
   for ENV in production preview development; do
     for VAR in VITE_RENDER_WORKER_URL VITE_QUANTUM_AGENT_URL; do
       VAL="${!VAR}"
-      # Remove existing then re-add (vercel env add is idempotent via rm+add)
-      vercel env rm "$VAR" "$ENV" \
+      # Remove existing then re-add (idempotent)
+      # shellcheck disable=SC2086
+      vercel env remove "$VAR" "$ENV" \
         --token "$VERCEL_TOKEN" \
-        --project-id "$VERCEL_PROJECT_ID" \
-        ${VERCEL_ORG_ID:+--scope "$VERCEL_ORG_ID"} \
+        $SCOPE_FLAG \
         --yes 2>/dev/null || true
 
+      # shellcheck disable=SC2086
       echo "$VAL" | vercel env add "$VAR" "$ENV" \
         --token "$VERCEL_TOKEN" \
-        --project-id "$VERCEL_PROJECT_ID" \
-        ${VERCEL_ORG_ID:+--scope "$VERCEL_ORG_ID"} \
+        $SCOPE_FLAG \
         --force
       echo "  ✓ $VAR → $ENV"
     done
   done
 
   echo "→ Triggering Vercel redeploy..."
+  # shellcheck disable=SC2086
   vercel deploy --prod \
     --token "$VERCEL_TOKEN" \
-    --project-id "$VERCEL_PROJECT_ID" \
-    ${VERCEL_ORG_ID:+--scope "$VERCEL_ORG_ID"} \
+    $SCOPE_FLAG \
     --yes 2>&1 | tail -5
 
   echo "✅ Vercel env vars injected and redeploy triggered."
 else
-  echo "ℹ  Add VERCEL_TOKEN, VERCEL_PROJECT_ID, VITE_RENDER_WORKER_URL,"
-  echo "   VITE_QUANTUM_AGENT_URL to .env then re-run: bash setup.sh"
+  echo "ℹ  Add VERCEL_TOKEN, VITE_RENDER_WORKER_URL, VITE_QUANTUM_AGENT_URL"
+  echo "   to .env then re-run: bash setup.sh"
 fi
