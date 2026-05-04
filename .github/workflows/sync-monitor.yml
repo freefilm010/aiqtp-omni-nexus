@@ -1,0 +1,60 @@
+name: Platform Sync Monitor
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deployment
+        run: sleep 30
+
+      - name: Check www.aiqtp.com
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://www.aiqtp.com --max-time 15)
+          echo "www.aiqtp.com → HTTP $STATUS"
+          [ "$STATUS" = "200" ] && echo "✅ Vercel production OK" || echo "⚠️ Vercel: $STATUS"
+
+      - name: Check aiqtp.vercel.app
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://aiqtp.vercel.app --max-time 15)
+          echo "aiqtp.vercel.app → HTTP $STATUS"
+          [ "$STATUS" = "200" ] && echo "✅ Vercel preview OK" || echo "⚠️ Vercel preview: $STATUS"
+
+      - name: Check Render trading-service
+        run: |
+          RESP=$(curl -s https://aiqtp-trading-service.onrender.com/health --max-time 20 || echo "timeout")
+          echo "Trading service → $RESP"
+          echo "$RESP" | grep -q "ok\|healthy\|alive" && echo "✅ Render trading OK" || echo "⚠️ Render trading: $RESP"
+
+      - name: Check Render quantum-agent
+        run: |
+          RESP=$(curl -s https://aiqtp-quantum-agent.onrender.com/health --max-time 20 || echo "timeout")
+          echo "Quantum agent → $RESP"
+          echo "$RESP" | grep -q "ok\|healthy\|alive" && echo "✅ Render quantum OK" || echo "⚠️ Render quantum: $RESP"
+
+      - name: Check Supabase project
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://rueaxiyvseaxkysnoock.supabase.co/rest/v1/ \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZWF4aXl2c2VheGt5c25vb2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NDkwMDEsImV4cCI6MjA4OTQyNTAwMX0.07J92R1g2-ihtnN43iYD63jU3gByBK3otB5zq3haw54" \
+            --max-time 10)
+          echo "Supabase → HTTP $STATUS"
+          [ "$STATUS" = "200" ] || [ "$STATUS" = "400" ] && echo "✅ Supabase OK" || echo "⚠️ Supabase: $STATUS"
+
+      - name: Sync summary
+        run: |
+          echo ""
+          echo "=============================="
+          echo "  AIQTP Platform Sync Report  "
+          echo "=============================="
+          echo "Triggered by: push to main"
+          echo "Commit: ${{ github.sha }}"
+          echo "Time: $(date -u)"
+          echo ""
+          echo "Reminder: After backend changes,"
+          echo "open Lovable → Publish to sync"
+          echo "Supabase edge functions."
