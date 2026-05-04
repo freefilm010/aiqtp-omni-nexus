@@ -106,6 +106,7 @@ POST /brokers/ibkr/order?conid=<id>   — IBKR order (conid = contract ID)
 5. Supabase edge function changes deploy automatically via GitHub Actions after merge
 6. Finish current task before pivoting to new user requests (complete then context-switch)
 7. Write learnings and architectural decisions to CLAUDE.md during sessions
+8. At session start, the SessionStart hook (`.claude/settings.json`) injects the path to the most recent prior transcript. Read its tail, identify any unfinished tasks (treat as this session's leading priorities), and refresh awareness of recent decisions / branch state / planned next steps before responding — avoid redundant questions and re-explanations
 
 ## Critical User Actions Still Needed
 
