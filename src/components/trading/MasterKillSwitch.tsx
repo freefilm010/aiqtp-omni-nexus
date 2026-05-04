@@ -24,7 +24,8 @@ type SystemStatusRow = {
   reason?: string | null;
 };
 
-const statusTable = () => supabase.from('system_status');
+const supabaseUnsafe = supabase as any;
+const statusTable = () => supabaseUnsafe.from('system_status');
 
 const MasterKillSwitch = () => {
   const [systemActive, setSystemActive] = useState<boolean | null>(null);
