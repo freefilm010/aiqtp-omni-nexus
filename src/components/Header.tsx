@@ -57,7 +57,8 @@ import {
   Home,
   Plug,
   Gift,
-  Wallet
+  Wallet,
+  Users
 } from "lucide-react";
 
 const AdminAccountItem = ({ onNavigate }: { onNavigate: () => void }) => {
@@ -206,6 +207,7 @@ const Header = () => {
   ];
 
   const moreLinks = [
+    { to: "/referral", label: "Refer & Earn", icon: Users },
     { to: "/stats", label: "⚔️ Stats Arena", icon: Trophy },
     { to: "/rewards", label: "🏆 Rewards Store", icon: Gift },
     { to: "/giveaway", label: "🎁 $2M Giveaway", icon: Gift },
