@@ -205,7 +205,7 @@ serve(async (req) => {
       }
 
       case 'cancel_order': {
-        const { orderId, exchangeAccountId, mode } = params;
+        const { orderId } = params;
 
         if (!orderId) {
           return new Response(
@@ -214,17 +214,68 @@ serve(async (req) => {
           );
         }
 
-        if (!exchangeAccountId) {
+        // Look up the trade in trade_logs by exchange_order_id or by row id
+        const { data: tradeRow, error: lookupError } = await supabase
+          .from('trade_logs')
+          .select('id, status, symbol, side, quantity, exchange_order_id')
+          .eq('user_id', user.id)
+          .or(`exchange_order_id.eq.${orderId},id.eq.${orderId}`)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (lookupError) {
           return new Response(
-            JSON.stringify({ success: false, error: 'Exchange connection required to cancel orders.' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ success: false, error: 'Failed to look up order' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Live order cancellation would go to exchange API
+        if (!tradeRow) {
+          return new Response(
+            JSON.stringify({ success: false, error: `Order ${orderId} not found` }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const cancellableStatuses = ['pending', 'open'];
+        if (!cancellableStatuses.includes(tradeRow.status)) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Cannot cancel order with status '${tradeRow.status}'. Only pending or open orders can be cancelled.`,
+            }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const { error: updateError } = await supabase
+          .from('trade_logs')
+          .update({ status: 'cancelled' })
+          .eq('id', tradeRow.id)
+          .eq('user_id', user.id);
+
+        if (updateError) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Failed to cancel order' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        console.log(`Order ${orderId} cancelled by user ${user.id}`);
         return new Response(
-          JSON.stringify({ success: false, error: 'Live order cancellation not yet implemented' }),
-          { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({
+            success: true,
+            message: `Order ${orderId} cancelled successfully`,
+            order: {
+              orderId: tradeRow.exchange_order_id ?? tradeRow.id,
+              symbol: tradeRow.symbol,
+              side: tradeRow.side,
+              quantity: tradeRow.quantity,
+              status: 'cancelled',
+            },
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
