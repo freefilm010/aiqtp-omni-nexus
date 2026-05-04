@@ -17,6 +17,9 @@ Endpoints:
   PATCH /strategy-registry/{id}    Update is_active / pending_graduation
   POST /bots/start                 Signal worker to run (no-op, logged)
   POST /bots/stop                  Signal worker to pause (no-op, logged)
+  GET  /admin/strategy-registry    Admin: all strategies (filterable)
+  GET  /admin/bots/leaderboard     Admin: top bots by composite score
+  GET  /admin/bots/stats           Admin: aggregate bot stats
 """
 
 import asyncio
@@ -954,6 +957,125 @@ async def patch_strategy(
         *vals,
     )
     return {"ok": True}
+
+
+# ─── Admin helpers ────────────────────────────────────────────────────────────
+
+# Comma-separated list of admin Supabase user UUIDs (set in Render env vars)
+_ADMIN_USER_IDS: set[str] = {
+    uid.strip()
+    for uid in os.getenv("ADMIN_USER_IDS", "").split(",")
+    if uid.strip()
+}
+
+def _require_admin(x_user_id: Optional[str], authorization: Optional[str]) -> str:
+    user_id = _require_user(x_user_id, authorization)
+    if _ADMIN_USER_IDS and user_id not in _ADMIN_USER_IDS:
+        raise HTTPException(403, "Admin access required")
+    return user_id
+
+
+@app.get("/admin/strategy-registry")
+@limiter.limit("30/minute")
+async def admin_list_all_strategies(
+    request: Request,
+    bot_type: Optional[str] = None,
+    graduated: Optional[bool] = None,
+    active: Optional[bool] = None,
+    limit: int = 200,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    """Admin: list ALL strategies across all users, with optional filters."""
+    _require_admin(x_user_id, authorization)
+
+    conditions = []
+    params: list = []
+    idx = 1
+    if bot_type:
+        conditions.append(f"bot_type = ${idx}"); params.append(bot_type); idx += 1
+    if graduated is not None:
+        conditions.append(f"is_graduated = ${idx}"); params.append(graduated); idx += 1
+    if active is not None:
+        conditions.append(f"is_active = ${idx}"); params.append(active); idx += 1
+
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    rows = await _query(
+        f"""SELECT id, user_id, name, description, bot_type, data_category,
+                   collection_frequency, is_active, pending_graduation, is_graduated,
+                   quality_score, reliability_score, total_records_collected,
+                   total_earnings, creator_profit_share, created_at
+            FROM public.strategy_registry
+            {where}
+            ORDER BY quality_score DESC NULLS LAST, created_at DESC
+            LIMIT ${idx}""",
+        *params, limit,
+    )
+    for r in rows:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+        for k in ("quality_score", "reliability_score", "total_earnings"):
+            if r.get(k) is not None:
+                r[k] = float(r[k])
+    return {"total": len(rows), "strategies": rows}
+
+
+@app.get("/admin/bots/leaderboard")
+@limiter.limit("30/minute")
+async def admin_bot_leaderboard(
+    request: Request,
+    limit: int = 50,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    """Admin: top bots ranked by composite score (quality * reliability)."""
+    _require_admin(x_user_id, authorization)
+    rows = await _query(
+        """SELECT id, user_id, name, bot_type, data_category, is_active,
+                  is_graduated, quality_score, reliability_score,
+                  total_records_collected, total_earnings, created_at,
+                  ROUND((COALESCE(quality_score,0) * COALESCE(reliability_score,0) / 100)::numeric, 2) AS composite_score
+           FROM public.strategy_registry
+           ORDER BY composite_score DESC NULLS LAST, total_earnings DESC
+           LIMIT $1""",
+        limit,
+    )
+    for r in rows:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+        for k in ("quality_score", "reliability_score", "total_earnings", "composite_score"):
+            if r.get(k) is not None:
+                r[k] = float(r[k])
+    return {"total": len(rows), "leaderboard": rows}
+
+
+@app.get("/admin/bots/stats")
+@limiter.limit("30/minute")
+async def admin_bot_stats(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    """Admin: aggregate stats across all strategies."""
+    _require_admin(x_user_id, authorization)
+    row = await _query(
+        """SELECT
+             COUNT(*)                                         AS total_bots,
+             COUNT(*) FILTER (WHERE is_active)               AS active_bots,
+             COUNT(*) FILTER (WHERE is_graduated)            AS graduated_bots,
+             COUNT(*) FILTER (WHERE pending_graduation)      AS pending_graduation,
+             COUNT(DISTINCT bot_type)                        AS bot_types,
+             ROUND(AVG(quality_score)::numeric,2)            AS avg_quality,
+             ROUND(AVG(reliability_score)::numeric,2)        AS avg_reliability,
+             SUM(total_records_collected)                    AS total_records,
+             SUM(total_earnings)                             AS total_earnings
+           FROM public.strategy_registry"""
+    )
+    r = row[0] if row else {}
+    for k in ("avg_quality", "avg_reliability", "total_earnings"):
+        if r.get(k) is not None:
+            r[k] = float(r[k])
+    return r
 
 
 # ─── Broker routes ───────────────────────────────────────────────────────────

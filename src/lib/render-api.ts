@@ -55,4 +55,19 @@ export const renderApi = {
     execute: (pair: string, buyExchange: string, sellExchange: string, amountUsdt: number) =>
       renderPost<any>('/arbitrage/execute', { pair, buy_exchange: buyExchange, sell_exchange: sellExchange, amount_usdt: amountUsdt }),
   },
+  admin: {
+    allStrategies: (filters?: { bot_type?: string; graduated?: boolean; active?: boolean; limit?: number }) => {
+      const params = new URLSearchParams();
+      if (filters?.bot_type) params.set('bot_type', filters.bot_type);
+      if (filters?.graduated !== undefined) params.set('graduated', String(filters.graduated));
+      if (filters?.active !== undefined) params.set('active', String(filters.active));
+      if (filters?.limit) params.set('limit', String(filters.limit));
+      const qs = params.toString();
+      return renderGet<{ total: number; strategies: any[] }>(`/admin/strategy-registry${qs ? '?' + qs : ''}`);
+    },
+    leaderboard: (limit = 50) =>
+      renderGet<{ total: number; leaderboard: any[] }>(`/admin/bots/leaderboard?limit=${limit}`),
+    stats: () =>
+      renderGet<{ total_bots: number; active_bots: number; graduated_bots: number; pending_graduation: number; bot_types: number; avg_quality: number; avg_reliability: number; total_records: number; total_earnings: number }>('/admin/bots/stats'),
+  },
 };

@@ -77,6 +77,9 @@ services:
       # Anthropic AI proxy
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Admin access (comma-separated Supabase user UUIDs)
+      - key: ADMIN_USER_IDS
+        sync: false
 
   # ── Core Brain Worker (polling loop) ─────────────────────────────────────
   - type: worker
