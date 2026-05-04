@@ -61,6 +61,7 @@ const navItems: NavItem[] = [
   { title: "Token Factory", href: "/admin/tokens", icon: Coins },
   { title: "Contests & Airdrops", href: "/admin/contests", icon: Trophy },
   { title: "Influencers", href: "/admin/influencers", icon: Users },
+  { title: "Bot Registry", href: "/admin/bots", icon: Bot, section: "Strategy" },
   { title: "Chat Management", href: "/admin/chats", icon: Bot },
   { title: "Payments", href: "/admin/payments", icon: CreditCard },
   { title: "Automation", href: "/admin/automation", icon: Zap },
