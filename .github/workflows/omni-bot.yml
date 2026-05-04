@@ -1,0 +1,263 @@
+name: AIQTP Omni-Bot — Platform Health Monitor
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # Every 6 hours
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: "Verbose output"
+        required: false
+        default: "false"
+
+env:
+  SUPABASE_URL: "https://rueaxiyvseaxkysnoock.supabase.co"
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZWF4aXl2c2VheGt5c25vb2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NDkwMDEsImV4cCI6MjA4OTQyNTAwMX0.07J92R1g2-ihtnN43iYD63jU3gByBK3otB5zq3haw54"
+  RENDER_TRADING_URL: "https://aiqtp-trading-service.onrender.com"
+  RENDER_QUANTUM_URL: "https://aiqtp-quantum-agent.onrender.com"
+
+jobs:
+  # ─── JOB 1: Infrastructure Health ─────────────────────────────────────────
+  infrastructure:
+    name: Infrastructure Health
+    runs-on: ubuntu-latest
+    outputs:
+      supabase_ok: ${{ steps.supabase.outputs.ok }}
+      render_trading_ok: ${{ steps.render_trading.outputs.ok }}
+      render_quantum_ok: ${{ steps.render_quantum.outputs.ok }}
+      frontend_ok: ${{ steps.frontend.outputs.ok }}
+    steps:
+      - name: Check Supabase REST API
+        id: supabase
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/" --max-time 15)
+          echo "Supabase REST → HTTP $STATUS"
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ]; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+            echo "✅ Supabase active"
+          elif [ "$STATUS" = "503" ]; then
+            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "❌ SUPABASE PAUSED — needs reactivation at supabase.com/dashboard"
+            exit 1
+          else
+            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Supabase returned unexpected $STATUS"
+          fi
+
+      - name: Check Render Trading Service
+        id: render_trading
+        run: |
+          BODY=$(curl -s --max-time 30 "$RENDER_TRADING_URL/health" 2>/dev/null || echo '{"status":"unreachable"}')
+          STATUS=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status','unknown'))" 2>/dev/null || echo "parse_error")
+          echo "Trading service → $STATUS"
+          if [ "$STATUS" = "ok" ] || [ "$STATUS" = "healthy" ]; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+            echo "✅ Trading service healthy"
+          else
+            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Trading service status: $STATUS (may be waking from sleep)"
+          fi
+
+      - name: Check Render Quantum Agent
+        id: render_quantum
+        run: |
+          BODY=$(curl -s --max-time 30 "$RENDER_QUANTUM_URL/health" 2>/dev/null || echo '{"status":"unreachable"}')
+          STATUS=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('status','unknown'))" 2>/dev/null || echo "parse_error")
+          echo "Quantum agent → $STATUS"
+          if [ "$STATUS" = "ok" ] || [ "$STATUS" = "healthy" ]; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+            echo "✅ Quantum agent healthy"
+          else
+            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Quantum agent status: $STATUS (may be waking from sleep)"
+          fi
+
+      - name: Check Frontend (aiqtp.com)
+        id: frontend
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://www.aiqtp.com --max-time 15 2>/dev/null || echo "000")
+          echo "Frontend → HTTP $STATUS"
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || [ "$STATUS" = "302" ]; then
+            echo "ok=true" >> $GITHUB_OUTPUT
+            echo "✅ Frontend responding"
+          else
+            echo "ok=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Frontend returned $STATUS"
+          fi
+
+  # ─── JOB 2: Edge Function Warmup ───────────────────────────────────────────
+  edge-functions:
+    name: Edge Function Warmup & Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm all critical edge functions
+        run: |
+          PASS=0
+          FAIL=0
+          for fn in qaqi-agent aiqtp-agent get-market-prices faucet-credit \
+                    multi-agent-orchestrator quantclaw-marketing nft-generate-image \
+                    platform-token-refresh compound-snapshot rent-strategy; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"action":"ping"}' \
+              "$SUPABASE_URL/functions/v1/$fn" \
+              --max-time 20 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ] || [ "$STATUS" = "400" ]; then
+              echo "  ✅ $fn → $STATUS"
+              PASS=$((PASS+1))
+            else
+              echo "  ⚠️ $fn → $STATUS"
+              FAIL=$((FAIL+1))
+            fi
+          done
+          echo ""
+          echo "Edge functions: $PASS ✅  $FAIL ⚠️"
+
+  # ─── JOB 3: Revenue Stream Verification ────────────────────────────────────
+  revenue-streams:
+    name: Revenue Stream Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Stripe webhook endpoint
+        run: |
+          # Stripe pings the webhook — we verify it's accessible
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "$RENDER_TRADING_URL/payments/webhook" --max-time 15 2>/dev/null || echo "000")
+          echo "Stripe webhook endpoint → HTTP $STATUS"
+          # 400 = accessible but bad payload (correct, Stripe signature missing)
+          [ "$STATUS" = "400" ] || [ "$STATUS" = "200" ] && echo "✅ Webhook accessible" || echo "⚠️ Webhook may be down ($STATUS)"
+
+      - name: Check payment checkout endpoint
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"amount_usd":1,"user_id":"test"}' \
+            "$RENDER_TRADING_URL/payments/create-checkout" --max-time 15 2>/dev/null || echo "000")
+          echo "Payment checkout → HTTP $STATUS"
+          # 401 = auth required (endpoint alive), 400 = bad params (endpoint alive)
+          [ "$STATUS" = "401" ] || [ "$STATUS" = "400" ] || [ "$STATUS" = "200" ] && \
+            echo "✅ Checkout endpoint alive" || echo "⚠️ Checkout returned $STATUS"
+
+      - name: Check arbitrage scanner
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$RENDER_TRADING_URL/arbitrage/opportunities" --max-time 20 2>/dev/null || echo "000")
+          echo "Arbitrage scanner → HTTP $STATUS"
+          [ "$STATUS" = "200" ] && echo "✅ Arbitrage scanner active" || echo "⚠️ Arbitrage returned $STATUS"
+
+      - name: Verify broker endpoints alive
+        run: |
+          for broker in tradier binance kraken; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "$RENDER_TRADING_URL/brokers/$broker/ticker?symbol=BTCUSD" --max-time 15 2>/dev/null || echo "000")
+            echo "  $broker ticker → $STATUS"
+          done
+
+  # ─── JOB 4: Token Ecosystem Sync ───────────────────────────────────────────
+  token-ecosystem:
+    name: Token & Wallet Ecosystem
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify platform token price feeds are fresh
+        run: |
+          # ping platform-token-refresh to keep prices alive
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "$SUPABASE_URL/functions/v1/platform-token-refresh" --max-time 20 2>/dev/null || echo "000")
+          echo "Platform token refresh → $STATUS"
+          [ "$STATUS" = "200" ] && echo "✅ Token prices refreshed" || echo "⚠️ Token refresh returned $STATUS"
+
+      - name: Run compound snapshot (auto-invest compounding)
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "$SUPABASE_URL/functions/v1/compound-snapshot" --max-time 30 2>/dev/null || echo "000")
+          echo "Compound snapshot → $STATUS"
+          [ "$STATUS" = "200" ] && echo "✅ Compound snapshot complete" || echo "⚠️ Snapshot returned $STATUS"
+
+      - name: Check market data sync
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"sync"}' \
+            "$SUPABASE_URL/functions/v1/market-data-sync" --max-time 30 2>/dev/null || echo "000")
+          echo "Market data sync → $STATUS"
+          [ "$STATUS" = "200" ] && echo "✅ Market data synced" || echo "⚠️ Market sync returned $STATUS"
+
+  # ─── JOB 5: Bot Pipeline Health ────────────────────────────────────────────
+  bot-pipeline:
+    name: Bot Graduation Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check admin bot stats from Render
+        run: |
+          BODY=$(curl -s --max-time 30 \
+            "$RENDER_TRADING_URL/admin/bots/stats" 2>/dev/null || echo '{}')
+          echo "Bot pipeline stats:"
+          echo "$BODY" | python3 -c "
+          import sys, json
+          try:
+              d = json.loads(sys.stdin.read())
+              print(f\"  Total bots:      {d.get('total_bots', 'N/A')}\")
+              print(f\"  Active:          {d.get('active_bots', 'N/A')}\")
+              print(f\"  Graduated:       {d.get('graduated_bots', 'N/A')}\")
+              print(f\"  Pending grad:    {d.get('pending_graduation', 'N/A')}\")
+              print(f\"  Avg quality:     {d.get('avg_quality', 'N/A')}%\")
+              print(f\"  Total earnings:  \${d.get('total_earnings', 0):.2f}\")
+          except Exception as e:
+              print(f'  Could not parse: {e}')
+          " 2>/dev/null || echo "  Could not reach bot stats endpoint"
+
+  # ─── JOB 6: Summary Report ─────────────────────────────────────────────────
+  summary:
+    name: Platform Health Summary
+    runs-on: ubuntu-latest
+    needs: [infrastructure, edge-functions, revenue-streams, token-ecosystem, bot-pipeline]
+    if: always()
+    steps:
+      - name: Generate health report
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  AIQTP Platform Health Report — $(date -u '+%Y-%m-%d %H:%M UTC')"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Infrastructure:"
+          echo "  Supabase DB:        ${{ needs.infrastructure.outputs.supabase_ok == 'true' && '✅ Active' || '❌ ISSUE' }}"
+          echo "  Render Trading:     ${{ needs.infrastructure.outputs.render_trading_ok == 'true' && '✅ Active' || '⚠️ Sleeping/Issue' }}"
+          echo "  Render Quantum:     ${{ needs.infrastructure.outputs.render_quantum_ok == 'true' && '✅ Active' || '⚠️ Sleeping/Issue' }}"
+          echo "  Frontend (aiqtp.com): ${{ needs.infrastructure.outputs.frontend_ok == 'true' && '✅ Active' || '❌ ISSUE' }}"
+          echo ""
+          echo "Edge Functions:     See 'Edge Function Warmup' job above"
+          echo "Revenue Streams:    See 'Revenue Stream Verification' job above"
+          echo "Token Ecosystem:    See 'Token & Wallet Ecosystem' job above"
+          echo "Bot Pipeline:       See 'Bot Graduation Pipeline' job above"
+          echo ""
+          echo "Next run: ~6 hours"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # Fail the job (and create alert) if Supabase is down
+          if [ "${{ needs.infrastructure.outputs.supabase_ok }}" = "false" ]; then
+            echo "🚨 CRITICAL: Supabase is down — platform non-functional"
+            exit 1
+          fi
