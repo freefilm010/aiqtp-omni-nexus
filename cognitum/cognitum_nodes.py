@@ -418,8 +418,8 @@ class CognitumVirtualNode(CognitumBaseNode):
                         mem_kb = int(line.split()[1])
                         mem_mb = mem_kb / 1024.0
                         break
-        except Exception:
-            pass
+        except OSError:
+            pass  # non-Linux — /proc not available, mem_mb stays 0.0
 
         return {
             "latency_ms": round(latency_ms, 6),

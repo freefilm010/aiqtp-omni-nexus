@@ -6,11 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Max single payment: 1,000,000 msats = 1,000 sats ≈ $0.50 at $50k BTC
+const MAX_MSATS = 1_000_000;
+
 const ActionSchema = z.object({
   action: z.enum(["balance", "create_charge", "send_payment"]),
-  amount_msats: z.number().positive().optional(),
+  amount_msats: z.number().positive().max(MAX_MSATS).optional(),
   description: z.string().max(200).optional(),
-  ln_address: z.string().max(200).optional(),
+  ln_address: z.string().max(200).regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/, "Invalid Lightning address format").optional(),
 });
 
 async function readZbdResponse(resp: Response) {

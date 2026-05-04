@@ -59,6 +59,10 @@ def _init_db_backend():
         def __init__(self):
             url = os.environ.get("SUPABASE_URL", "")
             key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+            if not url or not key:
+                raise RuntimeError(
+                    "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set when DATABASE_URL is absent"
+                )
             self._client = create_client(url, key)
 
         def table(self, name: str):
@@ -1027,6 +1031,12 @@ def poll_and_execute_directives() -> int:
 # ─── Main loop ────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    # Fail fast on missing required env vars — empty strings cause silent failures
+    missing = [v for v in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY") if not os.environ.get(v)]
+    if missing and not os.getenv("DATABASE_URL"):
+        # DATABASE_URL means we're on Render PostgreSQL — Supabase vars optional
+        raise RuntimeError(f"Required env var(s) not set: {', '.join(missing)}")
+
     # Load Alpaca keys from Supabase vault if not set via env vars
     _load_alpaca_keys_from_vault()
 

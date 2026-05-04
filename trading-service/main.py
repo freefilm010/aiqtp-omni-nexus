@@ -961,11 +961,14 @@ async def patch_strategy(
 
 # ─── Admin helpers ────────────────────────────────────────────────────────────
 
+import re as _re
+_UUID_RE = _re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', _re.I)
+
 # Comma-separated list of admin Supabase user UUIDs (set in Render env vars)
 _ADMIN_USER_IDS: set[str] = {
     uid.strip()
     for uid in os.getenv("ADMIN_USER_IDS", "").split(",")
-    if uid.strip()
+    if uid.strip() and _UUID_RE.match(uid.strip())
 }
 
 def _require_admin(x_user_id: Optional[str], authorization: Optional[str]) -> str:
@@ -982,12 +985,15 @@ async def admin_list_all_strategies(
     bot_type: Optional[str] = None,
     graduated: Optional[bool] = None,
     active: Optional[bool] = None,
-    limit: int = 200,
+    limit: int = 100,
+    offset: int = 0,
     x_user_id: Optional[str] = Header(default=None),
     authorization: Optional[str] = Header(default=None),
 ):
-    """Admin: list ALL strategies across all users, with optional filters."""
+    """Admin: list ALL strategies across all users, with optional filters and pagination."""
     _require_admin(x_user_id, authorization)
+    limit = max(1, min(limit, 500))  # hard cap: 1–500 rows per page
+    offset = max(0, offset)
 
     conditions = []
     params: list = []
@@ -1008,8 +1014,8 @@ async def admin_list_all_strategies(
             FROM public.strategy_registry
             {where}
             ORDER BY quality_score DESC NULLS LAST, created_at DESC
-            LIMIT ${idx}""",
-        *params, limit,
+            LIMIT ${idx} OFFSET ${idx+1}""",
+        *params, limit, offset,
     )
     for r in rows:
         if isinstance(r.get("created_at"), datetime):
@@ -1017,7 +1023,7 @@ async def admin_list_all_strategies(
         for k in ("quality_score", "reliability_score", "total_earnings"):
             if r.get(k) is not None:
                 r[k] = float(r[k])
-    return {"total": len(rows), "strategies": rows}
+    return {"total": len(rows), "offset": offset, "limit": limit, "strategies": rows}
 
 
 @app.get("/admin/bots/leaderboard")

@@ -15,9 +15,16 @@ Deno.serve(async (req) => {
 
   try {
     const auth = req.headers.get('Authorization') ?? '';
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    // Only the platform itself (using the service role) may record fees.
-    if (!auth.includes(serviceKey)) {
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    // Timing-safe comparison: strip Bearer prefix and compare byte-by-byte.
+    const provided = auth.startsWith('Bearer ') ? auth.slice(7) : auth;
+    const encoder = new TextEncoder();
+    const a = encoder.encode(provided.padEnd(512, '\0'));
+    const b = encoder.encode(serviceKey.padEnd(512, '\0'));
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+    const keyMatch = diff === 0 && provided.length === serviceKey.length && serviceKey.length > 0;
+    if (!keyMatch) {
       return new Response(JSON.stringify({ error: 'Service role required' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

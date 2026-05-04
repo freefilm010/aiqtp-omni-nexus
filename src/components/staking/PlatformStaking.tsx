@@ -91,14 +91,15 @@ export const PlatformStaking = () => {
       });
       if (error) throw error;
 
-      // Record in platform_revenue
-      await supabase.from("platform_revenue").insert({
+      // Record in platform_revenue (non-fatal if it fails)
+      const { error: feeErr } = await supabase.from("platform_revenue").insert({
         source_type: "staking_lock",
         source_category: "staking",
         amount: amount * 0.005, // 0.5% platform fee on staked amount
         currency: pool.symbol,
         status: "pending",
-      }).then(() => {}); // fire-and-forget
+      });
+      if (feeErr) console.error("platform_revenue insert failed:", feeErr.message);
 
       toast.success(`Staked ${amount} ${pool.symbol} at ${pool.apy}% APY for ${pool.lockPeriod}`);
       setAmounts((prev) => ({ ...prev, [pool.symbol]: "" }));
