@@ -36,6 +36,32 @@ services:
         value: BTCUSD,ETHUSD
       - key: CCXT_LIVE_ENABLED
         value: "false"
+      # Tradier (equity broker)
+      - key: TRADIER_API_KEY
+        sync: false
+      - key: TRADIER_ACCOUNT_ID
+        sync: false
+      - key: TRADIER_SANDBOX_MODE
+        value: "true"
+      # Binance (crypto)
+      - key: BINANCE_API_KEY
+        sync: false
+      - key: BINANCE_SECRET_KEY
+        sync: false
+      - key: BINANCE_LIVE_ENABLED
+        value: "false"
+      # Kraken (crypto)
+      - key: KRAKEN_API_KEY
+        sync: false
+      - key: KRAKEN_SECRET_KEY
+        sync: false
+      - key: KRAKEN_LIVE_ENABLED
+        value: "false"
+      # Interactive Brokers (Client Portal Gateway)
+      - key: IBKR_CPG_URL
+        sync: false
+      - key: IBKR_ACCOUNT_ID
+        sync: false
 
   # ── Core Brain Worker (polling loop) ─────────────────────────────────────
   - type: worker

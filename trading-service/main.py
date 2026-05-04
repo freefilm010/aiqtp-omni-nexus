@@ -20,11 +20,15 @@ Endpoints:
 """
 
 import asyncio
+import base64
+import hashlib
+import hmac
 import json
 import logging
 import os
 import random
 import time
+import urllib.parse
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
@@ -65,6 +69,25 @@ ALPACA_SECRET_KEY         = os.getenv("ALPACA_SECRET_KEY", "")
 ALPACA_BASE_URL           = os.getenv("ALPACA_BASE_URL", "https://api.alpaca.markets")
 ALPACA_PAPER_MODE         = os.getenv("ALPACA_PAPER_MODE", "false").lower() != "false"
 CCXT_LIVE_ENABLED         = os.getenv("CCXT_LIVE_ENABLED", "false").lower() == "true"
+
+# ─── Broker Config ────────────────────────────────────────────────────────────
+TRADIER_API_KEY    = os.getenv("TRADIER_API_KEY", "")
+TRADIER_ACCOUNT_ID = os.getenv("TRADIER_ACCOUNT_ID", "")
+TRADIER_SANDBOX    = os.getenv("TRADIER_SANDBOX_MODE", "true").lower() != "false"
+TRADIER_BASE_URL   = "https://sandbox.tradier.com/v1" if TRADIER_SANDBOX else "https://api.tradier.com/v1"
+
+BINANCE_API_KEY    = os.getenv("BINANCE_API_KEY", "")
+BINANCE_SECRET_KEY = os.getenv("BINANCE_SECRET_KEY", "")
+BINANCE_BASE_URL   = os.getenv("BINANCE_BASE_URL", "https://api.binance.com")
+BINANCE_LIVE       = os.getenv("BINANCE_LIVE_ENABLED", "false").lower() == "true"
+
+KRAKEN_API_KEY     = os.getenv("KRAKEN_API_KEY", "")
+KRAKEN_SECRET_KEY  = os.getenv("KRAKEN_SECRET_KEY", "")
+KRAKEN_BASE_URL    = "https://api.kraken.com"
+KRAKEN_LIVE        = os.getenv("KRAKEN_LIVE_ENABLED", "false").lower() == "true"
+
+IBKR_CPG_URL       = os.getenv("IBKR_CPG_URL", "")        # Client Portal Gateway base URL
+IBKR_ACCOUNT_ID    = os.getenv("IBKR_ACCOUNT_ID", "")
 
 SYMBOL_WHITELIST = {
     s.strip() for s in os.getenv(
@@ -346,6 +369,25 @@ class LiveOrderRequest(BaseModel):
     time_in_force: str = "gtc"
 
 
+class BrokerOrderRequest(BaseModel):
+    symbol: str
+    side: str = Field(..., pattern="^(buy|sell)$")
+    qty: float = Field(..., gt=0)
+    order_type: str = Field("market", pattern="^(market|limit)$")
+    limit_price: Optional[float] = None
+    time_in_force: str = "day"
+
+
+class TradierQuoteRequest(BaseModel):
+    symbols: list[str]
+
+
+class OptionsChainRequest(BaseModel):
+    symbol: str
+    expiration: str
+    option_type: Optional[str] = None  # "call" | "put" | None
+
+
 # ─── Backtest simulation ──────────────────────────────────────────────────────
 def _simulate_backtest(req: BacktestRequest) -> dict[str, Any]:
     rng = random.Random(hash(f"{req.strategy}:{req.pair}:{req.start_date}"))
@@ -495,6 +537,176 @@ async def _place_alpaca_order(req: LiveOrderRequest) -> dict[str, Any]:
         )
         if r.status_code not in (200, 201):
             raise HTTPException(r.status_code, f"Alpaca /v2/orders: {r.text}")
+        return r.json()
+
+
+# ─── Broker helpers ───────────────────────────────────────────────────────────
+
+def _tradier_headers() -> dict:
+    return {"Authorization": f"Bearer {TRADIER_API_KEY}", "Accept": "application/json"}
+
+
+async def _tradier_get(path: str, params: dict | None = None) -> dict:
+    if not TRADIER_API_KEY:
+        raise HTTPException(503, "TRADIER_API_KEY not configured")
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{TRADIER_BASE_URL}{path}", headers=_tradier_headers(),
+                             params=params, timeout=15)
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"Tradier {path}: {r.text}")
+        return r.json()
+
+
+async def _place_tradier_order(req: BrokerOrderRequest) -> dict:
+    if not TRADIER_API_KEY or not TRADIER_ACCOUNT_ID:
+        raise HTTPException(503, "TRADIER_API_KEY and TRADIER_ACCOUNT_ID required")
+    data = {
+        "class": "equity",
+        "symbol": req.symbol.upper(),
+        "side": req.side,
+        "quantity": str(req.qty),
+        "type": req.order_type,
+        "duration": req.time_in_force,
+    }
+    if req.order_type == "limit" and req.limit_price:
+        data["price"] = str(req.limit_price)
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{TRADIER_BASE_URL}/accounts/{TRADIER_ACCOUNT_ID}/orders",
+            headers={**_tradier_headers(), "Content-Type": "application/x-www-form-urlencoded"},
+            data=data,
+            timeout=15,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"Tradier order: {r.text}")
+        return r.json()
+
+
+def _binance_sign(params: dict) -> str:
+    query = urllib.parse.urlencode(params)
+    return hmac.new(BINANCE_SECRET_KEY.encode(), query.encode(), hashlib.sha256).hexdigest()
+
+
+async def _binance_ticker(symbol: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{BINANCE_BASE_URL}/api/v3/ticker/price",
+                             params={"symbol": symbol.upper()}, timeout=10)
+        if r.status_code != 200:
+            raise HTTPException(r.status_code, f"Binance ticker: {r.text}")
+        return r.json()
+
+
+async def _place_binance_order(req: BrokerOrderRequest) -> dict:
+    if not BINANCE_API_KEY or not BINANCE_SECRET_KEY:
+        raise HTTPException(503, "BINANCE_API_KEY and BINANCE_SECRET_KEY required")
+    if not BINANCE_LIVE:
+        raise HTTPException(503, "Binance live trading disabled — set BINANCE_LIVE_ENABLED=true")
+    params: dict[str, Any] = {
+        "symbol": req.symbol.upper().replace("/", ""),
+        "side": req.side.upper(),
+        "type": req.order_type.upper(),
+        "quantity": req.qty,
+        "timestamp": int(time.time() * 1000),
+    }
+    if req.order_type == "limit":
+        params["price"] = req.limit_price
+        params["timeInForce"] = req.time_in_force.upper()
+    params["signature"] = _binance_sign(params)
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{BINANCE_BASE_URL}/api/v3/order",
+            headers={"X-MBX-APIKEY": BINANCE_API_KEY},
+            params=params,
+            timeout=15,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"Binance order: {r.text}")
+        return r.json()
+
+
+def _kraken_sign(urlpath: str, data: dict) -> str:
+    postdata = urllib.parse.urlencode(data)
+    encoded = (str(data["nonce"]) + postdata).encode()
+    message = urlpath.encode() + hashlib.sha256(encoded).digest()
+    mac = hmac.new(base64.b64decode(KRAKEN_SECRET_KEY), message, hashlib.sha512)
+    return base64.b64encode(mac.digest()).decode()
+
+
+async def _kraken_ticker(pair: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        r = await client.get(f"{KRAKEN_BASE_URL}/0/public/Ticker",
+                             params={"pair": pair.upper()}, timeout=10)
+        if r.status_code != 200:
+            raise HTTPException(r.status_code, f"Kraken ticker: {r.text}")
+        body = r.json()
+        if body.get("error"):
+            raise HTTPException(400, f"Kraken: {body['error']}")
+        return body.get("result", {})
+
+
+async def _place_kraken_order(req: BrokerOrderRequest) -> dict:
+    if not KRAKEN_API_KEY or not KRAKEN_SECRET_KEY:
+        raise HTTPException(503, "KRAKEN_API_KEY and KRAKEN_SECRET_KEY required")
+    if not KRAKEN_LIVE:
+        raise HTTPException(503, "Kraken live trading disabled — set KRAKEN_LIVE_ENABLED=true")
+    nonce = int(time.time() * 1000)
+    data: dict[str, Any] = {
+        "nonce": nonce,
+        "ordertype": req.order_type,
+        "type": req.side,
+        "volume": req.qty,
+        "pair": req.symbol.upper(),
+    }
+    if req.order_type == "limit" and req.limit_price:
+        data["price"] = req.limit_price
+    urlpath = "/0/private/AddOrder"
+    sig = _kraken_sign(urlpath, data)
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{KRAKEN_BASE_URL}{urlpath}",
+            headers={"API-Key": KRAKEN_API_KEY, "API-Sign": sig},
+            data=data,
+            timeout=15,
+        )
+        if r.status_code != 200:
+            raise HTTPException(r.status_code, f"Kraken order: {r.text}")
+        body = r.json()
+        if body.get("error"):
+            raise HTTPException(400, f"Kraken: {body['error']}")
+        return body.get("result", {})
+
+
+async def _ibkr_get(path: str) -> dict:
+    if not IBKR_CPG_URL:
+        raise HTTPException(503, "IBKR_CPG_URL not configured — run Client Portal Gateway")
+    async with httpx.AsyncClient(verify=False) as client:
+        r = await client.get(f"{IBKR_CPG_URL}{path}", timeout=15)
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"IBKR {path}: {r.text}")
+        return r.json()
+
+
+async def _place_ibkr_order(req: BrokerOrderRequest, conid: int) -> dict:
+    if not IBKR_CPG_URL or not IBKR_ACCOUNT_ID:
+        raise HTTPException(503, "IBKR_CPG_URL and IBKR_ACCOUNT_ID required")
+    order: dict[str, Any] = {
+        "conid": conid,
+        "secType": f"{conid}:STK",
+        "orderType": "MKT" if req.order_type == "market" else "LMT",
+        "side": req.side.upper(),
+        "quantity": req.qty,
+        "tif": req.time_in_force.upper(),
+    }
+    if req.order_type == "limit" and req.limit_price:
+        order["price"] = req.limit_price
+    async with httpx.AsyncClient(verify=False) as client:
+        r = await client.post(
+            f"{IBKR_CPG_URL}/v1/api/iserver/account/{IBKR_ACCOUNT_ID}/orders",
+            json={"orders": [order]},
+            timeout=15,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"IBKR order: {r.text}")
         return r.json()
 
 
@@ -707,6 +919,156 @@ async def patch_strategy(
         *vals,
     )
     return {"ok": True}
+
+
+# ─── Broker routes ───────────────────────────────────────────────────────────
+
+@app.get("/brokers")
+async def list_brokers():
+    """Return which brokers are configured (keys present, not values)."""
+    return {
+        "alpaca":  {"configured": bool(ALPACA_API_KEY),    "live": not ALPACA_PAPER_MODE},
+        "tradier": {"configured": bool(TRADIER_API_KEY),   "sandbox": TRADIER_SANDBOX},
+        "binance": {"configured": bool(BINANCE_API_KEY),   "live": BINANCE_LIVE},
+        "kraken":  {"configured": bool(KRAKEN_API_KEY),    "live": KRAKEN_LIVE},
+        "ibkr":    {"configured": bool(IBKR_CPG_URL),      "account": bool(IBKR_ACCOUNT_ID)},
+    }
+
+
+@app.get("/brokers/tradier/quotes")
+@limiter.limit("60/minute")
+async def tradier_quotes(
+    request: Request,
+    symbols: str,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    data = await _tradier_get("/markets/quotes", {"symbols": symbols, "greeks": "false"})
+    return data
+
+
+@app.get("/brokers/tradier/options-chain")
+@limiter.limit("30/minute")
+async def tradier_options_chain(
+    request: Request,
+    symbol: str,
+    expiration: str,
+    option_type: Optional[str] = None,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    params: dict[str, Any] = {"symbol": symbol, "expiration": expiration, "greeks": "true"}
+    if option_type:
+        params["optionType"] = option_type
+    data = await _tradier_get("/markets/options/chains", params)
+    return data
+
+
+@app.post("/brokers/tradier/order")
+@limiter.limit("10/minute")
+async def tradier_order(
+    request: Request,
+    req: BrokerOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    result = await _place_tradier_order(req)
+    log.info("Tradier order %s %s qty=%.4f", req.side, req.symbol, req.qty)
+    return result
+
+
+@app.get("/brokers/binance/ticker")
+@limiter.limit("120/minute")
+async def binance_ticker(
+    request: Request,
+    symbol: str,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    return await _binance_ticker(symbol)
+
+
+@app.post("/brokers/binance/order")
+@limiter.limit("10/minute")
+async def binance_order(
+    request: Request,
+    req: BrokerOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    result = await _place_binance_order(req)
+    log.info("Binance order %s %s qty=%.4f", req.side, req.symbol, req.qty)
+    return result
+
+
+@app.get("/brokers/kraken/ticker")
+@limiter.limit("120/minute")
+async def kraken_ticker(
+    request: Request,
+    pair: str,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    return await _kraken_ticker(pair)
+
+
+@app.post("/brokers/kraken/order")
+@limiter.limit("10/minute")
+async def kraken_order(
+    request: Request,
+    req: BrokerOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    result = await _place_kraken_order(req)
+    log.info("Kraken order %s %s qty=%.4f", req.side, req.symbol, req.qty)
+    return result
+
+
+@app.get("/brokers/ibkr/accounts")
+@limiter.limit("30/minute")
+async def ibkr_accounts(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    return await _ibkr_get("/v1/api/iserver/accounts")
+
+
+@app.get("/brokers/ibkr/portfolio")
+@limiter.limit("30/minute")
+async def ibkr_portfolio(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    if not IBKR_ACCOUNT_ID:
+        raise HTTPException(503, "IBKR_ACCOUNT_ID not configured")
+    return await _ibkr_get(f"/v1/api/portfolio/{IBKR_ACCOUNT_ID}/positions/0")
+
+
+@app.post("/brokers/ibkr/order")
+@limiter.limit("10/minute")
+async def ibkr_order(
+    request: Request,
+    req: BrokerOrderRequest,
+    conid: int,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    result = await _place_ibkr_order(req, conid)
+    log.info("IBKR order %s %s qty=%.4f conid=%d", req.side, req.symbol, req.qty, conid)
+    return result
 
 
 # ─── Bot control ──────────────────────────────────────────────────────────────
