@@ -239,6 +239,41 @@ async def _run_schema_init(pool: asyncpg.Pool) -> None:
       sharpe_ratio      numeric(10,4),
       evaluated_at      timestamptz   NOT NULL DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS public.deposit_requests (
+      id                uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id           text        NOT NULL,
+      amount_usd        numeric     NOT NULL,
+      source            text,
+      status            text        NOT NULL DEFAULT 'pending',
+      session_id        text,
+      stripe_session_id text,
+      created_at        timestamptz NOT NULL DEFAULT now(),
+      processed_at      timestamptz
+    );
+    ALTER TABLE public.deposit_requests
+      ADD COLUMN IF NOT EXISTS source            text,
+      ADD COLUMN IF NOT EXISTS session_id        text,
+      ADD COLUMN IF NOT EXISTS stripe_session_id text,
+      ADD COLUMN IF NOT EXISTS processed_at      timestamptz;
+
+    CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
+      id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id          text        NOT NULL,
+      amount_usd       numeric     NOT NULL,
+      destination_type text,
+      status           text        NOT NULL DEFAULT 'pending',
+      created_at       timestamptz NOT NULL DEFAULT now(),
+      processed_at     timestamptz
+    );
+    ALTER TABLE public.withdrawal_requests
+      ADD COLUMN IF NOT EXISTS processed_at timestamptz;
+
+    CREATE TABLE IF NOT EXISTS public.user_balances (
+      user_id    text        PRIMARY KEY,
+      balance_usd numeric    NOT NULL DEFAULT 0,
+      updated_at  timestamptz NOT NULL DEFAULT now()
+    );
     """
     try:
         async with pool.acquire() as conn:
@@ -1093,6 +1128,16 @@ STRIPE_SECRET_KEY      = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET  = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 FRONTEND_URL           = os.getenv("FRONTEND_URL", "https://www.aiqtp.com")
 
+# ─── Payments (PayPal) ────────────────────────────────────────────────────────
+
+PAYPAL_CLIENT_ID     = os.getenv("PAYPAL_CLIENT_ID", "")
+PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
+PAYPAL_MODE          = os.getenv("PAYPAL_MODE", "live")  # "sandbox" | "live"
+_PAYPAL_BASE_URL     = (
+    "https://api-m.sandbox.paypal.com" if PAYPAL_MODE == "sandbox"
+    else "https://api-m.paypal.com"
+)
+
 
 class CheckoutRequest(BaseModel):
     amount_usd: float = Field(..., gt=0)
@@ -1248,6 +1293,183 @@ async def payment_history(
         if r.get("amount_usd") is not None:
             r["amount_usd"] = float(r["amount_usd"])
     return rows
+
+
+# ─── PayPal helpers ───────────────────────────────────────────────────────────
+
+async def _paypal_access_token() -> str:
+    """Obtain a short-lived OAuth2 bearer token from PayPal."""
+    if not PAYPAL_CLIENT_ID or not PAYPAL_CLIENT_SECRET:
+        raise HTTPException(503, "PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET not configured")
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{_PAYPAL_BASE_URL}/v1/oauth2/token",
+            auth=(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET),
+            data={"grant_type": "client_credentials"},
+            headers={"Accept": "application/json"},
+            timeout=15,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"PayPal OAuth2: {r.text}")
+        return r.json()["access_token"]
+
+
+# ─── PayPal models ────────────────────────────────────────────────────────────
+
+class PayPalCreateRequest(BaseModel):
+    amount_usd: float = Field(..., gt=0)
+    user_id: str
+
+
+class PayPalCaptureRequest(BaseModel):
+    order_id: str
+    user_id: str
+
+
+# ─── PayPal routes ────────────────────────────────────────────────────────────
+
+@app.post("/payments/paypal/create", status_code=201)
+@limiter.limit("10/minute")
+async def paypal_create_order(
+    request: Request,
+    body: PayPalCreateRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    """Create a PayPal order and return the approval URL for the payer."""
+    _require_user(x_user_id, authorization)
+
+    access_token = await _paypal_access_token()
+    amount_str = f"{body.amount_usd:.2f}"
+
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{_PAYPAL_BASE_URL}/v2/checkout/orders",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "intent": "CAPTURE",
+                "purchase_units": [
+                    {
+                        "amount": {"currency_code": "USD", "value": amount_str},
+                        "description": "AIQTP Deposit",
+                        "custom_id": body.user_id,
+                    }
+                ],
+                "application_context": {
+                    "return_url": f"{FRONTEND_URL}/dashboard?payment=success",
+                    "cancel_url": f"{FRONTEND_URL}/dashboard?payment=cancelled",
+                    "brand_name": "AIQTP",
+                    "user_action": "PAY_NOW",
+                },
+            },
+            timeout=15,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"PayPal create order: {r.text}")
+        order = r.json()
+
+    order_id = order["id"]
+    approve_url = next(
+        (link["href"] for link in order.get("links", []) if link.get("rel") == "approve"),
+        None,
+    )
+    if not approve_url:
+        raise HTTPException(502, "PayPal did not return an approval URL")
+
+    pool = await get_pool()
+    if pool:
+        try:
+            async with pool.acquire() as conn:
+                await conn.execute(
+                    """INSERT INTO public.deposit_requests
+                       (id, user_id, amount_usd, source, session_id, status, created_at)
+                       VALUES (gen_random_uuid(), $1, $2, 'paypal', $3, 'pending', now())""",
+                    body.user_id,
+                    body.amount_usd,
+                    order_id,
+                )
+        except Exception as exc:
+            log.warning("deposit_requests PayPal insert failed (non-fatal): %s", exc)
+
+    log.info("PayPal order created: order_id=%s user=%s amount=%.2f", order_id, body.user_id, body.amount_usd)
+    return {"order_id": order_id, "approve_url": approve_url}
+
+
+@app.post("/payments/paypal/capture", status_code=200)
+@limiter.limit("10/minute")
+async def paypal_capture_order(
+    request: Request,
+    body: PayPalCaptureRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    """Capture an approved PayPal order and credit the user's balance."""
+    _require_user(x_user_id, authorization)
+
+    access_token = await _paypal_access_token()
+
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{_PAYPAL_BASE_URL}/v2/checkout/orders/{body.order_id}/capture",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            timeout=15,
+        )
+        if r.status_code not in (200, 201):
+            raise HTTPException(r.status_code, f"PayPal capture: {r.text}")
+        capture_result = r.json()
+
+    capture_status = capture_result.get("status", "")
+    if capture_status != "COMPLETED":
+        raise HTTPException(402, f"PayPal capture not completed — status: {capture_status}")
+
+    # Extract captured amount from the response
+    purchase_units = capture_result.get("purchase_units", [])
+    captured_amount = 0.0
+    if purchase_units:
+        captures = purchase_units[0].get("payments", {}).get("captures", [])
+        if captures:
+            try:
+                captured_amount = float(captures[0]["amount"]["value"])
+            except (KeyError, ValueError, TypeError):
+                captured_amount = 0.0
+
+    pool = await get_pool()
+    if pool:
+        try:
+            async with pool.acquire() as conn:
+                await conn.execute(
+                    """UPDATE public.deposit_requests
+                       SET status = 'completed', processed_at = now()
+                       WHERE session_id = $1 AND source = 'paypal'""",
+                    body.order_id,
+                )
+                await conn.execute(
+                    """INSERT INTO public.user_balances (user_id, balance_usd, updated_at)
+                       VALUES ($1, $2, now())
+                       ON CONFLICT (user_id)
+                       DO UPDATE SET balance_usd = user_balances.balance_usd + $2,
+                                     updated_at  = now()""",
+                    body.user_id,
+                    captured_amount,
+                )
+            log.info("PayPal deposit credited: user=%s amount=%.2f order_id=%s",
+                     body.user_id, captured_amount, body.order_id)
+        except Exception as exc:
+            log.error("PayPal capture DB update failed: %s", exc)
+            raise HTTPException(500, f"Payment captured but balance update failed: {exc}")
+
+    return {
+        "order_id": body.order_id,
+        "status": "completed",
+        "amount_usd": captured_amount,
+        "user_id": body.user_id,
+    }
 
 
 # ─── AI Proxy (Anthropic) ─────────────────────────────────────────────────────
@@ -1462,6 +1684,370 @@ async def withdrawal_history(
         if r.get("amount_usd") is not None:
             r["amount_usd"] = float(r["amount_usd"])
     return rows
+
+
+# ─── Arbitrage Scanner ───────────────────────────────────────────────────────
+
+# In-memory price cache: key → {"price": float, "ts": float}
+_price_cache: dict[str, dict] = {}
+_PRICE_CACHE_TTL = 10.0  # seconds
+
+# In-memory scan history (last 10 results, newest first)
+_arb_scan_history: list[dict] = []
+
+# Default top-20 USDT pairs to scan (Binance symbol format; Kraken variants mapped below)
+_DEFAULT_ARB_PAIRS = [
+    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT",
+    "ADAUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT", "MATICUSDT",
+    "ATOMUSDT", "NEARUSDT", "LTCUSDT", "UNIUSDT", "AAVEUSDT",
+    "FILUSDT", "ALGOUSDT", "XLMUSDT", "VETUSDT", "TRXUSDT",
+]
+
+# Mapping from Binance USDT symbol → Kraken pair name
+_BINANCE_TO_KRAKEN: dict[str, str] = {
+    "BTCUSDT":   "XBTUSD",
+    "ETHUSDT":   "ETHUSD",
+    "SOLUSDT":   "SOLUSD",
+    "ADAUSDT":   "ADAUSD",
+    "DOTUSDT":   "DOTUSD",
+    "LINKUSDT":  "LINKUSD",
+    "MATICUSDT": "MATICUSD",
+    "AVAXUSDT":  "AVAXUSD",
+    "ATOMUSDT":  "ATOMUSD",
+    "NEARUSDT":  "NEARUSD",
+    "LTCUSDT":   "LTCUSD",
+    "UNIUSDT":   "UNIUSD",
+    "XRPUSDT":   "XRPUSD",
+    "AAVEUSDT":  "AAVEUSD",
+    "ALGOUSDT":  "ALGOUSD",
+    "XLMUSDT":   "XLMUSD",
+    "FILUSDT":   "FILUSD",
+    "TRXUSDT":   "TRXUSD",
+}
+
+# USD-denominated suffixes accepted when a caller supplies custom pairs
+_USD_SUFFIXES = ("USDT", "USDC", "USD", "BUSD")
+
+_ARB_FEE_RATE = 0.001  # 0.1% per side → 0.2% round-trip
+
+
+class ArbitrageScanRequest(BaseModel):
+    pairs: Optional[list[str]] = None          # Binance symbol format, e.g. ["BTCUSDT"]
+    min_profit_usdt: float = Field(default=2.0, ge=0)
+
+
+class ArbitrageExecuteRequest(BaseModel):
+    pair: str                                   # Binance symbol, e.g. "BTCUSDT"
+    buy_exchange: str = Field(..., pattern="^(binance|kraken)$")
+    sell_exchange: str = Field(..., pattern="^(binance|kraken)$")
+    amount_usdt: float = Field(..., ge=50)
+
+
+# ── Price cache helpers ───────────────────────────────────────────────────────
+
+def _arb_cache_get(key: str) -> Optional[float]:
+    entry = _price_cache.get(key)
+    if entry and (time.time() - entry["ts"]) < _PRICE_CACHE_TTL:
+        return entry["price"]
+    return None
+
+
+def _arb_cache_set(key: str, price: float) -> None:
+    _price_cache[key] = {"price": price, "ts": time.time()}
+
+
+# ── Exchange fetch helpers ────────────────────────────────────────────────────
+
+async def _fetch_binance_prices_bulk() -> dict[str, float]:
+    """Fetch all Binance spot prices in one API call. Returns {symbol: price}."""
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            "https://api.binance.com/api/v3/ticker/price",
+            timeout=10,
+        )
+    if r.status_code != 200:
+        raise HTTPException(r.status_code, f"Binance bulk ticker: {r.text}")
+    result: dict[str, float] = {}
+    for item in r.json():
+        sym = item.get("symbol", "")
+        try:
+            result[sym] = float(item["price"])
+        except (KeyError, ValueError):
+            pass
+    return result
+
+
+async def _fetch_kraken_prices_bulk(kraken_pairs: list[str]) -> dict[str, float]:
+    """Fetch Kraken prices for the given pair list. Returns {kraken_pair: last_price}."""
+    if not kraken_pairs:
+        return {}
+    pair_str = ",".join(kraken_pairs)
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            "https://api.kraken.com/0/public/Ticker",
+            params={"pair": pair_str},
+            timeout=10,
+        )
+    if r.status_code != 200:
+        raise HTTPException(r.status_code, f"Kraken bulk ticker: {r.text}")
+    body = r.json()
+    if body.get("error"):
+        raise HTTPException(400, f"Kraken: {body['error']}")
+    result: dict[str, float] = {}
+    for key, data in body.get("result", {}).items():
+        try:
+            # "c" field is [last_trade_price, lot_volume]
+            result[key] = float(data["c"][0])
+        except (KeyError, IndexError, ValueError):
+            pass
+    return result
+
+
+def _is_usd_pair(symbol: str) -> bool:
+    return any(symbol.upper().endswith(s) for s in _USD_SUFFIXES)
+
+
+# ── Core spread computation ───────────────────────────────────────────────────
+
+def _compute_arb_opportunities(
+    pairs: list[str],
+    binance_prices: dict[str, float],
+    kraken_prices: dict[str, float],
+    min_profit_usdt: float,
+) -> list[dict]:
+    opportunities: list[dict] = []
+
+    for bn_sym in pairs:
+        bn_sym = bn_sym.upper()
+        if not _is_usd_pair(bn_sym):
+            continue
+        kraken_sym = _BINANCE_TO_KRAKEN.get(bn_sym)
+        if not kraken_sym:
+            continue
+
+        # Prefer cache; fill from freshly-fetched bulk data
+        bp = _arb_cache_get(f"binance:{bn_sym}") or binance_prices.get(bn_sym)
+        kp: Optional[float] = _arb_cache_get(f"kraken:{kraken_sym}")
+        if kp is None:
+            # Kraken may return the pair under an alternate key (e.g. "XXBTZUSD")
+            for k, v in kraken_prices.items():
+                if kraken_sym in k or k in kraken_sym:
+                    kp = v
+                    break
+
+        if not bp or not kp or bp <= 0 or kp <= 0:
+            continue
+
+        # Refresh cache
+        _arb_cache_set(f"binance:{bn_sym}", bp)
+        _arb_cache_set(f"kraken:{kraken_sym}", kp)
+
+        # Evaluate both directions; keep only the profitable one
+        for buy_ex, buy_price, sell_ex, sell_price in [
+            ("binance", bp, "kraken", kp),
+            ("kraken",  kp, "binance", bp),
+        ]:
+            gross_spread = sell_price - buy_price
+            fee_cost = (buy_price + sell_price) * _ARB_FEE_RATE  # total fee in price units
+            net_spread = gross_spread - fee_cost
+            if net_spread <= 0:
+                continue
+
+            spread_pct = round(net_spread / buy_price * 100, 4)
+            # Profit per 1000 USDT invested
+            profit_per_1k = round((1000.0 / buy_price) * net_spread, 4)
+
+            if profit_per_1k < min_profit_usdt:
+                continue
+
+            # Confidence: higher spread → higher confidence, capped at 1.0
+            confidence = round(min(spread_pct / 2.0, 1.0), 4)
+
+            opportunities.append({
+                "pair":                  bn_sym,
+                "buy_exchange":          buy_ex,
+                "buy_price":             round(buy_price, 6),
+                "sell_exchange":         sell_ex,
+                "sell_price":            round(sell_price, 6),
+                "spread_pct":            spread_pct,
+                "spread_usdt":           round(net_spread, 6),
+                "profit_usdt_per_1000":  profit_per_1k,
+                "confidence":            confidence,
+            })
+            break  # only report the best direction per pair
+
+    opportunities.sort(key=lambda x: x["profit_usdt_per_1000"], reverse=True)
+    return opportunities
+
+
+# ── Arbitrage routes ─────────────────────────────────────────────────────────
+
+@app.post("/arbitrage/scan")
+@limiter.limit("20/minute")
+async def arbitrage_scan(
+    request: Request,
+    body: ArbitrageScanRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    """Scan Binance and Kraken simultaneously for CEX-CEX arbitrage opportunities."""
+    _require_user(x_user_id, authorization)
+
+    pairs = [p.upper() for p in body.pairs] if body.pairs else _DEFAULT_ARB_PAIRS
+
+    # Keep only USD-denominated pairs
+    pairs = [p for p in pairs if _is_usd_pair(p)]
+
+    # Collect the Kraken pair names we need for this scan
+    kraken_pairs_needed = list({
+        _BINANCE_TO_KRAKEN[p] for p in pairs if p in _BINANCE_TO_KRAKEN
+    })
+
+    t0 = time.time()
+    binance_prices, kraken_prices = await asyncio.gather(
+        _fetch_binance_prices_bulk(),
+        _fetch_kraken_prices_bulk(kraken_pairs_needed),
+    )
+
+    opportunities = _compute_arb_opportunities(
+        pairs, binance_prices, kraken_prices, body.min_profit_usdt
+    )
+
+    scan_result = {
+        "scanned_at":        datetime.now(timezone.utc).isoformat(),
+        "pairs_scanned":     len(pairs),
+        "elapsed_ms":        round((time.time() - t0) * 1000),
+        "min_profit_usdt":   body.min_profit_usdt,
+        "fee_rate_pct":      _ARB_FEE_RATE * 100,
+        "opportunities":     opportunities,
+        "opportunity_count": len(opportunities),
+    }
+
+    # Prepend to history; keep at most 10 entries
+    _arb_scan_history.insert(0, scan_result)
+    del _arb_scan_history[10:]
+
+    log.info(
+        "Arbitrage scan: %d pairs scanned, %d opportunities found in %dms",
+        len(pairs), len(opportunities), scan_result["elapsed_ms"],
+    )
+    return scan_result
+
+
+@app.get("/arbitrage/opportunities")
+@limiter.limit("60/minute")
+async def arbitrage_opportunities(request: Request):
+    """Return the last 10 cached arbitrage scan results (no auth required)."""
+    return {"scans": _arb_scan_history, "count": len(_arb_scan_history)}
+
+
+@app.post("/arbitrage/execute")
+@limiter.limit("5/minute")
+async def arbitrage_execute(
+    request: Request,
+    body: ArbitrageExecuteRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    """
+    Execute both legs of a CEX-CEX arbitrage trade simultaneously.
+    Buys on buy_exchange and sells on sell_exchange using existing broker helpers.
+    Both exchanges must have API keys configured and live trading enabled.
+    """
+    _require_user(x_user_id, authorization)
+
+    pair = body.pair.upper()
+    if not _is_usd_pair(pair):
+        raise HTTPException(
+            400, f"Pair {pair} is not USD-denominated — only USDT/USDC/USD pairs allowed"
+        )
+
+    if body.buy_exchange == body.sell_exchange:
+        raise HTTPException(400, "buy_exchange and sell_exchange must be different")
+
+    # Validate that API keys exist for each requested exchange
+    exchange_has_keys = {
+        "binance": bool(BINANCE_API_KEY and BINANCE_SECRET_KEY),
+        "kraken":  bool(KRAKEN_API_KEY and KRAKEN_SECRET_KEY),
+    }
+    for ex in (body.buy_exchange, body.sell_exchange):
+        if not exchange_has_keys.get(ex):
+            raise HTTPException(503, f"{ex} API keys not configured")
+
+    # Resolve current price for each exchange leg (cache → fresh fetch)
+    async def _get_arb_price(exchange: str) -> float:
+        if exchange == "binance":
+            cached = _arb_cache_get(f"binance:{pair}")
+            if cached:
+                return cached
+            data = await _binance_ticker(pair)
+            p = float(data["price"])
+            _arb_cache_set(f"binance:{pair}", p)
+            return p
+        # kraken
+        kraken_sym = _BINANCE_TO_KRAKEN.get(pair)
+        if not kraken_sym:
+            raise HTTPException(400, f"No Kraken mapping for pair {pair}")
+        cached = _arb_cache_get(f"kraken:{kraken_sym}")
+        if cached:
+            return cached
+        result = await _kraken_ticker(kraken_sym)
+        for data in result.values():
+            p = float(data["c"][0])
+            _arb_cache_set(f"kraken:{kraken_sym}", p)
+            return p
+        raise HTTPException(502, f"Kraken returned no price data for {kraken_sym}")
+
+    buy_price, sell_price = await asyncio.gather(
+        _get_arb_price(body.buy_exchange),
+        _get_arb_price(body.sell_exchange),
+    )
+
+    qty = round(body.amount_usdt / buy_price, 8)
+
+    buy_req  = BrokerOrderRequest(symbol=pair, side="buy",  qty=qty, order_type="market")
+    sell_req = BrokerOrderRequest(symbol=pair, side="sell", qty=qty, order_type="market")
+
+    async def _execute_arb_leg(exchange: str, req: BrokerOrderRequest) -> dict:
+        if exchange == "binance":
+            if not BINANCE_LIVE:
+                raise HTTPException(
+                    503, "Binance live trading disabled — set BINANCE_LIVE_ENABLED=true"
+                )
+            return await _place_binance_order(req)
+        if not KRAKEN_LIVE:
+            raise HTTPException(
+                503, "Kraken live trading disabled — set KRAKEN_LIVE_ENABLED=true"
+            )
+        return await _place_kraken_order(req)
+
+    buy_order, sell_order = await asyncio.gather(
+        _execute_arb_leg(body.buy_exchange, buy_req),
+        _execute_arb_leg(body.sell_exchange, sell_req),
+    )
+
+    gross_spread = sell_price - buy_price
+    fee_cost = (buy_price + sell_price) * _ARB_FEE_RATE
+    estimated_profit = round(qty * (gross_spread - fee_cost), 4)
+
+    log.info(
+        "Arbitrage executed: %s buy %s @ %.6f sell %s @ %.6f qty=%.8f est_profit=%.4f USDT",
+        pair, body.buy_exchange, buy_price,
+        body.sell_exchange, sell_price,
+        qty, estimated_profit,
+    )
+
+    return {
+        "pair":                  pair,
+        "qty":                   qty,
+        "buy_exchange":          body.buy_exchange,
+        "buy_price":             round(buy_price, 6),
+        "sell_exchange":         body.sell_exchange,
+        "sell_price":            round(sell_price, 6),
+        "buy_order":             buy_order,
+        "sell_order":            sell_order,
+        "estimated_profit_usdt": estimated_profit,
+    }
 
 
 if __name__ == "__main__":

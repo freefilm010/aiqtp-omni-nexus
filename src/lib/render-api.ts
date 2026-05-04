@@ -47,4 +47,12 @@ export const renderApi = {
       renderPost<any>('/ai/chat', { messages, tools }),
   },
   health: () => renderGet<{ status: string }>('/health', false),
+  arbitrage: {
+    scan: (minProfitUsdt = 2) =>
+      renderPost<any[]>('/arbitrage/scan', { min_profit_usdt: minProfitUsdt }),
+    opportunities: () =>
+      renderGet<any[]>('/arbitrage/opportunities', false),
+    execute: (pair: string, buyExchange: string, sellExchange: string, amountUsdt: number) =>
+      renderPost<any>('/arbitrage/execute', { pair, buy_exchange: buyExchange, sell_exchange: sellExchange, amount_usdt: amountUsdt }),
+  },
 };

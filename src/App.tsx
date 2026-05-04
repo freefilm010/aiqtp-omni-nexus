@@ -94,6 +94,7 @@ const StakingPage = lazy(() => import("./pages/StakingPage"));
 const DEXPage = lazy(() => import("./pages/DEXPage"));
 const TradingCommandCenter = lazy(() => import("./pages/TradingCommandCenter"));
 const StrategyNFTMarketplace = lazy(() => import("./pages/StrategyNFTMarketplace"));
+const ArbitragePage = lazy(() => import("./pages/ArbitragePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -539,6 +540,7 @@ const App = () => (
                       <Route path="/dex" element={<ProtectedRoute><DEXPage /></ProtectedRoute>} />
                       <Route path="/trading-bots" element={<ProtectedRoute><TradingCommandCenter /></ProtectedRoute>} />
                       <Route path="/strategy-nft" element={<StrategyNFTMarketplace />} />
+                      <Route path="/arbitrage" element={<ProtectedRoute><ArbitragePage /></ProtectedRoute>} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>

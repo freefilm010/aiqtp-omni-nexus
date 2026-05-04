@@ -155,6 +155,7 @@ const Header = () => {
     { to: "/dex", label: "DEX", icon: Coins },
     { to: "/trading-bots", label: "Trading Bots", icon: Bot },
     { to: "/defi-sniper", label: "DeFi Sniper", icon: Crosshair },
+    { to: "/arbitrage", label: "Arbitrage Scanner", icon: TrendingUp },
     { to: "/screener", label: "Crypto Screener", icon: TrendingUp },
     { to: "/derivatives", label: "Derivatives", icon: Layers },
     { to: "/cockpit", label: "Trading Cockpit", icon: LayoutGrid },
