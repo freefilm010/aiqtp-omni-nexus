@@ -259,7 +259,7 @@ const StrategyBacktest = () => {
                       <StatBox
                         label="Consistency"
                         value={st ? `${st.avgConsistency.toFixed(1)}%` : s.consistency_score != null ? `${s.consistency_score.toFixed(1)}%` : "—"}
-                        good={(st?.avgConsistency ?? s.consistency_score ?? 0) >= 85}
+                        good={(st?.avgConsistency ?? s.consistency_score ?? 0) >= 70}
                       />
                     </div>
                   )}

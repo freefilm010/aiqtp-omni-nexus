@@ -59,7 +59,7 @@ export const NFT_FEES = {
 export const STRATEGY_FEES = {
   listingFee: 0, // $0 to list
   graduationThreshold: 80, // 80% profitability required
-  consistencyThreshold: 85,
+  consistencyThreshold: 70,
   minBacktestCount: 5,
   defaultMonthlyRentalPrice: 99,
   profitShare: {
