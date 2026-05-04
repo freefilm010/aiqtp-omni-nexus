@@ -2,12 +2,11 @@ name: Supabase keep-alive
 
 on:
   schedule:
-    # Ping Supabase every Sunday at 00:00 UTC to prevent the 90-day pause
-    - cron: "0 0 * * 0"
+    # Ping every 4 days at 06:00 UTC — Supabase free tier pauses after 7 days
+    - cron: "0 6 */4 * *"
   workflow_dispatch:
 
 # Uses the public anon key (already in frontend bundle — not a secret).
-# No repository secrets needed.
 env:
   SUPABASE_URL: "https://rueaxiyvseaxkysnoock.supabase.co"
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZWF4aXl2c2VheGt5c25vb2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NDkwMDEsImV4cCI6MjA4OTQyNTAwMX0.07J92R1g2-ihtnN43iYD63jU3gByBK3otB5zq3haw54"
@@ -24,3 +23,18 @@ jobs:
             "$SUPABASE_URL/rest/v1/")
           echo "Supabase ping status: $STATUS"
           [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ] || exit 1
+
+      - name: Ping edge functions (keeps function workers warm)
+        run: |
+          for fn in qaqi-agent aiqtp-agent get-market-prices faucet-credit; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "Content-Type: application/json" \
+              -d '{"action":"ping"}' \
+              "$SUPABASE_URL/functions/v1/$fn" \
+              --max-time 10 || echo "timeout")
+            echo "  $fn → $STATUS"
+          done
+
