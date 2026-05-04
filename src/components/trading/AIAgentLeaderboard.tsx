@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getBotAvatar } from "@/lib/bots/botAvatars";
 import {
   Bot,
   Trophy,
@@ -232,7 +233,10 @@ const AIAgentLeaderboard = () => {
                       {getRankBadge(idx + 1)}
                       <Badge variant={lifecycle.variant}>{lifecycle.label}</Badge>
                     </div>
-                    <p className="font-semibold">{agent.name}</p>
+                    <div className="flex items-center gap-3 mb-2">
+                      <img src={getBotAvatar(agent.bot_type, lifecycle.label)} alt={agent.name} className="h-12 w-12 object-contain rounded-lg bg-muted/30 p-1" />
+                      <p className="font-semibold">{agent.name}</p>
+                    </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{agent.description || 'AI-generated trading agent'}</p>
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                       <div>
@@ -381,9 +385,7 @@ const AIAgentLeaderboard = () => {
                     {getRankBadge(idx + 1)}
                   </div>
                   <div className="col-span-3 flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                      <Bot className="w-4 h-4 text-primary" />
-                    </div>
+                    <img src={getBotAvatar(agent.bot_type, lifecycle.label)} alt={agent.name} className="h-8 w-8 object-contain rounded-md bg-muted/30 p-0.5 shrink-0" />
                     <div>
                       <p className="font-medium text-sm text-foreground">{agent.name}</p>
                       <p className="text-[10px] text-muted-foreground">{agent.status}</p>
