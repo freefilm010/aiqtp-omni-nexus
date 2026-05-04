@@ -51,9 +51,22 @@ const CHAINS = [
   { id: 'qtc-mainnet', name: 'QTC Mainnet', color: 'bg-gradient-to-r from-cyan-500 to-purple-500' },
 ];
 
+interface DexToken {
+  id: string;
+  name: string;
+  symbol: string;
+  address: string;
+  chain: string;
+  status: string;
+  score: number;
+  is_verified: boolean;
+  created_at: string;
+}
+
 export default function TokenFactory() {
   const [tokens, setTokens] = useState<PlatformToken[]>([]);
   const [claims, setClaims] = useState<FaucetClaim[]>([]);
+  const [dexTokens, setDexTokens] = useState<DexToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showFaucetDialog, setShowFaucetDialog] = useState(false);
@@ -77,6 +90,7 @@ export default function TokenFactory() {
   useEffect(() => {
     fetchTokens();
     fetchClaims();
+    fetchDexTokens();
   }, []);
 
   const fetchTokens = async () => {
@@ -92,6 +106,24 @@ export default function TokenFactory() {
       setTokens(data || []);
     }
     setLoading(false);
+  };
+
+  const fetchDexTokens = async () => {
+    const { data } = await supabase
+      .from("dex_tokens")
+      .select("id, name, symbol, address, chain, status, score, is_verified, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setDexTokens((data as DexToken[]) ?? []);
+  };
+
+  const handleDexApproval = async (id: string, action: "approved" | "rejected") => {
+    const { error } = await supabase
+      .from("dex_tokens")
+      .update({ status: action, is_verified: action === "approved" })
+      .eq("id", id);
+    if (error) toast.error(`Failed to ${action} token`);
+    else { toast.success(`Token ${action}`); fetchDexTokens(); }
   };
 
   const fetchClaims = async () => {
@@ -236,6 +268,15 @@ export default function TokenFactory() {
             </TabsTrigger>
             <TabsTrigger value="distribution" className="gap-2">
               <Send className="h-4 w-4" /> Distribution
+            </TabsTrigger>
+            <TabsTrigger value="approvals" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Approvals
+              {dexTokens.filter((t) => t.status === "pending").length > 0 && (
+                <Badge className="ml-1 h-4 px-1 text-[10px] bg-amber-500">
+                  {dexTokens.filter((t) => t.status === "pending").length}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -538,6 +579,90 @@ export default function TokenFactory() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="approvals">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" /> DEX Token Approvals
+              </CardTitle>
+              <CardDescription>
+                Review and approve community-submitted tokens before they appear on the platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {dexTokens.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-4">No DEX tokens submitted yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Token</TableHead>
+                      <TableHead>Chain</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Score</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dexTokens.map((token) => (
+                      <TableRow key={token.id}>
+                        <TableCell className="font-medium">
+                          <div>
+                            <p>{token.symbol}</p>
+                            <p className="text-xs text-muted-foreground">{token.name}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{token.chain}</TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          {token.address.slice(0, 8)}…{token.address.slice(-6)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={token.score >= 70 ? "default" : token.score >= 40 ? "secondary" : "destructive"}>
+                            {token.score}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={token.status === "approved" ? "default" : token.status === "pending" ? "secondary" : "destructive"}
+                          >
+                            {token.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(token.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          {token.status === "pending" && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                                onClick={() => handleDexApproval(token.id, "approved")}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="h-7 text-xs"
+                                onClick={() => handleDexApproval(token.id, "rejected")}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

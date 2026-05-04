@@ -65,6 +65,17 @@ const RevenueManager = () => {
         .select("*")
         .eq("is_active", true);
 
+      // Populate distribution state from DB rules
+      if (rules && rules.length > 0) {
+        const find = (type: string) =>
+          rules.find((r: { distribution_type: string; percentage: number }) => r.distribution_type === type)?.percentage ?? 0;
+        setDistribution({
+          reinvest: Number(find("reinvest")),
+          reserve: Number(find("reserve")),
+          withdraw: Number(find("withdraw")),
+        });
+      }
+
       const rows = revenueData ?? [];
       const totalRevenue = rows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
       const pendingRevenue = rows
@@ -94,6 +105,35 @@ const RevenueManager = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleSaveDistribution = async () => {
+    const total = distribution.reinvest + distribution.reserve + distribution.withdraw;
+    if (total !== 100) {
+      toast.error(`Percentages must sum to 100 (currently ${total})`);
+      return;
+    }
+    const rules = (["reinvest", "reserve", "withdraw"] as const).map((type) => ({
+      rule_name: `default_${type}`,
+      source_type: "all",
+      distribution_type: type,
+      percentage: distribution[type],
+      is_active: true,
+      execution_frequency: "immediate",
+    }));
+    const upserts = await Promise.all(
+      rules.map((rule) =>
+        supabase
+          .from("profit_distribution_rules")
+          .upsert(rule, { onConflict: "rule_name" })
+      )
+    );
+    const failed = upserts.filter((r) => r.error);
+    if (failed.length > 0) {
+      toast.error("Failed to save some rules", { description: failed[0].error?.message });
+    } else {
+      toast.success("Distribution settings saved");
+    }
+  };
 
   if (loading) {
     return (
@@ -316,7 +356,10 @@ const RevenueManager = () => {
                   <p className="text-xs text-muted-foreground">Available for admin withdrawal</p>
                 </div>
               </div>
-              <Button onClick={() => toast.success("Distribution settings saved")}>
+              <p className="text-xs text-muted-foreground">
+                Total: {distribution.reinvest + distribution.reserve + distribution.withdraw}% (must equal 100)
+              </p>
+              <Button onClick={handleSaveDistribution}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Update Distribution
               </Button>

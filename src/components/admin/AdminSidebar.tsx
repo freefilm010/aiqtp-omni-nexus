@@ -63,6 +63,7 @@ const navItems: NavItem[] = [
   { title: "Influencers", href: "/admin/influencers", icon: Users },
   { title: "System Health", href: "/admin/health", icon: Activity, section: "Strategy" },
   { title: "Bot Registry", href: "/admin/bots", icon: Bot },
+  { title: "Staking Admin", href: "/admin/staking", icon: Lock },
   { title: "Chat Management", href: "/admin/chats", icon: Bot },
   { title: "Payments", href: "/admin/payments", icon: CreditCard },
   { title: "Automation", href: "/admin/automation", icon: Zap },

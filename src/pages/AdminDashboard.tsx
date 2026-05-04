@@ -37,6 +37,7 @@ const FederalCharterMission = lazy(() => import("@/components/admin/FederalChart
 const CEOMissionControl = lazy(() => import("@/components/admin/CEOMissionControl"));
 const BotRegistry = lazy(() => import("@/components/admin/BotRegistry"));
 const SystemHealth = lazy(() => import("@/components/admin/SystemHealth"));
+const StakingAdmin = lazy(() => import("@/components/admin/StakingAdmin"));
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
@@ -108,6 +109,7 @@ const AdminDashboard = () => {
               <Route path="mission-control" element={<CEOMissionControl />} />
               <Route path="bots" element={<BotRegistry />} />
               <Route path="health" element={<SystemHealth />} />
+              <Route path="staking" element={<StakingAdmin />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </Suspense>
