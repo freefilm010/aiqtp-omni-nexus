@@ -53,7 +53,7 @@ const MasterKillSwitch = () => {
   useEffect(() => {
     loadStatus();
 
-    const channel = supabase
+    const channel = supabaseUnsafe
       .channel(`system-status-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'system_status' }, (payload: { new: SystemStatusRow }) => {
         const row = payload.new;
