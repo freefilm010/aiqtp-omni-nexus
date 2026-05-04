@@ -93,7 +93,7 @@ const DataBotBuilder = () => {
   const [frequency, setFrequency] = useState('hourly');
   const [sources, setSources] = useState<string[]>([]);
   const [newSource, setNewSource] = useState('');
-  const [profitShare, setProfitShare] = useState([30]);
+  const [profitShare, setProfitShare] = useState([50]);
 
   useEffect(() => {
     loadConfigs();

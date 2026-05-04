@@ -17,7 +17,7 @@ const StrategyMarketplacePage = () => {
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-3xl font-bold">Strategy Marketplace</h1>
           <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-            Rent proven strategies • Graduate your own • Compete for prizes • 40/40/20 profit split
+            Rent proven strategies • Graduate your own • Compete for prizes • 50/50 creator/platform profit split
           </p>
         </div>
 
