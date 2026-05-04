@@ -8,12 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { toast } from "sonner";
-import { CreditCard, Wallet, Shield, DollarSign } from "lucide-react";
+import { CreditCard, Wallet, Shield, DollarSign, Loader2 } from "lucide-react";
 
 const PaymentHub = () => {
   const { user } = useAuth();
   const [depositAmount, setDepositAmount] = useState("100");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
+  const [paypalLoading, setPaypalLoading] = useState(false);
   const { openCheckout, closeCheckout, isOpen, checkoutElement } = useStripeCheckout();
 
   useEffect(() => {
@@ -27,23 +28,55 @@ const PaymentHub = () => {
       .then(({ data }) => setUsdBalance(Number(data?.quantity ?? 0)));
   }, [user?.id]);
 
-  const handleDeposit = () => {
+  const validateAmount = (): number | null => {
     if (!user) {
       toast.error("Please sign in first");
-      return;
+      return null;
     }
     const amt = parseFloat(depositAmount);
     if (!amt || amt < 20 || amt > 10000) {
       toast.error("Enter an amount between $20 and $10,000");
-      return;
+      return null;
     }
+    return amt;
+  };
+
+  const handleDeposit = () => {
+    const amt = validateAmount();
+    if (!amt) return;
     openCheckout({
       mode: "deposit",
       amountInCents: Math.round(amt * 100),
-      customerEmail: user.email ?? undefined,
-      userId: user.id,
+      customerEmail: user!.email ?? undefined,
+      userId: user!.id,
       returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     });
+  };
+
+  const handlePayPalDeposit = async () => {
+    const amt = validateAmount();
+    if (!amt) return;
+    setPaypalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-paypal-checkout", {
+        body: {
+          action: "create",
+          amountUsd: amt,
+          returnUrl: `${window.location.origin}/checkout/return?paypal_order_id=PAYPAL_ORDER_ID`,
+          cancelUrl: `${window.location.origin}/billing`,
+        },
+      });
+      if (error || !data?.approveUrl) {
+        throw new Error(error?.message ?? data?.error ?? "PayPal checkout failed");
+      }
+      window.location.href = data.approveUrl;
+    } catch (e: unknown) {
+      toast.error("PayPal error", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setPaypalLoading(false);
+    }
   };
 
   return (
@@ -80,15 +113,31 @@ const PaymentHub = () => {
           <p className="text-xs text-muted-foreground">
             Min $20 / Max $10,000 per deposit. Funds credit instantly to your USD balance.
           </p>
-          <Button className="w-full" size="sm" onClick={handleDeposit}>
-            <CreditCard className="h-4 w-4 mr-2" />
-            Deposit ${depositAmount}
-          </Button>
+          <div className="grid grid-cols-1 gap-2">
+            <Button className="w-full" size="sm" onClick={handleDeposit}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Pay with Card (Stripe)
+            </Button>
+            <Button
+              className="w-full gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+              size="sm"
+              variant="outline"
+              onClick={handlePayPalDeposit}
+              disabled={paypalLoading}
+            >
+              {paypalLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <span className="font-bold text-blue-500">P</span>
+              )}
+              Pay with PayPal
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Shield className="h-3 w-3" />
-          <span>Powered by Stripe — encrypted &amp; PCI-DSS compliant</span>
+          <span>Stripe and PayPal — encrypted &amp; PCI-DSS compliant</span>
         </div>
       </CardContent>
 

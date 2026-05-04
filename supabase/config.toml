@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.payments-webhook]
 verify_jwt = false
 
+[functions.zbd-webhook]
+verify_jwt = false
+
 [functions.rent-strategy]
 verify_jwt = false
 
