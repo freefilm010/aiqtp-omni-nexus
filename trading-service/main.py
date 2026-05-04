@@ -369,6 +369,10 @@ class LiveOrderRequest(BaseModel):
     time_in_force: str = "gtc"
 
 
+class CancelOrderRequest(BaseModel):
+    order_id: str = Field(..., min_length=1)
+
+
 class BrokerOrderRequest(BaseModel):
     symbol: str
     side: str = Field(..., pattern="^(buy|sell)$")
@@ -504,6 +508,28 @@ def _sim_order_response(req: SimOrderRequest) -> dict[str, Any]:
         "simulated": True,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+async def _cancel_alpaca_order(order_id: str) -> dict[str, Any]:
+    if ALPACA_PAPER_MODE:
+        raise HTTPException(403, "Paper mode is active — live cancellations are disabled")
+    if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
+        raise HTTPException(503, "Alpaca credentials not configured")
+    async with httpx.AsyncClient() as client:
+        r = await client.delete(
+            f"{ALPACA_BASE_URL}/v2/orders/{order_id}",
+            headers={
+                "APCA-API-KEY-ID": ALPACA_API_KEY,
+                "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
+            },
+            timeout=15,
+        )
+        # Alpaca returns 204 on success, 422 if already filled/cancelled
+        if r.status_code == 204:
+            return {"id": order_id, "status": "canceled"}
+        if r.status_code == 207:
+            return {"id": order_id, "status": "partial", "details": r.json()}
+        raise HTTPException(r.status_code, f"Alpaca DELETE /v2/orders/{order_id}: {r.text}")
 
 
 async def _place_alpaca_order(req: LiveOrderRequest) -> dict[str, Any]:
@@ -776,6 +802,22 @@ async def ccxt_live_order(
         raise HTTPException(503, "Live trading is disabled. Set CCXT_LIVE_ENABLED=true")
     result = await _place_alpaca_order(req)
     log.info("Live order placed: %s %s %s qty=%s", req.side, req.symbol, req.order_type, req.qty)
+    return result
+
+
+@app.post("/ccxt/cancel_order")
+@limiter.limit("10/minute")
+async def ccxt_cancel_order(
+    request: Request,
+    req: CancelOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    if not CCXT_LIVE_ENABLED:
+        raise HTTPException(503, "Live trading is disabled. Set CCXT_LIVE_ENABLED=true")
+    result = await _cancel_alpaca_order(req.order_id)
+    log.info("Live order cancelled: %s", req.order_id)
     return result
 
 

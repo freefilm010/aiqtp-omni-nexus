@@ -205,7 +205,7 @@ serve(async (req) => {
       }
 
       case 'cancel_order': {
-        const { orderId, exchangeAccountId, mode } = params;
+        const { orderId, exchangeAccountId } = params;
 
         if (!orderId) {
           return new Response(
@@ -221,11 +221,86 @@ serve(async (req) => {
           );
         }
 
-        // Live order cancellation would go to exchange API
-        return new Response(
-          JSON.stringify({ success: false, error: 'Live order cancellation not yet implemented' }),
-          { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        // Verify ownership of the exchange account
+        const { data: cancelAccount, error: cancelAccountErr } = await supabase
+          .from('exchange_accounts')
+          .select('id, account_name, account_type, status')
+          .eq('id', exchangeAccountId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (cancelAccountErr || !cancelAccount) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Exchange account not found or not authorized' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const cancelWorkerUrl = Deno.env.get('RENDER_WORKER_URL') ?? 'https://aiqtp-trading-service.onrender.com';
+        try {
+          const cancelRes = await fetch(`${cancelWorkerUrl}/ccxt/cancel_order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Id': user.id },
+            body: JSON.stringify({ order_id: orderId }),
+          });
+
+          if (!cancelRes.ok) {
+            const errText = await cancelRes.text();
+            await supabase.from('trade_logs').insert({
+              user_id: user.id,
+              exchange_account_id: exchangeAccountId,
+              action: 'cancel_order',
+              exchange_order_id: orderId,
+              status: 'failed',
+              error_message: `Trading service ${cancelRes.status}: ${errText}`,
+              created_at: new Date().toISOString(),
+            });
+            return new Response(
+              JSON.stringify({ success: false, error: `Cancellation failed (${cancelRes.status}): ${errText}` }),
+              { status: cancelRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          const cancelData = await cancelRes.json();
+
+          await supabase.from('trade_logs').insert({
+            user_id: user.id,
+            exchange_account_id: exchangeAccountId,
+            action: 'cancel_order',
+            exchange_order_id: orderId,
+            status: 'success',
+            created_at: new Date().toISOString(),
+          });
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              order: {
+                orderId: cancelData.id ?? orderId,
+                status: cancelData.status ?? 'canceled',
+                exchange: cancelAccount.account_type.toLowerCase(),
+                mode: 'live',
+                message: 'Order cancellation submitted',
+              },
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        } catch (cancelErr: any) {
+          console.error('Cancel order error:', cancelErr);
+          await supabase.from('trade_logs').insert({
+            user_id: user.id,
+            exchange_account_id: exchangeAccountId,
+            action: 'cancel_order',
+            exchange_order_id: orderId,
+            status: 'failed',
+            error_message: cancelErr.message,
+            created_at: new Date().toISOString(),
+          });
+          return new Response(
+            JSON.stringify({ success: false, error: `Exchange error: ${cancelErr.message}` }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
 
       case 'get_orders': {
