@@ -808,7 +808,7 @@ const QuantClawPage = () => {
                               size="sm"
                               variant="outline"
                               className="h-6 px-2 text-[11px] gap-1 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-                              onClick={() => { setRagTool(tool); setRagResult(""); (document.querySelector('[data-value="qaqi"]') as HTMLElement)?.click(); }}
+                              onClick={() => { setRagTool(tool); setRagQuery(""); (document.querySelector('[data-value="qaqi"]') as HTMLElement)?.click(); }}
                             >
                               <Search className="h-3 w-3" />
                               Search
