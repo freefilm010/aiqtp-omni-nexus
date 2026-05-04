@@ -99,7 +99,7 @@ export const PlatformStaking = () => {
         currency: pool.symbol,
         status: "pending",
       });
-      if (feeErr) console.error("platform_revenue insert failed:", feeErr.message);
+      if (feeErr) console.warn("platform_revenue insert failed:", feeErr.message);
 
       toast.success(`Staked ${amount} ${pool.symbol} at ${pool.apy}% APY for ${pool.lockPeriod}`);
       setAmounts((prev) => ({ ...prev, [pool.symbol]: "" }));

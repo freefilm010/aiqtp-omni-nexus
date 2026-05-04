@@ -146,7 +146,7 @@ const ProfitAutomation = () => {
       ));
       toast.success('Rule updated');
     } catch (error) {
-      console.error('Error updating rule:', error);
+      console.warn('Error updating rule:', error);
       toast.error('Failed to update rule');
     }
   };
@@ -186,7 +186,7 @@ const ProfitAutomation = () => {
       });
       fetchRules();
     } catch (error) {
-      console.error('Error adding rule:', error);
+      console.warn('Error adding rule:', error);
       toast.error('Failed to add rule');
     }
   };
@@ -203,7 +203,7 @@ const ProfitAutomation = () => {
       setRules(prev => prev.filter(r => r.id !== id));
       toast.success('Rule deleted');
     } catch (error) {
-      console.error('Error deleting rule:', error);
+      console.warn('Error deleting rule:', error);
       toast.error('Failed to delete rule');
     }
   };

@@ -191,7 +191,7 @@ const ProfitDistributionRules = () => {
       resetForm();
       fetchRules();
     } catch (error) {
-      console.error('Error saving rule:', error);
+      console.warn('Error saving rule:', error);
       toast.error('Failed to save rule');
     }
   };
@@ -207,7 +207,7 @@ const ProfitDistributionRules = () => {
       toast.success(`Rule ${!rule.is_active ? 'enabled' : 'disabled'}`);
       fetchRules();
     } catch (error) {
-      console.error('Error toggling rule:', error);
+      console.warn('Error toggling rule:', error);
       toast.error('Failed to update rule');
     }
   };
@@ -223,7 +223,7 @@ const ProfitDistributionRules = () => {
       toast.success('Rule deleted');
       fetchRules();
     } catch (error) {
-      console.error('Error deleting rule:', error);
+      console.warn('Error deleting rule:', error);
       toast.error('Failed to delete rule');
     }
   };

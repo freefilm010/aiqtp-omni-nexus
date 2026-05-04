@@ -46,18 +46,32 @@ const RevenueManager = () => {
     setLoading(true);
     try {
       // Fetch platform_revenue
-      const { data: revenueData } = await supabase
-        .from("platform_revenue")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      let revenueData: any[] | null = null;
+      try {
+        const { data, error } = await supabase
+          .from("platform_revenue")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (error) console.warn("platform_revenue unavailable:", error.message);
+        else revenueData = data;
+      } catch (e) {
+        console.warn("platform_revenue query failed:", e);
+      }
 
       // Fetch profit distribution logs
-      const { data: distLogs } = await supabase
-        .from("profit_distribution_log")
-        .select("*")
-        .order("executed_at", { ascending: false })
-        .limit(50);
+      let distLogs: any[] | null = null;
+      try {
+        const { data, error } = await supabase
+          .from("profit_distribution_log")
+          .select("*")
+          .order("executed_at", { ascending: false })
+          .limit(50);
+        if (error) console.warn("profit_distribution_log unavailable:", error.message);
+        else distLogs = data;
+      } catch (e) {
+        console.warn("profit_distribution_log query failed:", e);
+      }
 
       // Fetch distribution rules for current split (table may not exist yet)
       let rules: { distribution_type: string; percentage: number }[] | null = null;
@@ -102,8 +116,7 @@ const RevenueManager = () => {
       setTransactions(rows);
       setDistributionLogs(distLogs ?? []);
     } catch (err) {
-      console.error("Error fetching revenue data:", err);
-      toast.error("Failed to load revenue data");
+      console.warn("Error fetching revenue data:", err);
     } finally {
       setLoading(false);
     }
