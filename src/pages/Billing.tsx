@@ -14,6 +14,7 @@ import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { toast } from "sonner";
 import { AccountBalance } from "@/components/billing/AccountBalance";
+import { renderApi } from "@/lib/render-api";
 
 const PLATFORM_ACCESS_FEATURES = [
   "Full platform access is free",
@@ -83,12 +84,9 @@ export default function Billing() {
     if (!user) { toast.error("Please sign in first"); return; }
     setWithdrawLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("request-withdrawal", {
-        body: { amountUsd: amt, destinationType: withdrawType, destinationDetails: {} },
-      });
-      if (error) throw error;
+      const data = await renderApi.withdrawals.request(amt, user.id, withdrawType);
       toast.success(`Withdrawal of $${amt.toFixed(2)} submitted`, {
-        description: `Withdrawal ID: ${(data as any)?.withdrawalId ?? "pending"}. Processing within 1–3 business days.`,
+        description: `Withdrawal ID: ${data?.withdrawal_id ?? "pending"}. Processing within 1–3 business days.`,
       });
       setWithdrawOpen(false);
     } catch (e: unknown) {

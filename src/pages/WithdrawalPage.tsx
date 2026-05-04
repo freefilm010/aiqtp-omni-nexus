@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { AccountBalance } from "@/components/billing/AccountBalance";
 import { toast } from "sonner";
+import { renderApi } from "@/lib/render-api";
 
 type Withdrawal = {
   id: string;
@@ -64,12 +65,9 @@ export default function WithdrawalPage() {
     if (!user) { toast.error("Sign in first"); return; }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("request-withdrawal", {
-        body: { amountUsd: amt, destinationType: destType, destinationDetails: {} },
-      });
-      if (error) throw error;
+      const data = await renderApi.withdrawals.request(amt, user.id, destType);
       toast.success(`Withdrawal of $${amt.toFixed(2)} submitted`, {
-        description: `ID: ${(data as { withdrawalId?: string })?.withdrawalId ?? "pending"} — processed within 1–3 business days.`,
+        description: `ID: ${data?.withdrawal_id ?? "pending"} — processed within 1–3 business days.`,
       });
       setAmount("20");
       // Refresh history
