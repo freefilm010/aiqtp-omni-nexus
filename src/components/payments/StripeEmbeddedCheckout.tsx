@@ -16,6 +16,9 @@ export function StripeEmbeddedCheckout({
   userId,
   returnUrl,
 }: StripeEmbeddedCheckoutProps) {
+  // Check if Stripe is configured before rendering
+  const stripePromise = getStripe();
+
   const fetchClientSecret = async (): Promise<string> => {
     const body = { amountInCents, customerEmail, userId, returnUrl, environment: getStripeEnvironment() };
 
@@ -26,11 +29,22 @@ export function StripeEmbeddedCheckout({
     return data.clientSecret;
   };
 
+  // If Stripe is not configured, show a friendly error instead of crashing
+  const isStripeConfigured = Boolean(import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN);
+  if (!isStripeConfigured) {
+    return (
+      <div className="p-6 text-center text-muted-foreground border border-dashed rounded-lg">
+        <p className="font-medium">Payments not configured</p>
+        <p className="text-sm mt-1">VITE_PAYMENTS_CLIENT_TOKEN is not set. Add it in Vercel environment variables.</p>
+      </div>
+    );
+  }
+
   const checkoutOptions = { fetchClientSecret };
 
   return (
     <div id="checkout" className="w-full">
-      <EmbeddedCheckoutProvider stripe={getStripe()} options={checkoutOptions}>
+      <EmbeddedCheckoutProvider stripe={stripePromise} options={checkoutOptions}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
     </div>

@@ -7,10 +7,17 @@ const environment: StripeEnv = clientToken?.startsWith('pk_test_') ? 'sandbox' :
 
 let stripePromise: Promise<Stripe | null> | null = null;
 
+/**
+ * Returns a promise that resolves to the Stripe.js instance.
+ * Returns a promise resolving to null (instead of throwing) when the
+ * publishable key env var is absent — callers should check for null and
+ * show a friendly "payments unavailable" message rather than crashing.
+ */
 export function getStripe(): Promise<Stripe | null> {
   if (!stripePromise) {
     if (!clientToken) {
-      throw new Error("VITE_PAYMENTS_CLIENT_TOKEN is not set");
+      console.warn("VITE_PAYMENTS_CLIENT_TOKEN is not set — Stripe payments are disabled");
+      return Promise.resolve(null);
     }
     stripePromise = loadStripe(clientToken);
   }
