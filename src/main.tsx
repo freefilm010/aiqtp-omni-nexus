@@ -1,6 +1,8 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { ensureBrowserStorage, removeStorage, sanitizeSupabaseAuthStorage } from "./lib/browserStorage";
+import { initSentry } from "./lib/sentry";
+initSentry();
 
 ensureBrowserStorage("localStorage");
 ensureBrowserStorage("sessionStorage");
