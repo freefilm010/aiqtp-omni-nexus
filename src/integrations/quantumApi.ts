@@ -6,7 +6,10 @@
 const BASE = (import.meta.env.VITE_QUANTUM_AGENT_URL as string | undefined)?.replace(/\/$/, "");
 
 async function _post(path: string, body: unknown) {
-  if (!BASE) throw new Error("VITE_QUANTUM_AGENT_URL not configured");
+  if (!BASE) {
+    console.warn("VITE_QUANTUM_AGENT_URL not configured — quantum features disabled");
+    return null;
+  }
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -20,7 +23,10 @@ async function _post(path: string, body: unknown) {
 }
 
 async function _get(path: string) {
-  if (!BASE) throw new Error("VITE_QUANTUM_AGENT_URL not configured");
+  if (!BASE) {
+    console.warn("VITE_QUANTUM_AGENT_URL not configured — quantum features disabled");
+    return null;
+  }
   const res = await fetch(`${BASE}${path}`);
   if (!res.ok) throw new Error(`Quantum Agent ${path}: ${res.status}`);
   return res.json();
