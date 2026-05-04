@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,12 +47,10 @@ serve(async (req) => {
       const winningTrades = trades.filter(t => (t.pnl_usd || 0) > 0);
       const totalPnl = trades.reduce((sum, t) => sum + (t.pnl_usd || 0), 0);
 
-      // Generate AI summary using Lovable AI
-      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+      // Generate AI summary
+      let summary = "Performance report generated successfully.";
+      try {
+        const aiResult = await callAI({
           messages: [{
             role: "system",
             content: `You are a professional financial report writer for AIQTP AI Trading Platform. Generate a concise, compelling performance summary for marketing purposes. Be factual and professional. Include key metrics and highlight strengths.`
@@ -77,13 +76,10 @@ serve(async (req) => {
             }),
           }],
           max_tokens: 500,
-        }),
-      });
-
-      let summary = "Performance report generated successfully.";
-      if (aiResponse.ok) {
-        const aiData = await aiResponse.json();
-        summary = aiData.choices?.[0]?.message?.content || summary;
+        });
+        summary = aiResult.choices?.[0]?.message?.content || summary;
+      } catch (aiError) {
+        console.error("AI summary error:", aiError);
       }
 
       // Log the report generation

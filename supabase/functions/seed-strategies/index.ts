@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -149,9 +150,6 @@ serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) throw new Error('Unauthorized');
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY') ?? Deno.env.get('ANTHROPIC_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
-
     if (action === 'list-templates') {
       const filtered = category && category !== 'all'
         ? STRATEGY_TEMPLATES.filter(t => t.category === category)
@@ -175,42 +173,25 @@ serve(async (req) => {
       }
 
       // Use AI to generate a full strategy from the template
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'system',
-              content: `You are AIQTP RD-Agent. Generate a complete trading strategy implementation.
+      const aiResult = await callAI({
+        messages: [
+          {
+            role: 'system',
+            content: `You are AIQTP RD-Agent. Generate a complete trading strategy implementation.
 Return JSON: { "name", "description", "entry_rules": { "conditions": [...], "logic": "AND" }, "exit_rules": { "stop_loss", "take_profit", "trailing_stop" }, "risk_parameters": { "max_position_size", "max_drawdown", "diversification" }, "code": "# Python implementation" }`
-            },
-            {
-              role: 'user',
-              content: `Generate a complete ${template.name} strategy.
+          },
+          {
+            role: 'user',
+            content: `Generate a complete ${template.name} strategy.
 Category: ${template.category}
 Indicators: ${template.indicators.join(', ')}
 Description: ${template.desc}
 Make it production-ready with proper entry/exit rules, risk management, and Python-style code.`
-            }
-          ],
-          temperature: 0.4,
-        }),
+          }
+        ],
       });
 
-      if (!aiResponse.ok) {
-        const status = aiResponse.status;
-        if (status === 429) return new Response(JSON.stringify({ error: 'Rate limit' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        if (status === 402) return new Response(JSON.stringify({ error: 'Credits exhausted' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        throw new Error(`AI error: ${status}`);
-      }
-
-      const aiData = await aiResponse.json();
-      const text = aiData.choices[0].message.content;
+      const text = aiResult.choices[0].message.content;
       let strategy;
       try {
         const match = text.match(/\{[\s\S]*\}/);

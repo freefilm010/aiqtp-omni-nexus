@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, logGeneration, rateLimitResponse } from "../_shared/rateLimiter.ts";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,9 +65,6 @@ serve(async (req) => {
     if (!rateLimitResult.allowed) {
       return rateLimitResponse('quantclaw-marketing', rateLimitResult);
     }
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const body: MarketingRequest = await req.json();
     const { action, platform, topic, campaignType, tone, targetAudience } = body;
@@ -134,44 +132,20 @@ Topic context: ${topic || "general platform features"}.`;
         });
     }
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
+    const aiResult = await callAI({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
     });
 
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited. Try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Credits exhausted. Add funds." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    const content = aiResult.choices?.[0]?.message?.content || "";
 
     return new Response(JSON.stringify({
       action,
       platform: platform || "general",
       content,
       generated_at: new Date().toISOString(),
-      usage: aiData.usage,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

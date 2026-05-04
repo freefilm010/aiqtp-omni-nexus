@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,7 +126,6 @@ async function callAgent(
   agent: AgentConfig,
   messages: Array<{ role: string; content: string }>,
   taskContext: string,
-  lovableKey: string,
   anthropicKey: string
 ): Promise<{ agentId: string; agentName: string; response: string; model: string; latencyMs: number; error?: string }> {
   const start = Date.now();
@@ -171,24 +171,7 @@ async function callAgent(
       const data = await res.json();
       responseText = data.content?.find((c: any) => c.type === "text")?.text || "";
     } else {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: agent.model,
-          messages: agentMessages,
-        }),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Gateway ${res.status}: ${errText.substring(0, 200)}`);
-      }
-
-      const data = await res.json();
+      const data = await callAI({ messages: agentMessages });
       responseText = data.choices?.[0]?.message?.content || "";
     }
 
@@ -215,8 +198,7 @@ async function callAgent(
 async function synthesize(
   agentResults: Array<{ agentId: string; agentName: string; response: string; model: string; error?: string }>,
   originalMessages: Array<{ role: string; content: string }>,
-  taskContext: string,
-  lovableKey: string
+  taskContext: string
 ): Promise<string> {
   const successfulResults = agentResults.filter(r => r.response && !r.error);
 
@@ -256,28 +238,18 @@ ${agentContributions}
 
 Produce the final, definitive answer. Do NOT mention the agents or the synthesis process — just deliver the best possible response as if you are the ultimate expert.`;
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-pro",
+  try {
+    const data = await callAI({
       messages: [
         { role: "system", content: "You are the Meta-Judge: you synthesize multiple AI perspectives into one superior answer." },
         { role: "user", content: judgePrompt }
       ],
-    }),
-  });
-
-  if (!res.ok) {
+    });
+    return data.choices?.[0]?.message?.content || successfulResults[0].response;
+  } catch {
     // Fallback: return the longest successful response
     return successfulResults.sort((a, b) => b.response.length - a.response.length)[0].response;
   }
-
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || successfulResults[0].response;
 }
 
 serve(async (req) => {
@@ -357,10 +329,8 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
 
     // Log the call
@@ -381,7 +351,7 @@ serve(async (req) => {
 
     // Fan out to ALL agents in parallel
     const agentPromises = activeAgents.map(agent =>
-      callAgent(agent, messages, taskContext, LOVABLE_API_KEY, ANTHROPIC_API_KEY)
+      callAgent(agent, messages, taskContext, ANTHROPIC_API_KEY)
     );
 
     const agentResults = await Promise.all(agentPromises);
@@ -394,7 +364,7 @@ serve(async (req) => {
 
     // Synthesize the best response
     const synthStart = Date.now();
-    const synthesizedResponse = await synthesize(agentResults, messages, taskContext, LOVABLE_API_KEY);
+    const synthesizedResponse = await synthesize(agentResults, messages, taskContext);
     const synthMs = Date.now() - synthStart;
 
     const totalMs = Date.now() - orchestratorStart;

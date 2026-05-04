@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +15,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
+    const lovableKey = true; // now using Anthropic directly via callAI
 
     // Auth check - admin only
     const userClient = createClient(supabaseUrl, anonKey, {
@@ -62,23 +63,11 @@ serve(async (req) => {
           });
         }
 
-        // AI analysis using Lovable AI
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 25000);
-
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${lovableKey}`,
-            "Content-Type": "application/json",
-          },
-          signal: controller.signal,
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              {
-                role: "system",
-                content: `You are QAQI, an autonomous AI investment engine. Analyze market signals, prices, and fundamentals to determine optimal portfolio allocation for maximum returns.
+        const aiResult = await callAI({
+          messages: [
+            {
+              role: "system",
+              content: `You are QAQI, an autonomous AI investment engine. Analyze market signals, prices, and fundamentals to determine optimal portfolio allocation for maximum returns.
 
 STRATEGY: Ultra-aggressive growth (95% growth / 5% stable). 100% profit reinvestment.
 GOAL: Maximize compound returns by identifying highest-potential assets and dynamically shifting capital. Only 5% held in stable reserves for liquidity.
@@ -89,83 +78,69 @@ Rules:
 - Assess current market regime (bull/bear/sideways/volatile)
 - Score your confidence 0-100
 - Provide brief reasoning for each allocation`,
-              },
-              {
-                role: "user",
-                content: `Current engine state: ${JSON.stringify(engineState)}
+            },
+            {
+              role: "user",
+              content: `Current engine state: ${JSON.stringify(engineState)}
 
 Active signals (top 20): ${JSON.stringify(signalData.map(s => ({
-                  symbol: s.symbol,
-                  type: s.signal_type,
-                  confidence: s.confidence,
-                  strength: s.strength,
-                  reason: s.reason,
-                })))}
+                symbol: s.symbol,
+                type: s.signal_type,
+                confidence: s.confidence,
+                strength: s.strength,
+                reason: s.reason,
+              })))}
 
 Market prices (top 50 by mcap): ${JSON.stringify(priceData.map(p => ({
-                  id: p.coin_id,
-                  price: p.price_usd,
-                  change_24h: p.price_change_percentage_24h,
-                  change_7d: p.price_change_percentage_7d,
-                  mcap: p.market_cap,
-                  volume: p.total_volume,
-                })))}
+                id: p.coin_id,
+                price: p.price_usd,
+                change_24h: p.price_change_percentage_24h,
+                change_7d: p.price_change_percentage_7d,
+                mcap: p.market_cap,
+                volume: p.total_volume,
+              })))}
 
 Analyze and return optimal allocations.`,
-              },
-            ],
-            tools: [
-              {
-                type: "function",
-                function: {
-                  name: "propose_allocations",
-                  description: "Propose optimal portfolio allocations based on market analysis",
-                  parameters: {
-                    type: "object",
-                    properties: {
-                      market_regime: { type: "string", enum: ["bull", "bear", "sideways", "volatile"] },
-                      confidence_score: { type: "number" },
-                      summary: { type: "string" },
-                      allocations: {
-                        type: "array",
-                        items: {
-                          type: "object",
-                          properties: {
-                            symbol: { type: "string" },
-                            name: { type: "string" },
-                            allocation_type: { type: "string", enum: ["stable", "growth", "hedge"] },
-                            target_percent: { type: "number" },
-                            ai_score: { type: "number" },
-                            signal: { type: "string" },
-                            reasoning: { type: "string" },
-                            stop_loss_percent: { type: "number" },
-                            take_profit_percent: { type: "number" },
-                          },
-                          required: ["symbol", "name", "allocation_type", "target_percent", "reasoning"],
+            },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "propose_allocations",
+                description: "Propose optimal portfolio allocations based on market analysis",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    market_regime: { type: "string", enum: ["bull", "bear", "sideways", "volatile"] },
+                    confidence_score: { type: "number" },
+                    summary: { type: "string" },
+                    allocations: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          symbol: { type: "string" },
+                          name: { type: "string" },
+                          allocation_type: { type: "string", enum: ["stable", "growth", "hedge"] },
+                          target_percent: { type: "number" },
+                          ai_score: { type: "number" },
+                          signal: { type: "string" },
+                          reasoning: { type: "string" },
+                          stop_loss_percent: { type: "number" },
+                          take_profit_percent: { type: "number" },
                         },
+                        required: ["symbol", "name", "allocation_type", "target_percent", "reasoning"],
                       },
                     },
-                    required: ["market_regime", "confidence_score", "allocations", "summary"],
                   },
+                  required: ["market_regime", "confidence_score", "allocations", "summary"],
                 },
               },
-            ],
-            tool_choice: { type: "function", function: { name: "propose_allocations" } },
-          }),
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "propose_allocations" } },
         });
-
-        clearTimeout(timeout);
-
-        if (!aiResponse.ok) {
-          const errText = await aiResponse.text();
-          console.error("AI error:", aiResponse.status, errText);
-          return new Response(JSON.stringify({ error: "AI analysis failed", status: aiResponse.status }), {
-            status: aiResponse.status === 429 ? 429 : 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        const aiResult = await aiResponse.json();
         const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
         let proposals;
         try {

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, Wallet, Percent, ShieldCheck, ArrowUpRight, Loader2, TrendingUp, DollarSign } from "lucide-react";
+import { Check, Wallet, Percent, ShieldCheck, ArrowUpRight, Loader2, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
@@ -98,6 +98,8 @@ export default function Billing() {
     }
   };
 
+  const [paypalLoading, setPaypalLoading] = useState(false);
+
   const handleDeposit = () => {
     if (!user) {
       toast.error("Please sign in first");
@@ -116,6 +118,33 @@ export default function Billing() {
       userId: user.id,
       returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     });
+  };
+
+  const handlePayPalDeposit = async () => {
+    if (!user) { toast.error("Please sign in first"); return; }
+    const amt = parseFloat(depositAmount);
+    if (!amt || amt < 20 || amt > 10000) {
+      toast.error("Enter an amount between $20 and $10,000");
+      return;
+    }
+    setPaypalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-paypal-checkout", {
+        body: {
+          action: "create",
+          amountUsd: amt,
+          returnUrl: `${window.location.origin}/checkout/return?paypal_order_id=PAYPAL_ORDER_ID`,
+          cancelUrl: `${window.location.origin}/billing`,
+        },
+      });
+      if (error || !data?.approveUrl) throw new Error(error?.message ?? "PayPal checkout failed");
+      setDepositOpen(false);
+      window.location.href = data.approveUrl;
+    } catch (e: unknown) {
+      toast.error("PayPal error", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setPaypalLoading(false);
+    }
   };
 
   return (
@@ -332,7 +361,17 @@ export default function Billing() {
                 value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="20.00" />
               <p className="text-xs text-muted-foreground">Min $20, max $10,000.</p>
             </div>
-            <Button onClick={handleDeposit} className="w-full">Continue to checkout</Button>
+            <div className="grid grid-cols-1 gap-2">
+              <Button onClick={handleDeposit} className="w-full gap-2">
+                <CreditCard className="h-4 w-4" />
+                Pay with Card (Stripe)
+              </Button>
+              <Button onClick={handlePayPalDeposit} disabled={paypalLoading} variant="outline" className="w-full gap-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10">
+                {paypalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="font-bold text-blue-500">P</span>}
+                Pay with PayPal
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Funds credited instantly after payment confirmation.</p>
           </div>
         </DialogContent>
       </Dialog>
