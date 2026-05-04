@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.guard_ai_strategies_admin_approved() FROM PUBLIC, anon, authenticated;
