@@ -62,24 +62,6 @@ services:
         sync: false
       - key: IBKR_ACCOUNT_ID
         sync: false
-      # Stripe payments
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      # PayPal payments
-      - key: PAYPAL_CLIENT_ID
-        sync: false
-      - key: PAYPAL_CLIENT_SECRET
-        sync: false
-      - key: PAYPAL_MODE
-        value: "live"
-      # Anthropic AI proxy
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      # Admin access (comma-separated Supabase user UUIDs)
-      - key: ADMIN_USER_IDS
-        sync: false
 
   # ── Core Brain Worker (polling loop) ─────────────────────────────────────
   - type: worker
