@@ -1182,6 +1182,7 @@ serve(async (req) => {
       response: finalContent || "Hello! I'm QAQI™, your Quantum AI assistant. How can I help you today?",
       tool_executions: toolResults,
       model: normalizedModel,
+      model_used: normalizedModel,
       usage: normalizedUsage,
       rate_limit: { used: qaqiUsed + 1, limit: qaqiLimit, remaining: qaqiLimit - qaqiUsed - 1 },
       capabilities: {

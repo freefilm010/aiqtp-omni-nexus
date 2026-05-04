@@ -1,5 +1,47 @@
 # AIQTP Omni-Nexus — Architecture & Sync Rules
 
+## Admin Credentials (DO NOT HARDCODE — reference only)
+
+| Field | Value |
+|-------|-------|
+| Username | tokenmac1 |
+| Primary email | 1drrey@gmail.com |
+| Secondary email | 1drrey@duck.com |
+| Info email | aiqtpinfo@gmail.com |
+| Crypto email | aiquantcrypto@gmail.com |
+
+Admin role auto-assigned via Supabase trigger `assign_admin_to_approved_emails()` on user creation.
+Render admin gated via `ADMIN_USER_IDS` env var (set to admin's Supabase user UUID).
+
+## Agent Army — Full Inventory
+
+| Agent | Page | Backend | Status |
+|-------|------|---------|--------|
+| **QAQI** (Quantum AI) | /qaqi | qaqi-agent edge fn + multi-agent-orchestrator | 🟢 LIVE |
+| **AIQTP Agent** (Classical AI) | /qaqi (tab) | qaqi-agent edge fn | 🟢 LIVE |
+| **HiveMind** (Swarm consensus) | /hive-mind | Supabase RT, swarm_agents table | 🟢 LIVE |
+| **TitanCodex** (Quantum+Energy) | /titan-codex | quantumSentinel lib, token_balances | 🟢 LIVE |
+| **QuantClaw** (Dev/Research) | /quantclaw | agent_directives→Render worker, qaqi-agent | 🟢 LIVE |
+| **Cognitum** (MEV swarm) | cognitum/ Python | Flashbots/Bitquery, Engram memory | 🟡 READY |
+| **Core Brain Worker** | Render worker | trading_worker.py, strategy_registry | 🟢 LIVE |
+
+### QAQI Army Mode
+When Army toggle is ON, QAQI fans out to 11 AI models simultaneously:
+Gemini 2.5 Flash Lite, Gemini 2.5 Flash, Gemini Pro 2.5, Gemini 3 Flash, Gemini 3.1 Pro,
+GPT-5, GPT-5 Mini, GPT-5 Nano, GPT-5.2, Claude Sonnet 4.5, Claude Haiku 4.
+A judge model (Claude) synthesizes the best unified answer.
+
+### QuantClaw Tools
+- **Wired & working**: freqtrade_backtest, freqtrade_optimize, ccxt_sim_order, ccxt_live_order, factor_generation
+- **Needs fix**: search_trading_code, search_quant_research, search_onchain (calls qaqi-agent but QAQI doesn't do RAG)
+- **UI only (no worker)**: social_media_post, marketing_campaign, content_generator, campaign_scheduler → call quantclaw-marketing edge fn directly
+
+### Known Bugs (tracked)
+- `qaqi-agent` returned `model` not `model_used` → **FIXED** (added both fields)
+- Token creator launch() was a stub → **FIXED** (writes to dex_tokens)
+- Consistency graduation threshold was 85% → **CHANGED TO 70%**
+- Profit split was 25/75 → **CHANGED TO 50/50**
+
 ## Source of Truth: GitHub `main` branch
 
 **GitHub main is the boss. Every platform follows it. Nobody overwrites it directly.**
