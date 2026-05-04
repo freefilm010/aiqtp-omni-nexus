@@ -1,54 +1,76 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useTradingStats } from "@/hooks/useTradingStats";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { TrendingUp, Lock, Unlock, DollarSign, RefreshCw } from "lucide-react";
+import { TrendingUp, Lock, Coins, RefreshCw, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { PlatformStaking } from "@/components/staking/PlatformStaking";
 
-const POOLS = [
-  { token: "DCENT", apy: 45.2, available: "1000", lockPeriod: "30 days", minStake: "100" },
-  { token: "BOLT",  apy: 38.7, available: "500",  lockPeriod: "30 days", minStake: "50" },
-  { token: "MANTRA",apy: 52.1, available: "750",  lockPeriod: "60 days", minStake: "100" },
-  { token: "QTC",   apy: 67.8, available: "2000", lockPeriod: "90 days", minStake: "500" },
-  { token: "ETH",   apy: 4.5,  available: "0",    lockPeriod: "Flexible", minStake: "0.01" },
-];
+interface UserStake {
+  id: string;
+  token_symbol: string;
+  token_name: string;
+  amount_staked: number;
+  apy: number;
+  lock_days: number;
+  lock_until: string;
+  expected_reward: number;
+  actual_reward: number;
+  status: string;
+  created_at: string;
+}
 
 export default function StakingPage() {
-  const { data: stats, refetch } = useTradingStats(10000);
-  const [amounts, setAmounts] = useState<Record<string, string>>({});
-  const [staked, setStaked] = useState<Record<string, number>>({});
-  const [rewards, setRewards] = useState<Record<string, number>>({});
+  const [stakes, setStakes] = useState<UserStake[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [unstaking, setUnstaking] = useState<string | null>(null);
 
-  const stakedValue = useMemo(() => (stats?.allTimeProfit ?? 0) * 0.1, [stats]);
-  const stakingRewards = useMemo(() => stakedValue * 0.05, [stakedValue]);
-  const activePools = Object.values(staked).filter(v => v > 0).length;
+  const load = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
 
-  const handleStake = (token: string) => {
-    const amt = parseFloat(amounts[token] ?? "");
-    const pool = POOLS.find(p => p.token === token);
-    if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
-    if (pool && amt < parseFloat(pool.minStake)) { toast.error(`Minimum stake: ${pool.minStake} ${token}`); return; }
-    setStaked(p => ({ ...p, [token]: (p[token] ?? 0) + amt }));
-    setAmounts(p => ({ ...p, [token]: "" }));
-    toast.success(`Staked ${amt} ${token}`);
+    const { data, error } = await supabase
+      .from("user_stakes")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) toast.error("Failed to load stakes");
+    else setStakes((data as UserStake[]) ?? []);
+    setLoading(false);
   };
 
-  const handleUnstake = (token: string) => {
-    const s = staked[token] ?? 0;
-    if (!s) return;
-    setStaked(p => ({ ...p, [token]: 0 }));
-    toast.success(`Unstaked ${s} ${token}`);
+  useEffect(() => { load(); }, []);
+
+  const handleUnstake = async (stakeId: string) => {
+    setUnstaking(stakeId);
+    try {
+      const { error } = await supabase.rpc("unstake", { p_stake_id: stakeId });
+      if (error) toast.error("Unstake failed", { description: error.message });
+      else { toast.success("Unstaked successfully — rewards credited"); load(); }
+    } finally {
+      setUnstaking(null);
+    }
   };
 
-  const handleClaim = (token: string) => {
-    const r = rewards[token] ?? 0;
-    if (!r) { toast.info("No rewards to claim yet"); return; }
-    setRewards(p => ({ ...p, [token]: 0 }));
-    toast.success(`Claimed ${r.toFixed(4)} ${token} rewards`);
+  const activeStakes = stakes.filter(s => s.status === "active");
+  const totalStaked = activeStakes.reduce((s, r) => s + Number(r.amount_staked), 0);
+  const totalExpected = activeStakes.reduce((s, r) => s + Number(r.expected_reward), 0);
+
+  const daysLeft = (lockUntil: string) => {
+    const d = Math.ceil((new Date(lockUntil).getTime() - Date.now()) / 86400000);
+    return d > 0 ? `${d}d left` : "Unlocked";
+  };
+
+  const statusColor = (s: UserStake) => {
+    if (s.status === "completed") return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    if (new Date(s.lock_until) < new Date()) return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+    return "bg-amber-500/20 text-amber-400 border-amber-500/30";
   };
 
   return (
@@ -57,108 +79,156 @@ export default function StakingPage() {
       <main className="container mx-auto px-4 py-8 pt-24">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Staking Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Stake tokens and earn passive income • Auto-compound available</p>
+            <h1 className="text-3xl font-bold">Staking</h1>
+            <p className="text-muted-foreground mt-1">Lock platform tokens to earn passive rewards</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw className="h-4 w-4 mr-2" />Refresh</Button>
+          <Button variant="outline" size="sm" onClick={load}>
+            <RefreshCw className="h-4 w-4 mr-2" />Refresh
+          </Button>
         </div>
 
-        {/* Overview stats */}
-        <div className="grid gap-4 md:grid-cols-4 mb-6">
-          {[
-            { label: "Total Staked Value", val: `$${stakedValue.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`, sub: "Across all pools" },
-            { label: "Total Rewards", val: `$${stakingRewards.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}`, sub: "Claimable now", color: "text-green-500" },
-            { label: "Average APY", val: "51.7%", sub: "Weighted average", color: "text-purple-500" },
-            { label: "Active Pools", val: `${activePools}/${POOLS.length}`, sub: "Pools staking" },
-          ].map(s => (
-            <Card key={s.label}>
-              <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">{s.label}</CardTitle></CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${s.color ?? ""}`}>{s.val}</div>
-                <p className="text-xs text-muted-foreground">{s.sub}</p>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Summary */}
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                <Coins className="h-3 w-3" /> Active Stakes
+              </div>
+              <div className="text-2xl font-bold">{activeStakes.length}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                <Lock className="h-3 w-3" /> Total Locked (tokens)
+              </div>
+              <div className="text-2xl font-bold">
+                {totalStaked.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                <TrendingUp className="h-3 w-3" /> Expected Rewards
+              </div>
+              <div className="text-2xl font-bold text-emerald-400">
+                {totalExpected.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Pools */}
-        <div className="grid gap-4">
-          {POOLS.map(pool => {
-            const stakedAmt = staked[pool.token] ?? 0;
-            const rewardAmt = rewards[pool.token] ?? 0;
-            return (
-              <Card key={pool.token} className="hover:border-primary/50 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {pool.token}
-                        <Badge variant="outline" className="text-green-500 border-green-500">{pool.apy}% APY</Badge>
-                      </CardTitle>
-                      <CardDescription>Lock: {pool.lockPeriod} • Min: {pool.minStake} {pool.token}</CardDescription>
-                    </div>
-                    <TrendingUp className="h-8 w-8 text-green-500" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
+        <Tabs defaultValue="stake" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="stake">Stake Tokens</TabsTrigger>
+            <TabsTrigger value="positions">
+              My Positions
+              {activeStakes.length > 0 && (
+                <Badge className="ml-2 h-4 px-1 text-[10px] bg-primary">{activeStakes.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="stake">
+            <PlatformStaking />
+          </TabsContent>
+
+          <TabsContent value="positions">
+            {loading ? (
+              <div className="py-12 text-center text-muted-foreground">Loading positions...</div>
+            ) : activeStakes.length === 0 ? (
+              <div className="py-12 text-center text-muted-foreground">
+                <Lock className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p>No active stakes yet. Go to Stake Tokens to get started.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {activeStakes.map(stake => {
+                  const unlocked = new Date(stake.lock_until) <= new Date();
+                  return (
+                    <Card key={stake.id} className="border-border hover:border-primary/30 transition-colors">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base">{stake.token_symbol}</CardTitle>
+                          <Badge className={statusColor(stake)}>
+                            <Clock className="h-3 w-3 mr-1" />
+                            {daysLeft(stake.lock_until)}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{stake.token_name}</p>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <div className="text-muted-foreground text-xs">Staked</div>
+                            <div className="font-mono font-bold">
+                              {Number(stake.amount_staked).toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground text-xs">APY</div>
+                            <div className="font-bold text-emerald-400">{stake.apy}%</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground text-xs">Expected Reward</div>
+                            <div className="font-mono text-emerald-400">
+                              {Number(stake.expected_reward).toFixed(4)} {stake.token_symbol}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground text-xs">Lock Period</div>
+                            <div>{stake.lock_days} days</div>
+                          </div>
+                        </div>
+                        <Button
+                          className="w-full"
+                          variant={unlocked ? "default" : "outline"}
+                          disabled={!unlocked || unstaking === stake.id}
+                          onClick={() => handleUnstake(stake.id)}
+                        >
+                          {unstaking === stake.id ? "Processing..." : unlocked ? "Unstake & Claim Rewards" : "Locked"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="history">
+            {loading ? (
+              <div className="py-12 text-center text-muted-foreground">Loading...</div>
+            ) : stakes.filter(s => s.status !== "active").length === 0 ? (
+              <div className="py-12 text-center text-muted-foreground">No completed stakes yet.</div>
+            ) : (
+              <div className="space-y-2">
+                {stakes.filter(s => s.status !== "active").map(stake => (
+                  <Card key={stake.id}>
+                    <CardContent className="py-3 flex items-center justify-between text-sm">
                       <div>
-                        <div className="text-sm font-medium mb-1">Available</div>
-                        <div className="text-2xl font-bold">{pool.available} {pool.token}</div>
+                        <span className="font-medium">{stake.token_symbol}</span>
+                        <span className="text-muted-foreground ml-2">
+                          {Number(stake.amount_staked).toFixed(2)} staked
+                        </span>
                       </div>
-                      <div className="space-y-2">
-                        <Input
-                          type="number"
-                          placeholder={`Min ${pool.minStake}`}
-                          value={amounts[pool.token] ?? ""}
-                          onChange={e => setAmounts(p => ({ ...p, [pool.token]: e.target.value }))}
-                        />
-                        <Button onClick={() => handleStake(pool.token)} className="w-full">
-                          <Lock className="mr-2 h-4 w-4" />Stake {pool.token}
-                        </Button>
+                      <div className="flex items-center gap-3">
+                        <span className="text-emerald-400 font-mono text-xs">
+                          +{Number(stake.actual_reward).toFixed(4)} reward
+                        </span>
+                        <Badge variant={stake.status === "completed" ? "default" : "destructive"}>
+                          {stake.status}
+                        </Badge>
                       </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-sm font-medium mb-1">Staked</div>
-                          <div className="text-xl font-bold">{stakedAmt.toFixed(2)} {pool.token}</div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium mb-1">Rewards</div>
-                          <div className="text-xl font-bold text-green-500">{rewardAmt.toFixed(4)} {pool.token}</div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button onClick={() => handleUnstake(pool.token)} variant="outline" disabled={stakedAmt === 0}>
-                          <Unlock className="mr-2 h-4 w-4" />Unstake
-                        </Button>
-                        <Button onClick={() => handleClaim(pool.token)} disabled={rewardAmt === 0}>
-                          <DollarSign className="mr-2 h-4 w-4" />Claim
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
-                    Stake {pool.minStake} {pool.token} → earn ~<span className="font-bold text-green-500">{(parseFloat(pool.minStake) * pool.apy / 100).toFixed(2)} {pool.token}</span>/year ({pool.apy}% APY)
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Auto-compound teaser */}
-        <Card className="mt-6 bg-gradient-to-r from-purple-900/20 to-pink-900/20 border-purple-500/30">
-          <CardHeader>
-            <CardTitle>Auto-Compound</CardTitle>
-            <CardDescription>Automatically reinvest rewards to maximize earnings</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Enable auto-compound to automatically stake rewards and earn compound interest. Available once you have active stakes.
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
       <Footer />
     </div>

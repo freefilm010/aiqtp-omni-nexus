@@ -117,18 +117,18 @@ const Auth = () => {
       if (userId) {
         const refCode = sessionStorage.getItem("aiqtp_ref");
         if (refCode) {
-          supabase.rpc("record_affiliate_signup", {
+          const { error: refErr } = await supabase.rpc("record_affiliate_signup", {
             p_referred_user_id: userId,
             p_referral_code: refCode,
             p_utm_source: sessionStorage.getItem("aiqtp_utm_source") || undefined,
             p_utm_medium: sessionStorage.getItem("aiqtp_utm_medium") || undefined,
             p_utm_campaign: sessionStorage.getItem("aiqtp_utm_campaign") || undefined,
-          }).then(() => {
-            sessionStorage.removeItem("aiqtp_ref");
-            sessionStorage.removeItem("aiqtp_utm_source");
-            sessionStorage.removeItem("aiqtp_utm_medium");
-            sessionStorage.removeItem("aiqtp_utm_campaign");
           });
+          if (refErr) console.error("Affiliate signup recording failed:", refErr.message);
+          sessionStorage.removeItem("aiqtp_ref");
+          sessionStorage.removeItem("aiqtp_utm_source");
+          sessionStorage.removeItem("aiqtp_utm_medium");
+          sessionStorage.removeItem("aiqtp_utm_campaign");
         }
       }
 

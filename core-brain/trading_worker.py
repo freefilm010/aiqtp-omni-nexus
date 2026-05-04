@@ -201,6 +201,7 @@ TRADE_QUANTITY:  float = 0.001  # Fixed size — replace with a proper risk/sizi
 _last_run_at:    dict[str, float] = {}  # strategy_id → epoch float
 _last_price:     dict[str, float] = {}  # symbol      → last seen USD price
 _last_direction: dict[str, str]   = {}  # strategy_id → 'buy' | 'sell'
+_cycle_count:    int               = 0   # incremented every main loop iteration
 
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
@@ -1151,6 +1152,18 @@ def main() -> None:
 
             if executed == 0:
                 log.info("All strategies gated by frequency. No trades this cycle.")
+
+            # ── Periodic: graduation pipeline (every 20 cycles ≈ 20 min) ────
+            global _cycle_count
+            _cycle_count += 1
+            if _cycle_count % 20 == 0:
+                try:
+                    result = db.rpc("run_bot_graduation").execute()
+                    n_grad = result.data if isinstance(result.data, int) else 0
+                    if n_grad:
+                        log.info("[graduation] %d bot(s) graduated this run", n_grad)
+                except Exception as grad_exc:
+                    log.warning("[graduation] run_bot_graduation failed (non-fatal): %s", grad_exc)
 
         except Exception as exc:
             log.error(

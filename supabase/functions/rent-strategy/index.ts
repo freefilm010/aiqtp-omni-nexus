@@ -38,6 +38,28 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase.rpc('rent_strategy', { p_strategy_id: strategyId });
     if (error) throw error;
 
+    // Record rental revenue (non-fatal)
+    if (data) {
+      const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      const { data: rental } = await admin
+        .from('strategy_rentals')
+        .select('monthly_price')
+        .eq('id', data)
+        .maybeSingle();
+      const fee = Number(rental?.monthly_price ?? 0) * 0.20; // 20% platform cut
+      if (fee > 0) {
+        const { error: revErr } = await admin.from('platform_revenue').insert({
+          source_type: 'commission',
+          source_category: 'strategy_rental',
+          amount: fee,
+          currency: 'USD',
+          status: 'pending',
+          metadata: { rental_id: data, strategy_id: strategyId, user_id: user.id },
+        });
+        if (revErr) console.error('platform_revenue (rental) insert failed:', revErr.message);
+      }
+    }
+
     return new Response(JSON.stringify({ rentalId: data }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
