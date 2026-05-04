@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const COINGECKO_PRO_API = 'https://pro-api.coingecko.com/api/v3';
+const BINANCE_API = 'https://api.binance.com/api/v3'; // free, no key, 1200 req/min
 
 // Cache TTL in seconds - serve cached data if fresh enough
 const CACHE_TTL_SECONDS = 60;
@@ -16,38 +17,104 @@ const CACHE_TTL_SECONDS = 60;
 let lastApiCall = 0;
 const MIN_CALL_INTERVAL_MS = 1500; // 1.5s between calls for free tier
 
+// CoinGecko ID → Binance USDT symbol
+const CG_ID_TO_BINANCE: Record<string, string> = {
+  'bitcoin': 'BTCUSDT', 'ethereum': 'ETHUSDT', 'binancecoin': 'BNBUSDT',
+  'ripple': 'XRPUSDT', 'solana': 'SOLUSDT', 'cardano': 'ADAUSDT',
+  'dogecoin': 'DOGEUSDT', 'polkadot': 'DOTUSDT', 'avalanche-2': 'AVAXUSDT',
+  'chainlink': 'LINKUSDT', 'matic-network': 'MATICUSDT', 'litecoin': 'LTCUSDT',
+  'uniswap': 'UNIUSDT', 'stellar': 'XLMUSDT', 'cosmos': 'ATOMUSDT',
+  'near': 'NEARUSDT', 'algorand': 'ALGOUSDT', 'tron': 'TRXUSDT',
+  'vechain': 'VETUSDT', 'filecoin': 'FILUSDT', 'the-sandbox': 'SANDUSDT',
+  'decentraland': 'MANAUSDT', 'axie-infinity': 'AXSUSDT', 'the-graph': 'GRTUSDT',
+  'aave': 'AAVEUSDT', 'maker': 'MKRUSDT', 'compound-governance-token': 'COMPUSDT',
+  'sushi': 'SUSHIUSDT', 'curve-dao-token': 'CRVUSDT', 'internet-computer': 'ICPUSDT',
+  'hedera-hashgraph': 'HBARUSDT', 'eos': 'EOSUSDT', 'tezos': 'XTZUSDT',
+  'monero': 'XMRUSDT', 'ethereum-classic': 'ETCUSDT', 'bitcoin-cash': 'BCHUSDT',
+  'shiba-inu': 'SHIBUSDT', 'fantom': 'FTMUSDT', 'harmony': 'ONEUSDT',
+  'theta-token': 'THETAUSDT', 'chiliz': 'CHZUSDT', 'basic-attention-token': 'BATUSDT',
+  'enjincoin': 'ENJUSDT', 'loopring': 'LRCUSDT', 'sandbox': 'SANDUSDT',
+  'injective-protocol': 'INJUSDT', 'aptos': 'APTUSDT', 'arbitrum': 'ARBUSDT',
+  'optimism': 'OPUSDT', 'sui': 'SUIUSDT', 'pepe': 'PEPEUSDT',
+  'worldcoin-wld': 'WLDUSDT', 'blur': 'BLURUSDT', 'sei-network': 'SEIUSDT',
+};
+const BINANCE_TO_CG_ID: Record<string, string> = Object.fromEntries(
+  Object.entries(CG_ID_TO_BINANCE).map(([cg, sym]) => [sym, cg])
+);
+
+// Fetch prices from Binance public API — no API key, 1200 req/min
+async function fetchBinancePrices(coinIds?: string[]): Promise<Record<string, any>> {
+  try {
+    let url: string;
+    if (coinIds && coinIds.length <= 20) {
+      const syms = coinIds.map(id => CG_ID_TO_BINANCE[id]).filter(Boolean);
+      if (syms.length === 0) return {};
+      url = `${BINANCE_API}/ticker/24hr?symbols=${JSON.stringify(syms)}`;
+    } else {
+      url = `${BINANCE_API}/ticker/24hr`; // all pairs
+    }
+
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!response.ok) { console.warn(`Binance ${response.status}`); return {}; }
+
+    const tickers: any[] = await response.json();
+    const result: Record<string, any> = {};
+
+    for (const t of tickers) {
+      const cgId = BINANCE_TO_CG_ID[t.symbol];
+      if (!cgId) continue;
+      const price = parseFloat(t.lastPrice);
+      if (!price || !isFinite(price)) continue;
+      result[cgId] = {
+        usd: price,
+        usd_24h_change: parseFloat(t.priceChangePercent),
+        usd_24h_vol: parseFloat(t.quoteVolume),
+        usd_market_cap: null,
+        _source: 'binance',
+      };
+    }
+    return result;
+  } catch (e: any) {
+    console.warn('Binance fetch error:', e?.message ?? e);
+    return {};
+  }
+}
+
 // Fetch with rate limiting and retry logic
 async function fetchWithRateLimit(
-  url: string, 
+  url: string,
   headers: Record<string, string>,
   maxRetries = 2
 ): Promise<Response> {
   const now = Date.now();
   const timeSinceLast = now - lastApiCall;
-  
+
   // Enforce minimum interval between calls
   if (timeSinceLast < MIN_CALL_INTERVAL_MS) {
     await new Promise(r => setTimeout(r, MIN_CALL_INTERVAL_MS - timeSinceLast));
   }
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     lastApiCall = Date.now();
     const response = await fetch(url, { headers });
-    
+
     if (response.status === 429) {
       // Rate limited - wait with exponential backoff
       const waitTime = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
       console.log(`Rate limited, waiting ${waitTime}ms before retry ${attempt + 1}`);
-      
+
       if (attempt < maxRetries) {
         await new Promise(r => setTimeout(r, waitTime));
         continue;
       }
     }
-    
+
     return response;
   }
-  
+
   throw new Error('Rate limit exceeded after retries');
 }
 
@@ -73,7 +140,7 @@ serve(async (req) => {
     const headers: Record<string, string> = { 'Accept': 'application/json' };
     if (apiKey) headers['x-cg-pro-api-key'] = apiKey;
 
-    const publicActions = new Set(['get_price', 'get_global', 'search_coins', 'get_exchanges', 'sync_trending', 'sync_market_prices', 'sync_coins_list']);
+    const publicActions = new Set(['get_price', 'get_global', 'search_coins', 'get_exchanges', 'sync_trending', 'sync_market_prices', 'sync_coins_list', 'sync_binance_prices']);
     const isPublicAction = publicActions.has(action);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -153,6 +220,43 @@ serve(async (req) => {
     };
 
     switch (action) {
+      // Fast Binance-only price sync — no API key, 1200 req/min, <2s for top 50 coins
+      case 'sync_binance_prices': {
+        const binancePrices = await fetchBinancePrices();
+        if (Object.keys(binancePrices).length === 0) {
+          return new Response(JSON.stringify({ success: false, error: 'Binance returned no data' }), {
+            status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const rows = Object.entries(binancePrices).map(([coinId, data]: [string, any]) => ({
+          coin_id: coinId,
+          price_usd: data.usd,
+          total_volume: data.usd_24h_vol,
+          price_change_percentage_24h: data.usd_24h_change,
+          last_updated: new Date().toISOString(),
+        }));
+
+        // Ensure market_coins entries exist first
+        const coinRows = rows.map(r => ({
+          id: r.coin_id,
+          symbol: (CG_ID_TO_BINANCE[r.coin_id] ?? r.coin_id).replace('USDT', ''),
+          name: r.coin_id.replace(/-/g, ' '),
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        }));
+        await supabase.from('market_coins').upsert(coinRows, { onConflict: 'id' });
+
+        const { error } = await supabase.from('market_prices').upsert(rows, { onConflict: 'coin_id' });
+        return new Response(JSON.stringify({
+          success: !error,
+          synced: rows.length,
+          source: 'binance',
+          message: `Synced ${rows.length} prices from Binance (free, no API key)`,
+          error: error?.message,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       case 'sync_coins_list': {
         const force = params?.force === true;
         
@@ -320,111 +424,73 @@ serve(async (req) => {
           return respond({ success: true, prices: cached, cached: true });
         }
 
-        const idsStr = ids.join(',');
-        const url = `${baseUrl}/simple/price?ids=${idsStr}&vs_currencies=usd,btc,eth&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`;
+        // Try Binance first (free, no key, 1200 req/min) for known coins
+        const binancePrices = await fetchBinancePrices(ids);
+        const binanceIds = new Set(Object.keys(binancePrices));
+        const missingIds = ids.filter(id => !binanceIds.has(id));
 
-        try {
-          const response = await fetchWithRateLimit(url, headers, 1);
+        let prices: Record<string, any> = { ...binancePrices };
 
-          // Handle provider errors without returning non-2xx (so the client doesn't throw)
-          if (!response.ok) {
-            if (response.status === 429) {
-              const retryAfterSeconds = Number(response.headers.get('retry-after') ?? '0') || 120;
-              const retryAfterMs = retryAfterSeconds * 1000;
+        // Only hit CoinGecko for coins not covered by Binance
+        if (missingIds.length > 0) {
+          try {
+            const idsStr = missingIds.join(',');
+            const url = `${baseUrl}/simple/price?ids=${idsStr}&vs_currencies=usd,btc,eth&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true`;
+            const response = await fetchWithRateLimit(url, headers, 1);
 
-              if (cached) {
-                console.log('Rate limited, returning stale cache');
-                return respond({
-                  success: true,
-                  prices: cached,
-                  cached: true,
-                  stale: true,
-                  rateLimited: true,
-                  retryAfterMs,
-                });
-              }
-
-              return respond({
-                success: false,
-                error: 'Rate limited by data provider',
-                rateLimited: true,
-                retryAfterMs,
-              });
-            }
-
-            if (cached) {
-              console.log('API failed, returning stale cache');
-              return respond({
-                success: true,
-                prices: cached,
-                cached: true,
-                stale: true,
-                providerStatus: response.status,
-              });
-            }
-
-            return respond({
-              success: false,
-              error: `Data provider error: ${response.status}`,
-              providerStatus: response.status,
-            });
-          }
-
-          const rawPrices = await response.json();
-          const prices = Object.fromEntries(
-            Object.entries(rawPrices ?? {}).filter(([, data]: [string, any]) => {
-              return typeof data?.usd === 'number' && Number.isFinite(data.usd);
-            })
-          );
-
-          // Update database with fresh prices (safe for public data)
-          if (canWrite) {
-            const rows = Object.entries(prices).map(([coinId, data]: [string, any]) => ({
-              coin_id: coinId,
-              price_usd: data.usd,
-              market_cap: data.usd_market_cap,
-              total_volume: data.usd_24h_vol,
-              price_change_percentage_24h: data.usd_24h_change,
-              last_updated: new Date().toISOString(),
-            }));
-
-            if (rows.length > 0) {
-              const { error: upsertError } = await supabase.from('market_prices').upsert(rows, { onConflict: 'coin_id' });
-              if (upsertError) {
-                console.error('Price upsert error:', JSON.stringify(upsertError));
-                // Try individual inserts for coins that might not exist in market_coins
-                for (const row of rows) {
-                  // Ensure coin exists in market_coins first
-                  await supabase.from('market_coins').upsert({
-                    id: row.coin_id,
-                    symbol: row.coin_id.toUpperCase().replace(/-/g, ''),
-                    name: row.coin_id.replace(/-/g, ' '),
-                    is_active: true,
-                    updated_at: new Date().toISOString()
-                  }, { onConflict: 'id' });
-                  // Then insert price
-                  await supabase.from('market_prices').upsert(row, { onConflict: 'coin_id' });
-                }
+            if (response.ok) {
+              const rawPrices = await response.json();
+              const cgPrices = Object.fromEntries(
+                Object.entries(rawPrices ?? {}).filter(([, data]: [string, any]) =>
+                  typeof data?.usd === 'number' && Number.isFinite(data.usd)
+                )
+              );
+              prices = { ...prices, ...cgPrices };
+            } else if (response.status === 429) {
+              const retryAfterMs = (Number(response.headers.get('retry-after') ?? '0') || 120) * 1000;
+              if (Object.keys(prices).length === 0 && cached) {
+                return respond({ success: true, prices: cached, cached: true, stale: true, rateLimited: true, retryAfterMs });
               }
             }
+          } catch (e: any) {
+            console.warn('CoinGecko fallback error:', e?.message ?? e);
           }
-
-          return respond({ success: true, prices });
-        } catch (e: any) {
-          if (cached) {
-            console.log('Error fetching, returning stale cache:', (e instanceof Error ? e.message : String(e)));
-            return respond({
-              success: true,
-              prices: cached,
-              cached: true,
-              stale: true,
-              error: (e instanceof Error ? e.message : String(e)),
-            });
-          }
-
-          // Don't throw → avoid 500s → client can handle gracefully
-          return respond({ success: false, error: e?.message || 'Failed to fetch prices' });
         }
+
+        if (Object.keys(prices).length === 0) {
+          if (cached) return respond({ success: true, prices: cached, cached: true, stale: true });
+          return respond({ success: false, error: 'Failed to fetch prices from all providers' });
+        }
+
+        // Update database with fresh prices
+        if (canWrite) {
+          const rows = Object.entries(prices).map(([coinId, data]: [string, any]) => ({
+            coin_id: coinId,
+            price_usd: data.usd,
+            market_cap: data.usd_market_cap ?? null,
+            total_volume: data.usd_24h_vol ?? null,
+            price_change_percentage_24h: data.usd_24h_change ?? null,
+            last_updated: new Date().toISOString(),
+          }));
+
+          if (rows.length > 0) {
+            const { error: upsertError } = await supabase.from('market_prices').upsert(rows, { onConflict: 'coin_id' });
+            if (upsertError) {
+              for (const row of rows) {
+                await supabase.from('market_coins').upsert({
+                  id: row.coin_id,
+                  symbol: row.coin_id.toUpperCase().replace(/-/g, ''),
+                  name: row.coin_id.replace(/-/g, ' '),
+                  is_active: true,
+                  updated_at: new Date().toISOString()
+                }, { onConflict: 'id' });
+                await supabase.from('market_prices').upsert(row, { onConflict: 'coin_id' });
+              }
+            }
+          }
+        }
+
+        return respond({ success: true, prices });
       }
 
       case 'sync_ohlcv': {

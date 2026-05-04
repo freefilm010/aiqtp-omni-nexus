@@ -67,6 +67,8 @@ const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 const Billing = lazy(() => import("./pages/Billing"));
+const WithdrawalPage = lazy(() => import("./pages/WithdrawalPage"));
+const ReferralPage = lazy(() => import("./pages/ReferralPage"));
 import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
 const DataEcosystem = lazy(() => import("./pages/DataEcosystem"));
 const WalletAssets = lazy(() => import("./pages/WalletAssets"));
@@ -92,6 +94,7 @@ const StakingPage = lazy(() => import("./pages/StakingPage"));
 const DEXPage = lazy(() => import("./pages/DEXPage"));
 const TradingCommandCenter = lazy(() => import("./pages/TradingCommandCenter"));
 const StrategyNFTMarketplace = lazy(() => import("./pages/StrategyNFTMarketplace"));
+const ArbitragePage = lazy(() => import("./pages/ArbitragePage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -518,6 +521,8 @@ const App = () => (
                       <Route path="/payment-success" element={<PaymentSuccess />} />
                       <Route path="/checkout/return" element={<CheckoutReturn />} />
                       <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
+                      <Route path="/withdrawal" element={<ProtectedRoute><WithdrawalPage /></ProtectedRoute>} />
+                      <Route path="/referral" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
                       <Route
                         path="/notifications"
                         element={
@@ -535,6 +540,7 @@ const App = () => (
                       <Route path="/dex" element={<ProtectedRoute><DEXPage /></ProtectedRoute>} />
                       <Route path="/trading-bots" element={<ProtectedRoute><TradingCommandCenter /></ProtectedRoute>} />
                       <Route path="/strategy-nft" element={<StrategyNFTMarketplace />} />
+                      <Route path="/arbitrage" element={<ProtectedRoute><ArbitragePage /></ProtectedRoute>} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </Suspense>

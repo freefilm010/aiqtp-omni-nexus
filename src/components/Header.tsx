@@ -57,7 +57,8 @@ import {
   Home,
   Plug,
   Gift,
-  Wallet
+  Wallet,
+  Users
 } from "lucide-react";
 
 const AdminAccountItem = ({ onNavigate }: { onNavigate: () => void }) => {
@@ -154,6 +155,7 @@ const Header = () => {
     { to: "/dex", label: "DEX", icon: Coins },
     { to: "/trading-bots", label: "Trading Bots", icon: Bot },
     { to: "/defi-sniper", label: "DeFi Sniper", icon: Crosshair },
+    { to: "/arbitrage", label: "Arbitrage Scanner", icon: TrendingUp },
     { to: "/screener", label: "Crypto Screener", icon: TrendingUp },
     { to: "/derivatives", label: "Derivatives", icon: Layers },
     { to: "/cockpit", label: "Trading Cockpit", icon: LayoutGrid },
@@ -189,6 +191,7 @@ const Header = () => {
   const assetLinks = [
     { to: "/quwallet", label: "QuWallet", icon: Wallet },
     { to: "/staking", label: "Staking", icon: Coins },
+    { to: "/withdrawal", label: "Withdraw Funds", icon: Wallet },
     { to: "/nft-studio", label: "NFT Studio", icon: Layers },
     { to: "/token-launchpad", label: "Token Launchpad", icon: Zap },
     { to: "/faucet", label: "Crypto Faucet", icon: Crosshair },
@@ -205,6 +208,7 @@ const Header = () => {
   ];
 
   const moreLinks = [
+    { to: "/referral", label: "Refer & Earn", icon: Users },
     { to: "/stats", label: "⚔️ Stats Arena", icon: Trophy },
     { to: "/rewards", label: "🏆 Rewards Store", icon: Gift },
     { to: "/giveaway", label: "🎁 $2M Giveaway", icon: Gift },

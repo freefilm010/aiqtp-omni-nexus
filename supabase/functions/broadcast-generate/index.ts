@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, logGeneration, rateLimitResponse } from "../_shared/rateLimiter.ts";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,9 +12,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -65,57 +63,42 @@ Return a JSON array of 5 broadcast items. Each item must have:
 
 Make it sound like a professional financial news anchor. Use real market context. Include specific tickers, percentages, and price levels.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Generate 5 ${contentType.replace("_", " ")} broadcast items for right now (${new Date().toISOString()}). Focus on current market conditions and upcoming events.` },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "create_broadcasts",
-            description: "Create broadcast content items",
-            parameters: {
-              type: "object",
-              properties: {
+    const aiResult = await callAI({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Generate 5 ${contentType.replace("_", " ")} broadcast items for right now (${new Date().toISOString()}). Focus on current market conditions and upcoming events.` },
+      ],
+      tools: [{
+        type: "function",
+        function: {
+          name: "create_broadcasts",
+          description: "Create broadcast content items",
+          parameters: {
+            type: "object",
+            properties: {
+              items: {
+                type: "array",
                 items: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      content_type: { type: "string", enum: ["text", "alert", "analysis"] },
-                      title: { type: "string" },
-                      body: { type: "string" },
-                      category: { type: "string", enum: ["market_update", "breaking_news", "economic_calendar", "ipo_ico", "pattern_alert", "earnings"] },
-                      priority: { type: "number" },
-                    },
-                    required: ["content_type", "title", "body", "category", "priority"],
+                  type: "object",
+                  properties: {
+                    content_type: { type: "string", enum: ["text", "alert", "analysis"] },
+                    title: { type: "string" },
+                    body: { type: "string" },
+                    category: { type: "string", enum: ["market_update", "breaking_news", "economic_calendar", "ipo_ico", "pattern_alert", "earnings"] },
+                    priority: { type: "number" },
                   },
+                  required: ["content_type", "title", "body", "category", "priority"],
                 },
               },
-              required: ["items"],
             },
+            required: ["items"],
           },
-        }],
-        tool_choice: { type: "function", function: { name: "create_broadcasts" } },
-      }),
+        },
+      }],
+      tool_choice: { type: "function", function: { name: "create_broadcasts" } },
     });
 
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (aiResponse.status === 402) return new Response(JSON.stringify({ error: "Credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      throw new Error(`AI error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) throw new Error("No tool call returned");
 
     const parsed = JSON.parse(toolCall.function.arguments);

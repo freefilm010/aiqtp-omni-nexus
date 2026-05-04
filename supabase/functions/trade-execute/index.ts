@@ -117,40 +117,37 @@ serve(async (req) => {
             .single();
 
           const apiKey = vault?.api_key_encrypted || '';
-          const exchangeType = account.account_type;
+          const exchangeType = account.account_type.toLowerCase();
 
-          // Route to appropriate exchange
+          // Route all live orders through the Python trading service (CCXT).
+          // CCXT supports 100+ exchanges — no per-exchange stub needed here.
+          const workerUrl = Deno.env.get('RENDER_WORKER_URL') ?? 'https://aiqtp-trading-service.onrender.com';
           let exchangeResult;
           try {
-            switch (exchangeType.toLowerCase()) {
-              case 'binance':
-                exchangeResult = await executeBinanceOrder({
-                  symbol,
-                  side,
-                  type,
-                  quantity,
-                  price,
-                  apiKey,
-                  apiSecret: Deno.env.get(`${account.account_name}_API_SECRET`) || ''
-                });
-                break;
-              case 'coinbase':
-                exchangeResult = await executeCoinbaseOrder({
-                  symbol,
-                  side,
-                  type,
-                  quantity,
-                  price,
-                  apiKey,
-                  apiSecret: Deno.env.get(`${account.account_name}_API_SECRET`) || ''
-                });
-                break;
-              default:
-                return new Response(
-                  JSON.stringify({ success: false, error: `Exchange ${exchangeType} not yet supported for live trading` }),
-                  { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                );
+            const ccxtRes = await fetch(`${workerUrl}/ccxt/live_order`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                exchange: exchangeType,
+                symbol,
+                side,
+                type,
+                amount: quantity,
+                price: type === 'limit' ? price : undefined,
+                api_key: apiKey,
+                api_secret: Deno.env.get(`${account.account_name.toUpperCase()}_API_SECRET`) || '',
+              }),
+            });
+            if (!ccxtRes.ok) {
+              const errText = await ccxtRes.text();
+              throw new Error(`Trading service error (${ccxtRes.status}): ${errText}`);
             }
+            const ccxtData = await ccxtRes.json();
+            exchangeResult = {
+              orderId: ccxtData.id ?? `ord_${Date.now()}`,
+              filledPrice: ccxtData.average ?? ccxtData.price ?? price ?? 0,
+              status: ccxtData.status ?? 'open',
+            };
           } catch (exchangeError: any) {
             console.error('Exchange execution error:', exchangeError);
             
@@ -339,35 +336,3 @@ serve(async (req) => {
   }
 });
 
-// Exchange-specific order execution functions
-async function executeBinanceOrder(params: {
-  symbol: string;
-  side: string;
-  type: string;
-  quantity: number;
-  price?: number;
-  apiKey: string;
-  apiSecret: string;
-}): Promise<{ orderId: string; filledPrice: number; status: string }> {
-  // Binance API integration
-  // This is a placeholder - real implementation would use Binance API
-  const timestamp = Date.now();
-  const baseUrl = 'https://api.binance.com';
-  
-  // For now, return a mock response indicating exchange integration needed
-  throw new Error('Binance API integration requires API keys. Please configure in account settings.');
-}
-
-async function executeCoinbaseOrder(params: {
-  symbol: string;
-  side: string;
-  type: string;
-  quantity: number;
-  price?: number;
-  apiKey: string;
-  apiSecret: string;
-}): Promise<{ orderId: string; filledPrice: number; status: string }> {
-  // Coinbase API integration
-  // This is a placeholder - real implementation would use Coinbase API
-  throw new Error('Coinbase API integration requires API keys. Please configure in account settings.');
-}

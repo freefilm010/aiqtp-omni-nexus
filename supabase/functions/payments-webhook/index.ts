@@ -55,6 +55,20 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
   await logAudit('platform_deposit_credited', userId, {
     session_id: session.id, amount_usd: amountUsd, environment: env,
   });
+
+  // Record in platform_revenue for distribution tracking (1% platform fee on deposit)
+  const platformFee = Math.round(amountUsd * 0.01 * 100) / 100;
+  if (platformFee > 0) {
+    const { error: revErr } = await getSupabase().from('platform_revenue').insert({
+      source_type: 'trading_fee',
+      source_category: 'stripe_deposit',
+      amount: platformFee,
+      currency: 'USD',
+      status: 'pending',
+      metadata: { session_id: session.id, user_id: userId, gross_deposit: amountUsd },
+    });
+    if (revErr) console.error('platform_revenue insert failed:', revErr.message);
+  }
 }
 
 async function handlePaymentFailed(invoice: any, env: StripeEnv) {

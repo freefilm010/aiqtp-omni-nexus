@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -138,11 +139,6 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
     // Log call
     await supabaseClient.from('ai_generation_logs').insert({
       user_id: user.id,
@@ -171,43 +167,14 @@ Analyze the market conditions and provide a prediction. Return ONLY a valid JSON
 
     console.log(`Prediction request: ${symbol} ${model} ${timeframe} by user ${user.id}`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are a quantitative financial analyst. Respond ONLY with valid JSON, no markdown or explanation." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.3,
-      }),
+    const aiResult = await callAI({
+      messages: [
+        { role: "system", content: "You are a quantitative financial analyst. Respond ONLY with valid JSON, no markdown or explanation." },
+        { role: "user", content: prompt }
+      ],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "AI service is temporarily busy. Please wait and try again." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = aiResult.choices?.[0]?.message?.content;
     
     let prediction;
     try {

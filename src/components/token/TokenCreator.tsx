@@ -20,8 +20,11 @@ import {
   AlertTriangle
 } from "lucide-react";
 import GasFeeOptimizer from "./GasFeeOptimizer";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const TokenCreator = () => {
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [description, setDescription] = useState("");
@@ -33,17 +36,49 @@ const TokenCreator = () => {
   const [lpLock, setLpLock] = useState(true);
   const [lpLockDays, setLpLockDays] = useState("30");
   const [antiBot, setAntiBot] = useState(true);
+  const [launching, setLaunching] = useState(false);
 
-  const estimatedMarketCap = parseFloat(initialLiquidity) * 2 * 1000; // Simplified calculation
+  const estimatedMarketCap = parseFloat(initialLiquidity) * 2 * 1000;
 
-  const launch = () => {
+  const launch = async () => {
     if (!name || !symbol) {
       toast.error("Please fill in token name and symbol");
       return;
     }
-    toast.success("Token launch initiated!", {
-      description: `${name} (${symbol}) is being deployed on ${chain}`
-    });
+    if (!user) {
+      toast.error("You must be signed in to launch a token");
+      return;
+    }
+    setLaunching(true);
+    try {
+      const { data, error } = await supabase.from("dex_tokens").insert({
+        creator_id: user.id,
+        name,
+        symbol: symbol.toUpperCase(),
+        description,
+        chain,
+        total_supply: parseFloat(totalSupply),
+        initial_liquidity_sol: parseFloat(initialLiquidity),
+        bonding_curve_type: bondingCurve,
+        dev_allocation_percent: devAllocation[0],
+        lp_locked: lpLock,
+        lp_lock_days: lpLock ? parseInt(lpLockDays) : 0,
+        anti_bot_enabled: antiBot,
+        status: "pending",
+        market_cap_usd: estimatedMarketCap,
+      }).select().single();
+
+      if (error) throw error;
+
+      toast.success("Token launch submitted!", {
+        description: `${name} (${symbol}) queued for deployment on ${chain}. Token ID: ${data.id.slice(0, 8)}`
+      });
+      setName(""); setSymbol(""); setDescription("");
+    } catch (err: any) {
+      toast.error("Launch failed", { description: err.message });
+    } finally {
+      setLaunching(false);
+    }
   };
 
   return (
@@ -211,9 +246,9 @@ const TokenCreator = () => {
             )}
           </div>
 
-          <Button className="w-full" size="lg" onClick={launch}>
+          <Button className="w-full" size="lg" onClick={launch} disabled={launching}>
             <Rocket className="h-4 w-4 mr-2" />
-            Launch Token
+            {launching ? "Launching..." : "Launch Token"}
           </Button>
         </CardContent>
       </Card>

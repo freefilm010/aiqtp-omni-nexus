@@ -6,6 +6,7 @@ when the DATABASE_URL env var is set.
 import json
 import logging
 import os
+import re
 from typing import Any, Optional
 
 import psycopg2
@@ -17,9 +18,29 @@ DATABASE_URL: Optional[str] = os.getenv("DATABASE_URL")
 
 _conn: Optional[Any] = None
 
+# Allowlist for identifier names — only letters, digits, underscores.
+_IDENT_RE = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
+
+
+def _safe_ident(name: str, context: str = "identifier") -> str:
+    """Raise if name contains characters that could escape an SQL identifier."""
+    if not _IDENT_RE.match(name):
+        raise ValueError(f"Unsafe SQL {context}: {name!r}")
+    return name
+
+
+def _safe_col_list(cols: str) -> str:
+    """Validate a comma-separated column list or '*'."""
+    if cols.strip() == "*":
+        return "*"
+    parts = [c.strip() for c in cols.split(",")]
+    return ", ".join(_safe_ident(p, "column") for p in parts)
+
 
 def _get_conn():
     global _conn
+    if DATABASE_URL is None:
+        raise RuntimeError("DATABASE_URL env var is not set — cannot connect to Render DB")
     if _conn is None or _conn.closed:
         _conn = psycopg2.connect(DATABASE_URL)
         _conn.autocommit = True
@@ -35,7 +56,7 @@ class _Result:
 
 class _TableBuilder:
     def __init__(self, name: str):
-        self._name = name
+        self._name = _safe_ident(name, "table")
         self._op: Optional[str] = None
         self._cols = "*"
         self._where: list[tuple[str, Any]] = []
@@ -46,30 +67,30 @@ class _TableBuilder:
 
     def select(self, cols: str = "*") -> "_TableBuilder":
         self._op = "select"
-        self._cols = cols
+        self._cols = _safe_col_list(cols)
         return self
 
     def eq(self, col: str, val: Any) -> "_TableBuilder":
-        self._where.append((col, val))
+        self._where.append((_safe_ident(col, "column"), val))
         return self
 
     def order(self, col: str, *, ascending: bool = True) -> "_TableBuilder":
-        self._order_col = col
+        self._order_col = _safe_ident(col, "column")
         self._order_asc = ascending
         return self
 
     def limit(self, n: int) -> "_TableBuilder":
-        self._limit_n = n
+        self._limit_n = int(n)
         return self
 
     def insert(self, payload: dict) -> "_TableBuilder":
         self._op = "insert"
-        self._payload = payload
+        self._payload = {_safe_ident(k, "column"): v for k, v in payload.items()}
         return self
 
     def update(self, payload: dict) -> "_TableBuilder":
         self._op = "update"
-        self._payload = payload
+        self._payload = {_safe_ident(k, "column"): v for k, v in payload.items()}
         return self
 
     def execute(self) -> _Result:
@@ -111,6 +132,7 @@ class _TableBuilder:
                 cur.execute(sql, vals)
                 return _Result(data=None, error=None)
             except Exception as exc:
+                log.error("render_db insert error on %s: %s", self._name, exc)
                 return _Result(data=None, error=str(exc))
 
         elif self._op == "update":
@@ -126,6 +148,7 @@ class _TableBuilder:
                 cur.execute(sql, set_vals + where_vals)
                 return _Result(data=None, error=None)
             except Exception as exc:
+                log.error("render_db update error on %s: %s", self._name, exc)
                 return _Result(data=None, error=str(exc))
 
         return _Result(error="Unknown operation")

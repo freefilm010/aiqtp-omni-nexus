@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -109,34 +110,17 @@ serve(async (req) => {
 
     console.log(`AI Copilot request from ${user.id}: ${message.substring(0, 50)}...`);
 
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY') ?? Deno.env.get('ANTHROPIC_API_KEY');
-    
-    if (!lovableApiKey) {
-      const response = generateLocalResponse(message, context);
-      return new Response(
-        JSON.stringify({ response }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Log this call for rate limiting
     await authClient.from('ai_generation_logs').insert({
       user_id: user.id,
       function_name: 'ai-copilot'
     });
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-5-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an AI Copilot for the AIQTP™ AI Quantum Trading Portal admin dashboard. You help the admin manage:
+    const aiResult = await callAI({
+      messages: [
+        {
+          role: 'system',
+          content: `You are an AI Copilot for the AIQTP™ AI Quantum Trading Portal admin dashboard. You help the admin manage:
 - Portfolio optimization (aggressive 30% stable / 70% growth strategy)
 - Revenue streams and distribution
 - Payment processor configuration
@@ -145,35 +129,13 @@ serve(async (req) => {
 - User management
 
 Be concise, data-driven, and provide actionable insights. Format responses with markdown for readability.`
-          },
-          { role: 'user', content: message }
-        ],
-        max_completion_tokens: 1000,
-      }),
+        },
+        { role: 'user', content: message }
+      ],
+      max_tokens: 1000,
     });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('AI API error:', aiResponse.status, errorText);
-
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'AI service is temporarily busy. Please wait and try again.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      throw new Error(`AI API error: ${aiResponse.status}`);
-    }
-
-    const data = await aiResponse.json();
-    const responseText = data.choices?.[0]?.message?.content || generateLocalResponse(message, context);
+    const responseText = aiResult.choices?.[0]?.message?.content || generateLocalResponse(message, context);
 
     return new Response(
       JSON.stringify({

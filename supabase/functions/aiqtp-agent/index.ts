@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -303,12 +304,6 @@ serve(async (req) => {
     console.log(`Authenticated user ${userId} accessing aiqtp-agent`);
 
     const request: AIQTPRequest = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
-
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
-    }
-
     const systemPrompt = buildSystemPrompt(request.context);
     const messages = [
       { role: "system", content: systemPrompt },
@@ -323,64 +318,18 @@ serve(async (req) => {
       });
     }
 
-    // Use multi-model approach - start with fast model
-    let model = AI_MODELS.fast;
-    
-    // Use reasoning model for complex decisions
-    if (request.action === "generate_revenue" || request.task?.type?.includes("strategy")) {
-      model = AI_MODELS.reasoning;
-    }
-
-    // Call Lovable AI
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        tools: AIQTP_TOOLS.map(tool => ({
-          type: "function",
-          function: {
-            name: tool.name,
-            description: tool.description,
-            parameters: tool.parameters
-          }
-        })),
-        tool_choice: "auto"
-      }),
+    const aiData = await callAI({
+      messages,
+      tools: AIQTP_TOOLS.map(tool => ({
+        type: "function",
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.parameters
+        }
+      })),
+      tool_choice: "auto"
     });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("AI Gateway error:", aiResponse.status, errorText);
-
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({
-          error: "Rate limit exceeded. Revenue generators paused temporarily.",
-          aiqtp_status: "throttled"
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({
-          error: "Credits depleted. Please add funds to continue autonomous operations.",
-          aiqtp_status: "paused"
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      throw new Error(`AI Gateway error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
     const choice = aiData.choices?.[0];
 
     // Handle tool calls
@@ -402,8 +351,8 @@ serve(async (req) => {
       action: request.action,
       response: choice?.message?.content || "Task executed",
       tool_executions: toolResults,
-      model_used: model,
-      usage: aiData.usage,
+      model_used: "claude-haiku-4-5",
+      usage: null,
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

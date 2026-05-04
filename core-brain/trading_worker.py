@@ -59,6 +59,10 @@ def _init_db_backend():
         def __init__(self):
             url = os.environ.get("SUPABASE_URL", "")
             key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+            if not url or not key:
+                raise RuntimeError(
+                    "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set when DATABASE_URL is absent"
+                )
             self._client = create_client(url, key)
 
         def table(self, name: str):
@@ -87,6 +91,8 @@ LOOP_INTERVAL_SECONDS: int = int(os.getenv("LOOP_INTERVAL_SECONDS", "60"))
 # ── Alpaca brokerage (QuantClaw-Prod live order execution) ────────────────────
 # Keys are read from env vars if set, otherwise fetched from Supabase
 # account_key_vault at startup so the user can configure them via the UI.
+ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+
 ALPACA_API_KEY: Optional[str]    = os.getenv("ALPACA_API_KEY")
 ALPACA_SECRET_KEY: Optional[str] = os.getenv("ALPACA_SECRET_KEY")
 ALPACA_BASE_URL: str             = os.getenv(
@@ -195,6 +201,7 @@ TRADE_QUANTITY:  float = 0.001  # Fixed size — replace with a proper risk/sizi
 _last_run_at:    dict[str, float] = {}  # strategy_id → epoch float
 _last_price:     dict[str, float] = {}  # symbol      → last seen USD price
 _last_direction: dict[str, str]   = {}  # strategy_id → 'buy' | 'sell'
+_cycle_count:    int               = 0   # incremented every main loop iteration
 
 
 # ─── Utilities ────────────────────────────────────────────────────────────────
@@ -742,6 +749,183 @@ def _execute_alpaca_live_order(params: dict, user_id: str, agent_type: str) -> d
     }
 
 
+def _call_anthropic_haiku(system_prompt: str, user_prompt: str) -> str:
+    """
+    Calls claude-haiku-4-5 via the Anthropic Messages API.
+    Returns the text content of the first message block.
+    Raises RuntimeError if ANTHROPIC_API_KEY is not set or the call fails.
+    """
+    if not ANTHROPIC_API_KEY:
+        raise EnvironmentError(
+            "ANTHROPIC_API_KEY is not set — cannot call Anthropic API for marketing tools."
+        )
+
+    payload = {
+        "model": "claude-haiku-4-5",
+        "max_tokens": 1024,
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": user_prompt}],
+    }
+    resp = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    # Extract the first text block from the Anthropic response
+    for block in data.get("content", []):
+        if block.get("type") == "text":
+            return block["text"]
+    return ""
+
+
+def _run_social_media_post(params: dict) -> dict:
+    """
+    Generates a social media post via claude-haiku-4-5 and returns the content.
+    Supported params: platform, topic, tone, length, hashtags, etc.
+    """
+    platform = params.get("platform", "Twitter/X")
+    topic    = params.get("topic", "crypto trading")
+    tone     = params.get("tone", "professional")
+    length   = params.get("length", "short")
+    extras   = {k: v for k, v in params.items()
+                if k not in ("platform", "topic", "tone", "length")}
+
+    system_prompt = (
+        "You are an expert social media content creator specialising in fintech and crypto. "
+        "Write compelling, platform-appropriate posts that drive engagement."
+    )
+    user_prompt = (
+        f"Write a {tone} {length} social media post for {platform} about: {topic}.\n"
+        f"Additional context: {extras}\n"
+        "Include relevant hashtags and a clear call-to-action. "
+        "Return only the post text, ready to publish."
+    )
+
+    generated = _call_anthropic_haiku(system_prompt, user_prompt)
+    return {
+        "platform":    platform,
+        "topic":       topic,
+        "tone":        tone,
+        "length":      length,
+        "post_content": generated,
+        "generated_by": "claude-haiku-4-5",
+    }
+
+
+def _run_marketing_campaign(params: dict) -> dict:
+    """
+    Generates a marketing campaign brief via claude-haiku-4-5.
+    Supported params: campaign_name, product, target_audience, goal, budget, duration, channels, etc.
+    """
+    campaign_name    = params.get("campaign_name", "AIQTP Campaign")
+    product          = params.get("product", "AIQTP trading platform")
+    target_audience  = params.get("target_audience", "retail crypto traders")
+    goal             = params.get("goal", "user acquisition")
+    extras           = {k: v for k, v in params.items()
+                        if k not in ("campaign_name", "product", "target_audience", "goal")}
+
+    system_prompt = (
+        "You are a senior marketing strategist specialising in fintech and crypto platforms. "
+        "Produce concise, actionable campaign briefs in structured markdown."
+    )
+    user_prompt = (
+        f"Create a marketing campaign brief for '{campaign_name}'.\n"
+        f"Product: {product}\n"
+        f"Target audience: {target_audience}\n"
+        f"Goal: {goal}\n"
+        f"Additional details: {extras}\n"
+        "Include: Executive Summary, Key Messages, Channel Strategy, "
+        "Success Metrics, and a rough Timeline. Return well-structured markdown."
+    )
+
+    generated = _call_anthropic_haiku(system_prompt, user_prompt)
+    return {
+        "campaign_name":   campaign_name,
+        "product":         product,
+        "target_audience": target_audience,
+        "goal":            goal,
+        "campaign_brief":  generated,
+        "generated_by":    "claude-haiku-4-5",
+    }
+
+
+def _run_content_generator(params: dict) -> dict:
+    """
+    Generates blog posts, newsletters, or other long-form content via claude-haiku-4-5.
+    Supported params: content_type, topic, tone, length, audience, keywords, etc.
+    """
+    content_type = params.get("content_type", "blog post")
+    topic        = params.get("topic", "algorithmic trading strategies")
+    tone         = params.get("tone", "informative")
+    length       = params.get("length", "medium")
+    audience     = params.get("audience", "crypto enthusiasts")
+    extras       = {k: v for k, v in params.items()
+                    if k not in ("content_type", "topic", "tone", "length", "audience")}
+
+    system_prompt = (
+        "You are an expert fintech content writer who creates engaging, accurate, and "
+        "SEO-friendly content for crypto and algorithmic trading audiences."
+    )
+    user_prompt = (
+        f"Write a {tone} {length} {content_type} for {audience} about: {topic}.\n"
+        f"Additional requirements: {extras}\n"
+        "Structure with a compelling headline, introduction, main body with subheadings, "
+        "and a strong conclusion with a call-to-action."
+    )
+
+    generated = _call_anthropic_haiku(system_prompt, user_prompt)
+    return {
+        "content_type": content_type,
+        "topic":        topic,
+        "tone":         tone,
+        "length":       length,
+        "audience":     audience,
+        "content":      generated,
+        "generated_by": "claude-haiku-4-5",
+    }
+
+
+def _run_campaign_scheduler(params: dict) -> dict:
+    """
+    Acknowledges and logs a campaign schedule.
+    No actual publishing occurs — outputs the planned schedule as JSON.
+    Supported params: campaign_name, channels, start_date, end_date, frequency, posts_per_channel, etc.
+    """
+    campaign_name      = params.get("campaign_name", "Unnamed Campaign")
+    channels           = params.get("channels", ["Twitter/X", "LinkedIn"])
+    start_date         = params.get("start_date", utcnow_iso()[:10])
+    end_date           = params.get("end_date", "")
+    frequency          = params.get("frequency", "daily")
+    posts_per_channel  = params.get("posts_per_channel", 1)
+
+    schedule: dict[str, Any] = {
+        "campaign_name":     campaign_name,
+        "channels":          channels,
+        "start_date":        start_date,
+        "end_date":          end_date,
+        "frequency":         frequency,
+        "posts_per_channel": posts_per_channel,
+        "status":            "scheduled",
+        "note":              "Schedule acknowledged and logged. No publishing has occurred yet.",
+        "acknowledged_at":   utcnow_iso(),
+        "additional_params": {k: v for k, v in params.items()
+                              if k not in ("campaign_name", "channels", "start_date",
+                                           "end_date", "frequency", "posts_per_channel")},
+    }
+    log.info(
+        "[campaign_scheduler] Campaign '%s' scheduled | channels=%s freq=%s start=%s",
+        campaign_name, channels, frequency, start_date,
+    )
+    return schedule
+
+
 def poll_and_execute_directives() -> int:
     """
     Polls agent_directives for pending rows, executes each tool, and writes
@@ -753,6 +937,10 @@ def poll_and_execute_directives() -> int:
       ccxt_sim_order      → simulate_trade() (no broker)
       ccxt_live_order     → _execute_alpaca_live_order() (prod-gated)
       factor_generation   → _run_factor_generation()
+      social_media_post   → _run_social_media_post()   (Anthropic claude-haiku-4-5)
+      marketing_campaign  → _run_marketing_campaign()  (Anthropic claude-haiku-4-5)
+      content_generator   → _run_content_generator()   (Anthropic claude-haiku-4-5)
+      campaign_scheduler  → _run_campaign_scheduler()  (log-only, no publishing)
     """
     try:
         result = (
@@ -809,9 +997,25 @@ def poll_and_execute_directives() -> int:
             elif tool == "factor_generation":
                 out = _run_factor_generation(params)
 
+            elif tool == "social_media_post":
+                out = _run_social_media_post(params)
+
+            elif tool == "marketing_campaign":
+                out = _run_marketing_campaign(params)
+
+            elif tool == "content_generator":
+                out = _run_content_generator(params)
+
+            elif tool == "campaign_scheduler":
+                out = _run_campaign_scheduler(params)
+
             else:
-                raise ValueError(f"Unknown tool: {tool!r}. Supported: freqtrade_backtest, "
-                                 "freqtrade_optimize, ccxt_sim_order, ccxt_live_order, factor_generation")
+                raise ValueError(
+                    f"Unknown tool: {tool!r}. Supported: freqtrade_backtest, "
+                    "freqtrade_optimize, ccxt_sim_order, ccxt_live_order, "
+                    "factor_generation, social_media_post, marketing_campaign, "
+                    "content_generator, campaign_scheduler"
+                )
 
             _mark_directive(did, "done", result=out)
             log.info("[directive] %s done | tool=%s", did[:8], tool)
@@ -828,6 +1032,12 @@ def poll_and_execute_directives() -> int:
 # ─── Main loop ────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    # Fail fast on missing required env vars — empty strings cause silent failures
+    missing = [v for v in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY") if not os.environ.get(v)]
+    if missing and not os.getenv("DATABASE_URL"):
+        # DATABASE_URL means we're on Render PostgreSQL — Supabase vars optional
+        raise RuntimeError(f"Required env var(s) not set: {', '.join(missing)}")
+
     # Load Alpaca keys from Supabase vault if not set via env vars
     _load_alpaca_keys_from_vault()
 
@@ -942,6 +1152,18 @@ def main() -> None:
 
             if executed == 0:
                 log.info("All strategies gated by frequency. No trades this cycle.")
+
+            # ── Periodic: graduation pipeline (every 20 cycles ≈ 20 min) ────
+            global _cycle_count
+            _cycle_count += 1
+            if _cycle_count % 20 == 0:
+                try:
+                    result = db.rpc("run_bot_graduation").execute()
+                    n_grad = result.data if isinstance(result.data, int) else 0
+                    if n_grad:
+                        log.info("[graduation] %d bot(s) graduated this run", n_grad)
+                except Exception as grad_exc:
+                    log.warning("[graduation] run_bot_graduation failed (non-fatal): %s", grad_exc)
 
         except Exception as exc:
             log.error(

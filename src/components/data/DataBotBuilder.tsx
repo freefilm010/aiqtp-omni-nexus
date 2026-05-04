@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getBotAvatar } from "@/lib/bots/botAvatars";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +94,7 @@ const DataBotBuilder = () => {
   const [frequency, setFrequency] = useState('hourly');
   const [sources, setSources] = useState<string[]>([]);
   const [newSource, setNewSource] = useState('');
-  const [profitShare, setProfitShare] = useState([30]);
+  const [profitShare, setProfitShare] = useState([50]);
 
   useEffect(() => {
     loadConfigs();
@@ -305,6 +306,8 @@ const DataBotBuilder = () => {
                     configs.map(config => (
                       <div key={config.id} className="p-4 rounded-lg border hover:border-primary/50 transition-colors">
                         <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-start gap-3">
+                            <img src={getBotAvatar(config.bot_type, config.is_graduated ? 'Qualified' : undefined)} alt={config.bot_type} className="h-12 w-12 object-contain rounded-lg bg-muted/30 p-1 shrink-0" />
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="font-medium">{config.name}</h4>
@@ -315,6 +318,7 @@ const DataBotBuilder = () => {
                               <Badge variant="outline">{config.data_category}</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground mt-1">{config.description}</p>
+                          </div>
                           </div>
                           <Switch
                             checked={config.is_active}

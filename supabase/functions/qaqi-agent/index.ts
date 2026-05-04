@@ -907,16 +907,48 @@ serve(async (req) => {
     }
 
     const requestedModel = request.model || "google/gemini-2.5-pro";
-    const isClaudeModel = requestedModel.startsWith("claude-");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
+    // Determine model provider from model name
+    const isClaudeModel = requestedModel.includes("claude");
+    const isGeminiModel = requestedModel.includes("gemini");
+    const isOpenAIModel = requestedModel.includes("gpt") || requestedModel.includes("o1") || requestedModel.includes("o3");
+
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
-    if (!isClaudeModel && !LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
+    // Validate that the required key exists; fall back to Claude if not
+    let effectiveModel = requestedModel;
+    let effectiveProvider: "claude" | "gemini" | "openai" = "claude";
+
+    if (isClaudeModel) {
+      if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
+      effectiveProvider = "claude";
+    } else if (isGeminiModel) {
+      if (!GOOGLE_AI_KEY) {
+        console.warn("GOOGLE_AI_KEY not configured — falling back to Claude");
+        effectiveModel = "claude-3-5-sonnet-20241022";
+        effectiveProvider = "claude";
+      } else {
+        effectiveProvider = "gemini";
+      }
+    } else if (isOpenAIModel) {
+      if (!OPENAI_API_KEY) {
+        console.warn("OPENAI_API_KEY not configured — falling back to Claude");
+        effectiveModel = "claude-3-5-sonnet-20241022";
+        effectiveProvider = "claude";
+      } else {
+        effectiveProvider = "openai";
+      }
+    } else {
+      // Unknown model — fall back to Claude
+      console.warn(`Unknown model "${requestedModel}" — falling back to Claude`);
+      effectiveModel = "claude-3-5-sonnet-20241022";
+      effectiveProvider = "claude";
     }
-    if (isClaudeModel && !ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY not configured for Claude models");
+
+    if (effectiveProvider === "claude" && !ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY not configured");
     }
 
     // Log call
@@ -949,9 +981,88 @@ serve(async (req) => {
       });
     }
 
+    // ── OpenClaw RAG Router ────────────────────────────────────────────────────
+    // When the requested tool is a code/research search, bypass the main model
+    // dispatch and answer with the OpenClaw specialist persona using Claude.
+    const OPENCLAW_TOOLS = new Set([
+      "search_trading_code",
+      "search_quant_research",
+      "search_onchain",
+    ]);
+
+    if (request.context?.tool && OPENCLAW_TOOLS.has(request.context.tool)) {
+      if (!ANTHROPIC_API_KEY) {
+        throw new Error("ANTHROPIC_API_KEY not configured for OpenClaw router");
+      }
+
+      // Extract the user's query from the last user message
+      const userQuery = (request.messages ?? [])
+        .filter((m) => m.role === "user")
+        .map((m) => m.content)
+        .join("\n")
+        .trim() || "Provide a general overview of the topic.";
+
+      const openclawSystemPrompt =
+        "You are OpenClaw — an expert quantitative trading research agent with deep " +
+        "knowledge of trading algorithms, on-chain protocols, and ML strategies. " +
+        "When asked to search for code, research, or on-chain data, provide the most " +
+        "relevant technical knowledge, code examples, strategy explanations, and " +
+        "references you have. Be precise, thorough, and cite key concepts clearly.";
+
+      const openclawResponse = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5",
+          max_tokens: 2048,
+          system: openclawSystemPrompt,
+          messages: [{ role: "user", content: userQuery }],
+        }),
+      });
+
+      if (!openclawResponse.ok) {
+        const errText = await openclawResponse.text();
+        throw new Error(`OpenClaw Anthropic API error ${openclawResponse.status}: ${errText}`);
+      }
+
+      const openclawData = await openclawResponse.json();
+      const openclawText =
+        openclawData.content?.find((c: any) => c.type === "text")?.text ?? "";
+
+      return new Response(
+        JSON.stringify({
+          qaqi_status: "operational",
+          qaqi_version: "4.0.0",
+          action: request.action,
+          response: openclawText,
+          tool_executions: [
+            {
+              tool: request.context.tool,
+              query: userQuery,
+              result: openclawText,
+              router: "openclaw",
+              success: true,
+            },
+          ],
+          model: "claude-haiku-4-5",
+          model_used: "claude-haiku-4-5",
+          usage: openclawData.usage,
+          rate_limit: { used: qaqiUsed + 1, limit: qaqiLimit, remaining: qaqiLimit - qaqiUsed - 1 },
+          conversation_id: request.conversationId,
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    // ── End OpenClaw RAG Router ────────────────────────────────────────────────
+
     let aiResponse: Response;
 
-    if (isClaudeModel) {
+    if (effectiveProvider === "claude") {
       // Route to Anthropic API directly
       const anthropicMessages = messages
         .filter(m => m.role !== "system")
@@ -971,23 +1082,47 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: requestedModel,
+          model: effectiveModel,
           max_tokens: 4096,
           system: systemPrompt,
           messages: anthropicMessages,
           tools: anthropicTools,
         }),
       });
+    } else if (effectiveProvider === "gemini") {
+      // Route directly to Google Generative AI API
+      // Convert messages to Google format (skip system message — passed via systemInstruction)
+      const googleContents = messages
+        .filter(m => m.role !== "system")
+        .map(m => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }]
+        }));
+
+      // Use the model name as-is if it is already a bare model id, strip provider prefix if present
+      const googleModelId = effectiveModel.replace(/^google\//, "");
+
+      aiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${googleModelId}:generateContent?key=${GOOGLE_AI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: googleContents,
+          }),
+        }
+      );
     } else {
-      // Route to Lovable AI Gateway (OpenAI-compatible)
-      aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      // Route to OpenAI API directly
+      aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: requestedModel,
+          model: effectiveModel,
           messages,
           tools: QAQI_TOOLS.map(tool => ({
             type: "function",
@@ -1030,19 +1165,19 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    
-    // Normalize response format: Anthropic vs OpenAI-compatible
+
+    // Normalize response format: Anthropic / Google / OpenAI
     let choice: any;
-    let normalizedModel = requestedModel;
+    let normalizedModel = effectiveModel;
     let normalizedUsage = aiData.usage;
 
-    if (isClaudeModel) {
+    if (effectiveProvider === "claude") {
       // Anthropic format: { content: [{type, text}], model, usage: {input_tokens, output_tokens} }
       const textContent = aiData.content?.find((c: any) => c.type === "text");
       const toolUseBlocks = aiData.content?.filter((c: any) => c.type === "tool_use") || [];
-      
-      normalizedModel = aiData.model || requestedModel;
-      
+
+      normalizedModel = aiData.model || effectiveModel;
+
       if (toolUseBlocks.length > 0) {
         choice = {
           message: {
@@ -1065,10 +1200,16 @@ serve(async (req) => {
           }
         };
       }
+    } else if (effectiveProvider === "gemini") {
+      // Google Generative AI format: { candidates: [{ content: { parts: [{text}] } }] }
+      const candidate = aiData.candidates?.[0];
+      const text = candidate?.content?.parts?.map((p: any) => p.text || "").join("") || "";
+      normalizedUsage = aiData.usageMetadata;
+      choice = { message: { content: text, tool_calls: null } };
     } else {
-      // OpenAI-compatible format
+      // OpenAI format
       choice = aiData.choices?.[0];
-      normalizedModel = aiData.model;
+      normalizedModel = aiData.model || effectiveModel;
     }
     
     // Handle tool calls and feed results back for a synthesized response
@@ -1108,7 +1249,7 @@ serve(async (req) => {
       }
       
       // Feed tool results back to the model for a synthesized response
-      if (isClaudeModel) {
+      if (effectiveProvider === "claude") {
         // Anthropic follow-up: send tool results back
         const anthropicFollowUp = messages
           .filter(m => m.role !== "system")
@@ -1129,13 +1270,13 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: requestedModel,
+              model: effectiveModel,
               max_tokens: 4096,
               system: systemPrompt,
               messages: anthropicFollowUp,
             }),
           });
-          
+
           if (followUpResponse.ok) {
             const followUpData = await followUpResponse.json();
             const followUpText = followUpData.content?.find((c: any) => c.type === "text");
@@ -1144,33 +1285,74 @@ serve(async (req) => {
         } catch (e) {
           console.error("Claude follow-up call failed:", e);
         }
+      } else if (effectiveProvider === "gemini") {
+        // Google follow-up: append tool results as user turn
+        const googleFollowUpContents = messages
+          .filter(m => m.role !== "system")
+          .map(m => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content }]
+          }))
+          .concat([
+            { role: "model", parts: [{ text: finalContent }] },
+            {
+              role: "user",
+              parts: toolCallMessages.map(tm => ({
+                text: `Tool result for ${tm.tool_call_id}: ${tm.content}`
+              }))
+            }
+          ]);
+
+        const googleModelId = effectiveModel.replace(/^google\//, "");
+        try {
+          const followUpResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${googleModelId}:generateContent?key=${GOOGLE_AI_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: googleFollowUpContents,
+              }),
+            }
+          );
+
+          if (followUpResponse.ok) {
+            const followUpData = await followUpResponse.json();
+            const text = followUpData.candidates?.[0]?.content?.parts
+              ?.map((p: any) => p.text || "").join("") || "";
+            finalContent = text || finalContent;
+          }
+        } catch (e) {
+          console.error("Gemini follow-up call failed:", e);
+        }
       } else {
-        // Lovable AI Gateway follow-up
+        // OpenAI follow-up
         const followUpMessages = [
           ...messages,
           choice.message,
           ...toolCallMessages
         ];
-        
+
         try {
-          const followUpResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const followUpResponse = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+              "Authorization": `Bearer ${OPENAI_API_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: requestedModel,
+              model: effectiveModel,
               messages: followUpMessages,
             }),
           });
-          
+
           if (followUpResponse.ok) {
             const followUpData = await followUpResponse.json();
             finalContent = followUpData.choices?.[0]?.message?.content || finalContent;
           }
         } catch (e) {
-          console.error("Follow-up call failed:", e);
+          console.error("OpenAI follow-up call failed:", e);
         }
       }
     }
@@ -1182,6 +1364,7 @@ serve(async (req) => {
       response: finalContent || "Hello! I'm QAQI™, your Quantum AI assistant. How can I help you today?",
       tool_executions: toolResults,
       model: normalizedModel,
+      model_used: normalizedModel,
       usage: normalizedUsage,
       rate_limit: { used: qaqiUsed + 1, limit: qaqiLimit, remaining: qaqiLimit - qaqiUsed - 1 },
       capabilities: {

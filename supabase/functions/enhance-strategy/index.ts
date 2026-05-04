@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
+import { callAI } from "../_shared/anthropic.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,9 +59,6 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY') ?? Deno.env.get('ANTHROPIC_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
-
     const systemPrompt = `You are AIQTP RD-Agent, an expert quantitative strategy optimizer.
 Your task: enhance and improve the following trading strategy to maximize profitability, reduce drawdown, and improve consistency.
 
@@ -96,31 +94,14 @@ Current Consistency: ${strategy.consistency_score || 'Not tested'}
 
 Apply institutional-grade improvements. Make it production-ready for live trading.`;
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.4,
-      }),
+    const aiResult = await callAI({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
     });
 
-    if (!aiResponse.ok) {
-      const status = aiResponse.status;
-      if (status === 429) return new Response(JSON.stringify({ error: 'AI rate limit exceeded' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      if (status === 402) return new Response(JSON.stringify({ error: 'AI credits exhausted' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      throw new Error(`AI API error: ${status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const generatedText = aiData.choices[0].message.content;
+    const generatedText = aiResult.choices[0].message.content;
 
     let enhanced;
     try {

@@ -11,8 +11,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? Deno.env.get("ANTHROPIC_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -52,97 +52,52 @@ serve(async (req) => {
 
     const fullPrompt = `Create a high-quality NFT artwork: ${prompt}. Style: ${style}. The image should be vibrant, detailed, and suitable as a collectible digital art piece. Square format, centered composition.`;
 
-    // Use Lovable AI image generation model
-    const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {
+    // Ask Claude to generate a detailed SVG representing the NFT art
+    const claudePrompt = `You are an expert SVG artist specializing in NFT artwork.
+
+Generate a complete, self-contained SVG (512x512 viewBox) representing the following NFT concept:
+
+"${fullPrompt}"
+
+Requirements:
+- Output ONLY the raw SVG markup — no explanations, no markdown fences, no extra text.
+- The SVG must start with <svg and end with </svg>.
+- Use rich colors, gradients, shapes, and patterns to make it visually striking.
+- Include a descriptive <title> element inside the SVG.
+- Square format (viewBox="0 0 512 512").`;
+
+    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-image-preview",
-        messages: [
-          {
-            role: "user",
-            content: fullPrompt,
-          },
-        ],
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 4096,
+        messages: [{ role: "user", content: claudePrompt }],
       }),
     });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error("AI API error:", errText);
+      console.error("Anthropic API error:", errText);
       throw new Error(`AI generation failed: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    
-    // Extract image from response
-    let imageUrl: string | null = null;
-    const message = aiData.choices?.[0]?.message;
-    
-    if (message?.content) {
-      // Check for inline image data or URL in the response
-      if (Array.isArray(message.content)) {
-        for (const part of message.content) {
-          if (part.type === "image_url") {
-            imageUrl = part.image_url?.url || null;
-          } else if (part.type === "image" && part.source?.data) {
-            // Base64 image - upload to storage
-            const base64Data = part.source.data;
-            const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-            const fileName = `nft-${user.id}-${Date.now()}.png`;
-            
-            const { error: uploadError } = await serviceClient.storage
-              .from("chat-attachments")
-              .upload(`nft-images/${fileName}`, imageBytes, {
-                contentType: "image/png",
-                upsert: true,
-              });
-            
-            if (!uploadError) {
-              const { data: urlData } = serviceClient.storage
-                .from("chat-attachments")
-                .getPublicUrl(`nft-images/${fileName}`);
-              imageUrl = urlData.publicUrl;
-            }
-          }
-        }
-      } else if (typeof message.content === "string") {
-        // Check if it contains a markdown image or data URL
-        const imgMatch = message.content.match(/!\[.*?\]\((.*?)\)/);
-        if (imgMatch) {
-          imageUrl = imgMatch[1];
-        }
-        const dataUrlMatch = message.content.match(/(data:image\/[^;]+;base64,[^\s"]+)/);
-        if (dataUrlMatch) {
-          // Upload data URL to storage
-          const dataUrl = dataUrlMatch[1];
-          const base64Part = dataUrl.split(",")[1];
-          const mimeMatch = dataUrl.match(/data:(image\/[^;]+)/);
-          const mime = mimeMatch ? mimeMatch[1] : "image/png";
-          const ext = mime.split("/")[1] || "png";
-          
-          const imageBytes = Uint8Array.from(atob(base64Part), c => c.charCodeAt(0));
-          const fileName = `nft-${user.id}-${Date.now()}.${ext}`;
-          
-          const { error: uploadError } = await serviceClient.storage
-            .from("chat-attachments")
-            .upload(`nft-images/${fileName}`, imageBytes, {
-              contentType: mime,
-              upsert: true,
-            });
-          
-          if (!uploadError) {
-            const { data: urlData } = serviceClient.storage
-              .from("chat-attachments")
-              .getPublicUrl(`nft-images/${fileName}`);
-            imageUrl = urlData.publicUrl;
-          }
-        }
-      }
-    }
+
+    // Extract the SVG text from Claude's response
+    const rawText: string = aiData.content?.find((c: any) => c.type === "text")?.text || "";
+
+    // Pull out just the <svg>...</svg> block in case Claude added any surrounding text
+    const svgMatch = rawText.match(/<svg[\s\S]*<\/svg>/i);
+    const svgContent = svgMatch ? svgMatch[0] : rawText;
+
+    // Base64-encode the SVG and produce a data URL
+    const svgBase64 = btoa(unescape(encodeURIComponent(svgContent)));
+    let imageUrl: string | null = `data:image/svg+xml;base64,${svgBase64}`;
 
     // Update the NFT record with the image URL if nft_id provided
     if (nftId && imageUrl) {
