@@ -267,7 +267,7 @@ const QuantumResearchLab = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {backends.filter(b => b.status === 'online').map(backend => (
+                    {backends.filter(b => b.available).map(backend => (
                       <SelectItem key={backend.name} value={backend.name}>
                         {backend.name} ({backend.qubits} qubits)
                       </SelectItem>
