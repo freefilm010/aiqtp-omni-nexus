@@ -124,6 +124,92 @@ POST /brokers/ibkr/order?conid=<id>   — IBKR order (conid = contract ID)
 
 All installed at `/opt/node22/lib/node_modules/`. Restart Claude Code to load.
 
+## Bootstrap / Setup — Going from Zero to Live
+
+This documents the exact steps to stand up a fresh Supabase connection after the Lovable
+handoff. The Supabase project ref is `rueaxiyvseaxkysnoock`.
+
+### Prerequisites
+
+- A Supabase personal access token (get one at https://supabase.com/dashboard/account/tokens)
+- A GitHub personal access token with `workflow` scope (only needed to trigger deploy via API)
+- All broker/payment API keys at hand
+
+### Step 1 — Apply the two new SQL migrations
+
+The database schema already exists from Lovable-era migrations. Two new migrations
+(revenue infrastructure + staking) must be applied manually via the SQL editor:
+
+1. Open: https://supabase.com/dashboard/project/rueaxiyvseaxkysnoock/sql
+2. Paste the contents of `scripts/apply-new-migrations.sql` and click **Run**
+3. The script is idempotent — safe to run multiple times (uses `IF NOT EXISTS` + exception guards)
+
+Migrations included:
+- `supabase/migrations/20260504120000_revenue_infrastructure.sql` — Plaid ACH, PayPal,
+  auto-invest cron, affiliate referral codes, platform fee view
+- `supabase/migrations/20260504130000_staking_schema.sql` — user_stakes table, RLS policies,
+  staking_pool_stats view, unstake() RPC
+
+### Step 2 — Set Supabase edge function secrets
+
+Run the interactive bootstrap script to push all required secrets to the Supabase project
+via the Management API, then trigger an edge function deploy:
+
+```bash
+export SUPABASE_ACCESS_TOKEN="sbp_..."   # from supabase.com/dashboard/account/tokens
+export GITHUB_TOKEN="ghp_..."            # GitHub token with workflow scope (optional)
+bash scripts/supabase-bootstrap.sh
+```
+
+The script will prompt for:
+
+| Secret | Notes |
+|--------|-------|
+| ANTHROPIC_API_KEY | From console.anthropic.com |
+| STRIPE_SECRET_KEY | From dashboard.stripe.com |
+| STRIPE_WEBHOOK_SECRET | From Stripe webhook endpoint settings |
+| PAYPAL_CLIENT_ID | From developer.paypal.com |
+| PAYPAL_CLIENT_SECRET | From developer.paypal.com |
+| PAYPAL_MODE | Hardcoded to `live` |
+| PLAID_CLIENT_ID | Optional — skip if not using bank linking |
+| PLAID_SECRET | Optional |
+| PLAID_ENV | Hardcoded to `production` if Plaid creds provided |
+
+All values are transmitted directly to the Supabase Management API over HTTPS and stored
+encrypted. They do not appear in shell history (`read -s`).
+
+### Step 3 — Deploy edge functions
+
+If `GITHUB_TOKEN` was provided in Step 2, the workflow dispatch fires automatically.
+Otherwise, trigger it manually:
+
+- **Via GitHub UI**: https://github.com/aiqtp/aiqtp-omni-nexus/actions/workflows/deploy-all.yml
+  → "Run workflow" → branch: main
+- **Via merge**: Any merge to main auto-triggers `deploy-all.yml`
+
+Monitor the deploy at: https://github.com/aiqtp/aiqtp-omni-nexus/actions
+
+### Step 4 — Add remaining secrets to Render
+
+Secrets for the trading-service and quantum-agent live on Render, not Supabase.
+Add them at: https://dashboard.render.com → select service → Environment
+
+See the Services & API Keys table above for the full list.
+
+### Step 5 — Add SUPABASE_ACCESS_TOKEN to GitHub repository secrets
+
+Required for `deploy-all.yml` to run on merges:
+
+1. https://github.com/aiqtp/aiqtp-omni-nexus/settings/secrets/actions
+2. New repository secret → Name: `SUPABASE_ACCESS_TOKEN` → Value: `sbp_...`
+
+### Scripts reference
+
+| File | Purpose |
+|------|---------|
+| `scripts/supabase-bootstrap.sh` | Sets all Supabase edge function secrets via Management API + triggers GitHub Actions deploy |
+| `scripts/apply-new-migrations.sql` | Combined idempotent SQL for both new migrations — paste into SQL editor |
+
 ## Health Check URLs
 
 ```bash
