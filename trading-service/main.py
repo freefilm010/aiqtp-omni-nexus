@@ -31,21 +31,40 @@ from typing import Any, Optional
 
 import asyncpg
 import httpx
+import sentry_sdk
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from jose import JWTError, jwt
 from pydantic import BaseModel, Field
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("trading-tools")
 
+# ─── Sentry ──────────────────────────────────────────────────────────────────
+_sentry_dsn = os.getenv("SENTRY_DSN", "")
+if _sentry_dsn:
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        integrations=[StarletteIntegration(), FastApiIntegration()],
+        traces_sample_rate=0.2,
+        environment=os.getenv("RENDER_SERVICE_NAME", "development"),
+    )
+    log.info("Sentry initialized")
+
 # ─── Config ───────────────────────────────────────────────────────────────────
-SUPABASE_URL             = os.getenv("SUPABASE_URL", "http://kong:8000")
+SUPABASE_URL              = os.getenv("SUPABASE_URL", "http://kong:8000")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-ALPACA_API_KEY           = os.getenv("ALPACA_API_KEY", "")
-ALPACA_SECRET_KEY        = os.getenv("ALPACA_SECRET_KEY", "")
-ALPACA_BASE_URL          = os.getenv("ALPACA_BASE_URL", "https://api.alpaca.markets")
-ALPACA_PAPER_MODE        = os.getenv("ALPACA_PAPER_MODE", "false").lower() != "false"
-CCXT_LIVE_ENABLED        = os.getenv("CCXT_LIVE_ENABLED", "false").lower() == "true"
+SUPABASE_JWT_SECRET       = os.getenv("SUPABASE_JWT_SECRET", "")
+ALPACA_API_KEY            = os.getenv("ALPACA_API_KEY", "")
+ALPACA_SECRET_KEY         = os.getenv("ALPACA_SECRET_KEY", "")
+ALPACA_BASE_URL           = os.getenv("ALPACA_BASE_URL", "https://api.alpaca.markets")
+ALPACA_PAPER_MODE         = os.getenv("ALPACA_PAPER_MODE", "false").lower() != "false"
+CCXT_LIVE_ENABLED         = os.getenv("CCXT_LIVE_ENABLED", "false").lower() == "true"
 
 SYMBOL_WHITELIST = {
     s.strip() for s in os.getenv(
@@ -55,8 +74,28 @@ SYMBOL_WHITELIST = {
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
+ALLOWED_ORIGINS = [
+    "https://www.aiqtp.com",
+    "https://aiqtp.vercel.app",
+    "https://aiqtp.lovable.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+# ─── Rate limiter ─────────────────────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
+
 app = FastAPI(title="AIQTP Trading Tools", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
+    allow_credentials=True,
+)
 
 # ─── Database pool ────────────────────────────────────────────────────────────
 
@@ -84,11 +123,6 @@ async def _startup():
 
 
 async def _run_schema_init(pool: asyncpg.Pool) -> None:
-    """
-    Idempotent schema bootstrap — runs on every cold start.
-    All statements use IF NOT EXISTS / ON CONFLICT DO NOTHING so they're
-    safe to re-execute. This replaces the manual render_postgres_init.sql step.
-    """
     ddl = """
     CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -172,7 +206,7 @@ async def _run_schema_init(pool: asyncpg.Pool) -> None:
 
     CREATE TABLE IF NOT EXISTS public.performance_evaluator (
       id                uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
-      strategy_id       uuid          NOT NULL,
+      strategy_id       uuid,
       user_id           uuid          NOT NULL,
       total_trades      integer       NOT NULL DEFAULT 0,
       win_rate          numeric(5,2)  NOT NULL DEFAULT 0,
@@ -197,13 +231,45 @@ async def _shutdown():
         await _pool.close()
 
 
-def _require_user(x_user_id: Optional[str]) -> str:
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+def _verify_jwt(token: str) -> str:
+    """Verify Supabase JWT and return user_id (sub claim)."""
+    try:
+        payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"],
+                             options={"verify_aud": False})
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(401, "JWT missing sub claim")
+        return user_id
+    except JWTError as exc:
+        raise HTTPException(401, f"Invalid token: {exc}")
+
+
+def _require_user(
+    x_user_id: Optional[str] = None,
+    authorization: Optional[str] = None,
+) -> str:
+    """
+    Accept either a verified JWT (Authorization: Bearer <token>)
+    or the legacy X-User-Id header (dev / non-JWT environments).
+    JWT takes precedence when SUPABASE_JWT_SECRET is configured.
+    """
+    if SUPABASE_JWT_SECRET and authorization:
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() == "bearer" and token:
+            return _verify_jwt(token)
+
+    if SUPABASE_JWT_SECRET and not authorization:
+        raise HTTPException(401, "Authorization header required")
+
+    # Fallback: X-User-Id (only when JWT secret not configured)
     if not x_user_id or len(x_user_id) < 10:
         raise HTTPException(401, "X-User-Id header required")
     return x_user_id
 
 
-# ─── DB helper ────────────────────────────────────────────────────────────────
+# ─── DB helpers ───────────────────────────────────────────────────────────────
 
 async def _query(sql: str, *args) -> list[dict]:
     pool = await get_pool()
@@ -220,6 +286,29 @@ async def _exec(sql: str, *args) -> None:
         raise HTTPException(503, "Render PostgreSQL not configured — set DATABASE_URL")
     async with pool.acquire() as conn:
         await conn.execute(sql, *args)
+
+
+async def _record_performance(user_id: str, result: dict) -> None:
+    """Write a performance evaluation record after a backtest."""
+    pool = await get_pool()
+    if not pool:
+        return
+    try:
+        trades = result.get("total_trades", 0)
+        win_rate = result.get("win_rate_pct", 0)
+        total_pnl = result.get("total_profit_abs", 0)
+        initial = result.get("initial_balance", 10000)
+        # Simple profit factor: gross profit / gross loss
+        profit_factor = abs(total_pnl / (initial * 0.01)) if total_pnl != 0 else 0
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """INSERT INTO public.performance_evaluator
+                   (user_id, total_trades, win_rate, profit_factor, total_pnl_usd)
+                   VALUES ($1, $2, $3, $4, $5)""",
+                uuid.UUID(user_id), trades, win_rate, round(profit_factor, 4), total_pnl,
+            )
+    except Exception as exc:
+        log.warning("Performance evaluator write failed (non-fatal): %s", exc)
 
 
 # ─── Models ───────────────────────────────────────────────────────────────────
@@ -257,9 +346,8 @@ class LiveOrderRequest(BaseModel):
     time_in_force: str = "gtc"
 
 
-# ─── Backtest simulation engine ───────────────────────────────────────────────
+# ─── Backtest simulation ──────────────────────────────────────────────────────
 def _simulate_backtest(req: BacktestRequest) -> dict[str, Any]:
-    """Deterministic simulation — real Freqtrade integration is a drop-in swap."""
     rng = random.Random(hash(f"{req.strategy}:{req.pair}:{req.start_date}"))
 
     trades = []
@@ -275,7 +363,6 @@ def _simulate_backtest(req: BacktestRequest) -> dict[str, Any]:
 
     day = start
     while day < end:
-        # Maybe open a trade
         if len(open_trades) < req.max_open_trades and rng.random() < 0.08:
             entry_price = rng.uniform(30000, 70000) if "BTC" in req.pair else rng.uniform(1000, 4000)
             open_trades.append({
@@ -286,25 +373,27 @@ def _simulate_backtest(req: BacktestRequest) -> dict[str, Any]:
                 "stake": req.stake_amount,
             })
 
-        # Maybe close open trades
         still_open = []
         for t in open_trades:
             if rng.random() < 0.15:
                 pct = rng.uniform(-0.12, 0.18)
                 profit = t["stake"] * pct
                 balance += profit
-                trades.append({**t, "close_date": day.strftime("%Y-%m-%d"), "profit_pct": round(pct * 100, 2), "profit_abs": round(profit, 2)})
+                trades.append({**t, "close_date": day.strftime("%Y-%m-%d"),
+                                "profit_pct": round(pct * 100, 2),
+                                "profit_abs": round(profit, 2)})
             else:
                 still_open.append(t)
         open_trades = still_open
         day += timedelta(days=1)
 
-    # Close remaining
     for t in open_trades:
         pct = rng.uniform(-0.05, 0.05)
         profit = t["stake"] * pct
         balance += profit
-        trades.append({**t, "close_date": end.strftime("%Y-%m-%d"), "profit_pct": round(pct * 100, 2), "profit_abs": round(profit, 2)})
+        trades.append({**t, "close_date": end.strftime("%Y-%m-%d"),
+                        "profit_pct": round(pct * 100, 2),
+                        "profit_abs": round(profit, 2)})
 
     wins  = [t for t in trades if t["profit_abs"] > 0]
     total_profit = sum(t["profit_abs"] for t in trades)
@@ -324,7 +413,7 @@ def _simulate_backtest(req: BacktestRequest) -> dict[str, Any]:
         "avg_profit_pct": round(sum(t["profit_pct"] for t in trades) / len(trades), 2) if trades else 0,
         "best_trade_pct": round(max((t["profit_pct"] for t in trades), default=0), 2),
         "worst_trade_pct": round(min((t["profit_pct"] for t in trades), default=0), 2),
-        "trades": trades[-20:],  # last 20 for payload size
+        "trades": trades[-20:],
     }
 
 
@@ -376,7 +465,6 @@ def _sim_order_response(req: SimOrderRequest) -> dict[str, Any]:
 
 
 async def _place_alpaca_order(req: LiveOrderRequest) -> dict[str, Any]:
-    """Place order via Alpaca v2 API."""
     sym = req.symbol.replace("/", "")
     if sym not in SYMBOL_WHITELIST:
         raise HTTPException(400, f"Symbol {sym} not in whitelist: {SYMBOL_WHITELIST}")
@@ -406,7 +494,7 @@ async def _place_alpaca_order(req: LiveOrderRequest) -> dict[str, Any]:
             timeout=15,
         )
         if r.status_code not in (200, 201):
-            raise HTTPException(r.status_code, f"Alpaca error: {r.text}")
+            raise HTTPException(r.status_code, f"Alpaca /v2/orders: {r.text}")
         return r.json()
 
 
@@ -417,16 +505,31 @@ async def health():
 
 
 @app.post("/freqtrade/backtest")
-async def freqtrade_backtest(req: BacktestRequest):
+@limiter.limit("10/minute")
+async def freqtrade_backtest(
+    request: Request,
+    req: BacktestRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
     t0 = time.time()
     result = await asyncio.to_thread(_simulate_backtest, req)
     result["elapsed_ms"] = round((time.time() - t0) * 1000)
     log.info("Backtest %s %s → %.2f%%", req.strategy, req.pair, result["total_profit_pct"])
+    asyncio.create_task(_record_performance(user_id, result))
     return result
 
 
 @app.post("/freqtrade/hyperopt")
-async def freqtrade_hyperopt(req: HyperoptRequest):
+@limiter.limit("5/minute")
+async def freqtrade_hyperopt(
+    request: Request,
+    req: HyperoptRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
     t0 = time.time()
     result = await asyncio.to_thread(_simulate_hyperopt, req)
     result["elapsed_ms"] = round((time.time() - t0) * 1000)
@@ -435,14 +538,28 @@ async def freqtrade_hyperopt(req: HyperoptRequest):
 
 
 @app.post("/ccxt/sim_order")
-async def ccxt_sim_order(req: SimOrderRequest):
+@limiter.limit("30/minute")
+async def ccxt_sim_order(
+    request: Request,
+    req: SimOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
     result = _sim_order_response(req)
     log.info("Sim order %s %s %.4f @ %.2f", req.side, req.symbol, req.amount, result["price"])
     return result
 
 
 @app.post("/ccxt/live_order")
-async def ccxt_live_order(req: LiveOrderRequest):
+@limiter.limit("5/minute")
+async def ccxt_live_order(
+    request: Request,
+    req: LiveOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
     if not CCXT_LIVE_ENABLED:
         raise HTTPException(503, "Live trading is disabled. Set CCXT_LIVE_ENABLED=true")
     result = await _place_alpaca_order(req)
@@ -460,8 +577,14 @@ class DirectiveIn(BaseModel):
 
 
 @app.get("/agent-directives")
-async def list_directives(limit: int = 10, x_user_id: Optional[str] = Header(default=None)):
-    user_id = _require_user(x_user_id)
+@limiter.limit("60/minute")
+async def list_directives(
+    request: Request,
+    limit: int = 10,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
     rows = await _query(
         """SELECT id, tool, status, result, error_msg, created_at
            FROM public.agent_directives
@@ -476,8 +599,14 @@ async def list_directives(limit: int = 10, x_user_id: Optional[str] = Header(def
 
 
 @app.post("/agent-directives", status_code=201)
-async def create_directive(body: DirectiveIn, x_user_id: Optional[str] = Header(default=None)):
-    user_id = _require_user(x_user_id)
+@limiter.limit("20/minute")
+async def create_directive(
+    request: Request,
+    body: DirectiveIn,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
     await _exec(
         """INSERT INTO public.agent_directives
            (user_id, tool, agent_type, params, status)
@@ -508,8 +637,13 @@ class StrategyPatch(BaseModel):
 
 
 @app.get("/strategy-registry")
-async def list_strategies(x_user_id: Optional[str] = Header(default=None)):
-    user_id = _require_user(x_user_id)
+@limiter.limit("60/minute")
+async def list_strategies(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
     rows = await _query(
         """SELECT id, name, description, bot_type, data_category,
                   collection_frequency, sources, creator_profit_share,
@@ -531,8 +665,14 @@ async def list_strategies(x_user_id: Optional[str] = Header(default=None)):
 
 
 @app.post("/strategy-registry", status_code=201)
-async def create_strategy(body: StrategyIn, x_user_id: Optional[str] = Header(default=None)):
-    user_id = _require_user(x_user_id)
+@limiter.limit("10/minute")
+async def create_strategy(
+    request: Request,
+    body: StrategyIn,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
     await _exec(
         """INSERT INTO public.strategy_registry
            (user_id, name, description, bot_type, data_category,
@@ -548,8 +688,15 @@ async def create_strategy(body: StrategyIn, x_user_id: Optional[str] = Header(de
 
 
 @app.patch("/strategy-registry/{strategy_id}")
-async def patch_strategy(strategy_id: str, body: StrategyPatch, x_user_id: Optional[str] = Header(default=None)):
-    user_id = _require_user(x_user_id)
+@limiter.limit("30/minute")
+async def patch_strategy(
+    request: Request,
+    strategy_id: str,
+    body: StrategyPatch,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if not updates:
         return {"ok": True}
@@ -562,16 +709,18 @@ async def patch_strategy(strategy_id: str, body: StrategyPatch, x_user_id: Optio
     return {"ok": True}
 
 
-# ─── Bot control (signals only — actual start/stop is the Render worker) ─────
+# ─── Bot control ──────────────────────────────────────────────────────────────
 
 @app.post("/bots/start")
-async def bots_start():
+@limiter.limit("10/minute")
+async def bots_start(request: Request):
     log.info("bots/start signal received")
     return {"ok": True, "message": "Start signal logged — worker polls continuously"}
 
 
 @app.post("/bots/stop")
-async def bots_stop():
+@limiter.limit("10/minute")
+async def bots_stop(request: Request):
     log.info("bots/stop signal received")
     return {"ok": True, "message": "Stop signal logged — set system_status trading_active=false to halt"}
 
