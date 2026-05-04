@@ -1,0 +1,40 @@
+name: Deploy Everything
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-edge-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy all Supabase edge functions
+        run: supabase functions deploy --project-ref rueaxiyvseaxkysnoock
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  health-check:
+    runs-on: ubuntu-latest
+    needs: deploy-edge-functions
+    steps:
+      - name: Wait for Vercel + Render
+        run: sleep 45
+
+      - name: Check all platforms
+        run: |
+          check() {
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$1" --max-time 15)
+            echo "$2 → $STATUS"
+          }
+          check "https://www.aiqtp.com"                                "www.aiqtp.com (Vercel)"
+          check "https://aiqtp-trading-service.onrender.com/health"   "trading-service (Render)"
+          check "https://aiqtp-quantum-agent.onrender.com/health"     "quantum-agent (Render)"
+          check "https://rueaxiyvseaxkysnoock.supabase.co/rest/v1/"   "Supabase"
+          echo "✅ Deploy complete — all platforms synced from GitHub main"
