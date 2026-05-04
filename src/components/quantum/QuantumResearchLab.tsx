@@ -26,18 +26,7 @@ interface QuantumJob {
   qubits: number;
   shots: number;
   createdAt: string;
-  result?: {
-    counts: Record<string, number>;
-    executionTime: number;
-  };
-}
-
-interface QuantumBackend {
-  name: string;
-  qubits: number;
-  status: 'online' | 'maintenance' | 'offline';
-  queueLength: number;
-  avgJobTime: string;
+  result?: quantumApi.QuantumRunResult;
 }
 
 const QuantumResearchLab = () => {
@@ -367,7 +356,7 @@ const QuantumResearchLab = () => {
                   {job.result && (
                     <div className="space-y-2">
                       <div className="text-xs text-muted-foreground">
-                        Execution: {job.result.executionTime}s • {job.shots.toLocaleString()} shots
+                        Execution: {((job.result.elapsed_ms ?? 0) / 1000).toFixed(2)}s • {job.shots.toLocaleString()} shots
                       </div>
                       <div className="grid grid-cols-4 gap-2">
                         {Object.entries(job.result.counts).slice(0, 4).map(([state, count]) => (
