@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SID=$(echo \"$INPUT\" | jq -r '.session_id // empty'); PDIR=\"$HOME/.claude/projects/$(pwd | sed 's|/|-|g')\"; PREV=$(ls -t \"$PDIR\"/*.jsonl 2>/dev/null | grep -v \"$SID\" | head -n 1); if [ -n \"$PREV\" ]; then jq -nc --arg p \"$PREV\" '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:(\"Previous session transcript: \" + $p + \"\\nBefore replying to the user, tail this JSONL transcript and identify: (1) any task that was started but not finished — treat those as the leading priorities for this session; (2) recent decisions, current branch state, and planned next steps — so you can avoid redundant questions or re-explanations. Briefly acknowledge the carryover at the top of your first reply.\")}}'; else jq -nc '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:\"No previous session transcript found for this project. Treat this as a fresh start.\"}}'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
