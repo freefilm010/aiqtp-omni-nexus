@@ -664,7 +664,7 @@ def _execute_alpaca_live_order(params: dict, user_id: str, agent_type: str) -> d
       2. ALPACA_PAPER_MODE must be False for live; paper orders always allowed
       3. Symbol must be in ALPACA_SYMBOL_WHITELIST
       4. Per-user rate limit: ≤ 5 orders per rolling hour
-      5. Notional value ≤ 2% of account NAV (fetched from Alpaca account endpoint)
+      5. Notional value ≤ 20% of account NAV (fetched from Alpaca account endpoint)
       6. ALPACA_API_KEY and ALPACA_SECRET_KEY must be set
     """
     if agent_type != "prod":
@@ -701,16 +701,16 @@ def _execute_alpaca_live_order(params: dict, user_id: str, agent_type: str) -> d
         "Content-Type":        "application/json",
     }
 
-    # Fetch account to enforce 2% position size limit
+    # Fetch account to enforce 20% position size limit
     acct_resp = requests.get(f"{ALPACA_BASE_URL}/v2/account", headers=headers, timeout=10)
     acct_resp.raise_for_status()
     acct = acct_resp.json()
     nav  = float(acct.get("portfolio_value") or acct.get("equity") or 0)
 
-    if nav > 0 and notional > nav * 0.02:
+    if nav > 0 and notional > nav * 0.20:
         raise ValueError(
-            f"Notional ${notional:.2f} exceeds 2% position limit "
-            f"(account NAV=${nav:.2f}, max=${nav * 0.02:.2f})."
+            f"Notional ${notional:.2f} exceeds 20% position limit "
+            f"(account NAV=${nav:.2f}, max=${nav * 0.20:.2f})."
         )
 
     order_payload: dict[str, Any] = {
