@@ -1,4 +1,4 @@
-const NAME_PART_PATTERN = /^[A-Za-z][A-Za-z'\-]+$/;
+const NAME_PART_PATTERN = /^[A-Za-z][A-Za-z'-]+$/;
 
 interface SafePublicNameOptions {
   username?: string | null;

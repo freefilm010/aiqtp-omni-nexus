@@ -136,7 +136,7 @@ export async function verifyMLDSASignature(
 
 // Crypto Agility Layer - allows hot-swapping algorithms
 export class CryptoAgilityManager {
-  private currentKEM: 'ML-KEM-768' = 'ML-KEM-768';
+  private currentKEM = 'ML-KEM-768' as const;
   private currentDSA: 'ML-DSA-65' | 'SLH-DSA-128' = 'ML-DSA-65';
   private keyRotationInterval: number = 86400000; // 24 hours
   private lastRotation: number = Date.now();

@@ -162,7 +162,7 @@ export const WalletActionDialogs = ({ action, wallet, allWallets, onClose, onRef
           if (ce1) throw ce1;
 
           // Find or create target wallet
-          let targetW = allWallets.find(w => w.currency === convertTo);
+          const targetW = allWallets.find(w => w.currency === convertTo);
           if (targetW) {
             const { error: ce2 } = await supabase.from("platform_wallets").update({
               balance: Number(targetW.balance) + converted,

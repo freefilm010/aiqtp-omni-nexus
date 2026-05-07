@@ -376,6 +376,10 @@ def _close_open_positions() -> None:
     symbols = list({t["symbol"] for t in open_trades if t.get("symbol")})
     prices = fetch_market_prices(symbols)
 
+    # Take-profit / stop-loss thresholds (configurable via env vars).
+    take_profit_pct = float(os.getenv("TAKE_PROFIT_PCT", "0.05"))   # +5 %
+    stop_loss_pct   = float(os.getenv("STOP_LOSS_PCT",   "0.02"))   # −2 %
+
     for trade in open_trades:
         try:
             symbol = trade["symbol"]
@@ -383,89 +387,106 @@ def _close_open_positions() -> None:
             if not current_price:
                 continue
 
-            # Re-evaluate strategy for this symbol
-            # We construct a minimal strategy dict to pass to determine_direction
-            mock_strategy = {"id": trade["strategy_id"], "name": "PositionManager", "data_category": "market"}
-            # Override strategy_symbol to return the exact symbol we are managing
-            global CATEGORY_SYMBOLS
-            original_pool = CATEGORY_SYMBOLS.get("market", [])
-            CATEGORY_SYMBOLS["market"] = [symbol]
-            
-            signal = determine_direction(mock_strategy, current_price)
-            
-            # Restore original pool
-            CATEGORY_SYMBOLS["market"] = original_pool
+            # Re-evaluate the signal directly from the strategy module instead
+            # of mutating the global CATEGORY_SYMBOLS pool. This keeps the
+            # close-loop reentrant and avoids hidden side-effects.
+            try:
+                fresh_signal = real_strategy.generate_signal(symbol)
+                signal_direction = fresh_signal.get("direction", "hold")
+            except Exception as sig_exc:
+                log.warning(
+                    "[PositionManager] Signal refresh failed for %s: %s — "
+                    "falling back to TP/SL only", symbol, sig_exc,
+                )
+                signal_direction = "hold"
 
-            # Close logic:
-            # 1. Signal reversal (e.g., holding long, signal says sell)
-            # 2. Simple Take Profit (e.g., +5%)
-            # 3. Simple Stop Loss (e.g., -2%)
-            
             entry_price = float(trade["entry_price"])
-            direction = trade["direction"]
-            
-            pnl_pct = 0.0
+            direction   = trade["direction"]
+
             if direction == "buy":
                 pnl_pct = (current_price - entry_price) / entry_price
-                should_close = signal == "sell" or pnl_pct >= 0.05 or pnl_pct <= -0.02
+                reversal = signal_direction == "sell"
             else:
                 pnl_pct = (entry_price - current_price) / entry_price
-                should_close = signal == "buy" or pnl_pct >= 0.05 or pnl_pct <= -0.02
+                reversal = signal_direction == "buy"
+
+            should_close = (
+                reversal
+                or pnl_pct >= take_profit_pct
+                or pnl_pct <= -stop_loss_pct
+            )
 
             if should_close:
-                log.info(f"Closing position for {symbol} (PnL: {pnl_pct*100:.2f}%)")
-                
-                # Execute closing order via Alpaca
+                close_reason = (
+                    "reversal"      if reversal
+                    else "take_profit" if pnl_pct >= take_profit_pct
+                    else "stop_loss"
+                )
+                log.info(
+                    "Closing position %s for %s (reason=%s, PnL=%.2f%%)",
+                    trade.get("id", "?")[:8], symbol, close_reason, pnl_pct * 100,
+                )
+
                 close_side = "sell" if direction == "buy" else "buy"
-                
-                # We need the original quantity. If not stored, we estimate from fee/notional.
-                # For simplicity, we use the same notional value to close.
-                notional = entry_price * TRADE_QUANTITY
-                
+
+                # Reconstruct the actual notional that was filled at entry.
+                # Prefer the explicit qty stored on the trade row when present;
+                # otherwise fall back to entry_price * TRADE_QUANTITY which
+                # mirrors what execute_real_trade() submitted on the open.
+                stored_qty = trade.get("qty")
+                if stored_qty:
+                    try:
+                        notional = float(stored_qty) * entry_price
+                    except (TypeError, ValueError):
+                        notional = entry_price * TRADE_QUANTITY
+                else:
+                    notional = entry_price * TRADE_QUANTITY
+
                 alpaca_params = {
-                    "symbol": symbol,
-                    "side": close_side,
+                    "symbol":   symbol,
+                    "side":     close_side,
                     "notional": notional,
-                    "approved": True
+                    "approved": True,
                 }
-                
-                order_result = _execute_alpaca_live_order(alpaca_params, trade["user_id"], "prod")
-                
+
+                order_result = _execute_alpaca_live_order(
+                    alpaca_params, trade["user_id"], "prod",
+                )
+
                 exit_price = float(order_result.get("filled_avg_price") or current_price)
-                
-                # Calculate final PnL
+
+                # Final PnL based on real fill prices
                 if direction == "buy":
                     gross_pnl = (exit_price - entry_price) * TRADE_QUANTITY
                 else:
                     gross_pnl = (entry_price - exit_price) * TRADE_QUANTITY
-                    
+
                 close_fee = exit_price * TRADE_QUANTITY * MAKER_FEE_RATE
                 total_fee = float(trade.get("fee", 0)) + close_fee
-                net_pnl = gross_pnl - total_fee
-                
+                net_pnl   = gross_pnl - total_fee
+
                 actual_slip_pct = abs(exit_price - current_price) / current_price * 100
-                
-                # Update trade_logs
+
                 update_data = {
-                    "status": "closed",
-                    "exit_price": round(exit_price, 8),
-                    "closed_at": utcnow_iso(),
+                    "status":           "closed",
+                    "exit_price":       round(exit_price, 8),
+                    "closed_at":        utcnow_iso(),
                     "realized_pnl_usd": round(net_pnl, 6),
-                    "fee": round(total_fee, 6),
-                    "slippage_pct": round(actual_slip_pct, 4)
+                    "fee":              round(total_fee, 6),
+                    "slippage_pct":     round(actual_slip_pct, 4),
                 }
-                
+
                 db.table("trade_logs").update(update_data).eq("id", trade["id"]).execute()
-                
-                # Collect fee if profitable
+
+                # Collect platform fee on positive net PnL only
                 trade.update(update_data)
                 collect_platform_fee(trade)
-                
-                # Update performance metrics
+
+                # Refresh strategy performance metrics
                 update_performance(trade["strategy_id"])
-                
+
         except Exception as e:
-            log.error(f"Failed to manage open position {trade.get('id')}: {e}")
+            log.error("Failed to manage open position %s: %s", trade.get("id"), e)
 
 
 def simulate_trade(strategy: dict, prices: dict[str, float]) -> Optional[dict]:

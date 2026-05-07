@@ -93,7 +93,7 @@ const CapitolCommunity = () => {
 
     // Fetch profile names for post authors
     const userIds = [...new Set((data || []).map((p) => p.user_id))];
-    let profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
+    const profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
@@ -154,7 +154,7 @@ const CapitolCommunity = () => {
     if (!data) return;
 
     const userIds = [...new Set(data.map((c) => c.user_id))];
-    let profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
+    const profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")

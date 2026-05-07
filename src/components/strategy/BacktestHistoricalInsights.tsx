@@ -193,7 +193,7 @@ const BacktestHistoricalInsights = ({ strategyId, strategyName, trainingStats }:
                 ) : (
                   <Lightbulb className="h-3.5 w-3.5 mt-0.5 text-muted-foreground shrink-0" />
                 )}
-                <span className="text-muted-foreground">{p.replace(/[✅⚠️]/g, '').trim()}</span>
+                <span className="text-muted-foreground">{p.replace(/\u2705|\u26A0\uFE0F?|\uFE0F/gu, '').trim()}</span>
               </div>
             ))}
           </CardContent>

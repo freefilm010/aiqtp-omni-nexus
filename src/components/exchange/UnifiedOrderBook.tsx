@@ -44,7 +44,7 @@ const seededRandom = (seed: number) => {
 const generateUnifiedBook = (basePrice: number, seed: number): UnifiedBook => {
   const generateLevels = (side: 'bid' | 'ask', count: number): OrderLevel[] => {
     let cumulative = 0;
-    let localSeed = seed + (side === 'bid' ? 0 : 1000);
+    const localSeed = seed + (side === 'bid' ? 0 : 1000);
     
     return Array.from({ length: count }, (_, i) => {
       const offset = side === 'bid' ? -(i + 1) * (basePrice * 0.0001) : (i + 1) * (basePrice * 0.0001);

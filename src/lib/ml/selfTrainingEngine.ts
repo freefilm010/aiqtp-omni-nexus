@@ -255,7 +255,7 @@ export function identifyPatterns(analyses: StrategyDateAnalysis[]): string[] {
 
 // ── Self-Training Prediction Engine ─────────────────────────
 
-let featureWeights: Record<string, number> = {
+const featureWeights: Record<string, number> = {
   momentum: 0.20,
   meanReversion: 0.15,
   volatilityAdjust: 0.15,

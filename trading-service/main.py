@@ -158,14 +158,18 @@ async def _run_schema_init(pool: asyncpg.Pool) -> None:
       UNIQUE (user_id, account_id)
     );
 
+    -- system_status: kill-switch table read by the core-brain worker.
+    -- Schema MUST match the canonical Supabase migration
+    -- (20260430120000_core_trading_schema.sql) so that frontend writes,
+    -- Supabase reads, and Render-PG worker reads all agree on (key, active).
     CREATE TABLE IF NOT EXISTS public.system_status (
-      id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-      key        text        NOT NULL UNIQUE,
-      value      text        NOT NULL,
-      updated_at timestamptz NOT NULL DEFAULT now()
+      key        text        PRIMARY KEY,
+      active     boolean     NOT NULL DEFAULT true,
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      reason     text
     );
-    INSERT INTO public.system_status (key, value)
-      VALUES ('trading_active', 'true')
+    INSERT INTO public.system_status (key, active, reason)
+      VALUES ('main', true, 'System initialized')
       ON CONFLICT (key) DO NOTHING;
 
     CREATE TABLE IF NOT EXISTS public.trade_logs (
@@ -1084,7 +1088,7 @@ async def bots_start(request: Request):
 @limiter.limit("10/minute")
 async def bots_stop(request: Request):
     log.info("bots/stop signal received")
-    return {"ok": True, "message": "Stop signal logged — set system_status trading_active=false to halt"}
+    return {"ok": True, "message": "Stop signal logged — set system_status.active=false where key='main' to halt"}
 
 
 if __name__ == "__main__":

@@ -60,12 +60,8 @@ const AccessibilityToolbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { settings, updateSettings } = useAccessibility();
 
-  // Hide on auth page to prevent visual overlap
-  if (typeof window !== 'undefined' && window.location.pathname === '/auth') {
-    return null;
-  }
-
   // Keyboard shortcut to toggle toolbar visibility (Alt+A)
+  // (Hooks must run unconditionally to satisfy React's rules-of-hooks.)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && e.key.toLowerCase() === 'a') {
@@ -77,6 +73,11 @@ const AccessibilityToolbar: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [settings.toolbarVisible, updateSettings]);
+
+  // Hide on auth page to prevent visual overlap (after all hooks have been called)
+  if (typeof window !== 'undefined' && window.location.pathname === '/auth') {
+    return null;
+  }
 
   const toggleFontSize = () => {
     const sizes: Array<'normal' | 'large' | 'extra-large'> = ['normal', 'large', 'extra-large'];

@@ -72,7 +72,7 @@ export function useKrakenTickers(
       if (!hasCrypto && !hasTrad) return false;
 
       // Get symbol mapping for crypto
-      let symbolMap: Record<string, string> = {};
+      const symbolMap: Record<string, string> = {};
       if (hasCrypto) {
         const coinIds = cryptoData.map(r => r.coin_id);
         // Supabase limits IN to ~300 items, so batch

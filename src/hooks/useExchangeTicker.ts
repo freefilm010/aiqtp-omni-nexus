@@ -58,8 +58,9 @@ export function useExchangeTicker(params: {
         if (cancelled) return;
         setError(e?.message || "Failed to fetch ticker");
       } finally {
-        if (cancelled) return;
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
