@@ -3,13 +3,9 @@
  * v2.0 — Heron-aware backends, ZNE, fraud detection, risk profiling, bond optimization.
  */
 
-const BASE = (import.meta.env.VITE_QUANTUM_AGENT_URL as string | undefined)?.replace(/\/$/, "");
+const BASE = ((import.meta.env.VITE_QUANTUM_AGENT_URL as string | undefined) ?? "https://aiqtp-quantum-agent.onrender.com").replace(/\/$/, "");
 
 async function _post(path: string, body: unknown) {
-  if (!BASE) {
-    console.warn("VITE_QUANTUM_AGENT_URL not configured — quantum features disabled");
-    return null;
-  }
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -23,10 +19,6 @@ async function _post(path: string, body: unknown) {
 }
 
 async function _get(path: string) {
-  if (!BASE) {
-    console.warn("VITE_QUANTUM_AGENT_URL not configured — quantum features disabled");
-    return null;
-  }
   const res = await fetch(`${BASE}${path}`);
   if (!res.ok) throw new Error(`Quantum Agent ${path}: ${res.status}`);
   return res.json();

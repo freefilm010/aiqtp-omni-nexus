@@ -9,7 +9,7 @@
  * Falls back to /api (Vite proxy) for local development.
  */
 
-const BASE = (import.meta.env.VITE_RENDER_WORKER_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+const BASE = ((import.meta.env.VITE_RENDER_WORKER_URL as string | undefined) ?? "https://aiqtp-trading-service.onrender.com").replace(/\/$/, "");
 
 async function _post(path: string, body: unknown, userId: string) {
   const res = await fetch(`${BASE}${path}`, {

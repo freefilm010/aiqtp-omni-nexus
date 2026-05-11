@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTradingStats } from "@/hooks/useTradingStats";
 import { useAuth } from "@/hooks/useAuth";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import { toast } from "sonner";
 import { ArrowDownUp, Plus, TrendingUp } from "lucide-react";
 
@@ -17,22 +18,39 @@ const YOUR_TOKENS = [
   { symbol: "QTC",    name: "Quantum Time Crystal",  balance: "2000", price: 0.01 },
 ];
 
-const COMMON_TOKENS = [
-  { symbol: "ETH",  name: "Ethereum", balance: "0", price: 3120 },
-  { symbol: "USDC", name: "USD Coin", balance: "0", price: 1 },
-  { symbol: "USDT", name: "Tether",   balance: "0", price: 1 },
-];
+// Fallback prices used only when live data is unavailable
+const COMMON_TOKENS_FALLBACK: Record<string, number> = {
+  ETH: 3120,
+  USDC: 1,
+  USDT: 1,
+};
 
-const ALL_TOKENS = [...YOUR_TOKENS, ...COMMON_TOKENS];
+const COMMON_TOKENS_BASE = [
+  { symbol: "ETH",  name: "Ethereum", balance: "0" },
+  { symbol: "USDC", name: "USD Coin", balance: "0" },
+  { symbol: "USDT", name: "Tether",   balance: "0" },
+];
 
 export default function DEXPage() {
   const { user } = useAuth();
   const { data: stats } = useTradingStats(10000);
+  const { getPrice, isLive } = useMarketPrices(15000);
 
   const [fromToken, setFromToken] = useState("DCENT");
   const [toToken, setToToken]     = useState("ETH");
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount]     = useState("");
+
+  // Build COMMON_TOKENS with live prices where available
+  const COMMON_TOKENS = useMemo(() =>
+    COMMON_TOKENS_BASE.map(t => ({
+      ...t,
+      price: getPrice(t.symbol)?.priceNumeric ?? COMMON_TOKENS_FALLBACK[t.symbol] ?? 1,
+    })),
+    [getPrice]
+  );
+
+  const ALL_TOKENS = useMemo(() => [...YOUR_TOKENS, ...COMMON_TOKENS], [COMMON_TOKENS]);
 
   const pools = useMemo(() => {
     const base  = stats?.allTimeProfit ?? 1000;
@@ -85,7 +103,10 @@ export default function DEXPage() {
       <main className="container mx-auto px-4 py-8 pt-24">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">DEX — Decentralized Exchange</h1>
-          <p className="text-muted-foreground mt-1">Swap tokens, add liquidity, earn fees • DCENT · BOLT · MANTRA · QTC</p>
+          <p className="text-muted-foreground mt-1">
+            Swap tokens, add liquidity, earn fees • DCENT · BOLT · MANTRA · QTC
+            {isLive && <span className="ml-2 text-green-500 text-xs font-medium">● LIVE PRICES</span>}
+          </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -114,6 +135,11 @@ export default function DEXPage() {
                         <Input type="number" placeholder="0.0" value={toAmount} readOnly className="flex-1 bg-muted" />
                         <TokenSelect value={toToken} onChange={setToToken} />
                       </div>
+                      {toToken !== "DCENT" && toToken !== "BOLT" && toToken !== "MANTRA" && toToken !== "QTC" && (
+                        <p className="text-xs text-muted-foreground">
+                          Live price: ${(getPrice(toToken)?.priceNumeric ?? COMMON_TOKENS_FALLBACK[toToken] ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                      )}
                     </div>
                     <Button onClick={handleSwap} className="w-full" size="lg">Swap Tokens</Button>
                     <div className="text-xs text-muted-foreground border-t pt-2 space-y-1">
