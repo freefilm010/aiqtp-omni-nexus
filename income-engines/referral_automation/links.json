@@ -1,0 +1,44 @@
+{
+  "kucoin": {
+    "name": "KuCoin",
+    "description": "Spot + futures + options. Best altcoin coverage.",
+    "url": "https://www.kucoin.com/r/af?rcode=AIQTP",
+    "code": "UNSET"
+  },
+  "mexc": {
+    "name": "MEXC",
+    "description": "Deep altcoin liquidity, zero spot fees.",
+    "url": "https://promote.mexc.com/r?inviteCode=AIQTP",
+    "code": "UNSET"
+  },
+  "gate": {
+    "name": "Gate.io",
+    "description": "One of the longest-running CEXes, 1700+ pairs.",
+    "url": "https://www.gate.io/signup?ref=AIQTP",
+    "code": "UNSET"
+  },
+  "bybit": {
+    "name": "Bybit",
+    "description": "Top global perps + copy trading.",
+    "url": "https://www.bybit.com/invite?ref=AIQTP",
+    "code": "UNSET"
+  },
+  "bitget": {
+    "name": "Bitget",
+    "description": "Copy trading + zero-fee BTC.",
+    "url": "https://partner.bitget.com/bg?r=AIQTP",
+    "code": "UNSET"
+  },
+  "hyperliquid": {
+    "name": "Hyperliquid",
+    "description": "On-chain perps with the highest open interest.",
+    "url": "https://app.hyperliquid.xyz/join?ref=AIQTP",
+    "code": "UNSET"
+  },
+  "binance": {
+    "name": "Binance",
+    "description": "Largest CEX by volume worldwide.",
+    "url": "https://accounts.binance.com/register?ref=AIQTP",
+    "code": "UNSET"
+  }
+}

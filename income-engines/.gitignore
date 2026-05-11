@@ -1,0 +1,11 @@
+.env
+.env.local
+.env.*.local
+logs/*.log
+logs/*.jsonl
+logs/*.json
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store

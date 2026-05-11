@@ -1,0 +1,17 @@
+{
+  "default": {
+    "allow_execute": false,
+    "max_spend_usd_per_week": 25,
+    "min_eligibility_estimated_usd": 100
+  },
+  "Hyperliquid points": {
+    "allow_execute": true,
+    "max_spend_usd_per_week": 50,
+    "actions_allowed": ["trade_50_usd_volume"]
+  },
+  "Eigenlayer EigenDA": {
+    "allow_execute": false,
+    "max_spend_usd_per_week": 0,
+    "actions_allowed": []
+  }
+}

@@ -1,0 +1,4 @@
+[
+  {"inputs":[{"internalType":"address","name":"debtAsset","type":"address"},{"internalType":"uint256","name":"debtAmount","type":"uint256"},{"internalType":"address","name":"collateralAsset","type":"address"},{"internalType":"address","name":"victim","type":"address"},{"internalType":"uint24","name":"swapFee","type":"uint24"}],"name":"start","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"token","type":"address"}],"name":"sweep","outputs":[],"stateMutability":"nonpayable","type":"function"}
+]
