@@ -1,0 +1,17 @@
+{
+  "name": "gasless-bot-contracts",
+  "version": "1.0.0",
+  "description": "Hardhat project for FlashLoanArbExecutor on Arbitrum",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run ../scripts/deploy_executor.js --network arbitrum",
+    "verify": "hardhat verify --network arbitrum"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0"
+  }
+}
