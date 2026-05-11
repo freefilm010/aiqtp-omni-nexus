@@ -149,3 +149,40 @@ services:
         sync: false
       - key: IBM_QUANTUM_CRN
         sync: false
+
+  # ── AIQTP Momentum Trading Bot ───────────────────────────────────────────
+  - type: worker
+    name: aiqtp-momentum-bot
+    runtime: python
+    rootDir: trading-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bots/momentum_bot.py
+    envVars:
+      - key: HYPERLIQUID_PRIVATE_KEY
+        sync: false
+      - key: HYPERLIQUID_TESTNET
+        value: "false"
+      - key: BOT_POLL_SECONDS
+        value: "60"
+
+  # ── AIQTP Flash Loan Bot (Arb/Liq) ───────────────────────────────────────
+  - type: worker
+    name: aiqtp-flash-bot
+    runtime: python
+    rootDir: trading-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bots/flash_loan_bot.py
+    envVars:
+      - key: ARBITRUM_RPC_URL
+        value: https://arb1.arbitrum.io/rpc
+
+  # ── AIQTP DeFi Yield Scanner ─────────────────────────────────────────────
+  - type: worker
+    name: aiqtp-yield-scanner
+    runtime: python
+    rootDir: trading-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bots/yield_scanner.py --loop
+    envVars:
+      - key: YIELD_SCAN_INTERVAL
+        value: "1800"
