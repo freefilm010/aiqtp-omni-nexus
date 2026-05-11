@@ -56,6 +56,7 @@ from connectors.routes import (
     oi as _oi,
 )
 from strategies import strategies_router
+from stripe_auto_invest import auto_invest_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("trading-tools")
@@ -134,6 +135,7 @@ app.add_middleware(
 # Register new exchange / market-data / strategy routers
 app.include_router(connectors_router)
 app.include_router(strategies_router)
+app.include_router(auto_invest_router)
 
 # ─── Database pool ────────────────────────────────────────────────────────────
 

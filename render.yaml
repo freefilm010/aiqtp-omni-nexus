@@ -62,6 +62,19 @@ services:
         sync: false
       - key: IBKR_ACCOUNT_ID
         sync: false
+      # ── Stripe Auto-Invest Pipeline ──────────────────────────────────────
+      - key: STRIPE_ACCOUNT_ID
+        sync: false
+      - key: AUTO_INVEST_ENABLED
+        value: "false"
+      - key: AUTO_INVEST_SYMBOL
+        value: BTC
+      - key: AUTO_INVEST_LEVERAGE
+        value: "3"
+      - key: AUTO_INVEST_FRACTION
+        value: "0.8"
+      - key: COMPOUND_PROFITS
+        value: "true"
       # ── New exchange connectors (no traditional API keys) ───────────────
       # Hyperliquid (perp DEX, wallet-signed)
       - key: HYPERLIQUID_PRIVATE_KEY
