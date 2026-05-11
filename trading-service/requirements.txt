@@ -9,3 +9,14 @@ sentry-sdk[fastapi]==2.19.2
 python-jose[cryptography]==3.3.0
 stripe==9.12.0
 anthropic==0.40.0
+# ── Exchange / market-data connectors ──────────────────────────────────
+# Hyperliquid (perp DEX, wallet-signed)
+hyperliquid-python-sdk==0.10.0
+eth-account==0.13.4
+# Solana / Jupiter
+solders==0.21.0
+base58==2.1.1
+# Multi-exchange (KuCoin, MEXC, Gate.io and 100+ others)
+ccxt==4.4.40
+# Numerics for strategy modules (grid/DCA/momentum/arbitrage)
+numpy==1.26.4

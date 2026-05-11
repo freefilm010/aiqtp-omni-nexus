@@ -62,6 +62,40 @@ services:
         sync: false
       - key: IBKR_ACCOUNT_ID
         sync: false
+      # ── New exchange connectors (no traditional API keys) ───────────────
+      # Hyperliquid (perp DEX, wallet-signed)
+      - key: HYPERLIQUID_PRIVATE_KEY
+        sync: false
+      - key: HYPERLIQUID_TESTNET
+        value: "false"
+      # Jupiter / Solana (DEX aggregator)
+      - key: SOLANA_PRIVATE_KEY
+        sync: false
+      - key: SOLANA_RPC_URL
+        value: https://api.mainnet-beta.solana.com
+      - key: JUPITER_BASE_URL
+        value: https://lite-api.jup.ag/swap/v1
+      # 1inch DEX aggregator (free key from portal.1inch.dev)
+      - key: ONEINCH_API_KEY
+        sync: false
+      # CoinGecko (free public tier; key optional)
+      - key: COINGECKO_API_KEY
+        sync: false
+      # CCXT no-KYC exchanges (each optional)
+      - key: KUCOIN_API_KEY
+        sync: false
+      - key: KUCOIN_SECRET
+        sync: false
+      - key: KUCOIN_PASSWORD
+        sync: false
+      - key: MEXC_API_KEY
+        sync: false
+      - key: MEXC_SECRET
+        sync: false
+      - key: GATEIO_API_KEY
+        sync: false
+      - key: GATEIO_SECRET
+        sync: false
 
   # ── Core Brain Worker (polling loop) ─────────────────────────────────────
   - type: worker

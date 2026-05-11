@@ -46,6 +46,17 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from connectors import connectors_router
+from connectors.routes import (
+    cg as _cg,
+    cx as _cx,
+    dl as _dl,
+    hl as _hl,
+    jup as _jup,
+    oi as _oi,
+)
+from strategies import strategies_router
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("trading-tools")
 
@@ -119,6 +130,10 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True,
 )
+
+# Register new exchange / market-data / strategy routers
+app.include_router(connectors_router)
+app.include_router(strategies_router)
 
 # ─── Database pool ────────────────────────────────────────────────────────────
 
@@ -717,7 +732,26 @@ async def _place_ibkr_order(req: BrokerOrderRequest, conid: int) -> dict:
 # ─── Routes ───────────────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "trading-tools", "ccxt_live": CCXT_LIVE_ENABLED}
+    return {
+        "status": "ok",
+        "service": "trading-tools",
+        "ccxt_live": CCXT_LIVE_ENABLED,
+        "connectors": {
+            "hyperliquid": _hl.status(),
+            "jupiter": _jup.status(),
+            "oneinch": _oi.status(),
+            "coingecko": _cg.status(),
+            "defillama": _dl.status(),
+            "ccxt": _cx.status(),
+        },
+        "brokers": {
+            "alpaca": {"configured": bool(ALPACA_API_KEY), "live": not ALPACA_PAPER_MODE},
+            "tradier": {"configured": bool(TRADIER_API_KEY), "sandbox": TRADIER_SANDBOX},
+            "binance": {"configured": bool(BINANCE_API_KEY), "live": BINANCE_LIVE},
+            "kraken": {"configured": bool(KRAKEN_API_KEY), "live": KRAKEN_LIVE},
+            "ibkr": {"configured": bool(IBKR_CPG_URL), "account": bool(IBKR_ACCOUNT_ID)},
+        },
+    }
 
 
 @app.post("/freqtrade/backtest")

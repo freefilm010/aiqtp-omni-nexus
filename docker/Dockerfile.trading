@@ -10,6 +10,9 @@ COPY trading-service/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY trading-service/main.py /app/main.py
+COPY trading-service/connectors /app/connectors
+COPY trading-service/strategies /app/strategies
+COPY trading-service/scripts /app/scripts
 
 EXPOSE 8002
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
