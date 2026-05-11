@@ -1,0 +1,7 @@
+# Copy this file to mnemonic.txt and replace with your bundler wallet mnemonic.
+# This wallet is the BUNDLER OPERATOR — it signs and submits bundles on-chain.
+# It must hold ETH on Arbitrum to pay gas for bundle submissions.
+# NEVER commit mnemonic.txt to version control.
+#
+# Example (12-word BIP-39 mnemonic):
+# test test test test test test test test test test test junk

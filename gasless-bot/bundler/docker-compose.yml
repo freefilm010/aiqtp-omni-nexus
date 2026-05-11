@@ -1,0 +1,52 @@
+version: "3.8"
+# =============================================================================
+# AIQTP — Self-Hosted ERC-4337 Bundler (eth-infinitism reference implementation)
+# =============================================================================
+# Usage:
+#   cp .env.example .env   # fill in ARBITRUM_RPC_URL, BUNDLER_MNEMONIC, BUNDLER_BENEFICIARY
+#   docker compose up -d
+#
+# The bundler will be available at:
+#   http://localhost:3000/rpc   (JSON-RPC endpoint for UserOperations)
+#   http://localhost:3001/      (private admin API — do NOT expose publicly)
+#
+# Point gasless-bot at it:
+#   BUNDLER_RPC_URL=http://localhost:3000/rpc
+# =============================================================================
+
+services:
+  # ── ERC-4337 Bundler ────────────────────────────────────────────────────────
+  bundler:
+    image: accountabstraction/bundler:0.8.1
+    container_name: aiqtp-erc4337-bundler
+    restart: unless-stopped
+    ports:
+      - "${BUNDLER_PORT:-3000}:3000"
+      - "${BUNDLER_PRIVATE_PORT:-3001}:3001"
+    volumes:
+      - ./workdir:/app/workdir:rw
+    environment:
+      # The bundler image reads its config from /app/workdir/bundler.config.json
+      # Environment variable substitution is handled by the entrypoint script below.
+      ARBITRUM_RPC_URL: ${ARBITRUM_RPC_URL:-https://arb1.arbitrum.io/rpc}
+      BUNDLER_BENEFICIARY: ${BUNDLER_BENEFICIARY}
+    entrypoint: >
+      sh -c "
+        sed -i 's|\$${ARBITRUM_RPC_URL:-https://arb1.arbitrum.io/rpc}|'\"$$ARBITRUM_RPC_URL\"'|g' /app/workdir/bundler.config.json &&
+        sed -i 's|\$${BUNDLER_BENEFICIARY}|'\"$$BUNDLER_BENEFICIARY\"'|g' /app/workdir/bundler.config.json &&
+        node /app/dist/src/exec.js --config /app/workdir/bundler.config.json
+      "
+    mem_limit: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 20m
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "-X", "POST", "-H", "Content-Type: application/json",
+             "-d", "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"web3_clientVersion\",\"params\":[]}",
+             "http://localhost:3000/rpc"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s

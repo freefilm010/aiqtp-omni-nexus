@@ -6,23 +6,43 @@ Gasless Flash-Loan Arbitrage & Liquidation Bot for Arbitrum Mainnet.
 
 Architecture
 ------------
-* ERC-4337 Account Abstraction  – all transactions are UserOperations
-* Pimlico Verifying Paymaster   – sponsors all gas (zero ETH required)
-* Pimlico Alto Bundler          – submits UserOperations to the network
-* Aave V3 flash loans           – provide the capital for every trade
-* Uniswap V3 / SushiSwap        – DEX pair for arbitrage
-* Aave V3 subgraph (The Graph)  – source of liquidation candidates
+* ERC-4337 Account Abstraction    – all transactions are UserOperations
+* Self-hosted ERC-4337 Bundler    – submits UserOperations to the network
+  (eth-infinitism/bundler — see gasless-bot/bundler/ for Docker setup)
+* Self-hosted Verifying Paymaster – sponsors all gas (zero ETH required)
+  (same bundler process exposes pm_sponsorUserOperation when configured)
+* Aave V3 flash loans             – provide the capital for every trade
+* Uniswap V3 / SushiSwap          – DEX pair for arbitrage
+* Aave V3 subgraph (The Graph)    – source of liquidation candidates
 
 Flow per opportunity
 --------------------
 1. Scanner finds a profitable arb or a liquidatable position.
 2. Bot encodes the calldata for FlashLoanArbExecutor.
 3. Bot builds an ERC-4337 UserOperation targeting the Smart Account.
-4. Bot requests gas sponsorship from Pimlico pm_sponsorUserOperation.
+4. Bot requests gas sponsorship from the paymaster via pm_sponsorUserOperation.
 5. Bot signs the UserOperation with the owner private key.
-6. Bot submits via eth_sendUserOperation to the Pimlico bundler.
+6. Bot submits via eth_sendUserOperation to the self-hosted bundler.
 7. Bundler submits an on-chain transaction; Aave executes the flash loan.
 8. Profit is left in the executor contract; withdraw() sweeps it.
+
+Self-hosted bundler quick-start
+--------------------------------
+  cd gasless-bot/bundler
+  cp .env.example .env          # fill in ARBITRUM_RPC_URL, BUNDLER_BENEFICIARY
+  cp workdir/mnemonic.txt.example workdir/mnemonic.txt  # fill in mnemonic
+  docker compose up -d
+  # Bundler now listening at http://localhost:3000/rpc
+
+Environment variables
+---------------------
+  ARBITRUM_RPC_URL      Arbitrum JSON-RPC endpoint (required)
+  BUNDLER_RPC_URL       Self-hosted bundler endpoint (default: http://localhost:3000/rpc)
+  PAYMASTER_RPC_URL     Paymaster endpoint (default: same as BUNDLER_RPC_URL)
+  PAYMASTER_ENABLED     Set to "false" to skip paymaster sponsorship (default: true)
+  PRIVATE_KEY           EOA private key — signs UserOperations (required)
+  SMART_ACCOUNT_ADDRESS ERC-4337 Smart Account address (required)
+  EXECUTOR_ADDRESS      FlashLoanArbExecutor contract address (required)
 """
 
 import os
@@ -30,8 +50,6 @@ import sys
 import time
 import json
 import logging
-import hashlib
-import struct
 import requests
 from typing import Optional, Tuple
 
@@ -56,11 +74,24 @@ logging.basicConfig(
 log = logging.getLogger("gasless-bot")
 
 # ── Required env vars ─────────────────────────────────────────
-RPC_URL          = os.environ["ARBITRUM_RPC_URL"]
-PIMLICO_API_KEY  = os.environ["PIMLICO_API_KEY"]
-PRIVATE_KEY      = os.environ["PRIVATE_KEY"]
-SMART_ACCOUNT    = Web3.to_checksum_address(os.environ["SMART_ACCOUNT_ADDRESS"])
-EXECUTOR_ADDR    = Web3.to_checksum_address(os.environ["EXECUTOR_ADDRESS"])
+RPC_URL       = os.environ["ARBITRUM_RPC_URL"]
+PRIVATE_KEY   = os.environ["PRIVATE_KEY"]
+SMART_ACCOUNT = Web3.to_checksum_address(os.environ["SMART_ACCOUNT_ADDRESS"])
+EXECUTOR_ADDR = Web3.to_checksum_address(os.environ["EXECUTOR_ADDRESS"])
+
+# ── Bundler / Paymaster configuration ────────────────────────
+# BUNDLER_RPC_URL: URL of the self-hosted ERC-4337 bundler JSON-RPC endpoint.
+# Default: http://localhost:3000/rpc  (eth-infinitism/bundler in gasless-bot/bundler/)
+# To use a third-party bundler (e.g. Alchemy AA, Stackup), set this to their endpoint.
+BUNDLER_RPC_URL   = os.environ.get("BUNDLER_RPC_URL",   "http://localhost:3000/rpc")
+
+# PAYMASTER_RPC_URL: URL for paymaster sponsorship calls (pm_sponsorUserOperation).
+# Defaults to the same endpoint as the bundler.
+# When running the eth-infinitism bundler in --unsafe mode (no external paymaster),
+# set PAYMASTER_ENABLED=false and the bot will submit UserOps without sponsorship
+# (the Smart Account must hold ETH for gas in that case).
+PAYMASTER_RPC_URL = os.environ.get("PAYMASTER_RPC_URL", BUNDLER_RPC_URL)
+PAYMASTER_ENABLED = os.environ.get("PAYMASTER_ENABLED", "true").lower() == "true"
 
 # ── Optional tuning ───────────────────────────────────────────
 MIN_ARB_PROFIT_USD   = float(os.getenv("MIN_ARB_PROFIT_USD",   "10"))
@@ -110,6 +141,8 @@ account = Account.from_key(PRIVATE_KEY)
 log.info("Owner EOA: %s", account.address)
 log.info("Smart Account: %s", SMART_ACCOUNT)
 log.info("Executor: %s", EXECUTOR_ADDR)
+log.info("Bundler RPC: %s", BUNDLER_RPC_URL)
+log.info("Paymaster enabled: %s", PAYMASTER_ENABLED)
 
 # Minimal ABI fragments
 EXECUTOR_ABI = json.loads(open(
@@ -174,19 +207,32 @@ quoter   = w3.eth.contract(address=UNI_QUOTER,    abi=QUOTER_ABI)
 pool     = w3.eth.contract(address=AAVE_POOL,     abi=AAVE_POOL_ABI)
 
 # ─────────────────────────────────────────────────────────────
-#  Pimlico helpers
+#  Bundler / Paymaster JSON-RPC helpers
+#  All calls go to the self-hosted eth-infinitism bundler by default.
+#  Override BUNDLER_RPC_URL / PAYMASTER_RPC_URL in .env to use any
+#  ERC-4337-compatible bundler or paymaster service.
 # ─────────────────────────────────────────────────────────────
 
-PIMLICO_URL = f"https://api.pimlico.io/v2/arbitrum/rpc?apikey={PIMLICO_API_KEY}"
 
-
-def _pimlico_rpc(method: str, params: list) -> dict:
+def _bundler_rpc(method: str, params: list) -> dict:
+    """Send a JSON-RPC call to the bundler endpoint."""
     payload = {"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
-    r = requests.post(PIMLICO_URL, json=payload, timeout=30)
+    r = requests.post(BUNDLER_RPC_URL, json=payload, timeout=30)
     r.raise_for_status()
     data = r.json()
     if "error" in data:
-        raise RuntimeError(f"Pimlico RPC error [{method}]: {data['error']}")
+        raise RuntimeError(f"Bundler RPC error [{method}]: {data['error']}")
+    return data["result"]
+
+
+def _paymaster_rpc(method: str, params: list) -> dict:
+    """Send a JSON-RPC call to the paymaster endpoint."""
+    payload = {"jsonrpc": "2.0", "id": 1, "method": method, "params": params}
+    r = requests.post(PAYMASTER_RPC_URL, json=payload, timeout=30)
+    r.raise_for_status()
+    data = r.json()
+    if "error" in data:
+        raise RuntimeError(f"Paymaster RPC error [{method}]: {data['error']}")
     return data["result"]
 
 
@@ -209,10 +255,21 @@ def get_nonce(sender: str) -> int:
 
 
 def get_gas_prices() -> Tuple[int, int]:
-    """Return (maxFeePerGas, maxPriorityFeePerGas) from Pimlico."""
-    result = _pimlico_rpc("pimlico_getUserOperationGasPrice", [])
-    fast = result["fast"]
-    return int(fast["maxFeePerGas"], 16), int(fast["maxPriorityFeePerGas"], 16)
+    """
+    Return (maxFeePerGas, maxPriorityFeePerGas).
+    First tries the bundler's pimlico_getUserOperationGasPrice extension.
+    Falls back to eth_gasPrice from the Arbitrum RPC node if not supported.
+    """
+    try:
+        result = _bundler_rpc("pimlico_getUserOperationGasPrice", [])
+        fast = result["fast"]
+        return int(fast["maxFeePerGas"], 16), int(fast["maxPriorityFeePerGas"], 16)
+    except Exception:
+        # Fallback: use eth_gasPrice from the Arbitrum node directly
+        gas_price = w3.eth.gas_price
+        # Arbitrum uses EIP-1559; set priority fee to 10% of base
+        priority = max(gas_price // 10, 1_000_000)  # min 0.001 gwei
+        return gas_price + priority, priority
 
 
 # ─────────────────────────────────────────────────────────────
@@ -256,11 +313,17 @@ def build_userop(call_data: bytes) -> dict:
 
 def sponsor_userop(userop: dict) -> dict:
     """
-    Ask Pimlico's Verifying Paymaster to sponsor the UserOperation.
+    Ask the configured paymaster to sponsor the UserOperation.
     Returns the updated UserOperation with paymasterAndData filled in
     and gas limits adjusted.
+
+    When PAYMASTER_ENABLED=false the UserOperation is returned unchanged
+    (the Smart Account must hold ETH on Arbitrum to cover gas itself).
     """
-    result = _pimlico_rpc(
+    if not PAYMASTER_ENABLED:
+        log.info("Paymaster disabled — UserOp will be self-funded (Smart Account needs ETH).")
+        return userop
+    result = _paymaster_rpc(
         "pm_sponsorUserOperation",
         [userop, ENTRYPOINT_V07],
     )
@@ -326,8 +389,8 @@ def _pack_userop(op: dict) -> bytes:
 
 
 def submit_userop(userop: dict) -> str:
-    """Submit the signed UserOperation to the Pimlico bundler."""
-    op_hash = _pimlico_rpc(
+    """Submit the signed UserOperation to the self-hosted bundler."""
+    op_hash = _bundler_rpc(
         "eth_sendUserOperation",
         [userop, ENTRYPOINT_V07],
     )
@@ -339,7 +402,7 @@ def wait_for_userop(op_hash: str, timeout: int = 120) -> Optional[dict]:
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            receipt = _pimlico_rpc(
+            receipt = _bundler_rpc(
                 "eth_getUserOperationReceipt",
                 [op_hash],
             )
@@ -380,111 +443,122 @@ def _quote_uni(token_in: str, token_out: str, fee: int, amount_in: int) -> int:
         result = quoter.functions.quoteExactInputSingle(
             token_in, token_out, fee, amount_in, 0
         ).call()
-        return result[0]
+        return result[0]  # amountOut
     except Exception:
         return 0
 
 
-def _quote_sushi(token_in: str, token_out: str, fee: int, amount_in: int) -> int:
+def _quote_sushi(token_in: str, token_out: str, amount_in: int) -> int:
     """
-    SushiSwap on Arbitrum uses the legacy V2 AMM (not V3), so we
-    approximate the output via the constant-product formula using
-    on-chain reserves.  For simplicity we reuse the Uniswap V3
-    quoter here since SushiSwap V3 is also deployed on Arbitrum
-    and shares the same quoter interface.
+    Call SushiSwap V2 router getAmountsOut for a two-hop path.
+    SushiSwap on Arbitrum uses the Uniswap V2 interface.
     """
-    # SushiSwap V3 Quoter on Arbitrum
-    SUSHI_QUOTER = "0x0524E833cCD057e4d7A296e3aaAb9f7675964Ce1"
+    sushi_abi = [
+        {
+            "inputs": [
+                {"name": "amountIn",  "type": "uint256"},
+                {"name": "path",      "type": "address[]"},
+            ],
+            "name": "getAmountsOut",
+            "outputs": [{"name": "amounts", "type": "uint256[]"}],
+            "stateMutability": "view",
+            "type": "function",
+        }
+    ]
+    sushi = w3.eth.contract(address=SUSHI_ROUTER, abi=sushi_abi)
     try:
-        sushi_quoter = w3.eth.contract(address=SUSHI_QUOTER, abi=QUOTER_ABI)
-        result = sushi_quoter.functions.quoteExactInputSingle(
-            token_in, token_out, fee, amount_in, 0
+        amounts = sushi.functions.getAmountsOut(
+            amount_in, [token_in, token_out]
         ).call()
-        return result[0]
+        return amounts[-1]
     except Exception:
         return 0
-
-
-def _token_decimals(token_addr: str) -> int:
-    erc20_abi = [{"inputs":[],"name":"decimals","outputs":[{"type":"uint8"}],"stateMutability":"view","type":"function"}]
-    try:
-        c = w3.eth.contract(address=token_addr, abi=erc20_abi)
-        return c.functions.decimals().call()
-    except Exception:
-        return 18
 
 
 def scan_arbitrage() -> Optional[dict]:
     """
-    Scan all configured pairs for a profitable two-leg arbitrage.
-    Returns the best opportunity dict or None.
+    Scan Uniswap V3 and SushiSwap for price discrepancies.
+    Returns the best arbitrage opportunity or None.
     """
+    if not TOKEN_PRICES_USD:
+        return None
+
     best = None
     best_profit_usd = MIN_ARB_PROFIT_USD
 
-    for base_key, mid_key, fee in ARB_PAIRS:
-        base_addr = TOKENS[base_key]
-        mid_addr  = TOKENS[mid_key]
-        base_dec  = _token_decimals(base_addr)
+    for base_sym, mid_sym, fee in ARB_PAIRS:
+        base_token = TOKENS.get(base_sym)
+        mid_token  = TOKENS.get(mid_sym)
+        if not base_token or not mid_token:
+            continue
+
+        base_price = TOKEN_PRICES_USD.get(base_sym, 0)
+        mid_price  = TOKEN_PRICES_USD.get(mid_sym, 0)
+        if not base_price or not mid_price:
+            continue
 
         for loan_usd in LOAN_AMOUNTS_USD:
             if loan_usd > MAX_FLASH_LOAN_USD:
                 continue
 
-            # Convert USD loan amount to token units (rough: assume USDC=1)
-            if base_key in ("USDC", "USDT", "DAI"):
-                amount_in = int(loan_usd * 10 ** base_dec)
-            else:
-                price = TOKEN_PRICES_USD.get(base_key, 1)
-                if price == 0:
-                    continue
-                amount_in = int((loan_usd / price) * 10 ** base_dec)
+            # Determine token decimals (USDC=6, most others=18)
+            base_dec = 6 if base_sym in ("USDC", "USDT") else 18
+            mid_dec  = 8 if mid_sym == "WBTC" else 18
 
-            # Aave flash-loan fee = 0.05 %
-            flash_fee = amount_in * 5 // 10_000
+            amount_in = int(loan_usd / base_price * 10 ** base_dec)
 
-            # ── Direction A: buy on Uniswap, sell on Sushi ──
-            mid_from_uni   = _quote_uni(base_addr, mid_addr, fee, amount_in)
-            base_from_sushi = _quote_sushi(mid_addr, base_addr, fee, mid_from_uni) if mid_from_uni else 0
-            profit_a = base_from_sushi - amount_in - flash_fee if base_from_sushi > amount_in + flash_fee else 0
+            # Path A: buy mid on Uniswap, sell mid on SushiSwap
+            uni_out   = _quote_uni(base_token, mid_token, fee, amount_in)
+            sushi_out = _quote_sushi(mid_token, base_token, uni_out) if uni_out else 0
 
-            # ── Direction B: buy on Sushi, sell on Uniswap ──
-            mid_from_sushi  = _quote_sushi(base_addr, mid_addr, fee, amount_in)
-            base_from_uni   = _quote_uni(mid_addr, base_addr, fee, mid_from_sushi) if mid_from_sushi else 0
-            profit_b = base_from_uni - amount_in - flash_fee if base_from_uni > amount_in + flash_fee else 0
+            if sushi_out > amount_in:
+                profit_base = sushi_out - amount_in
+                profit_usd  = (profit_base / 10 ** base_dec) * base_price
+                # Subtract Aave flash-loan fee (0.05%)
+                flash_fee_usd = loan_usd * 0.0005
+                net_profit_usd = profit_usd - flash_fee_usd
 
-            profit_raw  = max(profit_a, profit_b)
-            start_uni   = profit_a >= profit_b
+                if net_profit_usd > best_profit_usd:
+                    best_profit_usd = net_profit_usd
+                    best = {
+                        "type":             "arbitrage",
+                        "asset":            base_token,
+                        "amount":           amount_in,
+                        "midToken":         mid_token,
+                        "poolFee":          fee,
+                        "startOnUniswap":   True,
+                        "estimatedProfitUSD": net_profit_usd,
+                    }
 
-            if profit_raw <= 0:
-                continue
+            # Path B: buy mid on SushiSwap, sell mid on Uniswap
+            sushi_out2 = _quote_sushi(base_token, mid_token, amount_in)
+            uni_out2   = _quote_uni(mid_token, base_token, fee, sushi_out2) if sushi_out2 else 0
 
-            # Convert profit to USD
-            if base_key in ("USDC", "USDT", "DAI"):
-                profit_usd = profit_raw / 10 ** base_dec
-            else:
-                price = TOKEN_PRICES_USD.get(base_key, 1)
-                profit_usd = (profit_raw / 10 ** base_dec) * price
+            if uni_out2 > amount_in:
+                profit_base = uni_out2 - amount_in
+                profit_usd  = (profit_base / 10 ** base_dec) * base_price
+                flash_fee_usd = loan_usd * 0.0005
+                net_profit_usd = profit_usd - flash_fee_usd
 
-            if profit_usd > best_profit_usd:
-                best_profit_usd = profit_usd
-                best = {
-                    "type":          "arbitrage",
-                    "asset":         base_addr,
-                    "amount":        amount_in,
-                    "midToken":      mid_addr,
-                    "poolFee":       fee,
-                    "startOnUniswap": start_uni,
-                    "estimatedProfitUSD": profit_usd,
-                }
+                if net_profit_usd > best_profit_usd:
+                    best_profit_usd = net_profit_usd
+                    best = {
+                        "type":             "arbitrage",
+                        "asset":            base_token,
+                        "amount":           amount_in,
+                        "midToken":         mid_token,
+                        "poolFee":          fee,
+                        "startOnUniswap":   False,
+                        "estimatedProfitUSD": net_profit_usd,
+                    }
 
     if best:
         log.info(
-            "ARB opportunity: %s/%s fee=%d amount=%d profit=~$%.2f",
-            [k for k, v in TOKENS.items() if v == best["asset"]][0],
-            [k for k, v in TOKENS.items() if v == best["midToken"]][0],
+            "ARB opportunity: %s→%s fee=%d loan=$%.0f profit=~$%.2f",
+            best["asset"][:8],
+            best["midToken"][:8],
             best["poolFee"],
-            best["amount"],
+            loan_usd,
             best["estimatedProfitUSD"],
         )
     return best
@@ -641,13 +715,13 @@ def execute_opportunity(opp: dict) -> bool:
         log.info("Building UserOperation for %s …", opp["type"])
         userop = build_userop(bytes.fromhex(call_data[2:]))
 
-        log.info("Requesting Pimlico paymaster sponsorship …")
+        log.info("Requesting paymaster sponsorship …")
         userop = sponsor_userop(userop)
 
         log.info("Signing UserOperation …")
         userop = sign_userop(userop)
 
-        log.info("Submitting to Pimlico bundler …")
+        log.info("Submitting to bundler (%s) …", BUNDLER_RPC_URL)
         op_hash = submit_userop(userop)
         log.info("UserOperation submitted: %s", op_hash)
 
@@ -716,6 +790,8 @@ def main():
     log.info("Smart Account : %s", SMART_ACCOUNT)
     log.info("Executor      : %s", EXECUTOR_ADDR)
     log.info("EntryPoint    : %s", ENTRYPOINT_V07)
+    log.info("Bundler RPC   : %s", BUNDLER_RPC_URL)
+    log.info("Paymaster     : %s", "enabled" if PAYMASTER_ENABLED else "disabled (self-funded)")
     log.info("Min ARB profit: $%.2f", MIN_ARB_PROFIT_USD)
     log.info("Min LIQ bonus : $%.2f", MIN_LIQ_BONUS_USD)
     log.info("Scan interval : %ds", SCAN_INTERVAL_SEC)

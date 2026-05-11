@@ -41,12 +41,15 @@ log = logging.getLogger("deploy-sca")
 
 # ── Config ────────────────────────────────────────────────────
 RPC_URL         = os.environ["ARBITRUM_RPC_URL"]
-PIMLICO_API_KEY = os.environ["PIMLICO_API_KEY"]
+# Bundler / Paymaster endpoints (self-hosted by default)
+BUNDLER_RPC_URL   = os.environ.get("BUNDLER_RPC_URL",   "http://localhost:3000/rpc")
+PAYMASTER_RPC_URL = os.environ.get("PAYMASTER_RPC_URL", BUNDLER_RPC_URL)
+PAYMASTER_ENABLED = os.environ.get("PAYMASTER_ENABLED", "true").lower() == "true"
 PRIVATE_KEY     = os.environ["PRIVATE_KEY"]
 
 CHAIN_ID        = 42161
 ENTRYPOINT_V07  = Web3.to_checksum_address("0x0000000071727De22E5E9d8BAf0edAc6f37da032")
-PIMLICO_URL     = f"https://api.pimlico.io/v2/arbitrum/rpc?apikey={PIMLICO_API_KEY}"
+
 
 # SimpleAccountFactory on Arbitrum (official eth-infinitism deployment)
 SIMPLE_ACCOUNT_FACTORY = Web3.to_checksum_address(
@@ -85,12 +88,12 @@ factory = w3.eth.contract(address=SIMPLE_ACCOUNT_FACTORY, abi=FACTORY_ABI)
 
 # ── Helpers ───────────────────────────────────────────────────
 
-def pimlico_rpc(method, params):
-    r = requests.post(PIMLICO_URL, json={"jsonrpc":"2.0","id":1,"method":method,"params":params}, timeout=30)
+def bundler_rpc(method, params):
+    r = requests.post(BUNDLER_RPC_URL, json={"jsonrpc":"2.0","id":1,"method":method,"params":params}, timeout=30)
     r.raise_for_status()
     d = r.json()
     if "error" in d:
-        raise RuntimeError(f"Pimlico error [{method}]: {d['error']}")
+        raise RuntimeError(f"Bundler error [{method}]: {d['error']}")
     return d["result"]
 
 
@@ -103,7 +106,7 @@ def is_deployed(addr: str) -> bool:
 
 
 def get_gas_prices():
-    result = pimlico_rpc("pimlico_getUserOperationGasPrice", [])
+    result = bundler_rpc("pimlico_getUserOperationGasPrice", [])
     fast = result["fast"]
     return int(fast["maxFeePerGas"], 16), int(fast["maxPriorityFeePerGas"], 16)
 
@@ -151,7 +154,7 @@ def wait_for_userop(op_hash: str, timeout: int = 120) -> dict | None:
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            r = pimlico_rpc("eth_getUserOperationReceipt", [op_hash])
+            r = bundler_rpc("eth_getUserOperationReceipt", [op_hash])
             if r:
                 return r
         except Exception:
@@ -191,8 +194,8 @@ def main():
         "signature":            "0x" + "00" * 65,
     }
 
-    log.info("Requesting Pimlico paymaster sponsorship …")
-    result = pimlico_rpc("pm_sponsorUserOperation", [userop, ENTRYPOINT_V07])
+    log.info("Requesting paymaster sponsorship …")
+    result = bundler_rpc("pm_sponsorUserOperation", [userop, ENTRYPOINT_V07])
     userop["paymasterAndData"]     = result["paymasterAndData"]
     userop["preVerificationGas"]   = result["preVerificationGas"]
     userop["verificationGasLimit"] = result["verificationGasLimit"]
@@ -201,8 +204,8 @@ def main():
     log.info("Signing UserOperation …")
     userop = sign_userop(userop)
 
-    log.info("Submitting to Pimlico bundler …")
-    op_hash = pimlico_rpc("eth_sendUserOperation", [userop, ENTRYPOINT_V07])
+    log.info("Submitting to bundler …")
+    op_hash = bundler_rpc("eth_sendUserOperation", [userop, ENTRYPOINT_V07])
     log.info("UserOperation hash: %s", op_hash)
 
     log.info("Waiting for on-chain inclusion …")

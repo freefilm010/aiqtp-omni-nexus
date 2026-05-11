@@ -1,0 +1,17 @@
+{
+  "chainId": 42161,
+  "gasFactor": "1.2",
+  "port": "3000",
+  "privateApiPort": "3001",
+  "network": "${ARBITRUM_RPC_URL:-https://arb1.arbitrum.io/rpc}",
+  "entryPoint": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+  "beneficiary": "${BUNDLER_BENEFICIARY}",
+  "minBalance": "0.01",
+  "mnemonic": "/app/workdir/mnemonic.txt",
+  "maxBundleGas": 5000000,
+  "minStake": "0.01",
+  "minUnstakeDelay": 86400,
+  "autoBundleInterval": 3,
+  "autoBundleMempoolSize": 10,
+  "unsafe": false
+}
