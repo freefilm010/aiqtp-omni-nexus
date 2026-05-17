@@ -302,6 +302,7 @@ const Hero = () => {
             <span className="bg-gradient-to-r from-white via-[hsl(270,91%,75%)] to-[hsl(355,88%,65%)] bg-clip-text text-transparent drop-shadow-lg">
               AIQTP™
             </span>
+            <span className="sr-only"> — AI Quantum Trading Portal</span>
           </h1>
           <h2 className="mb-1.5 text-lg font-bold tracking-tight animate-slide-up stagger-1 sm:text-3xl md:text-4xl lg:text-5xl">
             <span className="bg-gradient-to-r from-[hsl(270,91%,70%)] via-[hsl(320,85%,60%)] to-[hsl(355,88%,58%)] bg-clip-text text-transparent">
