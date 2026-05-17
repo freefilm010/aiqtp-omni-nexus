@@ -25,6 +25,7 @@ import {
 interface StrategyAgent {
   id: string;
   name: string;
+  bot_type?: string | null;
   description: string | null;
   status: string;
   profitability_score: number | null;
@@ -234,7 +235,7 @@ const AIAgentLeaderboard = () => {
                       <Badge variant={lifecycle.variant}>{lifecycle.label}</Badge>
                     </div>
                     <div className="flex items-center gap-3 mb-2">
-                      <img src={getBotAvatar(agent.bot_type, lifecycle.label)} alt={agent.name} className="h-12 w-12 object-contain rounded-lg bg-muted/30 p-1" />
+                      <img src={getBotAvatar(agent.bot_type ?? "strategy", lifecycle.label)} alt={agent.name} className="h-12 w-12 object-contain rounded-lg bg-muted/30 p-1" />
                       <p className="font-semibold">{agent.name}</p>
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{agent.description || 'AI-generated trading agent'}</p>
@@ -385,7 +386,7 @@ const AIAgentLeaderboard = () => {
                     {getRankBadge(idx + 1)}
                   </div>
                   <div className="col-span-3 flex items-center gap-2">
-                    <img src={getBotAvatar(agent.bot_type, lifecycle.label)} alt={agent.name} className="h-8 w-8 object-contain rounded-md bg-muted/30 p-0.5 shrink-0" />
+                    <img src={getBotAvatar(agent.bot_type ?? "strategy", lifecycle.label)} alt={agent.name} className="h-8 w-8 object-contain rounded-md bg-muted/30 p-0.5 shrink-0" />
                     <div>
                       <p className="font-medium text-sm text-foreground">{agent.name}</p>
                       <p className="text-[10px] text-muted-foreground">{agent.status}</p>
