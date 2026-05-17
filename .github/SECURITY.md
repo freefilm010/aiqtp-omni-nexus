@@ -5,7 +5,7 @@
 AIQTP™ takes security seriously. If you discover a vulnerability:
 
 1. **Do NOT open a public GitHub issue.**
-2. Email `1drrey@gmail.com` with subject `[SECURITY] <short description>`.
+2. Email `aiqtpinfo@gmail.com` with subject `[SECURITY] <short description>`.
 3. Include: reproduction steps, affected component, suggested impact rating (low/medium/high/critical).
 4. We will acknowledge within 48 hours and aim to patch critical issues within 7 days.
 
