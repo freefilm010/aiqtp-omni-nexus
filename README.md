@@ -1,8 +1,9 @@
 # AIQTP Omni-Nexus
 
-**Status:** 🟡 Private beta. Building in public.
+**Status:** 🟡 Private beta. Under active review and test.
+**Owner:** DRTRUST (Wyoming).
 
-Multi-broker AI trading terminal with a post-quantum-crypto roadmap, built by a solo founder. Stack: React 19 + Vite 7 + TypeScript on the frontend; FastAPI / Python 3.11 on the trading + quantum services; Supabase (Postgres + Edge Functions) for auth, data, and serverless logic; Render for backend hosting; Vercel for frontend hosting.
+Multi-broker AI trading terminal with a post-quantum-crypto roadmap. Stack: React 19 + Vite 7 + TypeScript on the frontend; FastAPI / Python 3.11 on the trading + quantum services; Supabase (Postgres + Edge Functions) for auth, data, and serverless logic; Render for backend hosting; Vercel for frontend hosting.
 
 ## What's actually here
 
@@ -115,4 +116,4 @@ Trading involves substantial risk of loss. AIQTP provides software tools and gen
 
 ## License
 
-Proprietary. © freefilm010. All rights reserved.
+Proprietary. © DRTRUST (Wyoming). All rights reserved.
