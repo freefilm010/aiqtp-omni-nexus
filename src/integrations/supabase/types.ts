@@ -245,6 +245,84 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_directives: {
+        Row: {
+          agent_type: string
+          created_at: string
+          error_msg: string | null
+          id: string
+          params: Json
+          result: Json | null
+          status: string
+          tool: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string
+          created_at?: string
+          error_msg?: string | null
+          id?: string
+          params?: Json
+          result?: Json | null
+          status?: string
+          tool: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string
+          error_msg?: string | null
+          id?: string
+          params?: Json
+          result?: Json | null
+          status?: string
+          tool?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      agent_heartbeats: {
+        Row: {
+          active_strategies: number
+          created_at: string
+          id: string
+          last_seen_at: string
+          loop_interval_seconds: number | null
+          metadata: Json
+          processed_directives: number
+          status: string
+          updated_at: string
+          worker_name: string
+        }
+        Insert: {
+          active_strategies?: number
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          loop_interval_seconds?: number | null
+          metadata?: Json
+          processed_directives?: number
+          status?: string
+          updated_at?: string
+          worker_name: string
+        }
+        Update: {
+          active_strategies?: number
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          loop_interval_seconds?: number | null
+          metadata?: Json
+          processed_directives?: number
+          status?: string
+          updated_at?: string
+          worker_name?: string
+        }
+        Relationships: []
+      }
       ai_factors: {
         Row: {
           category: string | null
@@ -8257,6 +8335,27 @@ export type Database = {
         }
         Relationships: []
       }
+      system_status: {
+        Row: {
+          active: boolean
+          key: string
+          reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          key: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          key?: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       token_airdrops: {
         Row: {
           amount_per_user: number
@@ -10053,6 +10152,10 @@ export type Database = {
       log_security_event: {
         Args: { p_details?: Json; p_event_type: string; p_severity?: string }
         Returns: string
+      }
+      mark_stale_agent_heartbeats: {
+        Args: { p_stale_after_seconds?: number }
+        Returns: number
       }
       owns_auto_invest_engine: {
         Args: { _engine_id: string }
