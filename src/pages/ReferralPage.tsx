@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Users, Copy, CheckCircle2, DollarSign, TrendingUp, Link2, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as _supabase } from "@/integrations/supabase/client";
+const supabase = _supabase as any;
 import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { toast } from "sonner";
 
