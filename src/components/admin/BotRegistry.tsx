@@ -211,7 +211,7 @@ const BotRegistry = () => {
                   <div className="flex items-center gap-3">
                     <img
                       src={getBotAvatar(s.bot_type)}
-                      alt={s.bot_type}
+                      alt={`${s.bot_type} trading bot avatar`}
                       className="w-10 h-10 rounded-full object-cover bg-muted"
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
@@ -254,7 +254,7 @@ const BotRegistry = () => {
                   </div>
                   <img
                     src={getBotAvatar(s.bot_type)}
-                    alt={s.bot_type}
+                    alt={`${s.bot_type} trading bot avatar`}
                     className="w-10 h-10 rounded-full object-cover bg-muted"
                     onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />

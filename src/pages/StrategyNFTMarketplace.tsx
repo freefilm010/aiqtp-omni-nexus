@@ -109,7 +109,7 @@ export default function StrategyNFTMarketplace() {
                 <div>
                   <Label>NFT Image (optional)</Label>
                   <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4 text-center cursor-pointer hover:border-primary/50" onClick={() => document.getElementById("nft-img-upload")?.click()}>
-                    {imagePreview ? <img src={imagePreview} alt="Preview" className="max-h-32 mx-auto rounded" loading="lazy" /> : <><ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" /><p className="text-sm text-muted-foreground">Click to upload</p></>}
+                    {imagePreview ? <img src={imagePreview} alt="Preview of NFT strategy artwork" className="max-h-32 mx-auto rounded" loading="lazy" /> : <><ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" /><p className="text-sm text-muted-foreground">Click to upload</p></>}
                     <input id="nft-img-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </div>
                 </div>

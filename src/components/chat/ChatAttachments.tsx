@@ -151,7 +151,7 @@ export const ChatAttachments = ({
                 {isImage ? (
                   <img
                     src={attachment.url}
-                    alt={attachment.name}
+                    alt={`Attachment preview: ${attachment.name}`}
                     className="h-10 w-10 object-cover rounded"
                   />
                 ) : (
@@ -202,7 +202,7 @@ export const MessageAttachments = ({ attachments }: { attachments: Attachment[] 
             {isImage ? (
               <img
                 src={attachment.url}
-                alt={attachment.name}
+                alt={`Chat image attachment: ${attachment.name}`}
                 className="max-h-40 max-w-xs rounded-lg border hover:opacity-80 transition-opacity"
               />
             ) : (
