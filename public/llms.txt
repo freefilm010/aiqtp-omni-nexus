@@ -1,0 +1,39 @@
+# AIQTP™ — AI Quantum Trading Platform
+
+> AI-powered quantum trading platform for crypto, stocks, real estate, precious metals, and NFTs. ML-driven signals, post-quantum security, zero subscription fees.
+
+## Pages
+
+- [Home](/): Platform overview and AI command center.
+- [Pricing](/pricing): Plans, fees, and subscription tiers.
+- [Sign in](/auth): Account login and registration.
+- [Legal](/legal): Terms of service and privacy policy.
+- [Fees](/fees): Trading fees and pricing structure.
+- [Performance](/performance): Strategy performance showcase.
+- [Education](/education): Trading strategies, technical analysis, DeFi guides.
+- [News](/news): Real-time crypto market news with AI sentiment.
+
+## Features
+
+- [Trading](/trading): Multi-asset trading dashboard.
+- [Advanced Trading](/advanced-trading): Professional order types and tools.
+- [AI Lab](/ai-lab): AI model training and backtesting.
+- [Strategy Studio](/strategy-studio): Build and deploy trading strategies.
+- [Strategy Marketplace](/marketplace): Browse and rent community strategies.
+- [ML Predictions](/ml-predictions): Machine learning market signals.
+- [Analytics](/analytics): Portfolio analytics and reporting.
+- [Risk](/risk): Advanced risk management.
+- [Screener](/screener): Asset screener across markets.
+- [DeFi Sniper](/defi-sniper): Early DeFi token detection.
+- [Quantum Lab](/quantum-lab): Quantum computing experiments.
+- [NFT Studio](/nft-studio): AI-powered NFT generation.
+- [Token Launchpad](/token-launchpad): Launch and discover tokens.
+- [Institutional](/institutional): Institutional services.
+- [Data Ecosystem](/data-ecosystem): Market data products.
+- [Wallet & Assets](/wallet-assets): Unified wallet and asset hub.
+
+## Optional
+
+- [Social Trading](/social): Copy trading and social feeds.
+- [Exchange Hub](/exchange): Connected exchange integrations.
+- [Vault](/vault): Lightning Vault wallet.
