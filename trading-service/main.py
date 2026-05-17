@@ -527,6 +527,50 @@ def _sim_order_response(req: SimOrderRequest) -> dict[str, Any]:
     }
 
 
+# Maximum % of Alpaca portfolio equity any single order is allowed to deploy.
+# Tighten by setting MAX_ORDER_NAV_PCT in the Render service env.
+MAX_ORDER_NAV_PCT: float = float(os.getenv("MAX_ORDER_NAV_PCT", "0.20"))
+
+
+async def _check_kill_switch_or_raise() -> None:
+    """
+    Read public.system_status and raise 503 if trading is halted.
+    Fails CLOSED: on any DB error, halt — better to refuse a legitimate
+    order on a transient blip than to keep submitting live orders blind
+    to the operator's kill signal.
+    """
+    try:
+        rows = await _query(
+            "SELECT active FROM public.system_status WHERE key = 'main' LIMIT 1"
+        )
+    except Exception as exc:
+        log.error("system_status read failed: %s — kill switch fail-closed", exc)
+        raise HTTPException(503, "Trading temporarily halted (status read error)")
+    if rows and rows[0].get("active") is False:
+        raise HTTPException(503, "Trading is halted by operator kill switch")
+
+
+async def _alpaca_account_nav() -> float:
+    """Return Alpaca portfolio_value (or equity) as float, 0.0 on failure."""
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            f"{ALPACA_BASE_URL}/v2/account",
+            headers={
+                "APCA-API-KEY-ID": ALPACA_API_KEY,
+                "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
+            },
+            timeout=10,
+        )
+        if r.status_code not in (200, 201):
+            log.warning("Alpaca /v2/account returned %s: %s", r.status_code, r.text)
+            return 0.0
+        d = r.json()
+        try:
+            return float(d.get("portfolio_value") or d.get("equity") or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
+
 async def _place_alpaca_order(req: LiveOrderRequest) -> dict[str, Any]:
     sym = req.symbol.replace("/", "")
     if sym not in SYMBOL_WHITELIST:
@@ -535,6 +579,30 @@ async def _place_alpaca_order(req: LiveOrderRequest) -> dict[str, Any]:
         raise HTTPException(403, "Paper mode is active — live orders are disabled")
     if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
         raise HTTPException(503, "Alpaca credentials not configured")
+
+    # Safety control #1 — honor the operator kill switch
+    await _check_kill_switch_or_raise()
+
+    # Safety control #2 — cap notional at MAX_ORDER_NAV_PCT of account equity.
+    # Alpaca quote-price lookup happens implicitly on the order; we use the
+    # request notional (if provided) or estimate from qty * last_price. When
+    # qty is supplied without notional we skip the check (Alpaca's own
+    # buying-power validation catches it on order submission).
+    req_notional = float(getattr(req, "notional", 0) or 0)
+    if req_notional <= 0 and getattr(req, "limit_price", None):
+        try:
+            req_notional = float(req.qty) * float(req.limit_price)
+        except (TypeError, ValueError):
+            req_notional = 0.0
+    if req_notional > 0:
+        nav = await _alpaca_account_nav()
+        if nav > 0 and req_notional > nav * MAX_ORDER_NAV_PCT:
+            raise HTTPException(
+                400,
+                f"Order notional ${req_notional:.2f} exceeds "
+                f"{int(MAX_ORDER_NAV_PCT * 100)}% of portfolio equity "
+                f"(${nav:.2f}). Reduce size or raise MAX_ORDER_NAV_PCT.",
+            )
 
     payload: dict[str, Any] = {
         "symbol": sym,
