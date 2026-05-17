@@ -234,10 +234,10 @@ const RewardsStorePage = () => {
         {/* Budget Transparency */}
         <Card className="mt-8 max-w-2xl mx-auto bg-muted/30">
           <CardContent className="p-4 text-xs text-muted-foreground space-y-2">
-            <h4 className="font-medium text-foreground text-sm flex items-center gap-2">
+            <h3 className="font-medium text-foreground text-sm flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" /> 
               Budget-Capped Rewards
-            </h4>
+            </h3>
             <ul className="list-disc list-inside space-y-1">
               <li><strong>10% Annual Cap</strong> — Total giveaways and rewards never exceed 10% of the platform's annual taxable profit.</li>
               <li><strong>Automated Guard</strong> — A database-level trigger blocks any redemption that would exceed the budget.</li>

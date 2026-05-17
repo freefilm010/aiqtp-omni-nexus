@@ -371,7 +371,7 @@ const StatsArenaPage = () => {
                     <div key={contest.id} className="border border-border/50 rounded-lg p-3 space-y-2 hover:border-primary/30 transition-colors">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <h4 className="text-sm font-semibold truncate">{contest.name}</h4>
+                          <h3 className="text-sm font-semibold truncate">{contest.name}</h3>
                           <p className="text-[10px] text-muted-foreground line-clamp-1">{contest.description}</p>
                         </div>
                         <Badge variant={contest.status === "active" ? "default" : "secondary"} className="text-[10px] shrink-0">

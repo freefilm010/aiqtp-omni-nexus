@@ -51,26 +51,26 @@ const LiveTicker = ({ tickers }: { tickers: Record<string, any> }) => {
 
 const LeftToolbar = () => (
   <div className="absolute left-0 top-7 bottom-9 z-20 flex w-11 flex-col items-center gap-1 border-r border-[hsl(222,14%,17%)] bg-[hsl(223,18%,9%)] py-2">
-    <button className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
+    <button aria-label="Crosshair cursor tool" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
       <Crosshair className="w-4 h-4" />
     </button>
-    <button className="flex h-8 w-8 items-center justify-center rounded bg-[hsl(224,100%,58%,0.15)] text-[hsl(224,100%,58%)]">
+    <button aria-label="Trend line tool" className="flex h-8 w-8 items-center justify-center rounded bg-[hsl(224,100%,58%,0.15)] text-[hsl(224,100%,58%)]">
       <Minus className="w-4 h-4" />
     </button>
-    <button className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
+    <button aria-label="Trend channel tool" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
       <TrendingUp className="w-4 h-4" />
     </button>
-    <button className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
+    <button aria-label="Rectangle annotation tool" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
       <Square className="w-4 h-4" />
     </button>
-    <button className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
+    <button aria-label="Ellipse annotation tool" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
       <Circle className="w-4 h-4" />
     </button>
-    <button className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
+    <button aria-label="Freehand drawing tool" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
       <PenTool className="w-4 h-4" />
     </button>
     <div className="flex-1" />
-    <button className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
+    <button aria-label="Switch to bar chart" className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[hsl(222,14%,20%)] hover:text-foreground">
       <BarChart2 className="w-4 h-4" />
     </button>
   </div>

@@ -321,10 +321,10 @@ const GiveawayPage = () => {
                       value={`${window.location.origin}/giveaway?ref=${entry.referral_code}`}
                       className="font-mono text-xs"
                     />
-                    <Button variant="outline" size="icon" onClick={copyReferralLink}>
+                    <Button aria-label="Copy referral link" variant="outline" size="icon" onClick={copyReferralLink}>
                       <Copy className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" onClick={() => {
+                    <Button aria-label="Share referral link on X" variant="outline" size="icon" onClick={() => {
                       const url = `${window.location.origin}/giveaway?ref=${entry.referral_code}`;
                       const text = "I just entered the AIQTP $2M Dream Giveaway! 🏠🚗 Sign up with my link:";
                       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank");

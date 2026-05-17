@@ -251,7 +251,7 @@ const ComputerVisionLab = () => {
                 <div className="relative w-full h-full">
                   <img
                     src={selectedImage}
-                    alt="Chart"
+                    alt="Uploaded chart for computer vision pattern analysis"
                     className="w-full h-full object-contain"
                     loading="lazy"
                   />
