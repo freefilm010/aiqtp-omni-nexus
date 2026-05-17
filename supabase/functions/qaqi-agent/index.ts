@@ -847,6 +847,24 @@ serve(async (req) => {
 
     const request: QAQIRequest = await req.json();
 
+    // SECURITY: Derive adminApproval server-side from user_roles ONLY.
+    // Never trust an adminApproval flag supplied by the client.
+    let serverAdminApproved = false;
+    try {
+      const { data: isAdmin } = await authClient.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin',
+      });
+      serverAdminApproved = Boolean(isAdmin);
+    } catch (_err) {
+      serverAdminApproved = false;
+    }
+    request.context = {
+      ...(request.context ?? {}),
+      adminApproval: serverAdminApproved,
+      userId: user.id,
+    };
+
     // Input validation
     if (request.messages && Array.isArray(request.messages)) {
       if (request.messages.length > 50) {

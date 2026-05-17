@@ -211,7 +211,6 @@ const QAQIAgent = () => {
             context: {
               module: "qaqi_autonomous",
               permissions: ["read", "write", "execute", "admin", "automate"],
-              adminApproval: true,
             },
           },
         });

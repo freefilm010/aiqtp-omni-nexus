@@ -11,12 +11,21 @@
 
 const BASE = ((import.meta.env.VITE_RENDER_WORKER_URL as string | undefined) ?? "https://aiqtp-trading-service.onrender.com").replace(/\/$/, "");
 
-async function _post(path: string, body: unknown, userId: string) {
+async function _authHeader(): Promise<string> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not authenticated");
+  }
+  return `Bearer ${session.access_token}`;
+}
+
+async function _post(path: string, body: unknown, _userId?: string) {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-User-Id": userId,
+      Authorization: await _authHeader(),
     },
     body: JSON.stringify(body),
   });
@@ -27,12 +36,12 @@ async function _post(path: string, body: unknown, userId: string) {
   return res.json();
 }
 
-async function _patch(path: string, body: unknown, userId: string) {
+async function _patch(path: string, body: unknown, _userId?: string) {
   const res = await fetch(`${BASE}${path}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      "X-User-Id": userId,
+      Authorization: await _authHeader(),
     },
     body: JSON.stringify(body),
   });
@@ -43,9 +52,9 @@ async function _patch(path: string, body: unknown, userId: string) {
   return res.json();
 }
 
-async function _get(path: string, userId: string) {
+async function _get(path: string, _userId?: string) {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "X-User-Id": userId },
+    headers: { Authorization: await _authHeader() },
   });
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
