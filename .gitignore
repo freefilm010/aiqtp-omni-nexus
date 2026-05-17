@@ -1,7 +1,8 @@
-# Secrets — never commit
+# Secrets — never commit any .env file...
 .env
-.env.local
-.env.*.local
+.env.*
+# ...except the example template
+!.env.example
 
 # Logs
 logs
