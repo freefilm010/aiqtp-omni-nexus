@@ -128,6 +128,10 @@ ALPACA_SYMBOL_WHITELIST: set[str] = {
     if s.strip()
 }
 
+# Rate-limit state is persisted in the Supabase `order_rate_limits` table
+# (migration 20260517070000_order_rate_limits.sql) so the limit survives
+# Render restarts. The in-memory dict below is a per-process fast-path cache;
+# the DB is the source of truth.
 _alpaca_order_times: dict[str, collections.deque] = {}
 
 # ─── Database backend ─────────────────────────────────────────────────────────
@@ -839,17 +843,79 @@ def _run_factor_generation(params: dict) -> dict:
     }
 
 
+_RATE_LIMIT_MAX_PER_HOUR = 5
+
+
 def _alpaca_rate_limit_ok(user_id: str) -> bool:
+    """
+    Returns True when user is under the 5-orders-per-rolling-hour cap.
+
+    Source of truth is the Supabase `order_rate_limits` table via the
+    `count_recent_orders` RPC. The in-memory deque is kept warm for read
+    performance but is reconciled against the DB on every check; if the
+    DB count is higher (e.g. another worker also placed an order), the
+    DB wins.
+
+    Fails CLOSED: if the DB read errors, returns False (rate-limit
+    considered exceeded). Better to refuse a legitimate order on a
+    transient blip than to allow an unbounded burst when we have no
+    visibility into recent activity.
+    """
     now = time.time()
-    dq  = _alpaca_order_times.setdefault(user_id, collections.deque())
-    # Drop timestamps older than 1 hour
+    dq = _alpaca_order_times.setdefault(user_id, collections.deque())
     while dq and now - dq[0] > 3600:
         dq.popleft()
-    return len(dq) < 5
+
+    try:
+        result = (
+            db.rpc(
+                "count_recent_orders",
+                {"p_user_id": user_id, "p_minutes": 60},
+            ).execute()
+        )
+        db_count = int(result.data or 0)
+    except Exception as exc:
+        log.error(
+            "count_recent_orders RPC failed for user %s: %s — "
+            "treating as rate-limit EXCEEDED (fail-closed).",
+            user_id, exc,
+        )
+        return False
+
+    effective = max(db_count, len(dq))
+    return effective < _RATE_LIMIT_MAX_PER_HOUR
 
 
-def _record_alpaca_order(user_id: str) -> None:
+def _record_alpaca_order(
+    user_id: str,
+    agent_type: str | None = None,
+    symbol: str | None = None,
+    side: str | None = None,
+    notional_usd: float | None = None,
+) -> None:
+    """Persist the order timestamp to Supabase + update in-memory cache.
+
+    Persistence failure is logged but does NOT raise — the order has
+    already been placed at the broker; losing the rate-limit row would
+    only let the next order squeeze through. Use Sentry/log monitoring
+    to catch repeated failures.
+    """
     _alpaca_order_times.setdefault(user_id, collections.deque()).append(time.time())
+    try:
+        db.table("order_rate_limits").insert(
+            {
+                "user_id":      user_id,
+                "agent_type":   agent_type,
+                "symbol":       symbol,
+                "side":         side,
+                "notional_usd": notional_usd,
+            }
+        ).execute()
+    except Exception as exc:
+        log.warning(
+            "Persisting rate-limit row for user %s failed (order still placed): %s",
+            user_id, exc,
+        )
 
 
 def _execute_alpaca_live_order(params: dict, user_id: str, agent_type: str) -> dict:
@@ -930,7 +996,13 @@ def _execute_alpaca_live_order(params: dict, user_id: str, agent_type: str) -> d
     order_resp.raise_for_status()
     order = order_resp.json()
 
-    _record_alpaca_order(user_id)
+    _record_alpaca_order(
+        user_id,
+        agent_type=agent_type,
+        symbol=symbol,
+        side=side,
+        notional_usd=notional if notional > 0 else None,
+    )
 
     return {
         "order_id":     order.get("id"),
