@@ -1,75 +1,118 @@
-# Welcome to your Lovable project
+# AIQTP Omni-Nexus
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/freefilm010/aiqtp-omni-nexus)
+**Status:** 🟡 Private beta. Building in public.
 
-## Project info
+Multi-broker AI trading terminal with a post-quantum-crypto roadmap, built by a solo founder. Stack: React 19 + Vite 7 + TypeScript on the frontend; FastAPI / Python 3.11 on the trading + quantum services; Supabase (Postgres + Edge Functions) for auth, data, and serverless logic; Render for backend hosting; Vercel for frontend hosting.
 
-**URL**: https://lovable.dev/projects/d588a2ef-0d53-4c77-8d2f-41dfd18dd47e
+## What's actually here
 
-## How can I edit this code?
+| Area | What exists |
+|---|---|
+| Frontend | 500+ TypeScript/React files. Modern Vite 7 stack, Tailwind, shadcn-ui, Sentry. |
+| Backend services | `core-brain` (trading worker), `trading-service` (FastAPI broker aggregator), `rag-service` (Qdrant + Ollama RAG), `onramp-service`, `gasless-bot`, `income-engines`. |
+| Edge functions | 48 Supabase Edge Functions (auth, payments, market data, ML predictions, agent orchestration). |
+| Database | 194 SQL migrations. Postgres + RLS. |
+| Broker integrations | Alpaca, Tradier, Binance, Kraken, IBKR, KuCoin, MEXC, Gate.io, Hyperliquid (perp DEX), Solana/Jupiter, 1inch. |
+| Security CI | Semgrep, CodeQL, Trivy, OSV-Scanner, OSSF Scorecard, GitGuardian, Qodo Merge. |
+| Quantum integration | IBM Qiskit Runtime via the `aiqtp-quantum-agent` Render service. |
 
-There are several ways of editing your application.
+## What this is NOT (yet)
 
-**Use Lovable**
+- **Not** a chartered bank.
+- **Not** a registered broker-dealer or investment adviser.
+- **Not** a stablecoin issuer (no payment stablecoin has been issued).
+- **Not** SOC 2 audited.
+- **Not** accepting customer funds beyond Stripe test mode for the beta.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d588a2ef-0d53-4c77-8d2f-41dfd18dd47e) and start prompting.
+If you saw older copy on the site claiming a federal charter is pending, fabricated user counts, or specific ROI percentages — that copy is being systematically removed. See `AUDIT_2026-05-17.md` for the full cleanup pass.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Live deployments
 
-**Use your preferred IDE**
+- Frontend: <https://www.aiqtp.com> · <https://aiqtp.vercel.app>
+- Trading API: `https://aiqtp-trading-service.onrender.com`
+- Quantum Agent: `https://aiqtp-quantum-agent.onrender.com`
+- Supabase: `https://rueaxiyvseaxkysnoock.supabase.co`
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Repository layout
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/                      Frontend (React + TypeScript + Vite)
+trading-service/          FastAPI broker aggregator (Alpaca, Tradier, etc.)
+core-brain/               Background trading worker + quantum agent
+rag-service/              Qdrant + Ollama RAG over indexed repos
+gasless-bot/              ERC-4337 flash-loan arb bot (experimental)
+onramp-service/           Fiat-to-crypto on-ramp module
+income-engines/           Multi-engine revenue orchestrator
+cognitum/                 CLI + compute-mining worker
+supabase/
+  functions/              48 Edge Functions
+  migrations/             194 SQL migrations
+docker/                   Self-hosted-stack Dockerfiles
+docs/                     Specs, audits, internal docs
+.github/workflows/        CI: deploy, security scan, keepalive, schema sync
 ```
 
-**Edit a file directly in GitHub**
+## Architecture & deploy flow
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Source of truth is **GitHub `main`**. On merge to main:
 
-**Use GitHub Codespaces**
+```
+main → Vercel auto-deploys frontend
+     → Render auto-deploys core-brain, trading-service, quantum-agent
+     → GitHub Actions deploys Supabase edge functions (deploy-all.yml)
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Full details in [`CLAUDE.md`](./CLAUDE.md). Operational runbook in [`RUNBOOK.md`](./RUNBOOK.md). Security reporting in [`.github/SECURITY.md`](./.github/SECURITY.md).
 
-## What technologies are used for this project?
+## Running locally
 
-This project is built with:
+Requires Node.js 22+, Python 3.11+, Docker (for the full stack).
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**Frontend only:**
 
-## How can I deploy this project?
+```bash
+npm install --legacy-peer-deps
+cp .env.example .env             # fill in your local values
+npm run dev                       # starts Vite at http://localhost:5173
+```
 
-Simply open [Lovable](https://lovable.dev/projects/d588a2ef-0d53-4c77-8d2f-41dfd18dd47e) and click on Share -> Publish.
+**Full self-hosted stack (Supabase + RAG + trading + ollama, all local):**
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+cp .env.example .env             # fill in 5 required secrets
+docker compose up -d              # ~2 min cold start
+```
 
-Yes, you can!
+Access:
+- QuantClaw UI (via Kong): http://localhost:8000
+- Supabase Studio: http://localhost:3000
+- RAG API: http://localhost:8001/docs
+- Trading API: http://localhost:8002/docs
+- Qdrant: http://localhost:6333/dashboard
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Roadmap
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+See [`docs/SIGNALS_PRO_SPEC.md`](./docs/SIGNALS_PRO_SPEC.md) for the next-product spec (subscription tiers, Stripe wiring, launch plan).
+
+Big picture:
+
+| Phase | Focus | Realistic horizon |
+|---|---|---|
+| **Phase 1 (now)** | Signals Pro SaaS, hardening, honest marketing | 6 months |
+| **Phase 2** | Broker-dealer partnership (Alpaca BD rails) + state MTL portfolio | 12–24 months |
+| **Phase 3** | Bank charter via acquisition (model: SoFi/Golden Pacific) | 5–7 years |
+| **Phase 4** | Integrated financial services holding company | 7–15 years |
+
+If older docs in this repo suggested a federal charter by mid-2026, that timeline came from an LLM hallucination and has been retired. The real GENIUS Act timeline (per OCC NPRM Feb 2026, Federal Register March 2026, final-rule statutory deadline July 18, 2026) makes any de novo charter approval realistically a 2027+ event.
+
+## Security
+
+Vulnerabilities → email `1drrey@gmail.com` with subject `[SECURITY] <description>`. Do NOT open a public issue. Full policy in [`.github/SECURITY.md`](./.github/SECURITY.md).
+
+## Disclaimer
+
+Trading involves substantial risk of loss. AIQTP provides software tools and general market commentary, not personalized investment advice. We are not a registered investment adviser, broker-dealer, bank, or stablecoin issuer. You are responsible for your own trades. Past performance — backtested, simulated, or actual — does not guarantee future results.
+
+## License
+
+Proprietary. © freefilm010. All rights reserved.
