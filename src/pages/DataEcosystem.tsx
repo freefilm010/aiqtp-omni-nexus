@@ -305,7 +305,8 @@ const DataEcosystem = () => {
                       <h4 className="font-medium">Data Creators</h4>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Build bots, earn up to 50% profit share on all data sales
+                      Build bots, share in marketplace revenue (terms TBD; subject to
+                      securities-law review before any revenue-share program launches)
                     </p>
                   </div>
                   <div className="p-4 rounded-lg border">

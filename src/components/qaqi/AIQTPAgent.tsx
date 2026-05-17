@@ -477,14 +477,15 @@ Position sizing: 2-5% of portfolio per entry
   }
   
   if (lowerQuery.includes("strategy") || lowerQuery.includes("trading")) {
-    return `**Trading Strategy Generated**
+    return `**Trading Strategy — Example Output**
 
-**Risk Profile**: Moderate
-**Expected Return**: 18.5% annually
-**Max Drawdown**: 12%
-**Sharpe Ratio**: 1.85
+> ⚠️ Example template only. Specific return / drawdown / Sharpe figures
+> from any AI-generated strategy are hypothetical, not promises, and not
+> investment advice. Past performance does not predict future results.
+> You are responsible for your own trades.
 
-**Allocation**:
+**Risk Profile**: Moderate (example)
+**Allocation example**:
 - BTC: 40%
 - ETH: 30%
 - Stablecoins: 20%

@@ -351,14 +351,14 @@ const Hero = () => {
             </Link>
           </div>
 
-          {/* Social proof strip */}
+          {/* Beta status strip — honest, no fabricated user counts */}
           <div className="mb-3 flex items-center justify-center gap-3 animate-slide-up stagger-3 md:mb-6">
             <div className="flex items-center gap-1.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-[hsl(162,91%,32%)] animate-pulse" />
-              <span className="font-mono text-[10px] text-[hsl(162,91%,32%)]">2,847 traders online</span>
+              <div className="h-1.5 w-1.5 rounded-full bg-[hsl(43,96%,56%)] animate-pulse" />
+              <span className="font-mono text-[10px] text-[hsl(43,96%,56%)]">Private beta</span>
             </div>
             <span className="text-[hsl(222,14%,25%)]">|</span>
-            <span className="font-mono text-[10px] text-muted-foreground">$14.2M+ volume today</span>
+            <span className="font-mono text-[10px] text-muted-foreground">Building in public</span>
           </div>
         </div>
 
@@ -393,8 +393,8 @@ const Hero = () => {
             <div className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground md:text-[9px]">Crypto · Stocks · More</div>
           </div>
           <div className="rounded-xl px-2 py-1.5 glass-morphism-subtle micro-hover md:px-6 md:py-3">
-            <div className="font-mono text-sm font-bold text-[hsl(162,91%,32%)] md:text-xl">Zero Fees</div>
-            <div className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground md:text-[9px]">No Subscriptions</div>
+            <div className="font-mono text-sm font-bold text-[hsl(162,91%,32%)] md:text-xl">Beta Access</div>
+            <div className="font-mono text-[7px] uppercase tracking-wider text-muted-foreground md:text-[9px]">Free During Beta</div>
           </div>
           <div className="rounded-xl px-2 py-1.5 glass-morphism-subtle micro-hover md:px-6 md:py-3">
             <div className="font-mono text-sm font-bold text-[hsl(270,91%,65%)] md:text-xl">AI-Powered</div>

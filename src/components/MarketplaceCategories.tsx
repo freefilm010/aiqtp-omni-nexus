@@ -125,23 +125,23 @@ const MarketplaceCategories = () => {
           )}
         </div>
 
-        {/* Stats */}
+        {/* Honest beta-stage facts — no fabricated user counts or AUM */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center">
           <div className="space-y-1">
-            <div className="text-xl md:text-4xl font-bold text-primary">$2.5T+</div>
-            <div className="text-muted-foreground text-[10px] md:text-sm">Total Asset Value</div>
+            <div className="text-xl md:text-4xl font-bold text-primary">10+</div>
+            <div className="text-muted-foreground text-[10px] md:text-sm">Brokers Integrated</div>
           </div>
           <div className="space-y-1">
-            <div className="text-xl md:text-4xl font-bold text-gold">50M+</div>
-            <div className="text-muted-foreground text-[10px] md:text-sm">Active Traders</div>
+            <div className="text-xl md:text-4xl font-bold text-gold">Beta</div>
+            <div className="text-muted-foreground text-[10px] md:text-sm">Stage</div>
           </div>
           <div className="space-y-1">
-            <div className="text-xl md:text-4xl font-bold text-accent">99.9%</div>
-            <div className="text-muted-foreground text-[10px] md:text-sm">Uptime</div>
+            <div className="text-xl md:text-4xl font-bold text-accent">PQ</div>
+            <div className="text-muted-foreground text-[10px] md:text-sm">Crypto Roadmap</div>
           </div>
           <div className="space-y-1">
-            <div className="text-xl md:text-4xl font-bold text-primary">200+</div>
-            <div className="text-muted-foreground text-[10px] md:text-sm">Countries</div>
+            <div className="text-xl md:text-4xl font-bold text-primary">Open</div>
+            <div className="text-muted-foreground text-[10px] md:text-sm">Architecture</div>
           </div>
         </div>
       </div>

@@ -35,10 +35,13 @@ const FAUCET_TOKENS: FaucetToken[] = [
   { id: 'qtc-mine', symbol: 'QTC', name: 'QTC Mining Pool', icon: <Gem className="h-5 w-5 text-purple-400" />, claimAmount: 3, claimInterval: 12, available: true, category: 'mining', description: 'PoW mining simulation rewards', chain: 'platform', hasValue: true },
   { id: 'aiq-mine', symbol: 'AIQ', name: 'AIQ Compute Mining', icon: <Zap className="h-5 w-5 text-cyan-400" />, claimAmount: 10, claimInterval: 8, available: true, category: 'mining', description: 'AI compute contribution rewards', chain: 'platform', hasValue: true },
 
-  // Staking yields
-  { id: 'qtc-stake', symbol: 'QTC', name: 'QTC Staking Yield', icon: <TrendingUp className="h-5 w-5 text-purple-500" />, claimAmount: 8, claimInterval: 24, available: true, category: 'staking', description: '12% APY staking yield', chain: 'platform', bonus: '12% APY', hasValue: true },
-  { id: 'aiq-stake', symbol: 'AIQ', name: 'AIQ Staking Yield', icon: <TrendingUp className="h-5 w-5 text-cyan-500" />, claimAmount: 40, claimInterval: 24, available: true, category: 'staking', description: '18% APY staking yield', chain: 'platform', bonus: '18% APY', hasValue: true },
-  { id: 'nxs-stake', symbol: 'NXS', name: 'NXS LP Staking', icon: <TrendingUp className="h-5 w-5 text-amber-500" />, claimAmount: 75, claimInterval: 24, available: true, category: 'staking', description: 'Liquidity pool rewards', chain: 'platform', bonus: '24% APY', hasValue: true },
+  // Beta-stage rewards — staking products with specific APY promises were removed.
+  // Promising specific APYs on unregistered platform tokens to US persons creates
+  // securities exposure (Howey test fail). Beta rewards have no monetary value
+  // until tokens are properly issued under a compliant securities framework.
+  { id: 'qtc-stake', symbol: 'QTC', name: 'QTC Beta Reward', icon: <TrendingUp className="h-5 w-5 text-purple-500" />, claimAmount: 8, claimInterval: 24, available: false, category: 'staking', description: 'Beta token reward (no monetary value)', chain: 'platform', bonus: 'Beta only', hasValue: false },
+  { id: 'aiq-stake', symbol: 'AIQ', name: 'AIQ Beta Reward', icon: <TrendingUp className="h-5 w-5 text-cyan-500" />, claimAmount: 40, claimInterval: 24, available: false, category: 'staking', description: 'Beta token reward (no monetary value)', chain: 'platform', bonus: 'Beta only', hasValue: false },
+  { id: 'nxs-stake', symbol: 'NXS', name: 'NXS Beta Reward', icon: <TrendingUp className="h-5 w-5 text-amber-500" />, claimAmount: 75, claimInterval: 24, available: false, category: 'staking', description: 'Beta token reward (no monetary value)', chain: 'platform', bonus: 'Beta only', hasValue: false },
 
   // Referral / affiliate rewards
   { id: 'ref-qtc', symbol: 'QTC', name: 'Referral Bonus', icon: <Coins className="h-5 w-5 text-purple-300" />, claimAmount: 2, claimInterval: 48, available: true, category: 'referral', description: 'Referral program rewards', chain: 'platform', hasValue: true },

@@ -664,24 +664,25 @@ function generateFallbackResponse(query: string): string {
   }
   
   if (lowerQuery.includes("revenue") || lowerQuery.includes("generator")) {
-    return `**💰 Revenue Automation Status**
+    return `**💰 Revenue Automation — Demo View**
 
-**Active Generators:**
+> ⚠️ **Example output only.** The figures below are illustrative placeholders
+> for the UI layout. They are not live revenue numbers. The QAQI revenue
+> engine is in development and is not currently generating actual revenue.
 
-| Generator | Status | Daily Revenue | Rate |
-|-----------|--------|--------------|------|
-| Arbitrage Bot | 🟢 Active | $245.50 | 2.1% |
-| Liquidity Mining | 🟢 Active | $182.30 | 18.5% APY |
-| Staking Rewards | 🟢 Active | $156.80 | 8.2% APY |
-| Trading Signals | 🟡 Paused | $0 | 68% Win |
-| Platform Fees | 🟢 Active | $89.20 | - |
+**Planned generators (when activated):**
 
-**Totals:**
-- Daily Revenue: **$673.80**
-- Monthly Projected: **$20,214.00**
-- Auto-Reinvest: 20% enabled
+| Generator | Status |
+|-----------|--------|
+| Arbitrage Bot | Planned |
+| Liquidity Mining | Planned (subject to securities review) |
+| Staking Rewards | Planned (subject to securities review) |
+| Trading Signals | In development |
+| Platform Fees | Beta |
 
-*Powered by QAQI Revenue Engine*`;
+*No specific APY, yield, or return is offered or promised. Any future
+yield-bearing product will require proper registration or exemption under
+US securities law.*`;
   }
   
   if (lowerQuery.includes("market") || lowerQuery.includes("btc") || lowerQuery.includes("analysis")) {

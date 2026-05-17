@@ -153,15 +153,16 @@ const PerformanceShowcase = () => {
       <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 border-b border-border">
         <div className="container max-w-6xl mx-auto px-4 py-12 md:py-20">
           <div className="text-center space-y-4">
-            <Badge variant="outline" className="text-primary border-primary/30 mb-2">
-              <Activity className="h-3 w-3 mr-1" /> Live Performance · Auto-Updated
+            <Badge variant="outline" className="text-yellow-500 border-yellow-500/30 mb-2">
+              <Activity className="h-3 w-3 mr-1" /> Beta · Backtest / Paper Trading Only
             </Badge>
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">
               AIQTP™ AI Trading Results
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Fully automated, AI-managed portfolio with 100% profit reinvestment. 
-              Real results from our adaptive trading engine.
+              Backtest and paper-trading results from our adaptive trading engine
+              during private beta. Hypothetical performance — not live customer
+              returns. Past performance does not predict future results.
             </p>
             <div className="flex gap-3 justify-center pt-4">
               <Button onClick={generateReport} disabled={generating} variant="default">

@@ -238,7 +238,10 @@ const AutoInvestPage = () => {
               </Badge>
             </div>
             <p className="text-muted-foreground">
-              AI-driven autonomous allocation • 100% profit reinvestment • Adaptive rebalancing
+              AI-driven autonomous allocation • Configurable reinvestment • Adaptive rebalancing
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Beta feature. No guaranteed returns. Trading involves risk of loss.
             </p>
           </div>
           <div className="flex gap-2">
