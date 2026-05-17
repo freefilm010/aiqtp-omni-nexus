@@ -108,10 +108,20 @@ curl -X POST http://localhost:8001/ingest/trigger
 4. Use ccxt_live_order in Agent Tools → Trade
 
 Safety guardrails (in trading_worker.py):
-- Max 2% NAV per order
-- 5 orders/hr per user_id rolling window
+- **Max 20% NAV per order** (set by commit 638ef39 — review before enabling live
+  trading at this size; consider tightening for production)
+- 5 orders/hr per user_id rolling window — **NOTE: in-memory only, resets on
+  every worker restart. Migrate to Postgres-backed counter before relying on it
+  for production rate limiting.**
 - Symbol whitelist (BTCUSD, ETHUSD, SOLUSD, AVAXUSD, LINKUSD by default)
 - Paper mode guard (requires ALPACA_PAPER_MODE=false)
+- Kill switch (fail-CLOSED): reads `system_status` table on every loop. On
+  read error, trading HALTS until status is readable.
+- ⚠️ The HTTP-exposed `POST /ccxt/live_order` route in trading-service does
+  NOT currently honor the kill switch or enforce position-size limits.
+  Currently gated off by `CCXT_LIVE_ENABLED=false` in production. Do not
+  flip that flag without first wiring kill-switch + position-size checks
+  into that route.
 
 ---
 

@@ -264,12 +264,14 @@ def determine_direction(strategy: dict, current_price: float) -> str:
 
 def check_system_status() -> bool:
     """
-    Returns True when trading should proceed.
-    Queries system_status WHERE key = 'main'.
-    A missing row is treated as active (safe default during initial setup
-    before the Control Panel has written the seed row).
-    On any Supabase error, logs a warning and returns True — the worker
-    keeps running rather than silently halting on a transient network blip.
+    Returns True when trading should proceed. Safety-critical: fails CLOSED.
+
+    Queries system_status WHERE key = 'main'. A missing row is treated as
+    active (safe default during initial setup before the Control Panel has
+    written the seed row). On any Supabase error, returns False so trading
+    HALTS until the kill-switch state can be read reliably. Better to pause
+    on a transient network blip than to keep placing live orders blind to
+    the operator's "kill" signal.
     """
     try:
         result = (
@@ -283,8 +285,12 @@ def check_system_status() -> bool:
             return True
         return bool(result.data[0].get("active", True))
     except Exception as exc:
-        log.error("system_status read failed: %s — treating system as ACTIVE", exc)
-        return True
+        log.error(
+            "system_status read failed: %s — treating system as HALTED "
+            "(fail-closed). Trading will resume when status is readable again.",
+            exc,
+        )
+        return False
 
 
 def fetch_active_strategies() -> list[dict]:
