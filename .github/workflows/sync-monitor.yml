@@ -37,10 +37,12 @@ jobs:
           echo "$RESP" | grep -q "ok\|healthy\|alive" && echo "✅ Render quantum OK" || echo "⚠️ Render quantum: $RESP"
 
       - name: Check Supabase project
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             https://rueaxiyvseaxkysnoock.supabase.co/rest/v1/ \
-            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZWF4aXl2c2VheGt5c25vb2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NDkwMDEsImV4cCI6MjA4OTQyNTAwMX0.07J92R1g2-ihtnN43iYD63jU3gByBK3otB5zq3haw54" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
             --max-time 10)
           echo "Supabase → HTTP $STATUS"
           [ "$STATUS" = "200" ] || [ "$STATUS" = "400" ] && echo "✅ Supabase OK" || echo "⚠️ Supabase: $STATUS"

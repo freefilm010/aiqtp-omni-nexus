@@ -7,9 +7,10 @@ on:
   workflow_dispatch:
 
 # Uses the public anon key (already in frontend bundle — not a secret).
+# Pulled from GH Actions secret SUPABASE_ANON_KEY so rotation is one-shot.
 env:
   SUPABASE_URL: "https://rueaxiyvseaxkysnoock.supabase.co"
-  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZWF4aXl2c2VheGt5c25vb2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NDkwMDEsImV4cCI6MjA4OTQyNTAwMX0.07J92R1g2-ihtnN43iYD63jU3gByBK3otB5zq3haw54"
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
 jobs:
   ping:
