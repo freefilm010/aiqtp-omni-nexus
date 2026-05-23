@@ -18,6 +18,16 @@ async function generateHash(data: string): Promise<string> {
   return arrayToHex(new Uint8Array(hashBuffer));
 }
 
+function deterministicFloat(seed: string, index: number): number {
+  let hash = 2166136261;
+  const input = `${seed}:${index}`;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+}
+
 // Proof of Temporal Resonance verification
 interface FloquetParams {
   numQubits: number;
@@ -26,7 +36,7 @@ interface FloquetParams {
   interactionStrength: number;
 }
 
-function constructFloquetHamiltonian(params: FloquetParams) {
+function constructFloquetHamiltonian(params: FloquetParams, seed: string) {
   const { numQubits, gFactor, disorderStrength, interactionStrength } = params;
   
   const spinFlip: number[][] = [];
@@ -36,13 +46,13 @@ function constructFloquetHamiltonian(params: FloquetParams) {
   
   const interactions: number[][] = [];
   for (let i = 0; i < numQubits - 1; i++) {
-    const phi = (Math.random() * Math.PI) + (0.5 * Math.PI);
+    const phi = (deterministicFloat(seed, i) * Math.PI) + (0.5 * Math.PI);
     interactions.push([i, i + 1, phi * interactionStrength]);
   }
   
   const disorder: number[] = [];
   for (let i = 0; i < numQubits; i++) {
-    disorder.push((Math.random() * 2 - 1) * Math.PI * disorderStrength);
+    disorder.push((deterministicFloat(seed, i + 1000) * 2 - 1) * Math.PI * disorderStrength);
   }
   
   return { spinFlip, interactions, disorder };
@@ -82,7 +92,7 @@ async function mineBlock(
   resonanceProof: object;
   periodDoubling: boolean;
 }> {
-  // Generate DTC samples for PoTR
+  // Generate deterministic DTC witness samples for PoTR
   const params: FloquetParams = {
     numQubits: 8,
     gFactor: 0.97,
@@ -90,15 +100,16 @@ async function mineBlock(
     interactionStrength: 0.7
   };
   
-  const hamiltonian = constructFloquetHamiltonian(params);
+  const witnessSeed = await generateHash(JSON.stringify({ transactions, previousBlock, validatorId }));
+  const hamiltonian = constructFloquetHamiltonian(params, witnessSeed);
   const samples: string[] = [];
   
-  // Simulate Floquet evolution
+  // Deterministic Floquet witness evolution
   for (let shot = 0; shot < 100; shot++) {
     let state = '';
     for (let q = 0; q < params.numQubits; q++) {
       const flipProbability = Math.sin(hamiltonian.spinFlip[q][1] / 2) ** 2;
-      const flipped = Math.random() < flipProbability;
+      const flipped = deterministicFloat(witnessSeed, shot * params.numQubits + q + 2000) < flipProbability;
       const disorderPhase = hamiltonian.disorder[q];
       const disorderEffect = Math.cos(disorderPhase) > 0;
       state += (flipped !== disorderEffect) ? '1' : '0';
