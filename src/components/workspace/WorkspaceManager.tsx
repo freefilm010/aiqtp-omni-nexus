@@ -161,81 +161,66 @@ interface SavedWorkspace {
   createdAt: Date;
 }
 
-// Mini widget renderers (simplified views)
-const MiniChart = ({ symbol = 'BTC' }: { symbol?: string }) => (
-  <div className="h-full flex flex-col">
-    <div className="flex items-center justify-between p-2 border-b">
-      <span className="font-semibold text-sm">{symbol}/USD</span>
-      <Badge variant="outline" className="text-green-500 text-xs">+2.4%</Badge>
-    </div>
-    <div className="flex-1 p-2 flex items-end justify-around gap-0.5">
-      {Array.from({ length: 30 }, (_, i) => (
-        <div
-          key={i}
-          className="bg-primary/60 rounded-sm"
-          style={{ width: '3%', height: `${20 + Math.random() * 60}%` }}
-        />
-      ))}
-    </div>
-  </div>
-);
+type WidgetRendererProps = { symbol?: string; getPrice: PriceLookup; prices: MarketPrice[] };
 
-const MiniOrderBook = () => (
+// Mini widget renderers (live-data snapshots; unavailable datasets are explicit)
+const MiniChart = ({ symbol = 'BTC', getPrice }: WidgetRendererProps) => {
+  const price = getPrice(symbol);
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between p-2 border-b">
+        <span className="font-semibold text-sm">{symbol}/USD</span>
+        <Badge variant="outline" className={price?.changePercent && price.changePercent < 0 ? "text-destructive text-xs" : "text-success text-xs"}>
+          {price?.change ?? "No live feed"}
+        </Badge>
+      </div>
+      <div className="flex-1 p-2 flex items-end justify-around gap-0.5">
+        {price ? Array.from({ length: 30 }, (_, i) => (
+          <div
+            key={i}
+            className="bg-primary/60 rounded-sm"
+            style={{ width: '3%', height: `${stableBarHeight(price.priceNumeric, i)}%` }}
+          />
+        )) : <div className="m-auto text-xs text-muted-foreground">Live market row unavailable</div>}
+      </div>
+    </div>
+  );
+};
+
+const MiniOrderBook = ({ symbol = 'BTC', getPrice }: WidgetRendererProps) => {
+  const price = getPrice(symbol);
+  return (
   <div className="h-full flex flex-col text-xs">
     <div className="p-2 border-b font-semibold">Order Book</div>
-    <div className="flex-1 grid grid-cols-2 gap-1 p-2">
-      <div className="space-y-0.5">
-        {[67500, 67495, 67490, 67485, 67480].map((p, i) => (
-          <div key={i} className="flex justify-between text-green-500">
-            <span>{p}</span>
-            <span>{(Math.random() * 5).toFixed(2)}</span>
-          </div>
-        ))}
+    <div className="flex-1 p-2 space-y-2">
+      <div className="rounded bg-muted/30 p-2 flex justify-between"><span>{symbol}/USD last</span><span>{price ? `$${price.price}` : 'Unavailable'}</span></div>
+      <div className="rounded bg-muted/30 p-2 text-muted-foreground">Depth feed is not connected; no fabricated bid/ask ladder shown.</div>
       </div>
-      <div className="space-y-0.5">
-        {[67510, 67515, 67520, 67525, 67530].map((p, i) => (
-          <div key={i} className="flex justify-between text-red-500">
-            <span>{p}</span>
-            <span>{(Math.random() * 5).toFixed(2)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
   </div>
-);
+  );
+};
 
 const MiniPositions = () => (
   <div className="h-full flex flex-col text-xs">
     <div className="p-2 border-b font-semibold">Open Positions</div>
-    <div className="flex-1 p-2 space-y-1">
-      {['BTC Long +1.2%', 'ETH Short -0.4%', 'SOL Long +5.1%'].map((pos, i) => (
-        <div key={i} className="flex justify-between p-1 rounded bg-muted/50">
-          <span>{pos.split(' ')[0]}</span>
-          <span className={pos.includes('+') ? 'text-green-500' : 'text-red-500'}>
-            {pos.split(' ').slice(1).join(' ')}
-          </span>
-        </div>
-      ))}
+    <div className="flex-1 p-2 flex items-center justify-center text-muted-foreground">
+      No live position rows returned.
     </div>
   </div>
 );
 
-const MiniWatchlist = () => (
+const MiniWatchlist = ({ prices }: WidgetRendererProps) => (
   <div className="h-full flex flex-col text-xs">
     <div className="p-2 border-b font-semibold">Watchlist</div>
     <div className="flex-1 p-2 space-y-1">
-      {[
-        { s: 'BTC', p: '$67,521', c: '+2.1%' },
-        { s: 'ETH', p: '$3,412', c: '+1.8%' },
-        { s: 'SOL', p: '$142.50', c: '+4.2%' },
-        { s: 'NVDA', p: '$875.32', c: '-0.5%' },
-      ].map((item, i) => (
-        <div key={i} className="flex justify-between p-1 rounded hover:bg-muted/50">
+      {prices.slice(0, 6).map((item) => (
+        <div key={item.symbol} className="flex justify-between p-1 rounded hover:bg-muted/50">
           <span className="font-medium">{item.s}</span>
-          <span>{item.p}</span>
-          <span className={item.c.startsWith('+') ? 'text-green-500' : 'text-red-500'}>{item.c}</span>
+          <span>${item.price}</span>
+          <span className={item.changePercent >= 0 ? 'text-success' : 'text-destructive'}>{item.change}</span>
         </div>
       ))}
+      {prices.length === 0 && <div className="text-muted-foreground text-center py-4">No live watchlist prices returned.</div>}
     </div>
   </div>
 );
