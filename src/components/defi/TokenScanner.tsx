@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+let dexTokenChannelSeq = 0;
+
 interface Token {
   id: string;
   name: string;
@@ -115,7 +117,7 @@ const TokenScanner = () => {
   // Real-time subscription
   useEffect(() => {
     const channel = supabase
-      .channel(`dex_tokens_changes-${Math.random().toString(36).slice(2)}`)
+      .channel(`dex_tokens_changes-${Date.now()}-${dexTokenChannelSeq++}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'dex_tokens' }, (payload) => {
         if (payload.eventType === 'INSERT' && payload.new) {
           const newToken = payload.new as any;

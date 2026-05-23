@@ -14,6 +14,32 @@ interface DepositBody {
   environment: StripeEnv;
 }
 
+async function resolveOrCreateCustomer(
+  stripe: ReturnType<typeof createStripeClient>,
+  options: { email?: string; userId?: string },
+): Promise<string> {
+  if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) throw new Error("Invalid userId");
+  if (options.userId) {
+    const found = await stripe.customers.search({ query: `metadata['userId']:'${options.userId}'`, limit: 1 });
+    if (found.data.length) return found.data[0].id;
+  }
+  if (options.email) {
+    const existing = await stripe.customers.list({ email: options.email, limit: 1 });
+    if (existing.data.length) {
+      const customer = existing.data[0];
+      if (options.userId && customer.metadata?.userId !== options.userId) {
+        await stripe.customers.update(customer.id, { metadata: { ...customer.metadata, userId: options.userId } });
+      }
+      return customer.id;
+    }
+  }
+  const created = await stripe.customers.create({
+    ...(options.email && { email: options.email }),
+    ...(options.userId && { metadata: { userId: options.userId } }),
+  });
+  return created.id;
+}
+
 async function createDepositCheckout(opts: DepositBody) {
   if (!opts.amountInCents || opts.amountInCents < 2000) {
     throw new Error("Minimum deposit is $20.00");
@@ -24,6 +50,7 @@ async function createDepositCheckout(opts: DepositBody) {
   if (!opts.userId) throw new Error("userId is required");
 
   const stripe = createStripeClient(opts.environment);
+  const customerId = await resolveOrCreateCustomer(stripe, { email: opts.customerEmail, userId: opts.userId });
   const session = await stripe.checkout.sessions.create({
     line_items: [{
       price_data: {
@@ -36,12 +63,13 @@ async function createDepositCheckout(opts: DepositBody) {
     mode: "payment",
     ui_mode: "embedded_page",
     return_url: opts.returnUrl,
+    customer: customerId,
+    payment_intent_data: { description: "AIQTP Platform Deposit" },
     metadata: {
       userId: opts.userId,
       type: "platform_deposit",
       amount_usd: (opts.amountInCents / 100).toFixed(2),
     },
-    ...(opts.customerEmail && { customer_email: opts.customerEmail }),
   } as any);
   return session.client_secret;
 }

@@ -6,6 +6,8 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+let realtimeMarketPricesChannelSeq = 0;
+
 export function useRealtimeMarketPrices() {
   const queryClient = useQueryClient();
   const bufferRef = useRef(new Map<string, Record<string, unknown>>());
@@ -28,7 +30,7 @@ export function useRealtimeMarketPrices() {
     };
 
     const channel = supabase
-      .channel(`market-prices-debounced-${Math.random().toString(36).slice(2)}`)
+      .channel(`market-prices-debounced-${Date.now()}-${realtimeMarketPricesChannelSeq++}`)
       .on(
         "postgres_changes",
         {

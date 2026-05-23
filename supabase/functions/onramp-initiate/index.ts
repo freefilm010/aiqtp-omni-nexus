@@ -39,6 +39,32 @@ interface OnrampBody {
   customerEmail?: string;
 }
 
+async function resolveOrCreateCustomer(
+  stripe: ReturnType<typeof createStripeClient>,
+  options: { email?: string; userId?: string },
+): Promise<string> {
+  if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) throw new Error("Invalid userId");
+  if (options.userId) {
+    const found = await stripe.customers.search({ query: `metadata['userId']:'${options.userId}'`, limit: 1 });
+    if (found.data.length) return found.data[0].id;
+  }
+  if (options.email) {
+    const existing = await stripe.customers.list({ email: options.email, limit: 1 });
+    if (existing.data.length) {
+      const customer = existing.data[0];
+      if (options.userId && customer.metadata?.userId !== options.userId) {
+        await stripe.customers.update(customer.id, { metadata: { ...customer.metadata, userId: options.userId } });
+      }
+      return customer.id;
+    }
+  }
+  const created = await stripe.customers.create({
+    ...(options.email && { email: options.email }),
+    ...(options.userId && { metadata: { userId: options.userId } }),
+  });
+  return created.id;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") {
@@ -95,6 +121,7 @@ Deno.serve(async (req) => {
 
     // Create Stripe Checkout session
     const stripe = createStripeClient(body.environment);
+    const customerId = await resolveOrCreateCustomer(stripe, { email: body.customerEmail, userId: body.userId });
     const session = await (stripe.checkout.sessions.create as any)({
       line_items: [{
         price_data: {
@@ -110,6 +137,8 @@ Deno.serve(async (req) => {
       mode: "payment",
       ui_mode: "embedded_page",
       return_url: body.returnUrl,
+      customer: customerId,
+      payment_intent_data: { description: `Buy ${body.outputToken} on Arbitrum` },
       metadata: {
         userId: body.userId,
         type: "crypto_onramp",
@@ -118,7 +147,6 @@ Deno.serve(async (req) => {
         amount_usd: amountUsd,
         network: "arbitrum",
       },
-      ...(body.customerEmail && { customer_email: body.customerEmail }),
     });
 
     // Log the onramp request in Supabase

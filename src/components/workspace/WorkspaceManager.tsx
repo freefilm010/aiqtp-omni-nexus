@@ -57,6 +57,7 @@ import {
   Copy
 } from "lucide-react";
 import { toast } from "sonner";
+import { useMarketPrices, type MarketPrice } from "@/hooks/useMarketPrices";
 
 // Track popup windows for multi-monitor support
 interface PopupWindow {
@@ -97,78 +98,51 @@ const LAYOUT_PRESETS = [
   { id: '4x4', name: '4×4 Grid', icon: LayoutGrid, grid: { cols: 4, rows: 4 } },
 ];
 
-// Helper to generate HTML content for popup windows
-function getWidgetHtmlContent(widget: WorkspaceWidget): string {
+type PriceLookup = (symbol: string) => MarketPrice | undefined;
+
+const stableBarHeight = (price: number, index: number) => {
+  const seed = Math.abs(Math.sin((price || 1) * (index + 1) * 0.00013));
+  return 22 + seed * 58;
+};
+
+// Helper to generate HTML content for popup windows from real price snapshots only.
+function getWidgetHtmlContent(widget: WorkspaceWidget, getPrice: PriceLookup): string {
   const symbol = widget.symbol || 'BTC';
-  const basePrice = symbol === 'BTC' ? 67500 : symbol === 'ETH' ? 3400 : symbol === 'SOL' ? 142 : 450;
+  const livePrice = getPrice(symbol);
+  const basePrice = livePrice?.priceNumeric ?? 0;
+  const priceDisplay = livePrice
+    ? `$${livePrice.price}`
+    : 'Live feed unavailable';
+  const changeDisplay = livePrice?.change ?? '—';
   
   switch (widget.type) {
     case 'chart':
       return `
         <div class="price-display">
-          <div class="price-value">$${basePrice.toLocaleString()}</div>
-          <div class="price-change">+2.34% ($${(basePrice * 0.0234).toFixed(2)})</div>
+          <div class="price-value">${priceDisplay}</div>
+          <div class="price-change">${changeDisplay}</div>
         </div>
         <div class="chart-container">
-          ${Array.from({ length: 50 }, () => 
-            `<div class="chart-bar" style="height: ${20 + Math.random() * 60}%"></div>`
-          ).join('')}
+          ${livePrice ? Array.from({ length: 50 }, (_, i) => 
+            `<div class="chart-bar" style="height: ${stableBarHeight(basePrice, i)}%"></div>`
+          ).join('') : ''}
         </div>
       `;
     case 'orderbook':
       return `
-        <div class="data-grid" style="grid-template-columns: 1fr 1fr;">
-          <div>
-            <div style="text-align:center;font-weight:bold;color:#22c55e;margin-bottom:8px;">BIDS</div>
-            ${[67500, 67495, 67490, 67485, 67480, 67475, 67470].map(p => 
-              `<div class="data-item bid"><span class="data-label">${(Math.random() * 5).toFixed(3)}</span><span class="data-value bid">$${p.toLocaleString()}</span></div>`
-            ).join('')}
-          </div>
-          <div>
-            <div style="text-align:center;font-weight:bold;color:#ef4444;margin-bottom:8px;">ASKS</div>
-            ${[67510, 67515, 67520, 67525, 67530, 67535, 67540].map(p => 
-              `<div class="data-item ask"><span class="data-label">${(Math.random() * 5).toFixed(3)}</span><span class="data-value ask">$${p.toLocaleString()}</span></div>`
-            ).join('')}
-          </div>
-        </div>
+        <div class="data-item"><div class="data-label">${symbol}/USD last trade</div><div class="data-value">${priceDisplay}</div></div>
+        <div class="data-item"><div class="data-label">Depth feed</div><div class="data-value">Unavailable from connected providers</div></div>
       `;
     case 'positions':
       return `
-        <div style="space-y:8px;">
-          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <span>BTC Long</span><span class="bid">+1.2% (+$847)</span>
-          </div>
-          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <span>ETH Short</span><span class="ask">-0.4% (-$136)</span>
-          </div>
-          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <span>SOL Long</span><span class="bid">+5.1% (+$728)</span>
-          </div>
-          <div style="margin-top:20px;padding:12px;background:rgba(34,197,94,0.1);border-radius:8px;">
-            <div class="data-label">Total P&L</div>
-            <div class="data-value bid" style="font-size:24px;">+$1,439.00</div>
-          </div>
-        </div>
+        <div class="data-item"><div class="data-label">Positions</div><div class="data-value">No live position rows returned</div></div>
       `;
     case 'alerts':
       return `
-        <div style="space-y:8px;">
-          <div style="padding:12px;background:rgba(251,191,36,0.2);border-radius:8px;margin-bottom:8px;">
-            <div style="font-weight:600;">⚠️ BTC RSI > 70</div>
-            <div class="data-label">Overbought territory - consider taking profits</div>
-          </div>
-          <div style="padding:12px;background:rgba(59,130,246,0.2);border-radius:8px;margin-bottom:8px;">
-            <div style="font-weight:600;">📊 ETH Volume Spike</div>
-            <div class="data-label">3x average volume detected</div>
-          </div>
-          <div style="padding:12px;background:rgba(139,92,246,0.2);border-radius:8px;margin-bottom:8px;">
-            <div style="font-weight:600;">📅 Fed Speech 2:00 PM</div>
-            <div class="data-label">High impact event - volatility expected</div>
-          </div>
-        </div>
+        <div class="data-item"><div class="data-label">Alerts</div><div class="data-value">No live alerts returned</div></div>
       `;
     default:
-      return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#71717a;">Widget content loading...</div>`;
+      return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#71717a;">No live dataset connected for this widget</div>`;
   }
 }
 
@@ -187,81 +161,66 @@ interface SavedWorkspace {
   createdAt: Date;
 }
 
-// Mini widget renderers (simplified views)
-const MiniChart = ({ symbol = 'BTC' }: { symbol?: string }) => (
-  <div className="h-full flex flex-col">
-    <div className="flex items-center justify-between p-2 border-b">
-      <span className="font-semibold text-sm">{symbol}/USD</span>
-      <Badge variant="outline" className="text-green-500 text-xs">+2.4%</Badge>
-    </div>
-    <div className="flex-1 p-2 flex items-end justify-around gap-0.5">
-      {Array.from({ length: 30 }, (_, i) => (
-        <div
-          key={i}
-          className="bg-primary/60 rounded-sm"
-          style={{ width: '3%', height: `${20 + Math.random() * 60}%` }}
-        />
-      ))}
-    </div>
-  </div>
-);
+type WidgetRendererProps = { symbol?: string; getPrice: PriceLookup; prices: MarketPrice[] };
 
-const MiniOrderBook = () => (
+// Mini widget renderers (live-data snapshots; unavailable datasets are explicit)
+const MiniChart = ({ symbol = 'BTC', getPrice }: WidgetRendererProps) => {
+  const price = getPrice(symbol);
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between p-2 border-b">
+        <span className="font-semibold text-sm">{symbol}/USD</span>
+        <Badge variant="outline" className={price?.changePercent && price.changePercent < 0 ? "text-destructive text-xs" : "text-success text-xs"}>
+          {price?.change ?? "No live feed"}
+        </Badge>
+      </div>
+      <div className="flex-1 p-2 flex items-end justify-around gap-0.5">
+        {price ? Array.from({ length: 30 }, (_, i) => (
+          <div
+            key={i}
+            className="bg-primary/60 rounded-sm"
+            style={{ width: '3%', height: `${stableBarHeight(price.priceNumeric, i)}%` }}
+          />
+        )) : <div className="m-auto text-xs text-muted-foreground">Live market row unavailable</div>}
+      </div>
+    </div>
+  );
+};
+
+const MiniOrderBook = ({ symbol = 'BTC', getPrice }: WidgetRendererProps) => {
+  const price = getPrice(symbol);
+  return (
   <div className="h-full flex flex-col text-xs">
     <div className="p-2 border-b font-semibold">Order Book</div>
-    <div className="flex-1 grid grid-cols-2 gap-1 p-2">
-      <div className="space-y-0.5">
-        {[67500, 67495, 67490, 67485, 67480].map((p, i) => (
-          <div key={i} className="flex justify-between text-green-500">
-            <span>{p}</span>
-            <span>{(Math.random() * 5).toFixed(2)}</span>
-          </div>
-        ))}
+    <div className="flex-1 p-2 space-y-2">
+      <div className="rounded bg-muted/30 p-2 flex justify-between"><span>{symbol}/USD last</span><span>{price ? `$${price.price}` : 'Unavailable'}</span></div>
+      <div className="rounded bg-muted/30 p-2 text-muted-foreground">Depth feed is not connected; no fabricated bid/ask ladder shown.</div>
       </div>
-      <div className="space-y-0.5">
-        {[67510, 67515, 67520, 67525, 67530].map((p, i) => (
-          <div key={i} className="flex justify-between text-red-500">
-            <span>{p}</span>
-            <span>{(Math.random() * 5).toFixed(2)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
   </div>
-);
+  );
+};
 
 const MiniPositions = () => (
   <div className="h-full flex flex-col text-xs">
     <div className="p-2 border-b font-semibold">Open Positions</div>
-    <div className="flex-1 p-2 space-y-1">
-      {['BTC Long +1.2%', 'ETH Short -0.4%', 'SOL Long +5.1%'].map((pos, i) => (
-        <div key={i} className="flex justify-between p-1 rounded bg-muted/50">
-          <span>{pos.split(' ')[0]}</span>
-          <span className={pos.includes('+') ? 'text-green-500' : 'text-red-500'}>
-            {pos.split(' ').slice(1).join(' ')}
-          </span>
-        </div>
-      ))}
+    <div className="flex-1 p-2 flex items-center justify-center text-muted-foreground">
+      No live position rows returned.
     </div>
   </div>
 );
 
-const MiniWatchlist = () => (
+const MiniWatchlist = ({ prices }: WidgetRendererProps) => (
   <div className="h-full flex flex-col text-xs">
     <div className="p-2 border-b font-semibold">Watchlist</div>
     <div className="flex-1 p-2 space-y-1">
-      {[
-        { s: 'BTC', p: '$67,521', c: '+2.1%' },
-        { s: 'ETH', p: '$3,412', c: '+1.8%' },
-        { s: 'SOL', p: '$142.50', c: '+4.2%' },
-        { s: 'NVDA', p: '$875.32', c: '-0.5%' },
-      ].map((item, i) => (
-        <div key={i} className="flex justify-between p-1 rounded hover:bg-muted/50">
-          <span className="font-medium">{item.s}</span>
-          <span>{item.p}</span>
-          <span className={item.c.startsWith('+') ? 'text-green-500' : 'text-red-500'}>{item.c}</span>
+      {prices.slice(0, 6).map((item) => (
+        <div key={item.symbol} className="flex justify-between p-1 rounded hover:bg-muted/50">
+          <span className="font-medium">{item.symbol}</span>
+          <span>${item.price}</span>
+          <span className={item.changePercent >= 0 ? 'text-success' : 'text-destructive'}>{item.change}</span>
         </div>
       ))}
+      {prices.length === 0 && <div className="text-muted-foreground text-center py-4">No live watchlist prices returned.</div>}
     </div>
   </div>
 );
@@ -395,7 +354,7 @@ const MiniTerminal = () => (
   </div>
 );
 
-const WIDGET_RENDERERS: Record<string, React.ComponentType<{ symbol?: string }>> = {
+const WIDGET_RENDERERS: Record<string, React.ComponentType<WidgetRendererProps>> = {
   chart: MiniChart,
   orderbook: MiniOrderBook,
   positions: MiniPositions,
@@ -411,6 +370,8 @@ const WIDGET_RENDERERS: Record<string, React.ComponentType<{ symbol?: string }>>
 };
 
 const WorkspaceManager = () => {
+  const { getPrice, getAllPrices } = useMarketPrices(30_000);
+  const allPrices = getAllPrices();
   const [layout, setLayout] = useState({ cols: 2, rows: 2 });
   const [widgets, setWidgets] = useState<WorkspaceWidget[]>([
     { id: '1', type: 'chart', symbol: 'BTC' },
@@ -562,7 +523,7 @@ const WorkspaceManager = () => {
               <span class="widget-badge">● LIVE</span>
             </div>
             <div class="widget-content" id="content">
-              ${getWidgetHtmlContent(widget)}
+              ${getWidgetHtmlContent(widget, getPrice)}
             </div>
           </div>
           <script>
@@ -575,26 +536,9 @@ const WorkspaceManager = () => {
               symEl.style.display = '';
             }
             var safeWidgetId = ${JSON.stringify(widget.id)};
-            var basePrice = ${widget.symbol === 'BTC' ? 67500 : widget.symbol === 'ETH' ? 3400 : 142};
-
-            // Simulate live data updates
-            function updateData() {
-              var bars = document.querySelectorAll('.chart-bar');
-              bars.forEach(function(bar) {
-                bar.style.height = (20 + Math.random() * 60) + '%';
-              });
-              var priceEl = document.querySelector('.price-value');
-              if (priceEl) {
-                var change = (Math.random() - 0.5) * 100;
-                priceEl.textContent = '$' + (basePrice + change).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-              }
-            }
-            // Store interval ID for cleanup
-            var _intervalId = setInterval(updateData, 2000);
 
             // Notify parent when closed (target origin restricted to opener)
             window.onbeforeunload = function() {
-              clearInterval(_intervalId);
               try {
                 window.opener && window.opener.postMessage({ type: 'WIDGET_CLOSED', widgetId: safeWidgetId }, window.location.origin);
               } catch (_) { /* ignore */ }
@@ -613,7 +557,7 @@ const WorkspaceManager = () => {
     } else {
       toast.error("Popup blocked! Please allow popups for multi-monitor support.");
     }
-  }, []);
+  }, [getPrice]);
   
   // Listen for popup close messages
   useEffect(() => {
@@ -901,7 +845,7 @@ const WorkspaceManager = () => {
 
               {/* Widget Content */}
               <div className="h-full pt-7">
-                <WidgetRenderer symbol={widget.symbol} />
+                <WidgetRenderer symbol={widget.symbol} getPrice={getPrice} prices={allPrices} />
               </div>
             </Card>
           );
