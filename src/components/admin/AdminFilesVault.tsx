@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, Bot, Cloud, Code2, Database, Download, ExternalLink, FileUp, FolderLock, RefreshCw, ShieldCheck } from "lucide-react";
+import { Archive, Bot, Cloud, Code2, Database, Download, ExternalLink, FileUp, FolderLock, RefreshCw, ShieldCheck, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database as SupabaseDatabase } from "@/integrations/supabase/types";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -218,7 +218,7 @@ const AdminFilesVault = () => {
   );
 };
 
-const VaultStat = ({ icon: Icon, label, value }: { icon: typeof Archive; label: string; value: number }) => (
+const VaultStat = ({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number }) => (
   <Card>
     <CardContent className="p-4 flex items-center gap-3">
       <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center">
