@@ -25,7 +25,7 @@ interface SatelliteService {
   is_usa_compatible: boolean;
   is_crypto_native: boolean;
   requires_api_key: boolean;
-  revenue_model: string | null;
+  revenue_model?: string | null;
 }
 
 interface UserConnection {
@@ -65,11 +65,11 @@ const SatelliteServicesSection = ({ filter = "", categories }: Props) => {
 
   const fetchServices = async () => {
     const { data } = await supabase
-      .from("satellite_services")
-      .select("id,name,category,subcategory,description,website_url,supported_chains,features,is_usa_compatible,is_crypto_native,requires_api_key,revenue_model")
+      .from("satellite_services_public" as any)
+      .select("id,name,category,subcategory,description,website_url,supported_chains,features,is_usa_compatible,is_crypto_native,requires_api_key")
       .eq("is_active", true)
       .order("sort_order");
-    setServices((data as SatelliteService[]) || []);
+    setServices((data as unknown as SatelliteService[]) || []);
     setLoading(false);
   };
 

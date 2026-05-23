@@ -7,11 +7,12 @@ const corsHeaders = {
 };
 
 interface AutomationRequest {
-  action: "trigger_webhook" | "schedule_task" | "get_automations" | "create_automation" | "run_automation" | "get_logs";
+  action: "trigger_webhook" | "schedule_task" | "get_automations" | "create_automation" | "update_automation" | "run_automation" | "get_logs";
   webhookUrl?: string;
   webhookData?: any;
   automationType?: "zapier" | "n8n" | "molt" | "custom";
   automationId?: string;
+  isActive?: boolean;
   schedule?: string; // cron expression
   name?: string;
   description?: string;
@@ -31,6 +32,7 @@ interface Automation {
 
 // Trigger a webhook (Zapier, n8n, Molt, custom)
 async function triggerWebhook(webhookUrl: string, data: any): Promise<any> {
+  validateWebhookUrl(webhookUrl);
   console.log(`Triggering webhook: ${webhookUrl}`);
   
   try {
@@ -64,6 +66,21 @@ async function triggerWebhook(webhookUrl: string, data: any): Promise<any> {
   } catch (error) {
     console.error("Webhook trigger error:", error);
     throw new Error(`Failed to trigger webhook: ${(error instanceof Error ? error.message : String(error))}`);
+  }
+}
+
+function validateWebhookUrl(webhookUrl: string) {
+  const parsed = new URL(webhookUrl);
+  if (parsed.protocol !== "https:") throw new Error("Webhook URL must use HTTPS");
+  const host = parsed.hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    /^(127\.|10\.|0\.|169\.254\.|172\.(1[6-9]|2\d|3[0-1])\.|192\.168\.)/.test(host) ||
+    host === "::1"
+  ) {
+    throw new Error("Webhook host is not allowed");
   }
 }
 
@@ -113,6 +130,7 @@ async function createAutomation(
   schedule?: string,
   config?: any
 ): Promise<Automation> {
+  validateWebhookUrl(webhookUrl);
   const automationData = {
     type,
     webhookUrl,
@@ -143,6 +161,28 @@ async function createAutomation(
     name,
     ...automationData,
   };
+}
+
+async function updateAutomation(supabase: any, automationId: string, isActive: boolean): Promise<any> {
+  const { data: automation, error: fetchError } = await supabase
+    .from("admin_settings")
+    .select("*")
+    .eq("id", automationId)
+    .eq("category", "automations")
+    .single();
+
+  if (fetchError || !automation) throw new Error(`Automation not found: ${automationId}`);
+
+  const updatedValue = { ...automation.value, isActive };
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .update({ value: updatedValue, updated_at: new Date().toISOString() })
+    .eq("id", automationId)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to update automation: ${(error instanceof Error ? error.message : String(error))}`);
+  return { id: data.id, name: data.key, ...data.value };
 }
 
 // Run a specific automation
@@ -251,7 +291,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     const body: AutomationRequest = await req.json();
-    const { action, webhookUrl, webhookData, automationType, automationId, schedule, name, description, config } = body;
+    const { action, webhookUrl, webhookData, automationType, automationId, schedule, name, config, isActive } = body;
     
     // Get user ID from auth header
     const authHeader = req.headers.get("Authorization");
@@ -260,6 +300,27 @@ serve(async (req) => {
       const token = authHeader.replace("Bearer ", "");
       const { data: { user } } = await supabase.auth.getUser(token);
       userId = user?.id || null;
+    }
+
+    if (!userId) {
+      return new Response(JSON.stringify({ success: false, error: "Authentication required" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!adminRole) {
+      return new Response(JSON.stringify({ success: false, error: "Admin access required" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
     }
     
     console.log(`Automation Hub: ${action}`);
@@ -286,6 +347,11 @@ serve(async (req) => {
           throw new Error("Name, webhookUrl, and automationType required");
         }
         result = await createAutomation(supabase, userId || "system", name, automationType, webhookUrl, schedule, config);
+        break;
+
+      case "update_automation":
+        if (!automationId || typeof isActive !== "boolean") throw new Error("Automation ID and isActive required");
+        result = await updateAutomation(supabase, automationId, isActive);
         break;
         
       case "run_automation":

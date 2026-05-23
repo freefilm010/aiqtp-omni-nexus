@@ -12,7 +12,7 @@ const InvestmentManager = lazy(() => import("@/components/admin/InvestmentManage
 const PaymentProcessors = lazy(() => import("@/components/admin/PaymentProcessors"));
 const AICopilot = lazy(() => import("@/components/admin/AICopilot"));
 const SecurityCenter = lazy(() => import("@/components/admin/SecurityCenter"));
-const AutomationCenter = lazy(() => import("@/components/admin/AutomationCenter"));
+const AutomationCenter = lazy(() => import("@/components/integrations/AutomationIntegrations"));
 const TreasuryWallets = lazy(() => import("@/components/admin/TreasuryWallets"));
 const ProfitAutomation = lazy(() => import("@/components/admin/ProfitAutomation"));
 const ProfitDistributionRules = lazy(() => import("@/components/admin/ProfitDistributionRules"));

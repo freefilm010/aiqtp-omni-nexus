@@ -38,13 +38,13 @@ export function useSupportedChains() {
     const fetchChains = async () => {
       try {
         const { data, error } = await supabase
-          .from('supported_chains')
+          .from('supported_chains_public' as any)
           .select('*')
           .eq('is_active', true)
           .order('name');
 
         if (error) throw error;
-        setChains(data || []);
+        setChains((data as unknown as SupportedChain[]) || []);
       } catch (e: any) {
         setError(e.message);
       } finally {
