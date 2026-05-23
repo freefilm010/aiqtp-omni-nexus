@@ -43,7 +43,6 @@ interface UserStat {
 
 interface LeaderboardEntry {
   id: string;
-  user_id: string;
   rank: number;
   score: number;
   display_name: string | null;
@@ -126,9 +125,9 @@ const StatsArenaPage = () => {
 
   const fetchLeaderboard = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("leaderboard_entries")
-      .select("id, user_id, period_type, category, rank, score, display_name, avatar_url, highlight_stat, badge, period_start, updated_at")
+    const { data, error } = await (supabase as any)
+      .from("leaderboard_public")
+      .select("id, period_type, category, rank, score, display_name, avatar_url, highlight_stat, badge, period_start, updated_at")
       .eq("period_type", period)
       .eq("category", leaderCategory)
       .order("rank")
@@ -141,45 +140,24 @@ const StatsArenaPage = () => {
     }
 
     const entries = data as unknown as LeaderboardEntry[];
-    const userIds = [...new Set(entries.map((entry) => entry.user_id).filter(Boolean))];
-    const usernameMap = new Map<string, string>();
-
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .in("id", userIds);
-
-      for (const profile of profiles || []) {
-        if (profile.username) {
-          usernameMap.set(profile.id, profile.username);
-        }
-      }
-    }
-
     const deduped = new Map<string, LeaderboardEntry>();
 
     for (const entry of entries) {
-      const resolvedUsername = usernameMap.get(entry.user_id)?.trim();
       const sanitizedEntry = {
         ...entry,
         display_name: toSafePublicName({
-          username: resolvedUsername,
           displayName: entry.display_name,
-          fallbackId: entry.user_id,
+          fallbackId: entry.id,
           fallbackRank: entry.rank,
         }),
       };
 
       const displayName = entry.display_name?.trim();
-      const dedupeKey = resolvedUsername?.toLowerCase()
-        || (looksLikeRealName(displayName) ? displayName!.toLowerCase() : entry.user_id);
+      const dedupeKey = looksLikeRealName(displayName) ? displayName!.toLowerCase() : entry.id;
 
       const existing = deduped.get(dedupeKey);
-      const existingHasUsername = existing ? Boolean(usernameMap.get(existing.user_id)?.trim()) : false;
       const shouldReplace =
         !existing ||
-        (Boolean(resolvedUsername) && !existingHasUsername) ||
         entry.rank < existing.rank;
 
       if (shouldReplace) {
