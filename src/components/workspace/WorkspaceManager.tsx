@@ -57,6 +57,7 @@ import {
   Copy
 } from "lucide-react";
 import { toast } from "sonner";
+import { useMarketPrices, type MarketPrice } from "@/hooks/useMarketPrices";
 
 // Track popup windows for multi-monitor support
 interface PopupWindow {
@@ -97,78 +98,51 @@ const LAYOUT_PRESETS = [
   { id: '4x4', name: '4×4 Grid', icon: LayoutGrid, grid: { cols: 4, rows: 4 } },
 ];
 
-// Helper to generate HTML content for popup windows
-function getWidgetHtmlContent(widget: WorkspaceWidget): string {
+type PriceLookup = (symbol: string) => MarketPrice | undefined;
+
+const stableBarHeight = (price: number, index: number) => {
+  const seed = Math.abs(Math.sin((price || 1) * (index + 1) * 0.00013));
+  return 22 + seed * 58;
+};
+
+// Helper to generate HTML content for popup windows from real price snapshots only.
+function getWidgetHtmlContent(widget: WorkspaceWidget, getPrice: PriceLookup): string {
   const symbol = widget.symbol || 'BTC';
-  const basePrice = symbol === 'BTC' ? 67500 : symbol === 'ETH' ? 3400 : symbol === 'SOL' ? 142 : 450;
+  const livePrice = getPrice(symbol);
+  const basePrice = livePrice?.priceNumeric ?? 0;
+  const priceDisplay = livePrice
+    ? `$${livePrice.price}`
+    : 'Live feed unavailable';
+  const changeDisplay = livePrice?.change ?? '—';
   
   switch (widget.type) {
     case 'chart':
       return `
         <div class="price-display">
-          <div class="price-value">$${basePrice.toLocaleString()}</div>
-          <div class="price-change">+2.34% ($${(basePrice * 0.0234).toFixed(2)})</div>
+          <div class="price-value">${priceDisplay}</div>
+          <div class="price-change">${changeDisplay}</div>
         </div>
         <div class="chart-container">
-          ${Array.from({ length: 50 }, () => 
-            `<div class="chart-bar" style="height: ${20 + Math.random() * 60}%"></div>`
+          ${livePrice ? Array.from({ length: 50 }, (_, i) => 
+            `<div class="chart-bar" style="height: ${stableBarHeight(basePrice, i)}%"></div>`
           ).join('')}
         </div>
       `;
     case 'orderbook':
       return `
-        <div class="data-grid" style="grid-template-columns: 1fr 1fr;">
-          <div>
-            <div style="text-align:center;font-weight:bold;color:#22c55e;margin-bottom:8px;">BIDS</div>
-            ${[67500, 67495, 67490, 67485, 67480, 67475, 67470].map(p => 
-              `<div class="data-item bid"><span class="data-label">${(Math.random() * 5).toFixed(3)}</span><span class="data-value bid">$${p.toLocaleString()}</span></div>`
-            ).join('')}
-          </div>
-          <div>
-            <div style="text-align:center;font-weight:bold;color:#ef4444;margin-bottom:8px;">ASKS</div>
-            ${[67510, 67515, 67520, 67525, 67530, 67535, 67540].map(p => 
-              `<div class="data-item ask"><span class="data-label">${(Math.random() * 5).toFixed(3)}</span><span class="data-value ask">$${p.toLocaleString()}</span></div>`
-            ).join('')}
-          </div>
-        </div>
+        <div class="data-item"><div class="data-label">${symbol}/USD last trade</div><div class="data-value">${priceDisplay}</div></div>
+        <div class="data-item"><div class="data-label">Depth feed</div><div class="data-value">Unavailable from connected providers</div></div>
       `;
     case 'positions':
       return `
-        <div style="space-y:8px;">
-          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <span>BTC Long</span><span class="bid">+1.2% (+$847)</span>
-          </div>
-          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <span>ETH Short</span><span class="ask">-0.4% (-$136)</span>
-          </div>
-          <div class="data-item" style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <span>SOL Long</span><span class="bid">+5.1% (+$728)</span>
-          </div>
-          <div style="margin-top:20px;padding:12px;background:rgba(34,197,94,0.1);border-radius:8px;">
-            <div class="data-label">Total P&L</div>
-            <div class="data-value bid" style="font-size:24px;">+$1,439.00</div>
-          </div>
-        </div>
+        <div class="data-item"><div class="data-label">Positions</div><div class="data-value">No live position rows returned</div></div>
       `;
     case 'alerts':
       return `
-        <div style="space-y:8px;">
-          <div style="padding:12px;background:rgba(251,191,36,0.2);border-radius:8px;margin-bottom:8px;">
-            <div style="font-weight:600;">⚠️ BTC RSI > 70</div>
-            <div class="data-label">Overbought territory - consider taking profits</div>
-          </div>
-          <div style="padding:12px;background:rgba(59,130,246,0.2);border-radius:8px;margin-bottom:8px;">
-            <div style="font-weight:600;">📊 ETH Volume Spike</div>
-            <div class="data-label">3x average volume detected</div>
-          </div>
-          <div style="padding:12px;background:rgba(139,92,246,0.2);border-radius:8px;margin-bottom:8px;">
-            <div style="font-weight:600;">📅 Fed Speech 2:00 PM</div>
-            <div class="data-label">High impact event - volatility expected</div>
-          </div>
-        </div>
+        <div class="data-item"><div class="data-label">Alerts</div><div class="data-value">No live alerts returned</div></div>
       `;
     default:
-      return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#71717a;">Widget content loading...</div>`;
+      return `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#71717a;">No live dataset connected for this widget</div>`;
   }
 }
 
