@@ -55,6 +55,10 @@ export const renderApi = {
     execute: (pair: string, buyExchange: string, sellExchange: string, amountUsdt: number) =>
       renderPost<any>('/arbitrage/execute', { pair, buy_exchange: buyExchange, sell_exchange: sellExchange, amount_usdt: amountUsdt }),
   },
+  bots: {
+    start: () => renderPost<{ ok: boolean; active: boolean; message: string }>('/bots/start', {}),
+    stop: () => renderPost<{ ok: boolean; active: boolean; message: string }>('/bots/stop', {}),
+  },
   admin: {
     allStrategies: (filters?: { bot_type?: string; graduated?: boolean; active?: boolean; limit?: number }) => {
       const params = new URLSearchParams();
