@@ -1,4 +1,4 @@
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@22.0.2";
 
 const getEnv = (key: string): string => {
   const value = Deno.env.get(key);
@@ -8,14 +8,32 @@ const getEnv = (key: string): string => {
 
 export type StripeEnv = "sandbox" | "live";
 
-export function getSecretKey(env: StripeEnv): string {
+const GATEWAY_STRIPE_BASE = "https://connector-gateway.lovable.dev/stripe";
+
+export function getConnectionApiKey(env: StripeEnv): string {
   return env === "sandbox"
-    ? getEnv("STRIPE_TEST_SECRET_KEY")
-    : getEnv("STRIPE_SECRET_KEY");
+    ? getEnv("STRIPE_SANDBOX_API_KEY")
+    : getEnv("STRIPE_LIVE_API_KEY");
 }
 
 export function createStripeClient(env: StripeEnv): Stripe {
-  return new Stripe(getSecretKey(env), { apiVersion: "2025-03-31.basil" });
+  const connectionApiKey = getConnectionApiKey(env);
+  const lovableApiKey = getEnv("LOVABLE_API_KEY");
+
+  return new Stripe(connectionApiKey, {
+    apiVersion: "2026-03-25.dahlia",
+    httpClient: Stripe.createFetchHttpClient((url: string | URL, init?: RequestInit) => {
+      const gatewayUrl = url.toString().replace("https://api.stripe.com", GATEWAY_STRIPE_BASE);
+      return fetch(gatewayUrl, {
+        ...init,
+        headers: {
+          ...Object.fromEntries(new Headers(init?.headers).entries()),
+          "X-Connection-Api-Key": connectionApiKey,
+          "Lovable-API-Key": lovableApiKey,
+        },
+      });
+    }),
+  });
 }
 
 export async function verifyWebhook(
@@ -26,8 +44,8 @@ export async function verifyWebhook(
   const body = await req.text();
   const secret =
     env === "sandbox"
-      ? getEnv("STRIPE_TEST_WEBHOOK_SECRET")
-      : getEnv("STRIPE_WEBHOOK_SECRET");
+      ? getEnv("PAYMENTS_SANDBOX_WEBHOOK_SECRET")
+      : getEnv("PAYMENTS_LIVE_WEBHOOK_SECRET");
 
   if (!signature || !body) throw new Error("Missing signature or body");
 
