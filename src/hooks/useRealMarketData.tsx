@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+let realMarketDataChannelSeq = 0;
+
 export interface MarketCoin {
   id: string;
   symbol: string;
@@ -134,7 +136,7 @@ export function useRealMarketData(options?: {
   // Realtime subscription for instant price updates
   useEffect(() => {
     const channel = supabase
-      .channel(`market-prices-realtime-${Math.random().toString(36).slice(2)}`)
+      .channel(`market-prices-realtime-${Date.now()}-${realMarketDataChannelSeq++}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'market_prices' },
