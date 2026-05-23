@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, ExternalLink, Rocket, BookOpen, Wallet, Globe } from "lucide-react";
-import { Twitter, Youtube, Github, Linkedin } from "@/lib/icons/brand-icons";
+import { Twitter, Youtube, Linkedin } from "@/lib/icons/brand-icons";
 
 interface SocialLink {
   name: string;
@@ -38,13 +38,6 @@ const SOCIAL_LINKS: SocialLink[] = [
     icon: Youtube, 
     color: 'text-foreground',
     hoverColor: 'hover:text-red-500'
-  },
-  { 
-    name: 'GitHub', 
-    url: 'https://github.com/aiqtp', 
-    icon: Github, 
-    color: 'text-foreground',
-    hoverColor: 'hover:text-purple-400'
   },
   { 
     name: 'LinkedIn', 
