@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
 import { tokenService } from "@/lib/data";
 
+let platformTokenPricesChannelSeq = 0;
+
 const EXPLICIT_TESTNET = new Set([
   "TUSDC", "TUSDT", "TDAI", "TBUSD", "TETH", "TBTC", "TSOL",
   "TMATIC", "TAVAX", "TUNI", "TAAVE", "TLINK",
@@ -135,7 +137,7 @@ export function useAssetValuation() {
     };
 
     const channel = supabase
-      .channel(`platform-token-prices-live-${Math.random().toString(36).slice(2)}`)
+      .channel(`platform-token-prices-live-${Date.now()}-${platformTokenPricesChannelSeq++}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "token_price_feeds" },
