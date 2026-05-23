@@ -383,6 +383,16 @@ function getSupabaseClient() {
   return createClient(supabaseUrl, supabaseKey);
 }
 
+function arrayToHex(arr: Uint8Array): string {
+  return Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function generateHash(data: string): Promise<string> {
+  const encoded = new TextEncoder().encode(data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
+  return arrayToHex(new Uint8Array(hashBuffer));
+}
+
 // Execute tool calls with comprehensive implementations
 async function executeToolCall(name: string, args: Record<string, any>, context?: QAQIRequest["context"]): Promise<any> {
   const timestamp = new Date().toISOString();
@@ -694,9 +704,16 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
           .from("qtc_transactions")
           .select("*", { count: "exact", head: true });
 
+        const { data: latestBlock } = await supabase
+          .from("qtc_blocks")
+          .select("block_height")
+          .order("block_height", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
         return {
-          network: "QTC Mainnet",
-          block_height: ledgerStats?.[0] ? Math.floor(Date.now() / 8000) : 0,
+          network: "QTC Ledger",
+          block_height: latestBlock?.block_height || 0,
           block_time: "8s (Quantum Heartbeat)",
           consensus: "Proof of Temporal Resonance",
           total_supply: "21,000,000 QTC",
