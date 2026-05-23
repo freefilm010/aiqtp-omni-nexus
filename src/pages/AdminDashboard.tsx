@@ -31,6 +31,7 @@ const FeedbackManager = lazy(() => import("@/components/admin/FeedbackManager"))
 const AdminKnowledgeBase = lazy(() => import("@/components/admin/AdminKnowledgeBase"));
 const AdminReportsCenter = lazy(() => import("@/components/admin/AdminReportsCenter"));
 const AdminUsersManagement = lazy(() => import("@/components/admin/AdminUsersManagement"));
+const AdminFilesVault = lazy(() => import("@/components/admin/AdminFilesVault"));
 const AdminSettingsPage = lazy(() => import("@/components/admin/AdminSettingsPage"));
 const ApexDashboard = lazy(() => import("@/components/admin/ApexDashboard"));
 const FederalCharterMission = lazy(() => import("@/components/admin/FederalCharterMission"));
@@ -102,6 +103,7 @@ const AdminDashboard = () => {
               <Route path="knowledge" element={<AdminKnowledgeBase />} />
               <Route path="reports" element={<AdminReportsCenter />} />
               <Route path="users" element={<AdminUsersManagement />} />
+              <Route path="files" element={<AdminFilesVault />} />
               <Route path="logs" element={<AdminReportsCenter />} />
               <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="apex" element={<ApexDashboard />} />
