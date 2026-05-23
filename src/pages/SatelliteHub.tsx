@@ -64,7 +64,7 @@ const SatelliteHub = () => {
 
   const fetchServices = async () => {
     const { data } = await supabase
-      .from("satellite_services")
+      .from("satellite_services_public" as any)
       .select("id,name,category,subcategory,description,website_url,supported_chains,features,is_usa_compatible,is_crypto_native,requires_api_key,revenue_model")
       .eq("is_active", true)
       .order("sort_order");
