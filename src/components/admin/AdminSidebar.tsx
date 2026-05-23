@@ -33,6 +33,7 @@ import {
   Library,
   Target,
   Lock,
+  FolderLock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -70,6 +71,7 @@ const navItems: NavItem[] = [
   { title: "Automation", href: "/admin/automation", icon: Zap },
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Security", href: "/admin/security", icon: Shield },
+  { title: "Files Vault", href: "/admin/files", icon: FolderLock },
   { title: "Customer Feedback", href: "/admin/feedback", icon: MessageSquare },
   { title: "Knowledge Base", href: "/admin/knowledge", icon: Library },
   { title: "Reports & Metrics", href: "/admin/reports", icon: BarChart3 },
