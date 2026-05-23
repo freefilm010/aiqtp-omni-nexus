@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTradingStats } from "@/hooks/useTradingStats";
 import { toast } from "sonner";
 import { Bot, Play, Pause, TrendingUp, Activity, Zap, BarChart3, RefreshCw, Settings } from "lucide-react";
+import { renderApi } from "@/lib/render-api";
 
 const BOTS = [
   { name: "Arbitrage Bot",        exchange: "Binance",  strategy: "Cross-Exchange Arbitrage" },
@@ -33,16 +34,24 @@ export default function TradingCommandCenter() {
   const totalTrades  = stats?.totalTrades ?? 0;
   const winRate      = stats?.winRate ?? 100;
 
-  const handleStartBots = () => {
-    fetch("/api/bots/start", { method: "POST" })
-      .then(() => { toast.success("All bots started"); refetch(); })
-      .catch(() => toast.error("Render /api/bots/start — check Render worker status"));
+  const handleStartBots = async () => {
+    try {
+      const result = await renderApi.bots.start();
+      toast.success(result.message || "Trading workers activated");
+      await refetch();
+    } catch (error: any) {
+      toast.error(error?.message || "Trading worker start failed");
+    }
   };
 
-  const handleStopBots = () => {
-    fetch("/api/bots/stop", { method: "POST" })
-      .then(() => { toast.success("All bots stopped"); refetch(); })
-      .catch(() => toast.error("Render /api/bots/stop — check Render worker status"));
+  const handleStopBots = async () => {
+    try {
+      const result = await renderApi.bots.stop();
+      toast.success(result.message || "Trading workers paused");
+      await refetch();
+    } catch (error: any) {
+      toast.error(error?.message || "Trading worker stop failed");
+    }
   };
 
   if (isLoading) {
@@ -117,7 +126,7 @@ export default function TradingCommandCenter() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-green-600 text-white">LIVE</Badge>
-                    <Button size="sm" variant="ghost" onClick={() => toast.info(`${bot.name} settings — coming soon`)}><Settings className="h-4 w-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => window.location.href = "/admin/bots"}><Settings className="h-4 w-4" /></Button>
                   </div>
                 </div>
               ))}

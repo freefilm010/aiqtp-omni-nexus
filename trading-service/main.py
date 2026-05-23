@@ -15,8 +15,8 @@ Endpoints:
   GET  /strategy-registry          List strategies for caller
   POST /strategy-registry          Register a new strategy
   PATCH /strategy-registry/{id}    Update is_active / pending_graduation
-  POST /bots/start                 Signal worker to run (no-op, logged)
-  POST /bots/stop                  Signal worker to pause (no-op, logged)
+  POST /bots/start                 Activate worker kill-switch state
+  POST /bots/stop                  Pause worker kill-switch state
 """
 
 import asyncio
@@ -1115,16 +1115,40 @@ async def ibkr_order(
 
 @app.post("/bots/start")
 @limiter.limit("10/minute")
-async def bots_start(request: Request):
-    log.info("bots/start signal received")
-    return {"ok": True, "message": "Start signal logged — worker polls continuously"}
+async def bots_start(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
+    await _exec(
+        """INSERT INTO public.system_status (key, active, reason, updated_at)
+           VALUES ('main', true, $1, now())
+           ON CONFLICT (key) DO UPDATE
+           SET active = EXCLUDED.active, reason = EXCLUDED.reason, updated_at = now()""",
+        f"Activated by {user_id}",
+    )
+    log.info("bots/start activated by %s", user_id)
+    return {"ok": True, "active": True, "message": "Trading workers activated"}
 
 
 @app.post("/bots/stop")
 @limiter.limit("10/minute")
-async def bots_stop(request: Request):
-    log.info("bots/stop signal received")
-    return {"ok": True, "message": "Stop signal logged — set system_status.active=false where key='main' to halt"}
+async def bots_stop(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
+    await _exec(
+        """INSERT INTO public.system_status (key, active, reason, updated_at)
+           VALUES ('main', false, $1, now())
+           ON CONFLICT (key) DO UPDATE
+           SET active = EXCLUDED.active, reason = EXCLUDED.reason, updated_at = now()""",
+        f"Paused by {user_id}",
+    )
+    log.info("bots/stop paused by %s", user_id)
+    return {"ok": True, "active": False, "message": "Trading workers paused"}
 
 
 if __name__ == "__main__":

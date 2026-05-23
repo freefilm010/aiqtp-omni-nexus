@@ -2,9 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -58,7 +56,6 @@ const AccountConnections = () => {
     {}
   );
   const [connectingId, setConnectingId] = useState<string | null>(null);
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [showAccountSelector, setShowAccountSelector] = useState(false);
 
   const connections = availableConnections.map((connection) => ({
@@ -67,31 +64,20 @@ const AccountConnections = () => {
     accounts: storedConnections[connection.id]?.accounts,
   }));
 
-  const mockAccounts = [
-    { id: 'acc1', name: '*****cdfc', type: 'Trading Account' },
-    { id: 'acc2', name: '*****a3b2', type: 'Savings Account' },
-  ];
-
   const handleConnect = (connectionId: string) => {
+    if (!user) {
+      toast.error("Sign in to connect accounts");
+      window.location.href = "/auth";
+      return;
+    }
     setConnectingId(connectionId);
-    setSelectedAccounts(storedConnections[connectionId]?.accounts ?? []);
     setShowAccountSelector(true);
   };
 
   const confirmConnection = () => {
-    if (connectingId && selectedAccounts.length > 0) {
-      setStoredConnections(prev => ({
-        ...prev,
-        [connectingId]: {
-          connected: true,
-          accounts: selectedAccounts,
-        },
-      }));
-      toast.success(`Connected to ${connections.find(c => c.id === connectingId)?.name}`);
-      setShowAccountSelector(false);
-      setConnectingId(null);
-      setSelectedAccounts([]);
-    }
+    toast.info("Use the live connector cards above to authorize supported services.");
+    setShowAccountSelector(false);
+    setConnectingId(null);
   };
 
   const handleDisconnect = (connectionId: string) => {
@@ -108,7 +94,6 @@ const AccountConnections = () => {
 
     if (!open) {
       setConnectingId(null);
-      setSelectedAccounts([]);
     }
   };
 
@@ -261,34 +246,15 @@ const AccountConnections = () => {
             </p>
           </DialogHeader>
 
-          <div className="space-y-3 my-4">
-            {mockAccounts.map((account) => (
-              <div
-                key={account.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-secondary cursor-pointer"
-                onClick={() => {
-                  setSelectedAccounts(prev =>
-                    prev.includes(account.id)
-                      ? prev.filter(a => a !== account.id)
-                      : [...prev, account.id]
-                  );
-                }}
-              >
-                <Checkbox 
-                  checked={selectedAccounts.includes(account.id)}
-                  onCheckedChange={() => {}}
-                />
-                <span>{account.name}</span>
-              </div>
-            ))}
+          <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground my-4">
+            Direct fake account selection has been removed. Supported services are connected through the live connector registry, where each integration records its real connection state for your signed-in account.
           </div>
 
           <Button 
             className="w-full" 
             onClick={confirmConnection}
-            disabled={selectedAccounts.length === 0}
           >
-            Continue
+            Open Live Connectors
           </Button>
         </DialogContent>
       </Dialog>
