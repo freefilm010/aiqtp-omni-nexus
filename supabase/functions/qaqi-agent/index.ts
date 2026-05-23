@@ -722,20 +722,51 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
         };
       }
       if (args.operation === "mine") {
+        const { data: latestBlock } = await supabase
+          .from("qtc_blocks")
+          .select("block_height, block_hash")
+          .order("block_height", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const height = Number(latestBlock?.block_height || 0) + 1;
+        const hash = await generateHash(JSON.stringify({ latestBlock, height, timestamp, operator: context?.userId || "qaqi" }));
         return {
-          block_mined: true,
-          height: Math.floor(Date.now() / 8000),
+          block_mined: false,
+          status: "ready_for_qtc_network_mine_block",
+          height,
           reward: 6.25,
-          hash: `0x${[...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`
+          candidate_hash: `0x${hash}`,
+          data_source: "qtc_blocks_db"
         };
       }
       return { operation: args.operation, status: "completed", timestamp };
     
     case "quwallet_manage":
       if (args.action === "create") {
+        const userId = context?.userId;
+        if (!userId) return { wallet_created: false, error: "Authenticated user required" };
+        const walletSeed = await generateHash(`${userId}:${args.wallet_name || "QuWallet"}:${timestamp}`);
+        const address = `qw${walletSeed.slice(0, 40)}`;
+        const { data: wallet, error: walletError } = await supabase
+          .from("quwallet_wallets")
+          .insert({
+            user_id: userId,
+            wallet_name: args.wallet_name || "QuWallet",
+            wallet_address: address,
+            kyber_public_key: `mlkem_${walletSeed}`,
+            dilithium_public_key: `mldsa_${await generateHash(`${walletSeed}:sig`)}`,
+            encrypted_private_keys: "managed_by_backend_key_vault",
+            key_derivation_salt: await generateHash(`${walletSeed}:salt`),
+            wallet_type: args.wallet_type || "standard",
+          })
+          .select("id, wallet_address")
+          .single();
+
+        if (walletError) return { wallet_created: false, error: walletError.message };
         return {
           wallet_created: true,
-          address: `qw${[...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`,
+          wallet_id: wallet.id,
+          address: wallet.wallet_address,
           encryption: "ML-KEM-768",
           pqc_secure: true,
           backup_required: true
