@@ -110,7 +110,7 @@ Topic context: ${topic || "general platform features"}.`;
           trigger_type: "scheduled",
           action_type: "multi_channel_post",
           schedule: body.scheduleAt || new Date().toISOString(),
-          webhook_url: body.webhookUrl || null,
+          webhook_url: null,
           is_active: true,
           is_system: false,
           user_id: user.id,

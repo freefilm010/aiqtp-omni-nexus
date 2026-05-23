@@ -291,7 +291,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     const body: AutomationRequest = await req.json();
-    const { action, webhookUrl, webhookData, automationType, automationId, schedule, name, description, config } = body;
+    const { action, webhookUrl, webhookData, automationType, automationId, schedule, name, config, isActive } = body;
     
     // Get user ID from auth header
     const authHeader = req.headers.get("Authorization");
@@ -300,6 +300,27 @@ serve(async (req) => {
       const token = authHeader.replace("Bearer ", "");
       const { data: { user } } = await supabase.auth.getUser(token);
       userId = user?.id || null;
+    }
+
+    if (!userId) {
+      return new Response(JSON.stringify({ success: false, error: "Authentication required" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!adminRole) {
+      return new Response(JSON.stringify({ success: false, error: "Admin access required" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
     }
     
     console.log(`Automation Hub: ${action}`);
@@ -326,6 +347,11 @@ serve(async (req) => {
           throw new Error("Name, webhookUrl, and automationType required");
         }
         result = await createAutomation(supabase, userId || "system", name, automationType, webhookUrl, schedule, config);
+        break;
+
+      case "update_automation":
+        if (!automationId || typeof isActive !== "boolean") throw new Error("Automation ID and isActive required");
+        result = await updateAutomation(supabase, automationId, isActive);
         break;
         
       case "run_automation":
