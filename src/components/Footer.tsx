@@ -1,14 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import GitHubEcosystem from "@/components/github/GitHubEcosystem";
-import { GITHUB_USERNAME } from "@/lib/github/repositories";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/hooks/useAuth";
-import { CRISIS_HELPLINES } from "@/lib/fees/platformFees";
 import CustomerFeedbackForm from "@/components/feedback/CustomerFeedbackForm";
 import { 
   Zap, Mail, Phone, MapPin, Globe, Shield, Accessibility, AlertTriangle, MessageCircle, Send, Activity, LineChart, Crosshair, TrendingUp, Layers, Atom, Brain, Cpu, FlaskConical, Target, ShoppingCart, LayoutGrid, BarChart3, Calendar, Newspaper, BellRing, BookOpen, Music, DollarSign, Percent, Bot, Coins, Trophy } from "lucide-react";
-import { Twitter, Linkedin, Youtube, Github } from "@/lib/icons/brand-icons";
+import { Twitter, Linkedin, Youtube } from "@/lib/icons/brand-icons";
 
 const AdminFooterLink = () => {
   const { isAdmin } = useAdminAuth();
@@ -22,18 +19,6 @@ const AdminFooterLink = () => {
         Admin Dashboard
       </Link>
     </li>
-  );
-};
-
-const AdminGitHubSection = () => {
-  const { isAdmin } = useAdminAuth();
-
-  if (!isAdmin) return null;
-
-  return (
-    <div className="py-8 border-t border-white/10">
-      <GitHubEcosystem />
-    </div>
   );
 };
 
@@ -235,11 +220,6 @@ const Footer = () => {
                 </a>
               </Button>
               <Button variant="glass" size="icon" asChild>
-                <a href={`https://github.com/${GITHUB_USERNAME}`} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-                  <Github className="w-4 h-4" />
-                </a>
-              </Button>
-              <Button variant="glass" size="icon" asChild>
                 <a href="https://linkedin.com/company/aiqtp" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
                   <Linkedin className="w-4 h-4" />
                 </a>
@@ -258,9 +238,6 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-
-        {/* GitHub Ecosystem Section - Admin Only */}
-        {user ? <AdminGitHubSection /> : null}
 
         {/* Legal Disclaimer Section */}
         <div className="py-6 border-t border-white/10 space-y-4">
@@ -281,31 +258,6 @@ const Footer = () => {
               <strong>🤖 AI DISCLAIMER:</strong> AI predictions are experimental technologies and may produce inaccurate results. Do not use as sole basis for trading decisions.
             </p>
           </div>
-        </div>
-
-        {/* Crisis & Responsible Trading Resources */}
-        <div className="py-4 border-t border-white/10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[10px] text-white/50">
-            {Object.values(CRISIS_HELPLINES).map((section) => (
-              <div key={section.title}>
-                <h5 className="font-semibold text-white/70 mb-1.5">{section.title}</h5>
-                <ul className="space-y-1">
-                  {section.resources.map((r) => (
-                    <li key={r.name}>
-                      <a href={r.url} target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-smooth">
-                        {r.name}
-                        {r.phone ? ` — ${r.phone}` : ""}
-                      </a>
-                      <span className="block text-white/30">{r.available}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <p className="text-[10px] text-white/40 mt-3">
-            If you or someone you know is struggling with gambling, financial stress, or a mental health crisis, please reach out. Help is available 24/7.
-          </p>
         </div>
 
         {/* Sitemap — hidden on mobile since nav grid is already visible */}
