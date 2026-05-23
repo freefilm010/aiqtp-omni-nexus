@@ -125,7 +125,7 @@ function getWidgetHtmlContent(widget: WorkspaceWidget, getPrice: PriceLookup): s
         <div class="chart-container">
           ${livePrice ? Array.from({ length: 50 }, (_, i) => 
             `<div class="chart-bar" style="height: ${stableBarHeight(basePrice, i)}%"></div>`
-          ).join('')}
+          ).join('') : ''}
         </div>
       `;
     case 'orderbook':
