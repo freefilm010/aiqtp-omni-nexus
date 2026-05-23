@@ -78,6 +78,7 @@ const StrategyMarketplace = () => {
   const [myStrategies, setMyStrategies] = useState<GraduatedStrategy[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<'profitability' | 'rentals' | 'price'>('profitability');
+  const [activeTab, setActiveTab] = useState("marketplace");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -330,7 +331,7 @@ const StrategyMarketplace = () => {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="marketplace" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="marketplace" className="text-[10px] sm:text-sm gap-1">
             <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -616,7 +617,7 @@ const StrategyMarketplace = () => {
               <CardContent className="py-12 text-center">
                 <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">You haven't rented any strategies yet</p>
-                <Button className="mt-4" onClick={() => {}}>
+                <Button className="mt-4" onClick={() => setActiveTab("marketplace")}>
                   Browse Marketplace
                 </Button>
               </CardContent>
