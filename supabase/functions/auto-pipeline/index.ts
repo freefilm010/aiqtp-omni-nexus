@@ -92,13 +92,18 @@ serve(async (req) => {
       const totalCycles = 10000;
       const results: any[] = [];
 
-      // Pick random templates
-      const shuffled = [...TEMPLATES].sort(() => Math.random() - 0.5).slice(0, count);
+      const templateOffset = Math.floor(deterministicFloat(user.id, count) * TEMPLATES.length);
+      const selectedTemplates = Array.from({ length: Math.min(count, TEMPLATES.length) }, (_, i) => TEMPLATES[(templateOffset + i) % TEMPLATES.length]);
 
-      for (const tpl of shuffled) {
+      for (const [templateIndex, tpl] of selectedTemplates.entries()) {
         // 1. BUILD: Create strategy
         const entryRules = { conditions: tpl.ind.map(i => `${i} signal confirmation`), logic: 'AND' };
-        const exitRules = { stop_loss: `${1 + Math.random() * 3}%`, take_profit: `${3 + Math.random() * 7}%`, trailing_stop: '1.5%' };
+        const ruleSeed = `${user.id}:${tpl.name}:${templateIndex}`;
+        const exitRules = {
+          stop_loss: `${(1 + deterministicFloat(ruleSeed, 1) * 3).toFixed(2)}%`,
+          take_profit: `${(3 + deterministicFloat(ruleSeed, 2) * 7).toFixed(2)}%`,
+          trailing_stop: '1.5%'
+        };
         const riskParams = { max_position_size: '5%', max_drawdown: '12%', diversification: '5' };
 
         const { data: strategy, error: buildErr } = await supabase
