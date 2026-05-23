@@ -215,7 +215,7 @@ const MiniWatchlist = ({ prices }: WidgetRendererProps) => (
     <div className="flex-1 p-2 space-y-1">
       {prices.slice(0, 6).map((item) => (
         <div key={item.symbol} className="flex justify-between p-1 rounded hover:bg-muted/50">
-          <span className="font-medium">{item.s}</span>
+          <span className="font-medium">{item.symbol}</span>
           <span>${item.price}</span>
           <span className={item.changePercent >= 0 ? 'text-success' : 'text-destructive'}>{item.change}</span>
         </div>
@@ -354,7 +354,7 @@ const MiniTerminal = () => (
   </div>
 );
 
-const WIDGET_RENDERERS: Record<string, React.ComponentType<{ symbol?: string }>> = {
+const WIDGET_RENDERERS: Record<string, React.ComponentType<WidgetRendererProps>> = {
   chart: MiniChart,
   orderbook: MiniOrderBook,
   positions: MiniPositions,
@@ -370,6 +370,8 @@ const WIDGET_RENDERERS: Record<string, React.ComponentType<{ symbol?: string }>>
 };
 
 const WorkspaceManager = () => {
+  const { getPrice, getAllPrices } = useMarketPrices(30_000);
+  const allPrices = getAllPrices();
   const [layout, setLayout] = useState({ cols: 2, rows: 2 });
   const [widgets, setWidgets] = useState<WorkspaceWidget[]>([
     { id: '1', type: 'chart', symbol: 'BTC' },
@@ -521,7 +523,7 @@ const WorkspaceManager = () => {
               <span class="widget-badge">● LIVE</span>
             </div>
             <div class="widget-content" id="content">
-              ${getWidgetHtmlContent(widget)}
+              ${getWidgetHtmlContent(widget, getPrice)}
             </div>
           </div>
           <script>
@@ -534,26 +536,9 @@ const WorkspaceManager = () => {
               symEl.style.display = '';
             }
             var safeWidgetId = ${JSON.stringify(widget.id)};
-            var basePrice = ${widget.symbol === 'BTC' ? 67500 : widget.symbol === 'ETH' ? 3400 : 142};
-
-            // Simulate live data updates
-            function updateData() {
-              var bars = document.querySelectorAll('.chart-bar');
-              bars.forEach(function(bar) {
-                bar.style.height = (20 + Math.random() * 60) + '%';
-              });
-              var priceEl = document.querySelector('.price-value');
-              if (priceEl) {
-                var change = (Math.random() - 0.5) * 100;
-                priceEl.textContent = '$' + (basePrice + change).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-              }
-            }
-            // Store interval ID for cleanup
-            var _intervalId = setInterval(updateData, 2000);
 
             // Notify parent when closed (target origin restricted to opener)
             window.onbeforeunload = function() {
-              clearInterval(_intervalId);
               try {
                 window.opener && window.opener.postMessage({ type: 'WIDGET_CLOSED', widgetId: safeWidgetId }, window.location.origin);
               } catch (_) { /* ignore */ }
@@ -572,7 +557,7 @@ const WorkspaceManager = () => {
     } else {
       toast.error("Popup blocked! Please allow popups for multi-monitor support.");
     }
-  }, []);
+  }, [getPrice]);
   
   // Listen for popup close messages
   useEffect(() => {
@@ -860,7 +845,7 @@ const WorkspaceManager = () => {
 
               {/* Widget Content */}
               <div className="h-full pt-7">
-                <WidgetRenderer symbol={widget.symbol} />
+                <WidgetRenderer symbol={widget.symbol} getPrice={getPrice} prices={allPrices} />
               </div>
             </Card>
           );
