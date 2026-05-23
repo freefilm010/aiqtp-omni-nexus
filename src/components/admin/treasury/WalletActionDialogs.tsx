@@ -65,6 +65,21 @@ export const WalletActionDialogs = ({ action, wallet, allWallets, onClose, onRef
 
   const otherWallets = allWallets.filter(w => w.id !== wallet.id);
 
+  const resolveUsdPrice = async (currency: string) => {
+    if (["USD", "USDC", "USDT"].includes(currency)) return 1;
+    const { data, error } = await supabase
+      .from("platform_tokens")
+      .select("id, token_price_feeds!inner(price)")
+      .eq("symbol", currency)
+      .eq("token_price_feeds.base_currency", "USD")
+      .maybeSingle();
+    if (error) throw error;
+    const feed = (data as any)?.token_price_feeds?.[0] ?? (data as any)?.token_price_feeds;
+    const price = Number(feed?.price);
+    if (!Number.isFinite(price) || price <= 0) throw new Error(`No live USD price for ${currency}`);
+    return price;
+  };
+
   const handleSubmit = async () => {
     const amt = parseFloat(amount);
     if (isNaN(amt) || amt <= 0) {
@@ -149,9 +164,12 @@ export const WalletActionDialogs = ({ action, wallet, allWallets, onClose, onRef
           if (!convertTo) { toast.error("Select target currency"); return; }
           if (amt > Number(wallet.available_balance)) { toast.error("Insufficient balance"); return; }
 
-          // Simulate conversion rate (in production, pull from real FX/crypto feeds)
-          const mockRate = 1.0; // placeholder
-          const converted = amt * mockRate;
+          const [fromUsd, toUsd] = await Promise.all([
+            resolveUsdPrice(wallet.currency),
+            resolveUsdPrice(convertTo),
+          ]);
+          const liveRate = fromUsd / toUsd;
+          const converted = amt * liveRate;
 
           // Debit source
           const { error: ce1 } = await supabase.from("platform_wallets").update({
@@ -177,7 +195,7 @@ export const WalletActionDialogs = ({ action, wallet, allWallets, onClose, onRef
             amount: amt,
             currency: wallet.currency,
             status: "completed",
-            metadata: { type: action, from: wallet.currency, to: convertTo, rate: mockRate, received: converted },
+            metadata: { type: action, from: wallet.currency, to: convertTo, rate: liveRate, received: converted },
           });
 
           toast.success(`${action === "convert" ? "Converted" : "Swapped"} ${amt} ${wallet.currency} → ${converted} ${convertTo}`);
