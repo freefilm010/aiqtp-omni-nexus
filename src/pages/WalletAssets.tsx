@@ -479,10 +479,14 @@ const WalletAssets = () => {
                             console.warn("Could not fetch wallet address for MoonPay:", e);
                           }
                           
-                          window.open(
-                            `https://www.moonpay.com/buy?apiKey=pk_live_demo&currencyCode=${coin.toLowerCase()}&baseCurrencyAmount=100${walletParam}`,
-                            "_blank"
-                          );
+                          const params = new URLSearchParams({
+                            defaultCrypto: coin,
+                            defaultAmount: "100",
+                          });
+                          if (walletParam) {
+                            params.set("wallets", walletParam.replace("&walletAddress=", ""));
+                          }
+                          window.open(`https://widget.onramper.com?${params.toString()}`, "_blank");
                         }}
                       >
                         <span className="font-bold">{coin}</span>
