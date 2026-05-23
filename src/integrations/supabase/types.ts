@@ -9763,6 +9763,69 @@ export type Database = {
         }
         Relationships: []
       }
+      copy_trading_leaders_public: {
+        Row: {
+          aum: number | null
+          avatar: string | null
+          copiers_count: number | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          is_active: boolean | null
+          is_hot: boolean | null
+          is_verified: boolean | null
+          max_drawdown: number | null
+          pnl_30d: number | null
+          pnl_all_time: number | null
+          risk_score: number | null
+          sharpe_ratio: number | null
+          strategy_description: string | null
+          tier: string | null
+          updated_at: string | null
+          win_rate: number | null
+        }
+        Insert: {
+          aum?: number | null
+          avatar?: string | null
+          copiers_count?: number | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          is_verified?: boolean | null
+          max_drawdown?: number | null
+          pnl_30d?: number | null
+          pnl_all_time?: number | null
+          risk_score?: number | null
+          sharpe_ratio?: number | null
+          strategy_description?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          win_rate?: number | null
+        }
+        Update: {
+          aum?: number | null
+          avatar?: string | null
+          copiers_count?: number | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_hot?: boolean | null
+          is_verified?: boolean | null
+          max_drawdown?: number | null
+          pnl_30d?: number | null
+          pnl_all_time?: number | null
+          risk_score?: number | null
+          sharpe_ratio?: number | null
+          strategy_description?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          win_rate?: number | null
+        }
+        Relationships: []
+      }
       data_aggregator_bots_public: {
         Row: {
           bot_type: string | null
