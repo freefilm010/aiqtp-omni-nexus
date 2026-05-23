@@ -125,18 +125,22 @@ serve(async (req) => {
       console.log("Job submitted successfully:", jobResult.id || jobResult.job_id);
     } else {
       const jobError = await jobResponse.text();
-      console.log("Job submission response:", jobResponse.status, jobError);
-      // Fall back to simulated response for trial accounts
-      jobResult = {
-        jobId: `quantum-${Date.now()}`,
-        backend: backend,
-        status: 'queued',
-        qubits: qubits,
-        shots: shots,
-        createdAt: new Date().toISOString(),
-        message: "Job queued (trial account - simulated queue)",
-        estimatedWaitTime: "2-5 minutes"
-      };
+      console.error("IBM Quantum job submission failed:", jobResponse.status, jobError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: "IBM Quantum job submission failed",
+        ibmStatus: jobResponse.status,
+        ibmMessage: jobError,
+        crnConfigured: !!IBM_QUANTUM_CRN,
+        availableBackends: availableBackends.slice(0, 10).map((b: any) => ({
+          name: b.name || b.backend_name,
+          qubits: b.n_qubits || b.num_qubits || b.qubit_count,
+          status: b.status || b.operational_status || 'unknown'
+        }))
+      }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const response = {
