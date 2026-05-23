@@ -7,11 +7,12 @@ const corsHeaders = {
 };
 
 interface AutomationRequest {
-  action: "trigger_webhook" | "schedule_task" | "get_automations" | "create_automation" | "run_automation" | "get_logs";
+  action: "trigger_webhook" | "schedule_task" | "get_automations" | "create_automation" | "update_automation" | "run_automation" | "get_logs";
   webhookUrl?: string;
   webhookData?: any;
   automationType?: "zapier" | "n8n" | "molt" | "custom";
   automationId?: string;
+  isActive?: boolean;
   schedule?: string; // cron expression
   name?: string;
   description?: string;
@@ -31,6 +32,7 @@ interface Automation {
 
 // Trigger a webhook (Zapier, n8n, Molt, custom)
 async function triggerWebhook(webhookUrl: string, data: any): Promise<any> {
+  validateWebhookUrl(webhookUrl);
   console.log(`Triggering webhook: ${webhookUrl}`);
   
   try {
@@ -64,6 +66,21 @@ async function triggerWebhook(webhookUrl: string, data: any): Promise<any> {
   } catch (error) {
     console.error("Webhook trigger error:", error);
     throw new Error(`Failed to trigger webhook: ${(error instanceof Error ? error.message : String(error))}`);
+  }
+}
+
+function validateWebhookUrl(webhookUrl: string) {
+  const parsed = new URL(webhookUrl);
+  if (parsed.protocol !== "https:") throw new Error("Webhook URL must use HTTPS");
+  const host = parsed.hostname.toLowerCase();
+  if (
+    host === "localhost" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    /^(127\.|10\.|0\.|169\.254\.|172\.(1[6-9]|2\d|3[0-1])\.|192\.168\.)/.test(host) ||
+    host === "::1"
+  ) {
+    throw new Error("Webhook host is not allowed");
   }
 }
 
@@ -113,6 +130,7 @@ async function createAutomation(
   schedule?: string,
   config?: any
 ): Promise<Automation> {
+  validateWebhookUrl(webhookUrl);
   const automationData = {
     type,
     webhookUrl,
@@ -143,6 +161,28 @@ async function createAutomation(
     name,
     ...automationData,
   };
+}
+
+async function updateAutomation(supabase: any, automationId: string, isActive: boolean): Promise<any> {
+  const { data: automation, error: fetchError } = await supabase
+    .from("admin_settings")
+    .select("*")
+    .eq("id", automationId)
+    .eq("category", "automations")
+    .single();
+
+  if (fetchError || !automation) throw new Error(`Automation not found: ${automationId}`);
+
+  const updatedValue = { ...automation.value, isActive };
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .update({ value: updatedValue, updated_at: new Date().toISOString() })
+    .eq("id", automationId)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to update automation: ${(error instanceof Error ? error.message : String(error))}`);
+  return { id: data.id, name: data.key, ...data.value };
 }
 
 // Run a specific automation
