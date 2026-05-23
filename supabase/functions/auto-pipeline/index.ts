@@ -29,7 +29,19 @@ const TEMPLATES = [
   { name: "Parabolic SAR Trail", cat: "trend", ind: ["PSAR"], desc: "PSAR trailing stop reversal" },
 ];
 
+function deterministicFloat(seed: string, index: number): number {
+  let hash = 2166136261;
+  const input = `${seed}:${index}`;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+}
+
 function runTrainingCycle(entryRules: any, exitRules: any, riskParams: any, cycleIndex: number, totalCycles: number) {
+  const seed = JSON.stringify({ entryRules, exitRules, riskParams, cycleIndex, totalCycles });
+  const jitter = (index: number, range: number) => (deterministicFloat(seed, index) * 2 - 1) * range;
   const conditions = entryRules?.conditions || [];
   const stopLoss = parseFloat(exitRules?.stop_loss) || 2;
   const takeProfit = parseFloat(exitRules?.take_profit) || 5;
@@ -40,21 +52,21 @@ function runTrainingCycle(entryRules: any, exitRules: any, riskParams: any, cycl
   const regimePhase = (cycleIndex / totalCycles) * Math.PI * 6;
   const regimeModifier = Math.sin(regimePhase) * 0.15;
   const baseWinRate = 50 + complexityBonus + (riskRewardRatio > 2 ? 5 : 0) - positionSizePenalty;
-  const winRate = Math.max(30, Math.min(85, baseWinRate + regimeModifier * 20 + (Math.random() * 10 - 5)));
-  const trades = Math.floor(80 + Math.random() * 120);
+  const winRate = Math.max(30, Math.min(85, baseWinRate + regimeModifier * 20 + jitter(1, 5)));
+  const trades = Math.floor(80 + deterministicFloat(seed, 2) * 120);
   const wins = Math.floor(trades * (winRate / 100));
   const losses = trades - wins;
   const avgWin = takeProfit * 0.8;
   const avgLoss = stopLoss * 1.1;
   const pnl = (wins * avgWin) - (losses * avgLoss);
   const profitability = pnl > 0 ? Math.min(95, 50 + pnl * 2) : Math.max(10, 50 + pnl);
-  const returns = Array.from({ length: 20 }, () => (Math.random() - 0.4) * takeProfit);
+  const returns = Array.from({ length: 20 }, (_, i) => (deterministicFloat(seed, i + 10) - 0.4) * takeProfit);
   const meanReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
   const stdReturn = Math.sqrt(returns.reduce((s, r) => s + (r - meanReturn) ** 2, 0) / returns.length);
   const sharpeRatio = stdReturn > 0 ? (meanReturn / stdReturn) * Math.sqrt(252) : 0;
   const drawdowns = returns.map((_, i) => returns.slice(0, i + 1).reduce((a, b) => a + b, 0));
   const maxDrawdown = Math.abs(Math.min(...drawdowns, 0));
-  const consistency = Math.max(30, Math.min(95, 60 + complexityBonus + riskRewardRatio * 3 - maxDrawdown * 2 + (Math.random() * 10 - 5)));
+  const consistency = Math.max(30, Math.min(95, 60 + complexityBonus + riskRewardRatio * 3 - maxDrawdown * 2 + jitter(50, 5)));
   return { profitability, winRate, sharpeRatio, maxDrawdown, consistency, trades, finalCapital: 10000 + pnl * 100 };
 }
 
