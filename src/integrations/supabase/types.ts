@@ -140,6 +140,60 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_file_assets: {
+        Row: {
+          category: string
+          checksum_sha256: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          metadata: Json
+          size_bytes: number | null
+          source_type: string
+          source_url: string | null
+          status: string
+          storage_bucket: string | null
+          storage_path: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          checksum_sha256?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          size_bytes?: number | null
+          source_type?: string
+          source_url?: string | null
+          status?: string
+          storage_bucket?: string | null
+          storage_path?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          checksum_sha256?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          size_bytes?: number | null
+          source_type?: string
+          source_url?: string | null
+          status?: string
+          storage_bucket?: string | null
+          storage_path?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_investments: {
         Row: {
           allocation_percent: number
