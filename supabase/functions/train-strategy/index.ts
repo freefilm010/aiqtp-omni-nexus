@@ -6,7 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Training engine: runs simulated cycles based on real market data patterns
+function deterministicFloat(seed: string, index: number): number {
+  let hash = 2166136261;
+  const input = `${seed}:${index}`;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+}
+
+// Training engine: deterministic validation cycles derived from strategy parameters
 function runTrainingCycle(
   entryRules: any,
   exitRules: any,
@@ -22,8 +32,8 @@ function runTrainingCycle(
   trades: number;
   finalCapital: number;
 } {
-  // Use strategy parameters to deterministically produce realistic results
-  // based on real market dynamics (mean-reversion, momentum, volatility clustering)
+  const seed = JSON.stringify({ entryRules, exitRules, riskParams, cycleIndex, totalCycles });
+  const jitter = (index: number, range: number) => (deterministicFloat(seed, index) * 2 - 1) * range;
   const conditions = entryRules?.conditions || [];
   const stopLoss = parseFloat(exitRules?.stop_loss) || 2;
   const takeProfit = parseFloat(exitRules?.take_profit) || 5;
@@ -34,17 +44,17 @@ function runTrainingCycle(
   const riskRewardRatio = takeProfit / Math.max(stopLoss, 0.5);
   const positionSizePenalty = maxPosSize > 10 ? (maxPosSize - 10) * 0.5 : 0;
   
-  // Market regime simulation (trending, ranging, volatile)
+  // Market regime validation model (trending, ranging, volatile)
   const regimePhase = (cycleIndex / totalCycles) * Math.PI * 6;
   const regimeModifier = Math.sin(regimePhase) * 0.15;
   
   // Base performance from strategy quality
   const baseWinRate = 50 + complexityBonus + (riskRewardRatio > 2 ? 5 : 0) - positionSizePenalty;
-  const winRate = Math.max(30, Math.min(85, baseWinRate + regimeModifier * 20 + (Math.random() * 10 - 5)));
+  const winRate = Math.max(30, Math.min(85, baseWinRate + regimeModifier * 20 + jitter(1, 5)));
   
   const avgWin = takeProfit * 0.8;
   const avgLoss = stopLoss * 1.1;
-  const trades = Math.floor(80 + Math.random() * 120);
+  const trades = Math.floor(80 + deterministicFloat(seed, 2) * 120);
   const wins = Math.floor(trades * (winRate / 100));
   const losses = trades - wins;
   
@@ -57,11 +67,11 @@ function runTrainingCycle(
   const sharpeRatio = volatility > 0 ? (dailyReturns / volatility) * Math.sqrt(252) : 0;
   
   // Max drawdown from position sizing and volatility
-  const maxDrawdown = Math.min(50, stopLoss * 3 + positionSizePenalty + Math.random() * 5);
+  const maxDrawdown = Math.min(50, stopLoss * 3 + positionSizePenalty + deterministicFloat(seed, 3) * 5);
   
   // Consistency from regime stability
   const consistency = Math.max(40, Math.min(99, 
-    70 + complexityBonus - Math.abs(regimeModifier) * 30 + (Math.random() * 10 - 5)
+    70 + complexityBonus - Math.abs(regimeModifier) * 30 + jitter(4, 5)
   ));
   
   const finalCapital = 10000 * (1 + totalPnl / 10000);
@@ -214,7 +224,7 @@ serve(async (req) => {
       ...(shouldGraduate ? {
         is_graduated: true,
         graduation_date: new Date().toISOString(),
-        status: 'paper_trading',
+        status: 'backtesting',
         is_available_for_rent: true,
         rental_price_monthly: Math.max(29, Math.floor(avgProfitability * 0.5)),
       } : {})
