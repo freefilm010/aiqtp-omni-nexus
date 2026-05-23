@@ -7258,6 +7258,63 @@ export type Database = {
         }
         Relationships: []
       }
+      satellite_services_public: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_crypto_native: boolean | null
+          is_usa_compatible: boolean | null
+          logo_url: string | null
+          name: string
+          requires_api_key: boolean | null
+          sort_order: number | null
+          subcategory: string | null
+          supported_chains: string[] | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id: string
+          is_active?: boolean | null
+          is_crypto_native?: boolean | null
+          is_usa_compatible?: boolean | null
+          logo_url?: string | null
+          name: string
+          requires_api_key?: boolean | null
+          sort_order?: number | null
+          subcategory?: string | null
+          supported_chains?: string[] | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_crypto_native?: boolean | null
+          is_usa_compatible?: boolean | null
+          logo_url?: string | null
+          name?: string
+          requires_api_key?: boolean | null
+          sort_order?: number | null
+          subcategory?: string | null
+          supported_chains?: string[] | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       saved_payment_methods: {
         Row: {
           bank_name: string | null
