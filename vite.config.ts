@@ -5,7 +5,7 @@ import path from "path";
 export default defineConfig(() => ({
   server: {
     host: "::",
-    port: 5173,
+    port: 8080,
     proxy: {
       "/agent-directives": { target: "http://localhost:8002", changeOrigin: true },
       "/strategy-registry": { target: "http://localhost:8002", changeOrigin: true },
