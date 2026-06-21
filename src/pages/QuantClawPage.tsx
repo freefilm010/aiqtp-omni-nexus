@@ -135,11 +135,6 @@ const QuantClawPage = () => {
   const [alpacaLoading, setAlpacaLoading] = useState(false);
   const [alpacaResult, setAlpacaResult] = useState<Record<string, unknown> | null>(null);
 
-  // Credentials vault state
-  const [alpacaKeyInput, setAlpacaKeyInput] = useState("");
-  const [alpacaSecretInput, setAlpacaSecretInput] = useState("");
-  const [savingCreds, setSavingCreds] = useState(false);
-
   // Persist chat history to localStorage whenever it changes
   useEffect(() => {
     saveChatHistory(chatHistory);
@@ -188,46 +183,6 @@ const QuantClawPage = () => {
       setDispatchingTool(null);
     } catch (err) {
       toast.error("Dispatch failed", { description: String(err) });
-    }
-  };
-
-  // Save Alpaca credentials to Supabase account_key_vault
-  // Worker reads from here at startup if env vars are not set
-  const saveAlpacaCreds = async () => {
-    if (!alpacaKeyInput.trim() || !alpacaSecretInput.trim()) {
-      toast.error("Both Alpaca API key and secret are required.");
-      return;
-    }
-    setSavingCreds(true);
-    try {
-      const upsert = async (accountId: string, value: string) => {
-        const existing = await supabase
-          .from("account_key_vault")
-          .select("id")
-          .eq("account_id", accountId)
-          .maybeSingle();
-        if (existing.data) {
-          await supabase
-            .from("account_key_vault")
-            .update({ api_key_encrypted: value })
-            .eq("account_id", accountId);
-        } else {
-          await supabase
-            .from("account_key_vault")
-            .insert({ account_id: accountId, api_key_encrypted: value });
-        }
-      };
-      await upsert("alpaca_api_key", alpacaKeyInput.trim());
-      await upsert("alpaca_secret_key", alpacaSecretInput.trim());
-      toast.success("Alpaca credentials saved to vault", {
-        description: "The Render Worker will load them automatically on next restart.",
-      });
-      setAlpacaKeyInput("");
-      setAlpacaSecretInput("");
-    } catch (e: unknown) {
-      toast.error("Failed to save credentials", { description: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setSavingCreds(false);
     }
   };
 
