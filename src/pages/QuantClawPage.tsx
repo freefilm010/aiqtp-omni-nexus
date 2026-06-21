@@ -135,11 +135,6 @@ const QuantClawPage = () => {
   const [alpacaLoading, setAlpacaLoading] = useState(false);
   const [alpacaResult, setAlpacaResult] = useState<Record<string, unknown> | null>(null);
 
-  // Credentials vault state
-  const [alpacaKeyInput, setAlpacaKeyInput] = useState("");
-  const [alpacaSecretInput, setAlpacaSecretInput] = useState("");
-  const [savingCreds, setSavingCreds] = useState(false);
-
   // Persist chat history to localStorage whenever it changes
   useEffect(() => {
     saveChatHistory(chatHistory);
@@ -188,46 +183,6 @@ const QuantClawPage = () => {
       setDispatchingTool(null);
     } catch (err) {
       toast.error("Dispatch failed", { description: String(err) });
-    }
-  };
-
-  // Save Alpaca credentials to Supabase account_key_vault
-  // Worker reads from here at startup if env vars are not set
-  const saveAlpacaCreds = async () => {
-    if (!alpacaKeyInput.trim() || !alpacaSecretInput.trim()) {
-      toast.error("Both Alpaca API key and secret are required.");
-      return;
-    }
-    setSavingCreds(true);
-    try {
-      const upsert = async (accountId: string, value: string) => {
-        const existing = await supabase
-          .from("account_key_vault")
-          .select("id")
-          .eq("account_id", accountId)
-          .maybeSingle();
-        if (existing.data) {
-          await supabase
-            .from("account_key_vault")
-            .update({ api_key_encrypted: value })
-            .eq("account_id", accountId);
-        } else {
-          await supabase
-            .from("account_key_vault")
-            .insert({ account_id: accountId, api_key_encrypted: value });
-        }
-      };
-      await upsert("alpaca_api_key", alpacaKeyInput.trim());
-      await upsert("alpaca_secret_key", alpacaSecretInput.trim());
-      toast.success("Alpaca credentials saved to vault", {
-        description: "The Render Worker will load them automatically on next restart.",
-      });
-      setAlpacaKeyInput("");
-      setAlpacaSecretInput("");
-    } catch (e: unknown) {
-      toast.error("Failed to save credentials", { description: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setSavingCreds(false);
     }
   };
 
@@ -590,39 +545,19 @@ const QuantClawPage = () => {
                 </div>
               </Card>
 
-              {/* Alpaca credentials vault */}
+              {/* Alpaca account status */}
               <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Lock className="h-4 w-4 text-yellow-400" />
-                    Alpaca Credentials Vault
+                    Alpaca Account Status
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Stored in Supabase — the Render Worker loads them automatically at startup
+                    Broker credentials are server-side only and loaded from backend/runtime secrets.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Input
-                      placeholder="Alpaca API Key ID"
-                      type="password"
-                      value={alpacaKeyInput}
-                      onChange={e => setAlpacaKeyInput(e.target.value)}
-                      className="bg-background/50 text-xs font-mono"
-                    />
-                    <Input
-                      placeholder="Alpaca Secret Key"
-                      type="password"
-                      value={alpacaSecretInput}
-                      onChange={e => setAlpacaSecretInput(e.target.value)}
-                      className="bg-background/50 text-xs font-mono"
-                    />
-                  </div>
                   <div className="flex items-center gap-3">
-                    <Button size="sm" onClick={saveAlpacaCreds} disabled={savingCreds} className="gap-1">
-                      {savingCreds ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
-                      Save to Vault
-                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -648,7 +583,7 @@ const QuantClawPage = () => {
                     </Button>
                   </div>
                   <p className="text-[10px] text-muted-foreground">
-                    Keys are never stored in code or Render env vars.
+                    Keys are never collected or written from the browser.
                   </p>
                   {alpacaResult && (
                     <pre className="text-[11px] text-muted-foreground bg-background/50 border border-border/50 rounded p-3 overflow-x-auto max-h-48">

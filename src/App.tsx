@@ -13,6 +13,7 @@ import { BaseCurrencyProvider } from "./contexts/BaseCurrencyContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useAuth } from "@/hooks/useAuth";
 import SkipLinks from "./components/accessibility/SkipLinks";
 import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnouncer";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -142,7 +143,19 @@ const AuthDeepLinkHandler = () => {
   return null;
 };
 /** Mounts global realtime subscriptions inside provider tree */
-const RealtimeSync = () => { useRealtimePortfolio(); useRealtimeMarketPrices(); useWebSocketPrices(); usePortfolioSnapshot(); return null; };
+const MarketRealtimeSync = () => { useRealtimeMarketPrices(); useWebSocketPrices(); return null; };
+const AuthenticatedRealtimeSync = () => { useRealtimePortfolio(); usePortfolioSnapshot(); return null; };
+const RealtimeSync = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  return (
+    <>
+      {location.pathname !== "/auth" ? <MarketRealtimeSync /> : null}
+      {user ? <AuthenticatedRealtimeSync /> : null}
+    </>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -75,8 +75,9 @@ export function useKrakenTickers(
       const symbolMap: Record<string, string> = {};
       if (hasCrypto) {
         const coinIds = cryptoData.map(r => r.coin_id);
-        // Supabase limits IN to ~300 items, so batch
-        const batchSize = 300;
+        // Keep REST URLs safely below proxy limits; large `in.(...)` lists were
+        // causing 500s on pages that load the full market universe.
+        const batchSize = 75;
         for (let i = 0; i < coinIds.length; i += batchSize) {
           const batch = coinIds.slice(i, i + batchSize);
           const { data: coins } = await supabase
