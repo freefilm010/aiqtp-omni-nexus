@@ -35,9 +35,12 @@ function json(body: unknown, status = 200) {
 async function assertAdmin(req: Request): Promise<string> {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace("Bearer ", "");
+  // Server-to-server: allow callers presenting the service-role key in either
+  // Authorization: Bearer or X-Admin-Key header.
+  const adminKey = req.headers.get("x-admin-key") ?? "";
+  if (adminKey && adminKey === SERVICE_KEY) return "service-role";
+  if (token && token === SERVICE_KEY) return "service-role";
   if (!token) throw new Error("Missing Authorization header");
-  // Service-role calls (server-to-server) are trusted as admin.
-  if (token === SERVICE_KEY) return "service-role";
   const { data: userRes, error: userErr } = await admin.auth.getUser(token);
   if (userErr || !userRes?.user) throw new Error("Invalid auth token");
   const uid = userRes.user.id;
