@@ -36,6 +36,8 @@ async function assertAdmin(req: Request): Promise<string> {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace("Bearer ", "");
   if (!token) throw new Error("Missing Authorization header");
+  // Service-role calls (server-to-server) are trusted as admin.
+  if (token === SERVICE_KEY) return "service-role";
   const { data: userRes, error: userErr } = await admin.auth.getUser(token);
   if (userErr || !userRes?.user) throw new Error("Invalid auth token");
   const uid = userRes.user.id;
