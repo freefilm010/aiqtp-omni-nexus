@@ -41,7 +41,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/react": "^8.0.0",
     "@stripe/react-stripe-js": "6.2.0",
-    "@stripe/stripe-js": "9.2.0",
+    "@stripe/stripe-js": "9.6.0",
     "@supabase/supabase-js": "^2.105.1",
     "@tanstack/react-query": "^5.100.6",
     "@xyflow/react": "^12.10.2",
