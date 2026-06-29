@@ -437,11 +437,7 @@ const Hero = () => {
           </div>
         </div>
 
-        <div className="bento-grid mb-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 animate-scale-in stagger-4 md:mb-8">
-          {visibleMiniCharts.map((chart, i) => (
-            <MiniChartPanel key={i} {...chart} featured={i === 0 || i === 3} />
-          ))}
-        </div>
+        {/* Mini-chart strip removed — customers use Watchlist / Markets pages. Keeps hero LCP fast. */}
 
         <div className="mb-3 flex flex-wrap justify-center gap-1 animate-slide-up stagger-5 md:mb-8 md:gap-2">
           <Badge variant="outline" className="px-2.5 py-1 font-mono text-[9px] text-muted-foreground glass-morphism-subtle micro-hover border-[hsl(270,91%,65%,0.2)] md:px-4 md:py-1.5 md:text-[10px]">
