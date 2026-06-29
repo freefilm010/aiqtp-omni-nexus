@@ -70,23 +70,25 @@ const Index = () => {
                   </p>
                 </div>
 
-                {/* Row 1: AI Panel + Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                  <AimeStyleAIPanel />
-                  <div className="space-y-4 md:space-y-6">
-                    <SuperchartsWidget />
-                  </div>
+                {/* Row 1: Institutional-grade live charts */}
+                <div className="mb-4 md:mb-6">
+                  <SuperchartsWidget />
                 </div>
 
-                {/* Row 2: Screener + Smart Money */}
+                {/* Row 2: AI Panel + Smart Money */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                  <UltimateAIScreener />
+                  <AimeStyleAIPanel />
                   <SmartMoneyFlow />
                 </div>
 
-                {/* Row 3: Calendar + Portfolio + Copy Trading */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {/* Row 3: Screener + Calendar */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+                  <UltimateAIScreener />
                   <FinancialCalendarWidget />
+                </div>
+
+                {/* Row 4: Portfolio + Copy Trading */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                   <PortfolioSyncWidget />
                   <CopyTradingLeaderboard />
                 </div>
