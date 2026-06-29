@@ -32,6 +32,8 @@ const toTVSymbol = (sym: SymbolValue): string =>
 const toTVInterval = (tf: TimeframeValue): string =>
   ({ "1m": "1", "5m": "5", "15m": "15", "1h": "60", "4h": "240", "1d": "D", "1w": "W" })[tf];
 
+const TIMEFRAMES: TimeframeValue[] = ["1m", "5m", "15m", "1h", "4h", "1d", "1w"];
+
 interface TradingViewChartProps {
   height?: number;
   showToolbar?: boolean;
@@ -69,6 +71,20 @@ const cssHsl = (name: string, fallback: string) => {
   return value ? `hsl(${value})` : fallback;
 };
 
+const cssHslAlpha = (name: string, alpha: number, fallback: string) => {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value ? `hsl(${value} / ${alpha})` : fallback;
+};
+
+const formatChartPrice = (price: number) => {
+  if (!Number.isFinite(price) || price <= 0) return "—";
+  if (price >= 1_000) return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (price >= 1) return price.toFixed(2);
+  if (price >= 0.01) return price.toFixed(4);
+  return price.toFixed(8);
+};
+
 const normalizeCandles = (candles: OhlcvCandle[], timeframe: TimeframeValue) => {
   const step = intervalSeconds[timeframe] ?? 3600;
   const deduped = new Map<number, OhlcvCandle>();
@@ -100,15 +116,22 @@ const TradingViewChart = ({
   defaultTimeframe = "1h",
   symbol: controlledSymbol,
   timeframe: controlledTimeframe,
+  onTimeframeChange,
 }: TradingViewChartProps) => {
   const symbol = controlledSymbol ?? defaultSymbol;
-  const timeframe = controlledTimeframe ?? defaultTimeframe;
+  const [internalTimeframe, setInternalTimeframe] = useState<TimeframeValue>(defaultTimeframe);
+  const timeframe = controlledTimeframe ?? internalTimeframe;
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRootRef = useRef<HTMLDivElement>(null);
   const [isVisible] = useState(true);
   const [candles, setCandles] = useState<ReturnType<typeof normalizeCandles>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const setTimeframe = (next: TimeframeValue) => {
+    if (!controlledTimeframe) setInternalTimeframe(next);
+    onTimeframeChange?.(next);
+  };
 
   const chartMeta = useMemo(() => {
     const closes = candles.map((candle) => candle.close);
@@ -175,12 +198,15 @@ const TradingViewChart = ({
     root.replaceChildren();
 
     const panel = cssHsl("--panel", "hsl(223 18% 14%)");
+    const panelHeader = cssHsl("--panel-header", "hsl(223 18% 12%)");
     const foreground = cssHsl("--foreground", "hsl(220 15% 93%)");
     const muted = cssHsl("--muted-foreground", "hsl(220 10% 55%)");
-    const grid = cssHsl("--chart-grid", "hsl(222 14% 18%)");
+    const grid = cssHslAlpha("--chart-grid", 0.45, "hsl(222 14% 18% / 0.45)");
     const bull = cssHsl("--chart-bull", "hsl(162 91% 32%)");
     const bear = cssHsl("--chart-bear", "hsl(355 88% 58%)");
-    const volume = cssHsl("--chart-volume", "hsl(224 100% 58%)");
+    const bullVolume = cssHslAlpha("--chart-bull", 0.35, "hsl(162 91% 32% / 0.35)");
+    const bearVolume = cssHslAlpha("--chart-bear", 0.35, "hsl(355 88% 58% / 0.35)");
+    const priceLine = cssHsl("--primary", "hsl(224 100% 58%)");
 
     const chart = createChart(root, {
       width: Math.max(root.clientWidth, 320),
@@ -189,25 +215,34 @@ const TradingViewChart = ({
         background: { type: ColorType.Solid, color: panel },
         textColor: foreground,
         fontFamily: "JetBrains Mono, ui-monospace, SFMono-Regular, monospace",
+        panes: {
+          separatorColor: grid,
+          separatorHoverColor: grid,
+        },
       },
       grid: {
-        vertLines: { color: grid, style: LineStyle.Dotted },
-        horzLines: { color: grid, style: LineStyle.Dotted },
+        vertLines: { color: grid, style: LineStyle.SparseDotted },
+        horzLines: { color: grid, style: LineStyle.SparseDotted },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: muted, labelBackgroundColor: panel },
-        horzLine: { color: muted, labelBackgroundColor: panel },
+        vertLine: { color: muted, labelBackgroundColor: panelHeader, style: LineStyle.Dashed },
+        horzLine: { color: muted, labelBackgroundColor: panelHeader, style: LineStyle.Dashed },
       },
       rightPriceScale: {
         borderColor: grid,
-        scaleMargins: { top: 0.08, bottom: 0.22 },
+        entireTextOnly: true,
+        scaleMargins: { top: 0.06, bottom: 0.2 },
       },
       timeScale: {
         borderColor: grid,
         timeVisible: true,
         secondsVisible: timeframe === "1m" || timeframe === "5m",
-        rightOffset: 8,
+        rightOffset: 12,
+        barSpacing: 8,
+        minBarSpacing: 4,
+        fixLeftEdge: false,
+        fixRightEdge: false,
       },
       localization: {
         priceFormatter: (price: number) => {
@@ -224,11 +259,13 @@ const TradingViewChart = ({
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: bull,
       downColor: bear,
-      borderUpColor: bull,
-      borderDownColor: bear,
+      borderVisible: false,
       wickUpColor: bull,
       wickDownColor: bear,
       priceLineVisible: true,
+      priceLineColor: priceLine,
+      priceLineStyle: LineStyle.Dashed,
+      priceLineWidth: 1,
       lastValueVisible: true,
     });
 
@@ -237,7 +274,7 @@ const TradingViewChart = ({
     const volumeSeries = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
-      color: volume,
+      color: bullVolume,
     });
 
     chart.priceScale("volume").applyOptions({
@@ -248,7 +285,7 @@ const TradingViewChart = ({
       candles.map((candle) => ({
         time: candle.time,
         value: candle.volume,
-        color: candle.close >= candle.open ? bull : bear,
+        color: candle.close >= candle.open ? bullVolume : bearVolume,
       }))
     );
 
@@ -266,24 +303,51 @@ const TradingViewChart = ({
   }, [candles, height, timeframe]);
 
   return (
-    <div ref={containerRef} className="relative overflow-hidden border-panel-border bg-panel" data-focus-area="chart">
+    <div ref={containerRef} className="relative overflow-hidden border border-panel-border bg-panel shadow-panel" data-focus-area="chart">
       {showToolbar ? (
-        <div className="absolute left-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-2 border border-panel-border bg-panel/95 px-3 py-2 shadow-panel backdrop-blur">
-          <span className="font-mono text-xs font-bold text-foreground">{toTVSymbol(symbol as SymbolValue)}</span>
-          <span className={chartMeta.change >= 0 ? "font-mono text-xs text-success" : "font-mono text-xs text-destructive"}>
-            {chartMeta.change >= 0 ? "+" : ""}{chartMeta.change.toFixed(2)}%
-          </span>
-          <span className="font-mono text-[10px] uppercase text-muted-foreground">{toTVInterval(timeframe as TimeframeValue)} OHLCV</span>
-          {chartMeta.high > 0 ? <span className="font-mono text-[10px] text-muted-foreground">H {chartMeta.high.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span> : null}
-          {chartMeta.low > 0 ? <span className="font-mono text-[10px] text-muted-foreground">L {chartMeta.low.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span> : null}
+        <div className="flex min-h-14 flex-col gap-2 border-b border-panel-border bg-panel-header px-3 py-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-mono text-sm font-bold text-foreground md:text-base">{toTVSymbol(symbol as SymbolValue)}</span>
+            <span className="font-mono text-sm font-semibold text-foreground">{formatChartPrice(chartMeta.last)}</span>
+            <span className={chartMeta.change >= 0 ? "font-mono text-xs text-success" : "font-mono text-xs text-destructive"}>
+              {chartMeta.change >= 0 ? "+" : ""}{chartMeta.change.toFixed(2)}%
+            </span>
+            <span className="font-mono text-[10px] uppercase text-muted-foreground">{toTVInterval(timeframe as TimeframeValue)} OHLCV</span>
+            {chartMeta.high > 0 ? <span className="font-mono text-[10px] text-muted-foreground">H {formatChartPrice(chartMeta.high)}</span> : null}
+            {chartMeta.low > 0 ? <span className="font-mono text-[10px] text-muted-foreground">L {formatChartPrice(chartMeta.low)}</span> : null}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {TIMEFRAMES.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setTimeframe(item)}
+                className={
+                  "h-7 min-w-9 border px-2 font-mono text-[10px] uppercase transition-smooth " +
+                  (timeframe === item
+                    ? "border-primary bg-primary/15 text-primary"
+                    : "border-panel-border bg-secondary/40 text-muted-foreground hover:border-primary/60 hover:text-foreground")
+                }
+                aria-pressed={timeframe === item}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
 
-      <div
-        ref={chartRootRef}
-        style={{ width: "100%", height }}
-        aria-label={`${symbol} live candlestick chart`}
-      />
+      <div className="relative">
+        <div className="pointer-events-none absolute left-4 top-4 z-[1] font-mono text-5xl font-bold text-muted-foreground/5 md:text-7xl">
+          {symbol.split("/")[0]}
+        </div>
+        <div
+          ref={chartRootRef}
+          style={{ width: "100%", height }}
+          aria-label={`${symbol} live candlestick chart`}
+        />
+      </div>
 
       {loading || !isVisible ? (
         <div className="absolute inset-0 flex items-center justify-center bg-panel/80">
