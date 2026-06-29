@@ -443,7 +443,7 @@ const WorkspaceManager = () => {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>${widgetInfo?.name || 'Widget'} - ${widget.symbol || 'AIQTP'}</title>
+          <title>${escapeHtml(widgetInfo?.name || 'Widget')} - ${escapeHtml(widget.symbol || 'AIQTP')}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
