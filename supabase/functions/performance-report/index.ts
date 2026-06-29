@@ -15,6 +15,38 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // AuthN/AuthZ: require service-role bearer (cron) OR an authenticated admin user JWT.
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    let authorized = false;
+
+    if (token && token === supabaseKey) {
+      authorized = true;
+    } else if (token) {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: claimsData } = await userClient.auth.getClaims(token);
+      const uid = claimsData?.claims?.sub;
+      if (uid) {
+        const adminClient = createClient(supabaseUrl, supabaseKey);
+        const { data: isAdmin } = await adminClient.rpc("has_role", {
+          _user_id: uid,
+          _role: "admin",
+        });
+        if (isAdmin === true) authorized = true;
+      }
+    }
+
+    if (!authorized) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { action } = await req.json();
