@@ -100,6 +100,20 @@ const LAYOUT_PRESETS = [
 
 type PriceLookup = (symbol: string) => MarketPrice | undefined;
 
+// Escape user-controlled strings before embedding in HTML written via
+// document.write to a same-origin popup.
+const escapeHtml = (value: string): string =>
+  String(value).replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#39;';
+      default: return ch;
+    }
+  });
+
 const stableBarHeight = (price: number, index: number) => {
   const seed = Math.abs(Math.sin((price || 1) * (index + 1) * 0.00013));
   return 22 + seed * 58;
@@ -107,19 +121,21 @@ const stableBarHeight = (price: number, index: number) => {
 
 // Helper to generate HTML content for popup windows from real price snapshots only.
 function getWidgetHtmlContent(widget: WorkspaceWidget, getPrice: PriceLookup): string {
-  const symbol = widget.symbol || 'BTC';
-  const livePrice = getPrice(symbol);
+  const rawSymbol = widget.symbol || 'BTC';
+  const livePrice = getPrice(rawSymbol);
   const basePrice = livePrice?.priceNumeric ?? 0;
+  const symbol = escapeHtml(rawSymbol);
   const priceDisplay = livePrice
     ? `$${livePrice.price}`
     : 'Live feed unavailable';
-  const changeDisplay = livePrice?.change ?? '—';
+  const changeDisplay = escapeHtml(livePrice?.change ?? '—');
+  const safePriceDisplay = escapeHtml(priceDisplay);
   
   switch (widget.type) {
     case 'chart':
       return `
         <div class="price-display">
-          <div class="price-value">${priceDisplay}</div>
+          <div class="price-value">${safePriceDisplay}</div>
           <div class="price-change">${changeDisplay}</div>
         </div>
         <div class="chart-container">
@@ -130,7 +146,7 @@ function getWidgetHtmlContent(widget: WorkspaceWidget, getPrice: PriceLookup): s
       `;
     case 'orderbook':
       return `
-        <div class="data-item"><div class="data-label">${symbol}/USD last trade</div><div class="data-value">${priceDisplay}</div></div>
+        <div class="data-item"><div class="data-label">${symbol}/USD last trade</div><div class="data-value">${safePriceDisplay}</div></div>
         <div class="data-item"><div class="data-label">Depth feed</div><div class="data-value">Unavailable from connected providers</div></div>
       `;
     case 'positions':
