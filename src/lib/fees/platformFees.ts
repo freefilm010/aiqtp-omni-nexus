@@ -58,9 +58,9 @@ export const NFT_FEES = {
 // Bots achieving 80%+ profitability qualify for marketplace review
 export const STRATEGY_FEES = {
   listingFee: 0, // $0 to list
-  graduationThreshold: 80, // 80% profitability required
-  consistencyThreshold: 70,
-  minBacktestCount: 5,
+  graduationThreshold: 75, // 75% profitability required (lowered from 80)
+  consistencyThreshold: 69.9, // 69.9% consistency (lowered from 70)
+  minBacktestCount: 4, // lowered from 5 to widen the funnel
   defaultMonthlyRentalPrice: 99,
   profitShare: {
     creator: 0.50, // 50% lifetime share to strategy creator
