@@ -105,29 +105,10 @@ const TradingViewChart = ({
   const timeframe = controlledTimeframe ?? defaultTimeframe;
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRootRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible] = useState(true);
   const [candles, setCandles] = useState<ReturnType<typeof normalizeCandles>>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Only load the heavy TradingView iframe when the card scrolls into view
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const chartMeta = useMemo(() => {
     const closes = candles.map((candle) => candle.close);
