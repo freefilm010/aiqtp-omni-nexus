@@ -186,6 +186,7 @@ const Header = () => {
     { to: "/strategy-lab", label: "Strategy Lab", icon: FlaskConical },
     { to: "/marketplace", label: "Strategy Marketplace", icon: ShoppingCart },
     { to: "/strategy-nft", label: "Strategy NFT Market", icon: ShoppingCart },
+    { to: "/script-library", label: "Script Library (Pine/ThinkScript)", icon: Code2 },
     { to: "/risk", label: "Risk Management", icon: Shield },
   ];
 
