@@ -90,12 +90,12 @@ const SuperchartsWidget = () => {
   const selectedDirection = selectedChange >= 0 ? "up" : "down";
 
   return (
-    <Card className="overflow-hidden border-panel-border bg-panel shadow-card">
+    <Card className="overflow-hidden border-panel-border bg-panel shadow-panel">
       <div className="border-b border-panel-border bg-panel-header">
         <div className="flex flex-col gap-3 px-3 py-3 md:px-4">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-panel-border bg-secondary">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-panel-border bg-secondary/70">
                 <BarChart3 className="h-5 w-5 text-primary" />
               </div>
               <div className="min-w-0">
@@ -132,20 +132,20 @@ const SuperchartsWidget = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <div className="border border-panel-border bg-secondary/60 px-3 py-2">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="border border-panel-border bg-secondary/40 px-3 py-2">
               <div className="font-mono text-[10px] uppercase text-muted-foreground">24h Volume</div>
               <div className="font-mono text-sm font-semibold text-foreground">{formatCompactUsd(marketStats.volume)}</div>
             </div>
-            <div className="border border-panel-border bg-secondary/60 px-3 py-2">
+            <div className="border border-panel-border bg-secondary/40 px-3 py-2">
               <div className="font-mono text-[10px] uppercase text-muted-foreground">Tracked Cap</div>
               <div className="font-mono text-sm font-semibold text-foreground">{formatCompactUsd(marketStats.marketCap)}</div>
             </div>
-            <div className="border border-panel-border bg-secondary/60 px-3 py-2">
+            <div className="border border-panel-border bg-secondary/40 px-3 py-2">
               <div className="font-mono text-[10px] uppercase text-muted-foreground">Breadth</div>
               <div className="font-mono text-sm font-semibold text-foreground">{marketStats.advancing}↑ / {marketStats.declining}↓</div>
             </div>
-            <div className="border border-panel-border bg-secondary/60 px-3 py-2">
+            <div className="border border-panel-border bg-secondary/40 px-3 py-2">
               <div className="font-mono text-[10px] uppercase text-muted-foreground">Coverage</div>
               <div className="font-mono text-sm font-semibold text-foreground">{marketStats.count || "—"} live assets</div>
             </div>
@@ -153,9 +153,9 @@ const SuperchartsWidget = () => {
         </div>
       </div>
 
-      <div className="grid min-h-[620px] grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid min-h-[680px] grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 border-panel-border xl:border-r">
-          <div className="flex flex-col gap-3 border-b border-panel-border bg-secondary/30 px-3 py-3 md:flex-row md:items-center md:justify-between md:px-4">
+          <div className="flex flex-col gap-3 border-b border-panel-border bg-background/40 px-3 py-3 md:flex-row md:items-center md:justify-between md:px-4">
             <div className="min-w-0">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="font-mono text-2xl font-bold text-foreground md:text-3xl">{selectedSymbol}</span>
@@ -181,13 +181,13 @@ const SuperchartsWidget = () => {
                     onClick={() => setSymbol(item.value)}
                     className={
                       "min-h-12 border px-2 py-1 text-left font-mono transition-smooth " +
-                      (active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-panel-border bg-panel hover:border-primary/70 hover:bg-secondary")
+                       (active
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-panel-border bg-panel hover:border-primary/70 hover:bg-secondary/70")
                     }
                   >
                     <span className="block text-[11px] font-bold">{item.label}</span>
-                    <span className={"block text-[10px] " + (active ? "text-primary-foreground" : positive ? "text-success" : "text-destructive")}>
+                    <span className={"block text-[10px] " + (active ? "text-primary" : positive ? "text-success" : "text-destructive")}>
                       {price ? `${positive ? "+" : ""}${price.changePercent.toFixed(2)}%` : "—"}
                     </span>
                   </button>
@@ -196,7 +196,7 @@ const SuperchartsWidget = () => {
             </div>
           </div>
 
-          <TradingViewChart height={500} showToolbar symbol={symbol} defaultTimeframe="1h" />
+          <TradingViewChart height={560} showToolbar symbol={symbol} defaultTimeframe="1h" />
         </div>
 
         <aside className="flex min-h-0 flex-col bg-panel-header">
