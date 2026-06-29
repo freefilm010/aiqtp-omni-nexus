@@ -96,6 +96,7 @@ const DEXPage = lazy(() => import("./pages/DEXPage"));
 const TradingCommandCenter = lazy(() => import("./pages/TradingCommandCenter"));
 const StrategyNFTMarketplace = lazy(() => import("./pages/StrategyNFTMarketplace"));
 const ArbitragePage = lazy(() => import("./pages/ArbitragePage"));
+const ScriptLibraryPage = lazy(() => import("./pages/ScriptLibraryPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
