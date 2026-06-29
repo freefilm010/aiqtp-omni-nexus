@@ -141,10 +141,32 @@ serve(async (req) => {
   try {
     const { action, params } = await req.json().catch(() => ({ action: null, params: null }));
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    // Internal/cron-only: require Bearer <SERVICE_ROLE_KEY> OR admin JWT.
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const authHeader = req.headers.get('Authorization') ?? '';
+    let authorized = authHeader === `Bearer ${serviceKey}`;
+    if (!authorized && authHeader.startsWith('Bearer ')) {
+      try {
+        const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user } } = await userClient.auth.getUser();
+        if (user) {
+          const admin = createClient(supabaseUrl, serviceKey);
+          const { data: isAdmin } = await admin.rpc('has_role', { _user_id: user.id, _role: 'admin' });
+          authorized = Boolean(isAdmin);
+        }
+      } catch (_) { /* ignore */ }
+    }
+    if (!authorized) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, serviceKey);
 
     switch (action) {
       case 'sync_stocks': {
