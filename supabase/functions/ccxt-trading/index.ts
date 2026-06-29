@@ -532,20 +532,41 @@ serve(async (req) => {
 
     switch (action) {
       case "fetch_markets":
-        result = exchange === "binance" ? await binanceFetchMarkets() : await krakenFetchMarkets();
+        try {
+          result = exchange === "binance" ? await binanceFetchMarkets() : await krakenFetchMarkets();
+        } catch (e) {
+          if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
+            console.warn("Binance 451 — falling back to Kraken for fetch_markets");
+            result = await krakenFetchMarkets();
+          } else { throw e; }
+        }
         break;
 
       case "fetch_ticker":
         if (!symbol) throw new Error("Symbol required for fetch_ticker");
-        result = exchange === "binance" ? await binanceFetchTicker(symbol) : await krakenFetchTicker(symbol);
+        try {
+          result = exchange === "binance" ? await binanceFetchTicker(symbol) : await krakenFetchTicker(symbol);
+        } catch (e) {
+          if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
+            console.warn("Binance 451 — falling back to Kraken for fetch_ticker");
+            result = await krakenFetchTicker(symbol);
+          } else { throw e; }
+        }
         break;
 
       case "fetch_ohlcv":
         if (!symbol) throw new Error("Symbol required for fetch_ohlcv");
-        result =
-          exchange === "binance"
-            ? await binanceFetchOHLCV(symbol, timeframe || "1h", limit || 100)
-            : await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+        try {
+          result =
+            exchange === "binance"
+              ? await binanceFetchOHLCV(symbol, timeframe || "1h", limit || 100)
+              : await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+        } catch (e) {
+          if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
+            console.warn("Binance 451 — falling back to Kraken for fetch_ohlcv");
+            result = await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+          } else { throw e; }
+        }
         break;
 
       case "fetch_balance":
