@@ -48,8 +48,8 @@ jobs:
         if: steps.token.outputs.enabled == 'true'
         run: |
           git diff --quiet supabase/migrations/ && \
-            echo "drift=false" >> $GITHUB_OUTPUT || \
-            echo "drift=true" >> $GITHUB_OUTPUT
+            echo "drift=false" >> "$GITHUB_OUTPUT" || \
+            echo "drift=true" >> "$GITHUB_OUTPUT"
 
       - name: Open schema sync pull request if needed
         if: steps.token.outputs.enabled == 'true' && steps.drift.outputs.drift == 'true'
