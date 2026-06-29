@@ -44,6 +44,7 @@ import {
   Calendar,
   LineChart,
   FlaskConical,
+  Code2,
   BellRing,
   Palette,
   Monitor,
