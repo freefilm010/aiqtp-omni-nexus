@@ -96,6 +96,7 @@ const DEXPage = lazy(() => import("./pages/DEXPage"));
 const TradingCommandCenter = lazy(() => import("./pages/TradingCommandCenter"));
 const StrategyNFTMarketplace = lazy(() => import("./pages/StrategyNFTMarketplace"));
 const ArbitragePage = lazy(() => import("./pages/ArbitragePage"));
+const ScriptLibraryPage = lazy(() => import("./pages/ScriptLibraryPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -181,6 +182,8 @@ const App = () => (
                       <Route path="/index" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/pricing" element={<PricingPage />} />
+                      <Route path="/script-library" element={<ScriptLibraryPage />} />
+                      <Route path="/scripts" element={<ScriptLibraryPage />} />
                       <Route
                         path="/trading"
                         element={

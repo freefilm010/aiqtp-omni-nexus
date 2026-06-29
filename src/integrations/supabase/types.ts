@@ -7606,6 +7606,104 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_script_likes: {
+        Row: {
+          created_at: string
+          id: string
+          script_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          script_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          script_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_script_likes_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "shared_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_scripts: {
+        Row: {
+          asset_class: string | null
+          category: string
+          code: string
+          created_at: string
+          description: string | null
+          downloads: number
+          id: string
+          is_featured: boolean
+          language: string
+          license: string | null
+          likes: number
+          rating: number
+          source_url: string | null
+          tags: string[]
+          timeframe: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          version: string | null
+          visibility: string
+        }
+        Insert: {
+          asset_class?: string | null
+          category?: string
+          code: string
+          created_at?: string
+          description?: string | null
+          downloads?: number
+          id?: string
+          is_featured?: boolean
+          language: string
+          license?: string | null
+          likes?: number
+          rating?: number
+          source_url?: string | null
+          tags?: string[]
+          timeframe?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: string | null
+          visibility?: string
+        }
+        Update: {
+          asset_class?: string | null
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          downloads?: number
+          id?: string
+          is_featured?: boolean
+          language?: string
+          license?: string | null
+          likes?: number
+          rating?: number
+          source_url?: string | null
+          tags?: string[]
+          timeframe?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: string | null
+          visibility?: string
+        }
+        Relationships: []
+      }
       smart_money_flows: {
         Row: {
           asset: string
