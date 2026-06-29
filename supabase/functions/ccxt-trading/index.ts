@@ -532,20 +532,41 @@ serve(async (req) => {
 
     switch (action) {
       case "fetch_markets":
-        result = exchange === "binance" ? await binanceFetchMarkets() : await krakenFetchMarkets();
+        try {
+          result = exchange === "binance" ? await binanceFetchMarkets() : await krakenFetchMarkets();
+        } catch (e) {
+          if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
+            console.warn("Binance 451 — falling back to Kraken for fetch_markets");
+            result = await krakenFetchMarkets();
+          } else { throw e; }
+        }
         break;
 
       case "fetch_ticker":
         if (!symbol) throw new Error("Symbol required for fetch_ticker");
-        result = exchange === "binance" ? await binanceFetchTicker(symbol) : await krakenFetchTicker(symbol);
+        try {
+          result = exchange === "binance" ? await binanceFetchTicker(symbol) : await krakenFetchTicker(symbol);
+        } catch (e) {
+          if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
+            console.warn("Binance 451 — falling back to Kraken for fetch_ticker");
+            result = await krakenFetchTicker(symbol);
+          } else { throw e; }
+        }
         break;
 
       case "fetch_ohlcv":
         if (!symbol) throw new Error("Symbol required for fetch_ohlcv");
-        result =
-          exchange === "binance"
-            ? await binanceFetchOHLCV(symbol, timeframe || "1h", limit || 100)
-            : await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+        try {
+          result =
+            exchange === "binance"
+              ? await binanceFetchOHLCV(symbol, timeframe || "1h", limit || 100)
+              : await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+        } catch (e) {
+          if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
+            console.warn("Binance 451 — falling back to Kraken for fetch_ohlcv");
+            result = await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+          } else { throw e; }
+        }
         break;
 
       case "fetch_balance":
@@ -585,9 +606,16 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("CCXT Trading error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    const restricted = /\b451\b|restricted location/i.test(msg);
     return new Response(
-      JSON.stringify({ success: false, error: (error instanceof Error ? error.message : String(error)) }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      JSON.stringify({
+        success: false,
+        error: msg,
+        code: restricted ? "EXCHANGE_GEO_RESTRICTED" : "EXCHANGE_ERROR",
+        fallback: restricted,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   }
 });
