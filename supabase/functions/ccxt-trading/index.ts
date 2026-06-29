@@ -606,9 +606,16 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("CCXT Trading error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    const restricted = /\b451\b|restricted location/i.test(msg);
     return new Response(
-      JSON.stringify({ success: false, error: (error instanceof Error ? error.message : String(error)) }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      JSON.stringify({
+        success: false,
+        error: msg,
+        code: restricted ? "EXCHANGE_GEO_RESTRICTED" : "EXCHANGE_ERROR",
+        fallback: restricted,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   }
 });
