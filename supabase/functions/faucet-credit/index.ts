@@ -5,6 +5,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Per-symbol maximum amount per single faucet claim. Symbols not listed fall
+// back to DEFAULT_MAX. The DB function `credit_faucet_claim` also enforces a
+// hard cap as a defense-in-depth layer.
+const DEFAULT_MAX = 100;
+const MAX_FAUCET_AMOUNTS: Record<string, number> = {
+  QTC: 100,
+  AIQ: 50,
+  NXS: 50,
+  QAQI: 100,
+  AIQTP: 100,
+  tBTC: 0.01,
+  tETH: 0.1,
+  tSOL: 1,
+  tUSDC: 100,
+  tUSDT: 100,
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (req.method !== 'POST') {
@@ -48,6 +65,13 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'symbol, amount, chain required' }), {
           status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+      const maxAllowed = MAX_FAUCET_AMOUNTS[symbol] ?? DEFAULT_MAX;
+      if (amount > maxAllowed) {
+        return new Response(
+          JSON.stringify({ error: `Faucet limit exceeded for ${symbol}. Max ${maxAllowed} per claim.` }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
       }
       const { error: creditErr } = await admin.rpc('credit_faucet_claim', {
         p_user_id: user.id,
