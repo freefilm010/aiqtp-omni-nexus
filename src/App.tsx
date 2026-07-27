@@ -68,6 +68,7 @@ const RevenueCommandCenter = lazy(() => import("./pages/RevenueCommandCenter"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn"));
 const Billing = lazy(() => import("./pages/Billing"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const WithdrawalPage = lazy(() => import("./pages/WithdrawalPage"));
 const ReferralPage = lazy(() => import("./pages/ReferralPage"));
 import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
@@ -181,6 +182,7 @@ const App = () => (
                       <Route path="/" element={<Index />} />
                       <Route path="/index" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
+                      <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                       <Route path="/pricing" element={<PricingPage />} />
                       <Route path="/script-library" element={<ScriptLibraryPage />} />
                       <Route path="/scripts" element={<ScriptLibraryPage />} />

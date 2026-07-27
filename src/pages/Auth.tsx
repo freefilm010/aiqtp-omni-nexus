@@ -39,6 +39,11 @@ const Auth = () => {
 
   const redirectedRef = useRef(false);
 
+  // Preserve OAuth consent `next` (or any next=) through login/signup/social.
+  // Validated as a same-origin relative path before use.
+  const rawNext = new URLSearchParams(location.search).get("next");
+  const safeNext = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+
   // Capture referral code from URL (?ref=CODE) — stored in sessionStorage so it
   // survives OAuth redirects but doesn't pollute localStorage long-term.
   useEffect(() => {
@@ -83,7 +88,7 @@ const Auth = () => {
     const fromPath = (location.state as any)?.from?.pathname;
     const safeFrom = typeof fromPath === "string" && fromPath !== "/auth" ? fromPath : null;
 
-    navigate(safeFrom ?? "/", { replace: true });
+    navigate(safeNext ?? safeFrom ?? "/", { replace: true });
   }, [authLoading, recoveryMode, session?.user?.id, navigate, location.state]);
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -97,7 +102,7 @@ const Auth = () => {
         email: validated.email,
         password: validated.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}${safeNext ?? "/"}`,
           data: {
             username: validated.profileName,
           },
@@ -138,7 +143,7 @@ const Auth = () => {
         toast.success("Account created. Check your email to confirm, then sign in.");
       } else {
         toast.success("Account created — signing you in…");
-        navigate("/");
+        navigate(safeNext ?? "/");
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -177,7 +182,7 @@ const Auth = () => {
       }
 
       toast.success("Signed in");
-      navigate("/");
+      navigate(safeNext ?? "/");
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -341,7 +346,7 @@ const Auth = () => {
                   className="w-full mb-2"
                   onClick={async () => {
                     const result = await lovable.auth.signInWithOAuth("google", {
-                      redirect_uri: window.location.origin,
+                      redirect_uri: `${window.location.origin}${safeNext ?? "/"}`,
                     });
 
                     if (result?.error) {
@@ -365,7 +370,7 @@ const Auth = () => {
                   className="w-full mb-4"
                   onClick={async () => {
                     const result = await lovable.auth.signInWithOAuth("apple", {
-                      redirect_uri: window.location.origin,
+                      redirect_uri: `${window.location.origin}${safeNext ?? "/"}`,
                     });
 
                     if (result?.error) {
