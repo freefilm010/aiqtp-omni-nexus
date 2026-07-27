@@ -2393,6 +2393,7 @@ export type Database = {
           route_hash: string
           subject: string | null
           submission_token: string
+          user_id: string | null
         }
         Insert: {
           admin_notes?: string | null
@@ -2405,6 +2406,7 @@ export type Database = {
           route_hash?: string
           subject?: string | null
           submission_token?: string
+          user_id?: string | null
         }
         Update: {
           admin_notes?: string | null
@@ -2417,6 +2419,7 @@ export type Database = {
           route_hash?: string
           subject?: string | null
           submission_token?: string
+          user_id?: string | null
         }
         Relationships: []
       }
