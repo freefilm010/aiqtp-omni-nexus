@@ -10464,6 +10464,14 @@ export type Database = {
         Returns: string
       }
       rent_strategy: { Args: { p_strategy_id: string }; Returns: string }
+      repair_auto_invest_allocation_duplicates: {
+        Args: never
+        Returns: {
+          groups_repaired: number
+          keepers_updated: number
+          rows_deactivated: number
+        }[]
+      }
       request_withdrawal: {
         Args: {
           p_amount_usd: number
