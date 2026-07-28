@@ -37,45 +37,22 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+    if (!supabaseUrl || !serviceRoleKey) {
       throw new Error("Missing backend environment configuration");
     }
 
-    const authorization = req.headers.get("Authorization");
-    if (!authorization) {
+    const authorization = req.headers.get("Authorization") ?? "";
+    const bearer = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length) : "";
+    if (bearer !== serviceRoleKey) {
       return new Response(JSON.stringify({ error: "Authentication required" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const authClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authorization } },
-    });
-
-    const { data: { user }, error: userError } = await authClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid session" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: isAdmin, error: roleError } = await adminClient.rpc("has_role", {
-      _user_id: user.id,
-      _role: "admin",
-    });
-
-    if (roleError || isAdmin !== true) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const { data: allocations, error: allocationError } = await adminClient
       .from("auto_invest_allocations")
