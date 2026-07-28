@@ -38,14 +38,13 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const repairToken = Deno.env.get("AUTO_INVEST_REPAIR_TOKEN");
 
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !serviceRoleKey || !repairToken) {
       throw new Error("Missing backend environment configuration");
     }
 
-    const authorization = req.headers.get("Authorization") ?? "";
-    const bearer = authorization.startsWith("Bearer ") ? authorization.slice("Bearer ".length) : "";
-    if (bearer !== serviceRoleKey) {
+    if (req.headers.get("x-repair-token") !== repairToken) {
       return new Response(JSON.stringify({ error: "Authentication required" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
