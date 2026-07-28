@@ -133,10 +133,12 @@ export default function ExchangeManager() {
   };
 
   const updateTokenPrice = async () => {
-    const { error } = await supabase.rpc('update_token_price', {
-      p_token_id: priceUpdate.token_id,
-      p_base_currency: priceUpdate.base_currency,
-      p_new_price: priceUpdate.new_price,
+    const { error } = await supabase.functions.invoke('admin-update-token-price', {
+      body: {
+        token_id: priceUpdate.token_id,
+        base_currency: priceUpdate.base_currency,
+        new_price: priceUpdate.new_price,
+      },
     });
 
     if (error) {
