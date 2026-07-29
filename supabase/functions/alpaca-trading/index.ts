@@ -56,6 +56,38 @@ serve(async (req) => {
     }
 
     const { action, mode = 'paper', params = {} }: AlpacaRequest = await req.json();
+
+    // The Alpaca credentials are a single platform-owned brokerage account.
+    // Live mode and any order-mutating action must therefore be admin-only.
+    const MUTATING_ACTIONS = new Set([
+      'place_order',
+      'cancel_order',
+      'close_position',
+      'get_account',
+      'get_positions',
+      'get_orders',
+    ]);
+
+    if (mode === 'live' || MUTATING_ACTIONS.has(action)) {
+      const adminClient = createClient(
+        supabaseUrl,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      const { data: isAdmin, error: roleError } = await adminClient.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin',
+      });
+      if (roleError || !isAdmin) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Forbidden: trading against the platform brokerage account is restricted to administrators',
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const baseUrl = mode === 'live' ? ALPACA_LIVE_URL : ALPACA_PAPER_URL;
 
     const headers: Record<string, string> = {
