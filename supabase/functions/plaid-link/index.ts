@@ -56,7 +56,25 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, publicToken, accountId, amountUsd, accessToken } = await req.json();
+    const { action, publicToken, accountId, amountUsd } = await req.json();
+
+    const adminSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Never trust a client-supplied Plaid access token: always resolve the
+    // caller's own stored token from plaid_items scoped to their user id.
+    const getOwnAccessToken = async (): Promise<string> => {
+      const { data, error } = await adminSupabase
+        .from("plaid_items")
+        .select("access_token")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw new Error("Unable to load linked bank account");
+      if (!data?.access_token) throw new Error("No linked bank account found for this user");
+      return data.access_token as string;
+    };
 
     if (action === "create_link_token") {
       const data = await plaidPost("/link/token/create", {
@@ -77,10 +95,6 @@ Deno.serve(async (req) => {
       const data = await plaidPost("/item/public_token/exchange", { public_token: publicToken }) as { access_token: string; item_id: string };
 
       // Store access token for user (encrypted at rest by Supabase)
-      const adminSupabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
       await adminSupabase.from("plaid_items").upsert({
         user_id: user.id,
         access_token: data.access_token,
@@ -94,29 +108,26 @@ Deno.serve(async (req) => {
     }
 
     if (action === "get_accounts") {
-      if (!accessToken) throw new Error("accessToken required");
-      const data = await plaidPost("/accounts/get", { access_token: accessToken }) as { accounts: unknown[] };
+      const ownAccessToken = await getOwnAccessToken();
+      const data = await plaidPost("/accounts/get", { access_token: ownAccessToken }) as { accounts: unknown[] };
       return new Response(JSON.stringify({ accounts: data.accounts }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (action === "initiate_transfer") {
-      if (!accessToken || !accountId || !amountUsd) throw new Error("accessToken, accountId, amountUsd required");
+      if (!accountId || !amountUsd) throw new Error("accountId, amountUsd required");
+      const ownAccessToken = await getOwnAccessToken();
       if (amountUsd < 20) throw new Error("Minimum deposit is $20");
       if (amountUsd > 50000) throw new Error("Maximum ACH transfer is $50,000");
 
       // Get routing/account numbers via Plaid Auth
-      const authData = await plaidPost("/auth/get", { access_token: accessToken }) as { numbers: { ach: Array<{ account_id: string; routing: string; account: string }> } };
+      const authData = await plaidPost("/auth/get", { access_token: ownAccessToken }) as { numbers: { ach: Array<{ account_id: string; routing: string; account: string }> } };
       const achAccount = authData.numbers.ach.find(a => a.account_id === accountId);
       if (!achAccount) throw new Error("Account not found or not ACH-eligible");
 
       // In production, this would initiate via Plaid Transfer API or your ACH processor
       // For now: record pending transfer, credit when settled (1-3 business days)
-      const adminSupabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
       const { data: transfer } = await adminSupabase.from("pending_ach_transfers").insert({
         user_id: user.id,
         account_id: accountId,
