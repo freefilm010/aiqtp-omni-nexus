@@ -14,6 +14,7 @@ import { useAssetValuation, formatUsdValue, formatQuantity } from "@/hooks/useAs
 interface FaucetTokenListProps {
   tokens: FaucetToken[];
   balances: Record<string, number>;
+  holdingValues: Record<string, number>;
   claiming: string | null;
   loading: boolean;
   isOnCooldown: (token: FaucetToken) => boolean;
@@ -43,7 +44,7 @@ const isTestnetToken = (t: FaucetToken) =>
   t.category.startsWith("testnet") || t.category === "testnet-privacy" || t.symbol.startsWith("t");
 
 const FaucetTokenList = ({
-  tokens, balances, claiming, loading,
+  tokens, balances, holdingValues, claiming, loading,
   isOnCooldown, getCooldownRemaining, getCooldownProgress, onClaim,
 }: FaucetTokenListProps) => {
   const { getValuation } = useAssetValuation();
@@ -73,8 +74,21 @@ const FaucetTokenList = ({
                 .map((token, i) => {
                   const onCd = isOnCooldown(token);
                   const balance = balances[token.symbol] || 0;
+                  const ledgerValue = holdingValues[token.symbol] || 0;
                   const progress = getCooldownProgress(token);
                   const valuation = getValuation(token.symbol, balance > 0 ? balance : 1);
+                  const hasLiveValue = !valuation.priceUnavailable && !valuation.isStale && valuation.isLive;
+                  const tokenIsTestnet = isTestnetToken(token);
+                  const displayValue = tokenIsTestnet ? 0 : hasLiveValue ? valuation.priceUsd * balance : ledgerValue;
+                  const valueLabel = tokenIsTestnet
+                    ? "Testnet $0"
+                    : displayValue > 0
+                      ? `${formatUsdValue(displayValue)}${hasLiveValue ? "" : " stored"}`
+                      : valuation.priceUnavailable
+                        ? "No live value"
+                        : valuation.isStale
+                          ? "Stale value"
+                          : formatUsdValue(0);
 
                   return (
                     <motion.div
@@ -128,7 +142,7 @@ const FaucetTokenList = ({
                               )}
                               {balance > 0 && (
                                 <span className="text-[10px] text-primary font-medium">
-                                  {formatQuantity(balance)} · {valuation.priceUnavailable ? "No live value" : valuation.isStale ? "Stale value" : formatUsdValue(valuation.priceUsd * balance)}
+                                  {formatQuantity(balance)} · {valueLabel}
                                 </span>
                               )}
                             </div>

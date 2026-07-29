@@ -103,6 +103,7 @@ const CryptoFaucet = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string, number>>({});
+  const [holdingValues, setHoldingValues] = useState<Record<string, number>>({});
   const [lastClaimTimes, setLastClaimTimes] = useState<Record<string, Date>>({});
   const [streakCount, setStreakCount] = useState(0);
   const [totalClaimCount, setTotalClaimCount] = useState(0);
@@ -139,7 +140,6 @@ const CryptoFaucet = () => {
     if (!user) { setLoading(false); return; }
     setUserId(user.id);
 
-    const faucetSymbols = Array.from(new Set(FAUCET_TOKENS.map((t) => t.symbol)));
     const [claimsResponse, countResponse, holdingsResponse] = await Promise.all([
       supabase
         .from("faucet_claims")
@@ -153,9 +153,9 @@ const CryptoFaucet = () => {
         .eq("user_id", user.id),
       supabase
         .from("portfolio_holdings")
-        .select("symbol, quantity")
+        .select("symbol, quantity, value_usd")
         .eq("user_id", user.id)
-        .in("symbol", faucetSymbols),
+        .gt("quantity", 0),
     ]);
 
     if (loadVersion !== claimsLoadVersionRef.current) return;
@@ -167,10 +167,14 @@ const CryptoFaucet = () => {
     setTotalClaimCount(totalClaimCount || records.length);
 
     const bal: Record<string, number> = {};
+    const valueBySymbol: Record<string, number> = {};
     for (const h of holdings || []) {
-      bal[h.symbol] = Number(h.quantity) || 0;
+      const symbol = String(h.symbol).toUpperCase();
+      bal[symbol] = Number(h.quantity) || 0;
+      valueBySymbol[symbol] = Number(h.value_usd) || 0;
     }
     setBalances(bal);
+    setHoldingValues(valueBySymbol);
 
     // Cooldown tracking from recent claims
     const lastTimes: Record<string, Date> = {};
@@ -493,8 +497,12 @@ const CryptoFaucet = () => {
   const { items: claimedAssetItems } = getPortfolioValuation(balances);
   const ownedRealTokens = claimedAssetItems.filter(item => item.quantity > 0 && !item.isTestnet).length;
   const currentClaimedValue = claimedAssetItems
-    .filter(item => item.quantity > 0 && !item.isTestnet && !item.isStale && !item.priceUnavailable && item.isLive)
-    .reduce((sum, item) => sum + item.valueUsd, 0);
+    .filter(item => item.quantity > 0 && !item.isTestnet)
+    .reduce((sum, item) => {
+      const liveValue = !item.isStale && !item.priceUnavailable && item.isLive ? item.valueUsd : 0;
+      const ledgerValue = holdingValues[item.symbol] || 0;
+      return sum + (liveValue > 0 ? liveValue : ledgerValue);
+    }, 0);
 
   return (
     <div className="space-y-4">
@@ -527,6 +535,7 @@ const CryptoFaucet = () => {
         <FaucetTokenList
           tokens={FAUCET_TOKENS}
           balances={balances}
+          holdingValues={holdingValues}
           claiming={claiming}
           loading={loading}
           isOnCooldown={isOnCooldown}
@@ -537,6 +546,7 @@ const CryptoFaucet = () => {
 
         <FaucetSidebar
           balances={balances}
+          holdingValues={holdingValues}
           claims={claims}
           tokens={FAUCET_TOKENS}
           loading={loading}
