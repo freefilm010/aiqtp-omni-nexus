@@ -78,7 +78,17 @@ const FaucetTokenList = ({
                   const progress = getCooldownProgress(token);
                   const valuation = getValuation(token.symbol, balance > 0 ? balance : 1);
                   const hasLiveValue = !valuation.priceUnavailable && !valuation.isStale && valuation.isLive;
-                  const displayValue = hasLiveValue ? valuation.priceUsd * balance : ledgerValue;
+                  const tokenIsTestnet = isTestnetToken(token);
+                  const displayValue = tokenIsTestnet ? 0 : hasLiveValue ? valuation.priceUsd * balance : ledgerValue;
+                  const valueLabel = tokenIsTestnet
+                    ? "Testnet $0"
+                    : displayValue > 0
+                      ? `${formatUsdValue(displayValue)}${hasLiveValue ? "" : " stored"}`
+                      : valuation.priceUnavailable
+                        ? "No live value"
+                        : valuation.isStale
+                          ? "Stale value"
+                          : formatUsdValue(0);
 
                   return (
                     <motion.div
@@ -132,7 +142,7 @@ const FaucetTokenList = ({
                               )}
                               {balance > 0 && (
                                 <span className="text-[10px] text-primary font-medium">
-                                  {formatQuantity(balance)} · {displayValue > 0 ? formatUsdValue(displayValue) : valuation.priceUnavailable ? "No live value" : valuation.isStale ? "Stale value" : formatUsdValue(0)}
+                                  {formatQuantity(balance)} · {valueLabel}
                                 </span>
                               )}
                             </div>
