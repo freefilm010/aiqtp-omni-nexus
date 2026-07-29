@@ -42,6 +42,18 @@ const BINANCE_TO_CG_ID: Record<string, string> = Object.fromEntries(
   Object.entries(CG_ID_TO_BINANCE).map(([cg, sym]) => [sym, cg])
 );
 
+function jsonResponse(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+function isRateLimitError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /429|rate limit/i.test(message);
+}
+
 // Fetch prices from Binance public API — no API key, 1200 req/min
 async function fetchBinancePrices(coinIds?: string[]): Promise<Record<string, any>> {
   try {
@@ -225,9 +237,7 @@ serve(async (req) => {
       case 'sync_binance_prices': {
         const binancePrices = await fetchBinancePrices();
         if (Object.keys(binancePrices).length === 0) {
-          return new Response(JSON.stringify({ success: false, error: 'Binance returned no data' }), {
-            status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
+          return jsonResponse({ success: false, degraded: true, error: 'Binance returned no data' });
         }
 
         const rows = Object.entries(binancePrices).map(([coinId, data]: [string, any]) => ({
@@ -412,10 +422,7 @@ serve(async (req) => {
         const { coinIds } = params;
         const ids = Array.isArray(coinIds) ? coinIds : [coinIds];
 
-        const respond = (payload: unknown) =>
-          new Response(JSON.stringify(payload), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+        const respond = (payload: unknown) => jsonResponse(payload);
 
         // Try cache first — only use if data is fresh (< CACHE_TTL_SECONDS)
         const cached = await getCachedPrices(ids);
@@ -500,7 +507,13 @@ serve(async (req) => {
         const url = `${baseUrl}/coins/${coinId}/ohlc?vs_currency=usd&days=${days}`;
         const response = await fetchWithRateLimit(url, headers);
         
-        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
+        if (!response.ok) {
+          const cached = await getCachedPrices([coinId]);
+          if (response.status === 429 && cached) {
+            return jsonResponse({ success: true, records: 0, cached: true, stale: true, rateLimited: true, ohlcv: [], prices: cached });
+          }
+          return jsonResponse({ success: false, degraded: true, rateLimited: response.status === 429, error: `CoinGecko API error: ${response.status}` });
+        }
         const ohlcData = await response.json();
 
         let timeframe = '1d';
@@ -534,7 +547,9 @@ serve(async (req) => {
         const url = `${baseUrl}/search?query=${encodeURIComponent(query)}`;
         const response = await fetchWithRateLimit(url, headers);
         
-        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
+        if (!response.ok) {
+          return jsonResponse({ success: false, coins: [], exchanges: [], degraded: true, rateLimited: response.status === 429, error: `CoinGecko API error: ${response.status}` });
+        }
         const results = await response.json();
 
         return new Response(JSON.stringify({ 
@@ -548,7 +563,9 @@ serve(async (req) => {
         const url = `${baseUrl}/search/trending`;
         const response = await fetchWithRateLimit(url, headers);
         
-        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
+        if (!response.ok) {
+          return jsonResponse({ success: false, coins: [], nfts: [], degraded: true, rateLimited: response.status === 429, error: `CoinGecko API error: ${response.status}` });
+        }
         const trending = await response.json();
 
         return new Response(JSON.stringify({ 
@@ -562,7 +579,9 @@ serve(async (req) => {
         const url = `${baseUrl}/exchanges?per_page=100`;
         const response = await fetchWithRateLimit(url, headers);
         
-        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
+        if (!response.ok) {
+          return jsonResponse({ success: false, exchanges: [], degraded: true, rateLimited: response.status === 429, error: `CoinGecko API error: ${response.status}` });
+        }
         const exchanges = await response.json();
 
         return new Response(JSON.stringify({ success: true, exchanges }), {
@@ -574,7 +593,9 @@ serve(async (req) => {
         const url = `${baseUrl}/global`;
         const response = await fetchWithRateLimit(url, headers);
         
-        if (!response.ok) throw new Error(`CoinGecko API error: ${response.status}`);
+        if (!response.ok) {
+          return jsonResponse({ success: false, data: null, degraded: true, rateLimited: response.status === 429, error: `CoinGecko API error: ${response.status}` });
+        }
         const global = await response.json();
 
         return new Response(JSON.stringify({ success: true, data: global.data }), {
@@ -589,9 +610,11 @@ serve(async (req) => {
     console.error('Market data sync error:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: (error instanceof Error ? error.message : String(error)) 
+      error: (error instanceof Error ? error.message : String(error)),
+      degraded: true,
+      rateLimited: isRateLimitError(error),
     }), { 
-      status: 500, 
+      status: 200, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
   }

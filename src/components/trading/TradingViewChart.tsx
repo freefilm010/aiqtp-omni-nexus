@@ -79,7 +79,7 @@ const cssHslAlpha = (name: string, alpha: number, fallback: string) => {
 
 const formatChartPrice = (price: number) => {
   if (!Number.isFinite(price) || price <= 0) return "—";
-  if (price >= 1_000) return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (price >= 1_000) return price.toLocaleString("en-US", { maximumFractionDigits: 2 });
   if (price >= 1) return price.toFixed(2);
   if (price >= 0.01) return price.toFixed(4);
   return price.toFixed(8);
@@ -245,8 +245,9 @@ const TradingViewChart = ({
         fixRightEdge: false,
       },
       localization: {
+        locale: "en-US",
         priceFormatter: (price: number) => {
-          if (price >= 1_000) return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+          if (price >= 1_000) return price.toLocaleString("en-US", { maximumFractionDigits: 2 });
           if (price >= 1) return price.toFixed(2);
           if (price >= 0.01) return price.toFixed(4);
           return price.toFixed(8);
