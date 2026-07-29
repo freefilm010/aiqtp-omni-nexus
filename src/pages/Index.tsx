@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import LazySection from "@/components/LazySection";
+import WidgetErrorBoundary from "@/components/WidgetErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -72,25 +73,39 @@ const Index = () => {
 
                 {/* Row 1: Institutional-grade live charts */}
                 <div className="mb-4 md:mb-6">
-                  <SuperchartsWidget />
+                  <WidgetErrorBoundary name="Supercharts">
+                    <SuperchartsWidget />
+                  </WidgetErrorBoundary>
                 </div>
 
                 {/* Row 2: AI Panel + Smart Money */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                  <AimeStyleAIPanel />
-                  <SmartMoneyFlow />
+                  <WidgetErrorBoundary name="AI Panel">
+                    <AimeStyleAIPanel />
+                  </WidgetErrorBoundary>
+                  <WidgetErrorBoundary name="Smart Money Flow">
+                    <SmartMoneyFlow />
+                  </WidgetErrorBoundary>
                 </div>
 
                 {/* Row 3: Screener + Calendar */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                  <UltimateAIScreener />
-                  <FinancialCalendarWidget />
+                  <WidgetErrorBoundary name="AI Screener">
+                    <UltimateAIScreener />
+                  </WidgetErrorBoundary>
+                  <WidgetErrorBoundary name="Financial Calendar">
+                    <FinancialCalendarWidget />
+                  </WidgetErrorBoundary>
                 </div>
 
                 {/* Row 4: Portfolio + Copy Trading */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                  <PortfolioSyncWidget />
-                  <CopyTradingLeaderboard />
+                  <WidgetErrorBoundary name="Portfolio Sync">
+                    <PortfolioSyncWidget />
+                  </WidgetErrorBoundary>
+                  <WidgetErrorBoundary name="Copy Trading Leaderboard">
+                    <CopyTradingLeaderboard />
+                  </WidgetErrorBoundary>
                 </div>
               </div>
             </section>

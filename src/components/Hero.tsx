@@ -26,6 +26,9 @@ const LiveTicker = ({ tickers }: { tickers: Record<string, any> }) => {
 
   if (prices.length === 0) return null;
 
+  const formatPrice = (value: number) =>
+    value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   return (
     <div className="absolute top-0 left-0 right-0 z-20 h-8 overflow-hidden border-b border-white/5 bg-black/40 backdrop-blur-md">
       <div className="flex h-full animate-ticker whitespace-nowrap">
@@ -33,7 +36,7 @@ const LiveTicker = ({ tickers }: { tickers: Record<string, any> }) => {
           <div key={i} className="flex h-full items-center gap-2 border-r border-white/5 px-4">
             <span className="font-mono text-[11px] font-medium text-white/85">{t.symbol}</span>
             <span className={`font-mono text-[11px] font-semibold ${t.positive ? "text-[hsl(162,91%,55%)]" : "text-[hsl(355,88%,68%)]"}`}>
-              {t.ready ? t.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+              {t.ready ? formatPrice(t.price) : "—"}
             </span>
             <span className={`font-mono text-[10px] ${t.positive ? "text-[hsl(162,91%,55%)]" : "text-[hsl(355,88%,68%)]"}`}>
               {t.ready ? `${t.positive ? "+" : ""}${t.change.toFixed(2)}%` : ""}
@@ -57,7 +60,6 @@ const Hero = () => {
         src={heroCosmos}
         alt=""
         aria-hidden="true"
-        fetchPriority="high"
         decoding="async"
         width={1920}
         height={1280}
