@@ -192,7 +192,13 @@ const FaucetSidebar = ({ balances, holdingValues, claims, tokens, loading, strea
                     <span className="text-right w-14">USDT</span>
                   </div>
                   {realValuedItems
-                    .sort((a, b) => b.valueUsd - a.valueUsd)
+                    .sort((a, b) => {
+                      const aFresh = !a.isStale && !a.priceUnavailable && a.isLive;
+                      const bFresh = !b.isStale && !b.priceUnavailable && b.isLive;
+                      const aValue = aFresh ? a.valueUsd : holdingValues[a.symbol] || 0;
+                      const bValue = bFresh ? b.valueUsd : holdingValues[b.symbol] || 0;
+                      return bValue - aValue;
+                    })
                     .map((item) => {
                       const token = tokens.find(t => t.symbol === item.symbol);
                       const hasFreshPrice = !item.isStale && !item.priceUnavailable && item.isLive;
