@@ -13,6 +13,7 @@ import { looksLikeRealName, toSafePublicName } from "@/lib/users/publicName";
 
 interface FaucetSidebarProps {
   balances: Record<string, number>;
+  holdingValues: Record<string, number>;
   claims: ClaimRecord[];
   tokens: FaucetToken[];
   loading: boolean;
@@ -35,18 +36,19 @@ interface LeaderboardEntry {
   composite_score: number;
 }
 
-const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
+const FaucetSidebar = ({ balances, holdingValues, claims, tokens, loading, streakCount, userId }: FaucetSidebarProps) => {
   const { getPortfolioValuation } = useAssetValuation();
   const { items: valuedItems } = getPortfolioValuation(balances);
   const realValuedItems = valuedItems.filter((item) => item.quantity > 0 && !item.isTestnet);
-  const freshValuedItems = realValuedItems.filter(
-    (item) => !item.isStale && !item.priceUnavailable && item.isLive
-  );
   const staleOrMissingCount = realValuedItems.filter(
     (item) => item.isStale || item.priceUnavailable || !item.isLive
   ).length;
   const totalTokenTypes = realValuedItems.length;
-  const totalUsd = freshValuedItems.reduce((sum, item) => sum + item.valueUsd, 0);
+  const totalUsd = realValuedItems.reduce((sum, item) => {
+    const liveValue = !item.isStale && !item.priceUnavailable && item.isLive ? item.valueUsd : 0;
+    const ledgerValue = holdingValues[item.symbol] || 0;
+    return sum + (liveValue > 0 ? liveValue : ledgerValue);
+  }, 0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   const loadLeaderboard = useCallback(async () => {
@@ -173,7 +175,7 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                   <span className="text-xs font-bold text-primary">{formatUsdValue(totalUsd)}</span>
                 </div>
                 <p className="text-[9px] text-muted-foreground">
-                  Fresh value only • excludes test assets{staleOrMissingCount > 0 ? ` • ${staleOrMissingCount} stale/unpriced` : ""}
+                  Live value with ledger fallback • excludes test assets{staleOrMissingCount > 0 ? ` • ${staleOrMissingCount} stale/unpriced` : ""}
                 </p>
               </div>
             )}
@@ -195,6 +197,9 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                       const token = tokens.find(t => t.symbol === item.symbol);
                       const hasFreshPrice = !item.isStale && !item.priceUnavailable && item.isLive;
                       const unitPrice = item.priceUsd;
+                      const ledgerValue = holdingValues[item.symbol] || 0;
+                      const displayValue = hasFreshPrice ? item.valueUsd : ledgerValue;
+                      const displayUnitPrice = item.quantity > 0 ? displayValue / item.quantity : 0;
                       return (
                         <div key={item.symbol} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
                           <div className="flex items-center gap-1 w-14">
@@ -205,13 +210,13 @@ const FaucetSidebar = ({ balances, claims, tokens, loading, streakCount, userId 
                             {formatQuantity(item.quantity)}
                           </span>
                           <span className="font-mono text-[10px] text-right w-14 text-muted-foreground">
-                            {item.priceUnavailable ? "No data" : item.isStale || !item.isLive ? "Stale" : formatUsdValue(unitPrice)}
+                            {hasFreshPrice ? formatUsdValue(unitPrice) : displayUnitPrice > 0 ? formatUsdValue(displayUnitPrice) : item.priceUnavailable ? "No data" : "Stale"}
                           </span>
                           <span className={`font-mono text-[10px] text-right w-14 ${hasFreshPrice ? "text-green-500" : "text-muted-foreground"}`}>
-                            {item.priceUnavailable ? "—" : item.isStale || !item.isLive ? "Stale" : formatUsdValue(item.valueUsd)}
+                            {displayValue > 0 ? formatUsdValue(displayValue) : item.priceUnavailable ? "—" : item.isStale || !item.isLive ? "Stale" : formatUsdValue(0)}
                           </span>
                           <span className="font-mono text-[10px] text-muted-foreground text-right w-14">
-                            {item.priceUnavailable ? "—" : item.isStale || !item.isLive ? "Stale" : formatUsdValue(item.valueUsdt)}
+                            {displayValue > 0 ? formatUsdValue(displayValue) : item.priceUnavailable ? "—" : item.isStale || !item.isLive ? "Stale" : formatUsdValue(0)}
                           </span>
                         </div>
                       );
