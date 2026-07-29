@@ -196,7 +196,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const canWrite = isAuthedUser || action === 'get_price';
+    // Public read actions must never persist caller-controlled IDs.
+    // Only authenticated/internal invocations may update market cache tables.
+    const canWrite = isAuthedUser;
 
     console.log(`Market data sync action: ${action}`);
 
