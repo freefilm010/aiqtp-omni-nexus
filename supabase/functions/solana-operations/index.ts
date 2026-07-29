@@ -288,6 +288,19 @@ serve(async (req) => {
       }
 
       case 'create_platform_wallet': {
+        // Admin-only: mirrors the admin-only INSERT policy on solana_wallets,
+        // which the service-role client would otherwise bypass.
+        const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'admin',
+        });
+        if (roleError || !isAdmin) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Forbidden' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         // Create new platform-controlled wallet entry
         const { walletType, label, operatorId, address } = params;
         
