@@ -44,14 +44,35 @@ serve(async (req) => {
       throw new Error("Missing backend environment configuration");
     }
 
-    if (req.headers.get("x-repair-token") !== repairToken) {
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : null;
+
+    let isAuthorized = req.headers.get("x-repair-token") === repairToken;
+
+    if (!isAuthorized && bearerToken) {
+      const { data: userData } = await adminClient.auth.getUser(bearerToken);
+      const userId = userData.user?.id;
+
+      if (userId) {
+        const { data: roleRows, error: roleError } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .limit(1);
+
+        if (roleError) throw roleError;
+        isAuthorized = Boolean(roleRows?.length);
+      }
+    }
+
+    if (!isAuthorized) {
       return new Response(JSON.stringify({ error: "Authentication required" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: allocations, error: allocationError } = await adminClient
       .from("auto_invest_allocations")
