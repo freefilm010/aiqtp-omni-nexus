@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Brain, Bot, Shield, Zap, Activity, TrendingUp, Eye, BarChart3,
   Network, GitMerge, Cpu, Flame, Skull, Crown, RefreshCw, AlertTriangle,
