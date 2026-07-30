@@ -183,11 +183,6 @@ Analyze and return optimal allocations.`,
           });
         }
 
-        // Deactivate old allocations
-        await adminClient.from("auto_invest_allocations")
-          .update({ is_active: false })
-          .eq("engine_id", engine_id);
-
         // Get engine capital
         const { data: engine } = await adminClient
           .from("auto_invest_engine")
@@ -197,10 +192,27 @@ Analyze and return optimal allocations.`,
 
         const capital = engine?.total_capital || 0;
 
-        // Insert new allocations
+        const incomingSymbols: string[] = allocations.map((a: any) => a.symbol);
+
+        // Retire only the active allocations that are no longer part of the target set.
+        // Rows that stay are updated in place (never re-inserted) so no duplicate history builds up.
+        if (incomingSymbols.length > 0) {
+          await adminClient.from("auto_invest_allocations")
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq("engine_id", engine_id)
+            .eq("is_active", true)
+            .not("asset_symbol", "in", `(${incomingSymbols.map((s) => `"${s}"`).join(",")})`);
+        } else {
+          await adminClient.from("auto_invest_allocations")
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq("engine_id", engine_id)
+            .eq("is_active", true);
+        }
+
+        // Update-in-place or insert one active row per asset
         for (const alloc of allocations) {
           const value = capital * (alloc.target_percent / 100);
-          await adminClient.from("auto_invest_allocations").insert({
+          const row = {
             engine_id,
             asset_symbol: alloc.symbol,
             asset_name: alloc.name,
@@ -213,7 +225,24 @@ Analyze and return optimal allocations.`,
             ai_reasoning: alloc.reasoning,
             stop_loss_percent: alloc.stop_loss_percent || null,
             take_profit_percent: alloc.take_profit_percent || null,
-          });
+            is_active: true,
+          };
+
+          const { data: existing } = await adminClient
+            .from("auto_invest_allocations")
+            .select("id")
+            .eq("engine_id", engine_id)
+            .eq("asset_symbol", alloc.symbol)
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (existing?.id) {
+            await adminClient.from("auto_invest_allocations")
+              .update({ ...row, updated_at: new Date().toISOString() })
+              .eq("id", existing.id);
+          } else {
+            await adminClient.from("auto_invest_allocations").insert(row);
+          }
 
           // Log transaction
           await adminClient.from("auto_invest_transactions").insert({
