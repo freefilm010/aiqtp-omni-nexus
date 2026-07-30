@@ -86,16 +86,16 @@ serve(async (req) => {
         rows_deactivated?: number;
       };
 
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          mode: "database-rpc",
-          groupsRepaired: repair.groups_repaired ?? 0,
-          keepersUpdated: repair.keepers_updated ?? 0,
-          rowsDeactivated: repair.rows_deactivated ?? 0,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      const groupsRepaired = repair.groups_repaired ?? 0;
+      const keepersUpdated = repair.keepers_updated ?? 0;
+      const rowsDeactivated = repair.rows_deactivated ?? 0;
+
+      if (groupsRepaired > 0 || keepersUpdated > 0 || rowsDeactivated > 0) {
+        return new Response(
+          JSON.stringify({ ok: true, mode: "database-rpc", groupsRepaired, keepersUpdated, rowsDeactivated }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     const { data: allocations, error: allocationError } = await adminClient
