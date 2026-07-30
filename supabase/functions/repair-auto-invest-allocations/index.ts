@@ -75,6 +75,29 @@ serve(async (req) => {
       });
     }
 
+    const { data: rpcRepairRows, error: rpcRepairError } = await adminClient.rpc(
+      "emergency_repair_auto_invest_allocation_duplicates",
+    );
+
+    if (!rpcRepairError && Array.isArray(rpcRepairRows) && rpcRepairRows.length > 0) {
+      const repair = rpcRepairRows[0] as {
+        groups_repaired?: number;
+        keepers_updated?: number;
+        rows_deactivated?: number;
+      };
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          mode: "database-rpc",
+          groupsRepaired: repair.groups_repaired ?? 0,
+          keepersUpdated: repair.keepers_updated ?? 0,
+          rowsDeactivated: repair.rows_deactivated ?? 0,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: allocations, error: allocationError } = await adminClient
       .from("auto_invest_allocations")
       .select("id,engine_id,asset_symbol,quantity,value_usd,pnl_usd,updated_at,created_at")
