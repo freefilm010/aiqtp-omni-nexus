@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.uniq_auto_invest_allocation_active;
