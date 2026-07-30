@@ -266,10 +266,7 @@ def check_system_status() -> bool:
     """
     Returns True when trading should proceed.
     Queries system_status WHERE key = 'main'.
-    A missing row is treated as active (safe default during initial setup
-    before the Control Panel has written the seed row).
-    On any Supabase error, logs a warning and returns True — the worker
-    keeps running rather than silently halting on a transient network blip.
+    Fail closed: a missing row or database error halts order execution.
     """
     try:
         result = (
@@ -280,11 +277,12 @@ def check_system_status() -> bool:
             .execute()
         )
         if not result.data:
-            return True
-        return bool(result.data[0].get("active", True))
+            log.error("system_status row missing — halting trading")
+            return False
+        return result.data[0].get("active") is True
     except Exception as exc:
-        log.error("system_status read failed: %s — treating system as ACTIVE", exc)
-        return True
+        log.error("system_status read failed: %s — halting trading", exc)
+        return False
 
 
 def fetch_active_strategies() -> list[dict]:

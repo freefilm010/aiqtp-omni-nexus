@@ -55,7 +55,7 @@ export interface AssetValuation {
   valueUsdt: number;
   change24h: number | null;
   isLive: boolean;
-  /** true when price feed exists but data is older than 5 minutes */
+  /** true when price feed exists but data is older than 5 seconds */
   isStale: boolean;
   /** true when no price data exists at all (not testnet, not stablecoin fallback) */
   priceUnavailable: boolean;
@@ -63,23 +63,8 @@ export interface AssetValuation {
   isTestnet: boolean;
 }
 
-/**
- * Staleness tolerance for market prices.
- *
- * The market data poll cadence is 30s (useMarketPrices) with a 10s minimum,
- * and the binance-prices proxy patches the cache every ~2s via Realtime.
- * A 5-second hard cutoff was incorrectly flagging every price as stale
- * during the 25s window between polls, which caused the portfolio valuation
- * to collapse to ~$3.5k (platform tokens only) and the historical snapshot
- * job to record those collapsed values — producing the $980k → $3.5k
- * oscillation the user observed in portfolio history.
- *
- * 90s is 3× the poll interval — the standard "missed three heartbeats"
- * tolerance. Prices older than this are genuinely stale and excluded.
- */
-const STALE_THRESHOLD_MS = 90 * 1000;
-/** Platform tokens refresh every 30s via the platform-token-refresh edge function. */
-const PLATFORM_STALE_THRESHOLD_MS = 90 * 1000;
+const STALE_THRESHOLD_MS = 5_000;
+const PLATFORM_STALE_THRESHOLD_MS = 5_000;
 
 const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
 
@@ -88,7 +73,7 @@ const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
  * Falls back to platform token prices for non-listed tokens.
  */
 export function useAssetValuation() {
-  const { getPrice, isLive, loading } = useMarketPrices(30000);
+  const { getPrice, isLive, loading } = useMarketPrices(2_000);
   const [platformTokenPrices, setPlatformTokenPrices] = useState<Record<string, PlatformTokenFeed>>({});
 
   const loadPlatformTokenPrices = useCallback(async () => {

@@ -91,6 +91,18 @@ serve(async (req) => {
           );
         }
 
+        const { data: systemStatus, error: statusError } = await supabase
+          .from('system_status')
+          .select('active')
+          .eq('key', 'main')
+          .maybeSingle();
+        if (statusError || systemStatus?.active !== true) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Trading is halted or system status is unavailable' }),
+            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
 
         // Live trading - fetch exchange account and execute
 
@@ -109,14 +121,6 @@ serve(async (req) => {
             );
           }
 
-          // Fetch API key from secure vault
-          const { data: vault } = await supabase
-            .from('account_key_vault')
-            .select('api_key_encrypted')
-            .eq('account_id', exchangeAccountId)
-            .single();
-
-          const apiKey = vault?.api_key_encrypted || '';
           const exchangeType = account.account_type.toLowerCase();
 
           // Route all live orders through the Python trading service (CCXT).
@@ -124,18 +128,16 @@ serve(async (req) => {
           const workerUrl = Deno.env.get('RENDER_WORKER_URL') ?? 'https://aiqtp-trading-service.onrender.com';
           let exchangeResult;
           try {
-            const ccxtRes = await fetch(`${workerUrl}/ccxt/live_order`, {
+            const ccxtRes = await fetch(`${workerUrl}/api/ccxt/live_order`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 exchange: exchangeType,
                 symbol,
                 side,
-                type,
+                order_type: type,
                 amount: quantity,
                 price: type === 'limit' ? price : undefined,
-                api_key: apiKey,
-                api_secret: Deno.env.get(`${account.account_name.toUpperCase()}_API_SECRET`) || '',
               }),
             });
             if (!ccxtRes.ok) {
@@ -144,10 +146,13 @@ serve(async (req) => {
             }
             const ccxtData = await ccxtRes.json();
             exchangeResult = {
-              orderId: ccxtData.id ?? `ord_${Date.now()}`,
-              filledPrice: ccxtData.average ?? ccxtData.price ?? price ?? 0,
-              status: ccxtData.status ?? 'open',
+              orderId: ccxtData.id,
+              filledPrice: ccxtData.average ?? ccxtData.price ?? null,
+              status: ccxtData.status,
             };
+            if (!exchangeResult.orderId || !exchangeResult.status) {
+              throw new Error('Exchange response did not contain a verifiable order id and status');
+            }
           } catch (exchangeError: any) {
             console.error('Exchange execution error:', exchangeError);
             
@@ -179,7 +184,7 @@ serve(async (req) => {
             side,
             quantity,
             price: exchangeResult.filledPrice,
-            status: 'success',
+            status: exchangeResult.status,
             exchange_order_id: exchangeResult.orderId,
             created_at: new Date().toISOString()
           });
