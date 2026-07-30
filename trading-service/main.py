@@ -390,6 +390,12 @@ class LiveOrderRequest(BaseModel):
     price: Optional[float] = Field(default=None, gt=0)
 
 
+class CancelLiveOrderRequest(BaseModel):
+    exchange: str = Field(..., min_length=1)
+    order_id: str = Field(..., min_length=1)
+    symbol: str = Field(..., min_length=3)
+
+
 class BrokerOrderRequest(BaseModel):
     symbol: str
     side: str = Field(..., pattern="^(buy|sell)$")
@@ -828,6 +834,28 @@ async def ccxt_live_order(
     log.info(
         "CCXT live order user=%s exchange=%s side=%s symbol=%s amount=%s",
         user_id, req.exchange, req.side, req.symbol, req.amount,
+    )
+    return result
+
+
+@app.post("/ccxt/cancel_order")
+@limiter.limit("10/minute")
+async def ccxt_cancel_order(
+    request: Request,
+    req: CancelLiveOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
+    if not CCXT_LIVE_ENABLED:
+        raise HTTPException(503, "Live trading is disabled. Set CCXT_LIVE_ENABLED=true")
+    status_rows = await _query("SELECT active FROM public.system_status WHERE key = 'main' LIMIT 1")
+    if not status_rows or status_rows[0].get("active") is not True:
+        raise HTTPException(503, "Trading is halted or system status is unavailable")
+    result = await _cx.cancel_order(req.exchange, req.order_id, req.symbol)
+    log.info(
+        "CCXT order cancellation user=%s exchange=%s order=%s symbol=%s",
+        user_id, req.exchange, req.order_id, req.symbol,
     )
     return result
 

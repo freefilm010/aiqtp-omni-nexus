@@ -229,7 +229,7 @@ serve(async (req) => {
         // Look up the trade in trade_logs by exchange_order_id or by row id
         const { data: tradeRow, error: lookupError } = await supabase
           .from('trade_logs')
-          .select('id, status, symbol, side, quantity, exchange_order_id')
+          .select('id, status, symbol, side, quantity, exchange_order_id, exchange_account_id')
           .eq('user_id', user.id)
           .or(`exchange_order_id.eq.${orderId},id.eq.${orderId}`)
           .order('created_at', { ascending: false })
@@ -258,6 +258,44 @@ serve(async (req) => {
               error: `Cannot cancel order with status '${tradeRow.status}'. Only pending or open orders can be cancelled.`,
             }),
             { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (!tradeRow.exchange_order_id || !tradeRow.exchange_account_id) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Order lacks verified exchange identifiers' }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        const { data: cancelAccount, error: cancelAccountError } = await supabase
+          .from('connected_accounts')
+          .select('account_name')
+          .eq('id', tradeRow.exchange_account_id)
+          .eq('user_id', user.id)
+          .single();
+        if (cancelAccountError || !cancelAccount) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Exchange account not found or not authorized' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        const cancelWorkerUrl = Deno.env.get('RENDER_WORKER_URL') ?? 'https://aiqtp-trading-service.onrender.com';
+        const cancelResponse = await fetch(`${cancelWorkerUrl}/ccxt/cancel_order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+          body: JSON.stringify({
+            exchange: cancelAccount.account_name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+            order_id: tradeRow.exchange_order_id,
+            symbol: tradeRow.symbol,
+          }),
+        });
+        if (!cancelResponse.ok) {
+          const details = await cancelResponse.text();
+          return new Response(
+            JSON.stringify({ success: false, error: `Exchange cancellation failed (${cancelResponse.status}): ${details}` }),
+            { status: cancelResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
           );
         }
 
@@ -292,11 +330,12 @@ serve(async (req) => {
       }
 
       case 'get_orders': {
-        // Fetch from portfolio_holdings (real positions only)
-        const { data: holdings, error } = await supabase
-          .from('portfolio_holdings')
+        const { data: orders, error } = await supabase
+          .from('trade_logs')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .in('status', ['pending', 'open'])
+          .order('created_at', { ascending: false });
 
         if (error) {
           return new Response(
@@ -306,27 +345,14 @@ serve(async (req) => {
         }
 
         return new Response(
-          JSON.stringify({ success: true, orders: holdings || [], mode: 'live' }),
+          JSON.stringify({ success: true, orders: orders || [], mode: 'live' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       case 'get_positions': {
-        // Fetch from portfolio_holdings (real positions only)
-        const { data: positions, error } = await supabase
-          .from('portfolio_holdings')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'Failed to fetch positions' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
         return new Response(
-          JSON.stringify({ success: true, positions: positions || [], mode: 'live' }),
+          JSON.stringify({ success: true, positions: [], mode: 'live', source: 'exchange_position_adapter_required' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

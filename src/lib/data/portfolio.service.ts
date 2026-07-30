@@ -30,14 +30,14 @@ function toTradeLog(row: TradeLogRow): TradeLog {
   return {
     id: row.id,
     userId: row.user_id,
-    symbol: row.symbol ?? "BTC/USDT",
-    side: row.side ?? "buy",
-    action: row.action ?? "market",
+    symbol: row.symbol ?? "UNKNOWN",
+    side: row.side ?? "unknown",
+    action: row.action ?? "unknown",
     price: Number(row.price) || 0,
     quantity: Number(row.quantity) || 0,
     fee: Number(row.fee) || 0,
     slippagePct: Number(row.slippage_pct) || 0,
-    status: row.status ?? "filled",
+    status: row.status ?? "unknown",
     createdAt: row.created_at,
   };
 }

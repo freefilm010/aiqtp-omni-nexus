@@ -38,7 +38,7 @@ interface Order {
   price: number;
   amount: number;
   filled: number;
-  status: 'open' | 'partial' | 'filled' | 'cancelled';
+  status: 'open' | 'partial' | 'filled' | 'cancelled' | 'failed' | 'unknown';
   createdAt: Date;
 }
 
@@ -63,7 +63,7 @@ const PositionsOrders = () => {
         price: t.price,
         amount: t.quantity,
         filled: t.quantity,
-        status: (t.status === 'executed' ? 'filled' : t.status || 'filled') as Order['status'],
+        status: (t.status === 'executed' ? 'filled' : t.status || 'unknown') as Order['status'],
         createdAt: new Date(t.createdAt),
       })));
     }
