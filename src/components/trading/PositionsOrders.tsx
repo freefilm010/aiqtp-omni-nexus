@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { portfolioService } from "@/lib/data";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Position {
   id: string;
@@ -48,26 +49,9 @@ const PositionsOrders = () => {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    // Load positions via DAL
-    const holdingsResult = await portfolioService.getUserHoldings();
-    if (holdingsResult.data) {
-      setPositions(holdingsResult.data
-        .filter((h) => !h.symbol.startsWith('t') && h.quantity > 0)
-        .map((h) => ({
-          id: h.id,
-          symbol: h.symbol + '/USDT',
-          side: 'long' as const,
-          size: h.quantity,
-          entryPrice: 0,
-          markPrice: 0,
-          liquidationPrice: 0,
-          margin: 0,
-          leverage: 1,
-          pnl: 0,
-          pnlPercent: 0,
-          roe: 0,
-        })));
-    }
+    // Portfolio holdings are not leveraged exchange positions. Only verified
+    // position responses may populate this panel.
+    setPositions([]);
 
     // Load orders via DAL
     const tradesResult = await portfolioService.getTradeHistory(50);
@@ -90,9 +74,16 @@ const PositionsOrders = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const cancelOrder = (id: string) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'cancelled' as const } : o));
-    toast.success("Order cancelled");
+  const cancelOrder = async (id: string) => {
+    const { data, error } = await supabase.functions.invoke("trade-execute", {
+      body: { action: "cancel_order", params: { orderId: id } },
+    });
+    if (error || !data?.success) {
+      toast.error("Cancellation failed", { description: data?.error ?? error?.message });
+      return;
+    }
+    await loadData();
+    toast.success("Order cancellation confirmed");
   };
 
   const closePosition = async (id: string) => {

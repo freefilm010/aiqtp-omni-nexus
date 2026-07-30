@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Link,
   CheckCircle2,
@@ -53,10 +55,8 @@ const availableExchanges: Omit<ExchangeConfig, 'connected' | 'apiKey' | 'permiss
 ];
 
 const ExchangeConnector = () => {
-  const [exchanges, setExchanges] = useState<ExchangeConfig[]>([
-    { ...availableExchanges[0], connected: true, apiKey: '***...abc', permissions: ['read', 'trade'], lastSync: new Date(), balance: 45230.50 },
-    { ...availableExchanges[10], connected: true, permissions: ['wallet'], lastSync: new Date(), balance: 12450.00 },
-  ]);
+  const { user } = useAuth();
+  const [exchanges, setExchanges] = useState<ExchangeConfig[]>([]);
   const [connectingExchange, setConnectingExchange] = useState<typeof availableExchanges[0] | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
@@ -67,6 +67,40 @@ const ExchangeConnector = () => {
     withdraw: false
   });
 
+  useEffect(() => {
+    if (!user) {
+      setExchanges([]);
+      return;
+    }
+    const loadConnections = async () => {
+      const { data, error } = await supabase
+        .from("connected_accounts_safe")
+        .select("id, account_name, account_type, status, balance, last_sync_at")
+        .eq("user_id", user.id);
+      if (error) {
+        toast.error("Unable to load exchange connections", { description: error.message });
+        return;
+      }
+      setExchanges((data ?? []).map((row) => {
+        const catalog = availableExchanges.find((item) =>
+          item.id === row.account_name.toLowerCase().replace(/[^a-z0-9]/g, "")
+        );
+        return {
+          id: row.id,
+          name: row.account_name,
+          logo: catalog?.logo ?? "↔",
+          type: catalog?.type ?? "cex",
+          chain: catalog?.chain,
+          connected: row.status === "connected" || row.status === "active",
+          permissions: [],
+          lastSync: row.last_sync_at ? new Date(row.last_sync_at) : undefined,
+          balance: row.balance == null ? undefined : Number(row.balance),
+        };
+      }));
+    };
+    void loadConnections();
+  }, [user]);
+
   const handleConnect = () => {
     if (!connectingExchange) return;
 
@@ -75,26 +109,13 @@ const ExchangeConnector = () => {
       return;
     }
 
-    const newExchange: ExchangeConfig = {
-      ...connectingExchange,
-      connected: true,
-      apiKey: connectingExchange.type === 'cex' ? `***...${apiKey.slice(-3)}` : undefined,
-      permissions: Object.entries(permissions).filter(([_, v]) => v).map(([k]) => k),
-      lastSync: new Date(),
-      balance: Math.random() * 50000
-    };
-
-    setExchanges(prev => [...prev, newExchange]);
-    setConnectingExchange(null);
-    setApiKey("");
-    setSecretKey("");
-    setPassphrase("");
-    toast.success(`Connected to ${connectingExchange.name}`);
+    toast.error("Direct credential submission is disabled", {
+      description: "Use a verified server-side connector so credentials and balances can be validated before a connection is shown.",
+    });
   };
 
   const handleDisconnect = (id: string) => {
-    setExchanges(prev => prev.filter(e => e.id !== id));
-    toast.success("Exchange disconnected");
+    toast.info(`Disconnect request requires the verified connector for ${id}`);
   };
 
   const connectedIds = exchanges.filter(e => e.connected).map(e => e.id);

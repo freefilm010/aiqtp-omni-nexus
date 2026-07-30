@@ -10,12 +10,8 @@ const corsHeaders = {
 /**
  * Platform Token Price Refresh
  *
- * Keeps platform token price feeds alive by touching `last_updated`
- * on every invocation. This ensures the 1-minute staleness window
- * is never exceeded while the prices remain admin-set.
- *
- * When exchange integrations go live, this function will pull
- * real order-book mid-prices from the paired exchanges instead.
+ * Reports platform-token feed status without falsifying freshness.
+ * A timestamp changes only when a real oracle or exchange price is written.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -52,32 +48,25 @@ serve(async (req) => {
     }
 
     const tokenIds = tokens.map((t: any) => t.id);
-
-    // Touch last_updated on all feeds for these tokens
-    const { error: updateErr, count } = await supabase
+    const { data: feeds, error: feedErr } = await supabase
       .from("token_price_feeds")
-      .update({ last_updated: new Date().toISOString() })
+      .select("token_id, price, source, last_updated")
       .in("token_id", tokenIds);
 
-    if (updateErr) {
-      console.error("Feed refresh error:", JSON.stringify(updateErr));
-    }
-
-    // Also touch exchange_pairs
-    const { error: pairErr } = await supabase
-      .from("exchange_pairs")
-      .update({ updated_at: new Date().toISOString() })
-      .in("base_token_id", tokenIds);
-
-    if (pairErr) {
-      console.error("Pair refresh error:", JSON.stringify(pairErr));
+    if (feedErr) {
+      return new Response(
+        JSON.stringify({ success: false, error: feedErr.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        refreshed: count ?? tokenIds.length,
+        refreshed: 0,
+        status: "oracle_required",
         tokens: tokens.map((t: any) => t.symbol),
+        feeds: feeds ?? [],
         timestamp: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -192,15 +192,6 @@ class OneInchSwapIn(BaseModel):
     slippage: float = 1.0
 
 
-class CCXTOrderIn(BaseModel):
-    exchange: str = Field(..., min_length=1)
-    symbol: str = Field(..., min_length=3)
-    side: str = Field(..., pattern="^(buy|sell)$")
-    order_type: str = Field("market", pattern="^(market|limit)$")
-    amount: float = Field(..., gt=0)
-    price: Optional[float] = Field(default=None, gt=0)
-
-
 @router.post("/1inch/swap")
 @_wrap("1inch.swap")
 async def oneinch_swap(body: OneInchSwapIn) -> dict[str, Any]:
@@ -281,14 +272,3 @@ async def ccxt_markets(exchange: str) -> list[str]:
     return await cx.markets(exchange)
 
 
-@router.post("/ccxt/live_order")
-@_wrap("ccxt.live_order")
-async def ccxt_live_order(body: CCXTOrderIn) -> dict[str, Any]:
-    return await cx.create_order(
-        body.exchange,
-        body.symbol,
-        body.order_type,
-        body.side,
-        body.amount,
-        body.price,
-    )

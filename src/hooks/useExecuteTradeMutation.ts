@@ -6,7 +6,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { portfolioService } from "@/lib/data";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import type { Holding } from "@/lib/data/types";
 
 interface TradeParams {
   symbol: string;

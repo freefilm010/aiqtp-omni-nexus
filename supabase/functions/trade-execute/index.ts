@@ -121,16 +121,19 @@ serve(async (req) => {
             );
           }
 
-          const exchangeType = account.account_type.toLowerCase();
+          const exchangeType = account.account_name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
           // Route all live orders through the Python trading service (CCXT).
           // CCXT supports 100+ exchanges — no per-exchange stub needed here.
           const workerUrl = Deno.env.get('RENDER_WORKER_URL') ?? 'https://aiqtp-trading-service.onrender.com';
           let exchangeResult;
           try {
-            const ccxtRes = await fetch(`${workerUrl}/api/ccxt/live_order`, {
+            const ccxtRes = await fetch(`${workerUrl}/ccxt/live_order`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authHeader,
+              },
               body: JSON.stringify({
                 exchange: exchangeType,
                 symbol,
