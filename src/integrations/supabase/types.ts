@@ -4580,48 +4580,6 @@ export type Database = {
         }
         Relationships: []
       }
-      leaderboard_public: {
-        Row: {
-          avatar_url: string | null
-          badge: string | null
-          category: string | null
-          display_name: string | null
-          highlight_stat: string | null
-          id: string
-          period_start: string | null
-          period_type: string | null
-          rank: number | null
-          score: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          badge?: string | null
-          category?: string | null
-          display_name?: string | null
-          highlight_stat?: string | null
-          id: string
-          period_start?: string | null
-          period_type?: string | null
-          rank?: number | null
-          score?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          badge?: string | null
-          category?: string | null
-          display_name?: string | null
-          highlight_stat?: string | null
-          id?: string
-          period_start?: string | null
-          period_type?: string | null
-          rank?: number | null
-          score?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       lightning_channels: {
         Row: {
           capacity: number
@@ -10183,6 +10141,48 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_public: {
+        Row: {
+          avatar_url: string | null
+          badge: string | null
+          category: string | null
+          display_name: string | null
+          highlight_stat: string | null
+          id: string | null
+          period_start: string | null
+          period_type: string | null
+          rank: number | null
+          score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge?: string | null
+          category?: string | null
+          display_name?: string | null
+          highlight_stat?: string | null
+          id?: string | null
+          period_start?: string | null
+          period_type?: string | null
+          rank?: number | null
+          score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badge?: string | null
+          category?: string | null
+          display_name?: string | null
+          highlight_stat?: string | null
+          id?: string | null
+          period_start?: string | null
+          period_type?: string | null
+          rank?: number | null
+          score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       quwallet_wallets_safe: {
         Row: {
           created_at: string | null
@@ -10383,6 +10383,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      emergency_repair_auto_invest_allocation_duplicates: {
+        Args: never
+        Returns: {
+          groups_repaired: number
+          keepers_updated: number
+          rows_deactivated: number
+        }[]
       }
       get_factor_code: {
         Args: { p_factor_id: string }
