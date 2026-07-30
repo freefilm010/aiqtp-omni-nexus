@@ -16,16 +16,7 @@ interface CDSData {
   notional: string;
 }
 
-const mockCDSData: CDSData[] = [
-  { name: "Goldman Sachs", ticker: "GS", spread: 45.2, change: -2.3, rating: "A+", maturity: "5Y", notional: "$10M" },
-  { name: "JPMorgan Chase", ticker: "JPM", spread: 38.5, change: 1.2, rating: "A+", maturity: "5Y", notional: "$10M" },
-  { name: "Bank of America", ticker: "BAC", spread: 52.1, change: -0.8, rating: "A-", maturity: "5Y", notional: "$10M" },
-  { name: "Citigroup", ticker: "C", spread: 58.3, change: 3.5, rating: "BBB+", maturity: "5Y", notional: "$10M" },
-  { name: "Morgan Stanley", ticker: "MS", spread: 48.7, change: -1.1, rating: "A", maturity: "5Y", notional: "$10M" },
-  { name: "Tesla", ticker: "TSLA", spread: 125.4, change: 8.2, rating: "BB+", maturity: "5Y", notional: "$5M" },
-  { name: "Apple", ticker: "AAPL", spread: 22.1, change: -0.5, rating: "AA+", maturity: "5Y", notional: "$10M" },
-  { name: "Microsoft", ticker: "MSFT", spread: 18.3, change: 0.2, rating: "AAA", maturity: "5Y", notional: "$10M" },
-];
+const cdsMarketData: CDSData[] = [];
 
 const bloombergCommands = [
   { category: "Single Name", commands: ["CDSW - CDS valuation", "CDS - Single name lookup", "CDTK - CDS ticker lookup", "QCDS - Quick CDS valuation"] },
@@ -86,7 +77,7 @@ const CreditDerivatives = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockCDSData.map((cds) => (
+                    {cdsMarketData.map((cds) => (
                       <tr key={cds.ticker} className="border-b hover:bg-accent/50">
                         <td className="p-2 font-medium">{cds.name}</td>
                         <td className="p-2 text-muted-foreground">{cds.ticker}</td>
@@ -101,6 +92,9 @@ const CreditDerivatives = () => {
                         <td className="p-2 text-right">{cds.notional}</td>
                       </tr>
                     ))}
+                    {cdsMarketData.length === 0 && (
+                      <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Verified CDS market feed is not connected.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>

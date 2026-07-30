@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,123 +69,17 @@ interface SmartMoneyMove {
   destination?: string;
 }
 
-const WHALE_LABELS = [
-  '0x1234...5678 (Jump Trading)',
-  '0xabcd...ef01 (Wintermute)',
-  '0x9876...5432 (Galaxy Digital)',
-  '0xfedc...ba98 (Alameda Remnant)',
-  '0x2468...1357 (Three Arrows Cap)',
-  '0x1357...2468 (Paradigm)',
-  '0x8642...9753 (a]rthur hayes)',
-  '0x7531...8642 (Vitalik.eth)',
-];
-
-const generateWhaleWallets = (): WhaleWallet[] => {
-  const tokens = ['ETH', 'BTC', 'SOL', 'USDC', 'USDT'];
-  return WHALE_LABELS.map((label, i) => ({
-    id: `whale-${i}`,
-    address: label.split(' ')[0],
-    label: label.match(/\(([^)]+)\)/)?.[1] || 'Unknown',
-    balance: 10000 + Math.random() * 100000,
-    token: tokens[Math.floor(Math.random() * tokens.length)],
-    change24h: (Math.random() - 0.5) * 20,
-    lastActivity: new Date(Date.now() - Math.random() * 86400000),
-    tags: Math.random() > 0.5 ? ['Smart Money'] : ['Exchange', 'Large Holder']
-  }));
-};
-
-const generateTokenUnlocks = (): TokenUnlock[] => {
-  const tokens = [
-    { name: 'Arbitrum', symbol: 'ARB' },
-    { name: 'Optimism', symbol: 'OP' },
-    { name: 'Aptos', symbol: 'APT' },
-    { name: 'Sui', symbol: 'SUI' },
-    { name: 'Celestia', symbol: 'TIA' },
-    { name: 'Starknet', symbol: 'STRK' },
-    { name: 'Worldcoin', symbol: 'WLD' },
-    { name: 'Blur', symbol: 'BLUR' },
-  ];
-  
-  return tokens.map((t, i) => ({
-    id: `unlock-${i}`,
-    token: t.name,
-    symbol: t.symbol,
-    amount: 10000000 + Math.random() * 100000000,
-    valueUsd: 5000000 + Math.random() * 50000000,
-    unlockDate: new Date(Date.now() + (Math.random() * 30 - 5) * 86400000),
-    vestingType: (['team', 'investor', 'foundation', 'ecosystem'] as const)[Math.floor(Math.random() * 4)],
-    percentOfSupply: 0.5 + Math.random() * 5
-  })).sort((a, b) => a.unlockDate.getTime() - b.unlockDate.getTime());
-};
-
-const generateSmartMoneyMoves = (): SmartMoneyMove[] => {
-  const moves: SmartMoneyMove[] = [];
-  const tokens = ['ETH', 'SOL', 'ARB', 'OP', 'MATIC', 'AVAX', 'LINK', 'UNI'];
-  
-  for (let i = 0; i < 15; i++) {
-    const action = (['buy', 'sell', 'transfer'] as const)[Math.floor(Math.random() * 3)];
-    moves.push({
-      id: `move-${i}`,
-      wallet: WHALE_LABELS[Math.floor(Math.random() * WHALE_LABELS.length)].split(' ')[0],
-      label: WHALE_LABELS[Math.floor(Math.random() * WHALE_LABELS.length)].match(/\(([^)]+)\)/)?.[1] || 'Unknown',
-      action,
-      token: tokens[Math.floor(Math.random() * tokens.length)],
-      amount: 1000 + Math.random() * 50000,
-      valueUsd: 50000 + Math.random() * 5000000,
-      timestamp: new Date(Date.now() - Math.random() * 3600000 * 6),
-      destination: action === 'transfer' ? ['Binance', 'Coinbase', 'Cold Wallet'][Math.floor(Math.random() * 3)] : undefined
-    });
-  }
-  
-  return moves.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-};
-
-const generateBridgeFlows = (): BridgeFlow[] => {
-  const chains = ['Ethereum', 'Arbitrum', 'Optimism', 'Base', 'Polygon', 'Avalanche'];
-  const flows: BridgeFlow[] = [];
-  
-  for (let i = 0; i < 12; i++) {
-    const fromIdx = Math.floor(Math.random() * chains.length);
-    let toIdx = Math.floor(Math.random() * chains.length);
-    while (toIdx === fromIdx) toIdx = Math.floor(Math.random() * chains.length);
-    
-    flows.push({
-      id: `bridge-${i}`,
-      token: ['ETH', 'USDC', 'USDT'][Math.floor(Math.random() * 3)],
-      amount: 100 + Math.random() * 10000,
-      valueUsd: 100000 + Math.random() * 10000000,
-      fromChain: chains[fromIdx],
-      toChain: chains[toIdx],
-      timestamp: new Date(Date.now() - Math.random() * 86400000),
-      direction: chains[toIdx] === 'Ethereum' ? 'inflow' : 'outflow'
-    });
-  }
-  
-  return flows.sort((a, b) => b.valueUsd - a.valueUsd);
-};
-
 const OnChainIntelligence = () => {
-  const [whales, setWhales] = useState<WhaleWallet[]>([]);
-  const [unlocks, setUnlocks] = useState<TokenUnlock[]>([]);
-  const [smartMoney, setSmartMoney] = useState<SmartMoneyMove[]>([]);
-  const [bridgeFlows, setBridgeFlows] = useState<BridgeFlow[]>([]);
+  const [whales] = useState<WhaleWallet[]>([]);
+  const [unlocks] = useState<TokenUnlock[]>([]);
+  const [smartMoney] = useState<SmartMoneyMove[]>([]);
+  const [bridgeFlows] = useState<BridgeFlow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    setWhales(generateWhaleWallets());
-    setUnlocks(generateTokenUnlocks());
-    setSmartMoney(generateSmartMoneyMoves());
-    setBridgeFlows(generateBridgeFlows());
-  }, []);
 
   const handleRefresh = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setSmartMoney(generateSmartMoneyMoves());
-      setBridgeFlows(generateBridgeFlows());
-      setIsLoading(false);
-      toast.success('Data refreshed');
-    }, 500);
+    setIsLoading(false);
+    toast.error('Verified on-chain provider is not connected');
   };
 
   const copyAddress = (addr: string) => {

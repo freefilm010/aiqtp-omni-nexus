@@ -30,14 +30,14 @@ function toTradeLog(row: TradeLogRow): TradeLog {
   return {
     id: row.id,
     userId: row.user_id,
-    symbol: row.symbol ?? "BTC/USDT",
-    side: row.side ?? "buy",
-    action: row.action ?? "market",
+    symbol: row.symbol ?? "UNKNOWN",
+    side: row.side ?? "unknown",
+    action: row.action ?? "unknown",
     price: Number(row.price) || 0,
     quantity: Number(row.quantity) || 0,
     fee: Number(row.fee) || 0,
     slippagePct: Number(row.slippage_pct) || 0,
-    status: row.status ?? "filled",
+    status: row.status ?? "unknown",
     createdAt: row.created_at,
   };
 }
@@ -88,21 +88,26 @@ export async function executeTrade(params: {
   symbol: string;
   side: "buy" | "sell";
   quantity: number;
-  price: number;
+  exchangeAccountId: string;
 }): Promise<ServiceResult<null>> {
   const userId = await currentUserId();
   if (!userId) return { data: null, error: "Not authenticated" };
 
-  const { error } = await supabase.from("trade_logs").insert({
-    user_id: userId,
-    symbol: params.symbol,
-    side: params.side,
-    action: "market",
-    price: params.price,
-    quantity: params.quantity,
-    status: "filled",
+  const { data, error } = await supabase.functions.invoke("trade-execute", {
+    body: {
+      action: "place_order",
+      params: {
+        symbol: params.symbol,
+        side: params.side,
+        type: "market",
+        quantity: params.quantity,
+        mode: "live",
+        exchangeAccountId: params.exchangeAccountId,
+      },
+    },
   });
 
   if (error) return { data: null, error: error.message };
+  if (!data?.success) return { data: null, error: data?.error ?? "Exchange rejected the order" };
   return { data: null, error: null };
 }

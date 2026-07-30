@@ -382,12 +382,18 @@ class SimOrderRequest(BaseModel):
     price: Optional[float] = None
 
 class LiveOrderRequest(BaseModel):
+    exchange: str = Field(..., min_length=1)
     symbol: str
     side: str = Field(..., pattern="^(buy|sell)$")
-    qty: float = Field(..., gt=0)
+    amount: float = Field(..., gt=0)
     order_type: str = Field("market", pattern="^(market|limit)$")
-    limit_price: Optional[float] = None
-    time_in_force: str = "gtc"
+    price: Optional[float] = Field(default=None, gt=0)
+
+
+class CancelLiveOrderRequest(BaseModel):
+    exchange: str = Field(..., min_length=1)
+    order_id: str = Field(..., min_length=1)
+    symbol: str = Field(..., min_length=3)
 
 
 class BrokerOrderRequest(BaseModel):
@@ -811,11 +817,46 @@ async def ccxt_live_order(
     x_user_id: Optional[str] = Header(default=None),
     authorization: Optional[str] = Header(default=None),
 ):
-    _require_user(x_user_id, authorization)
+    user_id = _require_user(x_user_id, authorization)
     if not CCXT_LIVE_ENABLED:
         raise HTTPException(503, "Live trading is disabled. Set CCXT_LIVE_ENABLED=true")
-    result = await _place_alpaca_order(req)
-    log.info("Live order placed: %s %s %s qty=%s", req.side, req.symbol, req.order_type, req.qty)
+    status_rows = await _query("SELECT active FROM public.system_status WHERE key = 'main' LIMIT 1")
+    if not status_rows or status_rows[0].get("active") is not True:
+        raise HTTPException(503, "Trading is halted or system status is unavailable")
+    result = await _cx.create_order(
+        req.exchange,
+        req.symbol,
+        req.order_type,
+        req.side,
+        req.amount,
+        req.price,
+    )
+    log.info(
+        "CCXT live order user=%s exchange=%s side=%s symbol=%s amount=%s",
+        user_id, req.exchange, req.side, req.symbol, req.amount,
+    )
+    return result
+
+
+@app.post("/ccxt/cancel_order")
+@limiter.limit("10/minute")
+async def ccxt_cancel_order(
+    request: Request,
+    req: CancelLiveOrderRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    user_id = _require_user(x_user_id, authorization)
+    if not CCXT_LIVE_ENABLED:
+        raise HTTPException(503, "Live trading is disabled. Set CCXT_LIVE_ENABLED=true")
+    status_rows = await _query("SELECT active FROM public.system_status WHERE key = 'main' LIMIT 1")
+    if not status_rows or status_rows[0].get("active") is not True:
+        raise HTTPException(503, "Trading is halted or system status is unavailable")
+    result = await _cx.cancel_order(req.exchange, req.order_id, req.symbol)
+    log.info(
+        "CCXT order cancellation user=%s exchange=%s order=%s symbol=%s",
+        user_id, req.exchange, req.order_id, req.symbol,
+    )
     return result
 
 

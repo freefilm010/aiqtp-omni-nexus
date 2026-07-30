@@ -270,3 +270,5 @@ async def ccxt_ohlcv(
 @_wrap("ccxt.markets")
 async def ccxt_markets(exchange: str) -> list[str]:
     return await cx.markets(exchange)
+
+

@@ -91,6 +91,18 @@ serve(async (req) => {
           );
         }
 
+        const { data: systemStatus, error: statusError } = await supabase
+          .from('system_status')
+          .select('active')
+          .eq('key', 'main')
+          .maybeSingle();
+        if (statusError || systemStatus?.active !== true) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Trading is halted or system status is unavailable' }),
+            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
 
         // Live trading - fetch exchange account and execute
 
@@ -109,15 +121,7 @@ serve(async (req) => {
             );
           }
 
-          // Fetch API key from secure vault
-          const { data: vault } = await supabase
-            .from('account_key_vault')
-            .select('api_key_encrypted')
-            .eq('account_id', exchangeAccountId)
-            .single();
-
-          const apiKey = vault?.api_key_encrypted || '';
-          const exchangeType = account.account_type.toLowerCase();
+          const exchangeType = account.account_name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
           // Route all live orders through the Python trading service (CCXT).
           // CCXT supports 100+ exchanges — no per-exchange stub needed here.
@@ -126,16 +130,17 @@ serve(async (req) => {
           try {
             const ccxtRes = await fetch(`${workerUrl}/ccxt/live_order`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': authHeader,
+              },
               body: JSON.stringify({
                 exchange: exchangeType,
                 symbol,
                 side,
-                type,
+                order_type: type,
                 amount: quantity,
                 price: type === 'limit' ? price : undefined,
-                api_key: apiKey,
-                api_secret: Deno.env.get(`${account.account_name.toUpperCase()}_API_SECRET`) || '',
               }),
             });
             if (!ccxtRes.ok) {
@@ -144,10 +149,17 @@ serve(async (req) => {
             }
             const ccxtData = await ccxtRes.json();
             exchangeResult = {
-              orderId: ccxtData.id ?? `ord_${Date.now()}`,
-              filledPrice: ccxtData.average ?? ccxtData.price ?? price ?? 0,
-              status: ccxtData.status ?? 'open',
+              orderId: ccxtData.id,
+              filledPrice: ccxtData.average ?? ccxtData.price ?? null,
+              status: ccxtData.status,
             };
+            if (!exchangeResult.orderId || !exchangeResult.status) {
+              throw new Error('Exchange response did not contain a verifiable order id and status');
+            }
+            const normalizedStatus = String(exchangeResult.status).toLowerCase();
+            if (normalizedStatus === 'closed' && (!exchangeResult.filledPrice || exchangeResult.filledPrice <= 0)) {
+              throw new Error('Exchange reported a closed order without a verifiable fill price');
+            }
           } catch (exchangeError: any) {
             console.error('Exchange execution error:', exchangeError);
             
@@ -179,7 +191,7 @@ serve(async (req) => {
             side,
             quantity,
             price: exchangeResult.filledPrice,
-            status: 'success',
+            status: exchangeResult.status,
             exchange_order_id: exchangeResult.orderId,
             created_at: new Date().toISOString()
           });
@@ -217,7 +229,7 @@ serve(async (req) => {
         // Look up the trade in trade_logs by exchange_order_id or by row id
         const { data: tradeRow, error: lookupError } = await supabase
           .from('trade_logs')
-          .select('id, status, symbol, side, quantity, exchange_order_id')
+          .select('id, status, symbol, side, quantity, exchange_order_id, exchange_account_id')
           .eq('user_id', user.id)
           .or(`exchange_order_id.eq.${orderId},id.eq.${orderId}`)
           .order('created_at', { ascending: false })
@@ -246,6 +258,44 @@ serve(async (req) => {
               error: `Cannot cancel order with status '${tradeRow.status}'. Only pending or open orders can be cancelled.`,
             }),
             { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (!tradeRow.exchange_order_id || !tradeRow.exchange_account_id) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Order lacks verified exchange identifiers' }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        const { data: cancelAccount, error: cancelAccountError } = await supabase
+          .from('connected_accounts')
+          .select('account_name')
+          .eq('id', tradeRow.exchange_account_id)
+          .eq('user_id', user.id)
+          .single();
+        if (cancelAccountError || !cancelAccount) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Exchange account not found or not authorized' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+
+        const cancelWorkerUrl = Deno.env.get('RENDER_WORKER_URL') ?? 'https://aiqtp-trading-service.onrender.com';
+        const cancelResponse = await fetch(`${cancelWorkerUrl}/ccxt/cancel_order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+          body: JSON.stringify({
+            exchange: cancelAccount.account_name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+            order_id: tradeRow.exchange_order_id,
+            symbol: tradeRow.symbol,
+          }),
+        });
+        if (!cancelResponse.ok) {
+          const details = await cancelResponse.text();
+          return new Response(
+            JSON.stringify({ success: false, error: `Exchange cancellation failed (${cancelResponse.status}): ${details}` }),
+            { status: cancelResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
           );
         }
 
@@ -280,11 +330,12 @@ serve(async (req) => {
       }
 
       case 'get_orders': {
-        // Fetch from portfolio_holdings (real positions only)
-        const { data: holdings, error } = await supabase
-          .from('portfolio_holdings')
+        const { data: orders, error } = await supabase
+          .from('trade_logs')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .in('status', ['pending', 'open'])
+          .order('created_at', { ascending: false });
 
         if (error) {
           return new Response(
@@ -294,27 +345,14 @@ serve(async (req) => {
         }
 
         return new Response(
-          JSON.stringify({ success: true, orders: holdings || [], mode: 'live' }),
+          JSON.stringify({ success: true, orders: orders || [], mode: 'live' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       case 'get_positions': {
-        // Fetch from portfolio_holdings (real positions only)
-        const { data: positions, error } = await supabase
-          .from('portfolio_holdings')
-          .select('*')
-          .eq('user_id', user.id);
-
-        if (error) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'Failed to fetch positions' }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
         return new Response(
-          JSON.stringify({ success: true, positions: positions || [], mode: 'live' }),
+          JSON.stringify({ success: true, positions: [], mode: 'live', source: 'exchange_position_adapter_required' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

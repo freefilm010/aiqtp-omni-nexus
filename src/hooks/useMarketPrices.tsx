@@ -51,14 +51,9 @@ const COINGECKO_IDS: Record<string, string> = {
   FIL: "filecoin",
 };
 
-const MIN_POLL_MS = 10_000; // 10s fallback polling — WebSocket is primary
+const MIN_POLL_MS = 2_000;
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
-/**
- * 90s = 3× the 30s poll interval. Tighter thresholds were causing the DB-cache
- * coverage check to constantly trigger paid CoinGecko fetches and were marking
- * fresh prices as stale (see useAssetValuation for full context).
- */
-const MARKET_PRICE_STALE_MS = 90 * 1000;
+const MARKET_PRICE_STALE_MS = 5_000;
 
 const COINGECKO_SYMBOL_BY_ID = Object.fromEntries(
   Object.entries(COINGECKO_IDS).map(([symbol, id]) => [id, symbol])
@@ -309,7 +304,7 @@ const loadMarketPrices = async (): Promise<MarketPricesResult> => {
   }
 };
 
-export const useMarketPrices = (pollIntervalMs: number = 30000) => {
+export const useMarketPrices = (pollIntervalMs: number = 2_000) => {
   const [isLive, setIsLive] = useState(true);
   
   const queryClient = useQueryClient();
@@ -334,7 +329,7 @@ export const useMarketPrices = (pollIntervalMs: number = 30000) => {
   const lastSyncError = query.data?.lastSyncError ?? null;
   const loading = query.isLoading;
 
-  // Compute whether data is actually fresh (newest price < 5 min old)
+  // A market feed is live only when at least one configured price is <5s old.
   const isFresh = useMemo(() => {
     const entries = Object.values(prices);
     if (entries.length === 0) return false;
@@ -376,11 +371,11 @@ export const useMarketPrices = (pollIntervalMs: number = 30000) => {
     prices,
     getPrice,
     getAllPrices,
-    /** true when polling is active AND data is fresh (< 5 min old) */
+    /** true when polling is active AND data is fresh (<5s old) */
     isLive: isLive && isFresh,
     /** true when polling is active (user hasn't paused) */
     isPolling: isLive,
-    /** true when newest price data is < 5 min old */
+    /** true when newest price data is <5s old */
     isFresh,
     toggleLive,
     lastSyncError,

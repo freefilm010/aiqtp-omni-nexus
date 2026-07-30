@@ -45,6 +45,6 @@ export async function getMarketPrice(coinId: string): Promise<ServiceResult<Mark
 }
 
 /** Check if market data is stale (older than threshold). */
-export function isMarketDataStale(lastUpdated: string, thresholdMs = 5 * 60 * 1000): boolean {
+export function isMarketDataStale(lastUpdated: string, thresholdMs = 5_000): boolean {
   return (Date.now() - new Date(lastUpdated).getTime()) > thresholdMs;
 }

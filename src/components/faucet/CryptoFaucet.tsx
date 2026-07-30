@@ -367,7 +367,9 @@ const CryptoFaucet = () => {
         side: 'buy',
         price: valuation.priceUsd,
         quantity: stratQuantity,
-        status: 'completed',
+        // Internal allocation only. It is not a broker fill and must never be
+        // represented as a completed live trade.
+        status: 'allocated',
         ai_triggered: true,
         ai_reason: `Auto-compound ${tokenSymbol} → ${slice.name} (${slice.pct}%) | $${usdValue.toFixed(2)} total`,
       });

@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Brain, Bot, Shield, Zap, Activity, TrendingUp, Eye, BarChart3,
   Network, GitMerge, Cpu, Flame, Skull, Crown, RefreshCw, AlertTriangle,
@@ -211,19 +212,9 @@ const HiveMindPage = () => {
   const swarmConfidence = Math.max(bullPercent, bearPercent);
   const avgAccuracy = totalVoters > 0 ? Math.round(activeAgents.reduce((s, a) => s + a.accuracy7d, 0) / totalVoters) : 0;
 
-  const handleRetrain = useCallback(async (agentId: string) => {
-    // Update DB status
-    await supabase.from("swarm_agents").update({ status: "retraining", confidence: 0, signals_today: 0, vote: "neutral" }).eq("id", agentId);
-    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, status: "retraining" as const, confidence: 0, signalsToday: 0, vote: "neutral" as const } : a));
-
-    // Simulate retraining completion
-    setTimeout(async () => {
-      const newConf = 70 + Math.floor(Math.random() * 25);
-      const newAcc = 60 + Math.floor(Math.random() * 30);
-      await supabase.from("swarm_agents").update({ status: "active", confidence: newConf, accuracy_7d: newAcc, generation: agents.find(a => a.id === agentId)!.generation + 1, streak: 0 }).eq("id", agentId);
-      setAgents(prev => prev.map(a => a.id === agentId ? { ...a, status: "active" as const, confidence: newConf, accuracy7d: newAcc, generation: a.generation + 1, streak: 0 } : a));
-    }, 8000);
-  }, [agents]);
+  const handleRetrain = useCallback(async (_agentId: string) => {
+    toast.error("Verified retraining worker is not connected");
+  }, []);
 
   useEffect(() => {
     if (!autoEvolution) return;

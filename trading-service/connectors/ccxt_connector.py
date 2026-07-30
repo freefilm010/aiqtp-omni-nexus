@@ -134,3 +134,14 @@ class CCXTConnector:
             return await c.create_order(symbol, order_type, side, amount, price)
         finally:
             await c.close()
+
+    async def cancel_order(self, exchange: str, order_id: str, symbol: str) -> dict[str, Any]:
+        c = self._client(exchange)
+        try:
+            if not c.apiKey:
+                raise RuntimeError(
+                    f"{exchange.upper()}_API_KEY/SECRET not set for live order cancellation"
+                )
+            return await c.cancel_order(order_id, symbol)
+        finally:
+            await c.close()
