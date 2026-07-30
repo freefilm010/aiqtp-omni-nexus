@@ -81,13 +81,14 @@ const ExchangeConnector = () => {
         toast.error("Unable to load exchange connections", { description: error.message });
         return;
       }
-      setExchanges((data ?? []).map((row) => {
+      setExchanges((data ?? []).filter((row) => row.id && row.account_name).map((row) => {
+        const accountName = row.account_name ?? "Unknown exchange";
         const catalog = availableExchanges.find((item) =>
-          item.id === row.account_name.toLowerCase().replace(/[^a-z0-9]/g, "")
+          item.id === accountName.toLowerCase().replace(/[^a-z0-9]/g, "")
         );
         return {
-          id: row.id,
-          name: row.account_name,
+          id: row.id ?? accountName,
+          name: accountName,
           logo: catalog?.logo ?? "↔",
           type: catalog?.type ?? "cex",
           chain: catalog?.chain,

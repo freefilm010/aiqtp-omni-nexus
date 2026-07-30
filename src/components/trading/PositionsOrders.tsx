@@ -44,14 +44,13 @@ interface Order {
 
 const PositionsOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
+  const [positions] = useState<Position[]>([]);
   const [showAllSymbols, setShowAllSymbols] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     // Portfolio holdings are not leveraged exchange positions. Only verified
     // position responses may populate this panel.
-    setPositions([]);
 
     // Load orders via DAL
     const tradesResult = await portfolioService.getTradeHistory(50);

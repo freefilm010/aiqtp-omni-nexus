@@ -156,6 +156,10 @@ serve(async (req) => {
             if (!exchangeResult.orderId || !exchangeResult.status) {
               throw new Error('Exchange response did not contain a verifiable order id and status');
             }
+            const normalizedStatus = String(exchangeResult.status).toLowerCase();
+            if (normalizedStatus === 'closed' && (!exchangeResult.filledPrice || exchangeResult.filledPrice <= 0)) {
+              throw new Error('Exchange reported a closed order without a verifiable fill price');
+            }
           } catch (exchangeError: any) {
             console.error('Exchange execution error:', exchangeError);
             
