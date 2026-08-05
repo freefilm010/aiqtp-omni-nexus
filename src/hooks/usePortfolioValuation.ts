@@ -29,6 +29,8 @@ export interface PortfolioValuationResult {
   staleAssetCount: number;
   /** Count of real assets with missing prices (excluded from net worth) */
   missingPriceCount: number;
+  /** Count of platform tokens awaiting a live oracle (valued at $0, excluded) */
+  awaitingOracleCount: number;
   /** true if ANY real asset has stale data */
   hasStaleData: boolean;
   /** true if ANY real asset has no price */
@@ -54,6 +56,7 @@ export function usePortfolioValuation(): PortfolioValuationResult {
       validAssetCount: 0,
       staleAssetCount: 0,
       missingPriceCount: 0,
+      awaitingOracleCount: 0,
       hasStaleData: false,
       hasMissingPrices: false,
       hasDegradedData: false,
@@ -77,8 +80,14 @@ export function usePortfolioValuation(): PortfolioValuationResult {
     let validAssetCount = 0;
     let staleAssetCount = 0;
     let missingPriceCount = 0;
+    let awaitingOracleCount = 0;
 
     for (const v of realAssets) {
+      if (v.awaitingOracle) {
+        awaitingOracleCount++;
+        continue;
+      }
+
       if (v.priceUnavailable) {
         missingPriceCount++;
         continue;
@@ -109,6 +118,7 @@ export function usePortfolioValuation(): PortfolioValuationResult {
       validAssetCount,
       staleAssetCount,
       missingPriceCount,
+      awaitingOracleCount,
       hasStaleData: staleAssetCount > 0,
       hasMissingPrices: missingPriceCount > 0,
       hasDegradedData: false,
