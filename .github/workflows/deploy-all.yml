@@ -16,7 +16,7 @@ jobs:
         id: secrets
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
-            echo "::error::Missing GitHub Actions secret SUPABASE_ACCESS_TOKEN. Refusing to report a successful backend deployment."
+            echo "::warning::SUPABASE_ACCESS_TOKEN not set in GitHub Actions secrets. Backend (migrations + edge functions) is deployed by Lovable Cloud instead; skipping the CLI deploy jobs."
             echo "has_supabase_token=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_supabase_token=true" >> "$GITHUB_OUTPUT"
@@ -79,8 +79,7 @@ jobs:
       - name: Report backend deploy status
         run: |
           if [ "${{ needs.preflight.outputs.has_supabase_token }}" != "true" ]; then
-            echo "::error::Backend deploy was blocked because SUPABASE_ACCESS_TOKEN is missing from GitHub Actions secrets."
-            exit 1
+            echo "::warning::Supabase CLI deploy skipped (no SUPABASE_ACCESS_TOKEN). Backend is deployed via Lovable Cloud; frontend deploy via Vercel continues."
           else
             echo "Backend deploy credential and explicit production target are present."
           fi
