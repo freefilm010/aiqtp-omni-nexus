@@ -61,10 +61,18 @@ export interface AssetValuation {
   priceUnavailable: boolean;
   /** true when this is a testnet/faucet token with $0 value */
   isTestnet: boolean;
+  /** true for platform tokens that have no live oracle publishing prices (valued at $0) */
+  awaitingOracle: boolean;
 }
 
 const STALE_THRESHOLD_MS = 5_000;
 const PLATFORM_STALE_THRESHOLD_MS = 5_000;
+/**
+ * Beyond this age a platform-token feed is not "briefly stale" — no oracle is
+ * publishing prices at all. Those assets are reported as awaiting a live oracle
+ * and valued at $0 rather than repeatedly flagged as stale.
+ */
+const NO_ORACLE_THRESHOLD_MS = 10 * 60_000;
 
 const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
 
