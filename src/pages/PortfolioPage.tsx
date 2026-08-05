@@ -23,6 +23,7 @@ const TabLoader = () => (
 
 const PriceBadge = ({ val }: { val: AssetValuation }) => {
   if (val.isTestnet) return <Badge variant="outline" className="text-[10px] px-1.5 py-0">Test</Badge>;
+  if (val.awaitingOracle) return <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-0.5 text-muted-foreground"><AlertTriangle className="h-2.5 w-2.5" /> No Oracle</Badge>;
   if (val.priceUnavailable) return <Badge variant="destructive" className="text-[10px] px-1.5 py-0 gap-0.5"><XCircle className="h-2.5 w-2.5" /> No Price</Badge>;
   if (val.isStale) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-accent-foreground"><AlertTriangle className="h-2.5 w-2.5" /> Stale</Badge>;
   if (val.isLive) return <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5 text-primary"><CheckCircle2 className="h-2.5 w-2.5" /> Live</Badge>;
@@ -32,7 +33,7 @@ const PriceBadge = ({ val }: { val: AssetValuation }) => {
 const PortfolioPage = () => {
   const {
     realAssets, testAssets, netWorth, netWorthIncludingStale,
-    validAssetCount, staleAssetCount, missingPriceCount,
+    validAssetCount, staleAssetCount, missingPriceCount, awaitingOracleCount,
     hasStaleData, hasMissingPrices,
     isLoading, error, refetch,
   } = usePortfolioValuation();
@@ -64,9 +65,15 @@ const PortfolioPage = () => {
         {!isLoading && !error && hasHoldings && (
           <>
             {/* Data quality warnings */}
-            {(hasStaleData || hasMissingPrices) && (
+            {(hasStaleData || hasMissingPrices || awaitingOracleCount > 0) && (
               <Card className="mb-4 border-accent/50 bg-accent/5">
                 <CardContent className="p-3 text-xs space-y-1">
+                  {awaitingOracleCount > 0 && (
+                    <p className="flex items-center gap-1.5 text-muted-foreground">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      {awaitingOracleCount} platform token{awaitingOracleCount > 1 ? "s have" : " has"} no live oracle yet — valued at $0
+                    </p>
+                  )}
                   {hasStaleData && (
                     <p className="flex items-center gap-1.5 text-accent-foreground">
                       <AlertTriangle className="h-3.5 w-3.5" />

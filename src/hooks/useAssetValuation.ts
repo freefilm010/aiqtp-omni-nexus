@@ -61,10 +61,18 @@ export interface AssetValuation {
   priceUnavailable: boolean;
   /** true when this is a testnet/faucet token with $0 value */
   isTestnet: boolean;
+  /** true for platform tokens that have no live oracle publishing prices (valued at $0) */
+  awaitingOracle: boolean;
 }
 
 const STALE_THRESHOLD_MS = 5_000;
 const PLATFORM_STALE_THRESHOLD_MS = 5_000;
+/**
+ * Beyond this age a platform-token feed is not "briefly stale" — no oracle is
+ * publishing prices at all. Those assets are reported as awaiting a live oracle
+ * and valued at $0 rather than repeatedly flagged as stale.
+ */
+const NO_ORACLE_THRESHOLD_MS = 10 * 60_000;
 
 const PLATFORM_TOKENS = new Set(["QTC", "AIQ", "NXS", "AIQTP", "QAQI"]);
 
@@ -153,6 +161,7 @@ export function useAssetValuation() {
           isStale: false,
           priceUnavailable: false,
           isTestnet: true,
+          awaitingOracle: false,
         };
       }
 
@@ -167,6 +176,12 @@ export function useAssetValuation() {
       const platformPriceIsStale = Boolean(
         platformTokenPrice?.lastUpdated &&
           Date.now() - new Date(platformTokenPrice.lastUpdated).getTime() > platformStaleMs
+      );
+      const awaitingOracle = Boolean(
+        PLATFORM_TOKENS.has(upper) &&
+          !marketPrice &&
+          (!platformTokenPrice?.lastUpdated ||
+            Date.now() - new Date(platformTokenPrice.lastUpdated).getTime() > NO_ORACLE_THRESHOLD_MS)
       );
 
       let priceUsd = 0;
@@ -187,10 +202,17 @@ export function useAssetValuation() {
         priceUsd = 1;
       }
 
+      // No oracle publishing => honest $0 valuation, not a "stale price".
+      if (awaitingOracle) {
+        priceUsd = 0;
+        change24h = null;
+        live = false;
+      }
+
       const valueUsd = quantity * priceUsd;
       const valueUsdt = valueUsd / USDT_USD_RATIO;
        const priceUnavailable = priceUsd === 0 && !DOLLAR_PEGGED_ASSETS.has(upper);
-      const isStale = marketPrice ? marketPriceIsStale : platformPriceIsStale;
+      const isStale = awaitingOracle ? false : marketPrice ? marketPriceIsStale : platformPriceIsStale;
 
       return {
         symbol: upper,
@@ -203,6 +225,7 @@ export function useAssetValuation() {
         isStale,
         priceUnavailable,
         isTestnet: false,
+        awaitingOracle,
       };
     },
     [getPrice, isLive, platformTokenPrices]
