@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 /**
  * Subscription state for the currently-authenticated user.
@@ -29,7 +29,7 @@ export interface ActiveSubscription {
 }
 
 export function useActiveSubscription(requiredTier?: string): ActiveSubscription {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);

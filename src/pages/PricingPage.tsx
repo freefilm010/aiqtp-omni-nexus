@@ -42,6 +42,7 @@ import {
   calculateAffiliateEarnings
 } from "@/lib/fees/platformFees";
 import { QuickPayment } from "@/components/payments/QuickPayment";
+import { SignalsProPlans } from "@/components/payments/SignalsProPlans";
 
 const PricingPage = () => {
   return (
@@ -50,12 +51,14 @@ const PricingPage = () => {
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <Badge className="mb-4 bg-success/20 text-success border-success/30">100% Free Access</Badge>
-          <h1 className="text-xl sm:text-4xl font-bold mb-4">{FEE_SUMMARY.headline}</h1>
+          <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">Private beta pricing</Badge>
+          <h1 className="text-xl sm:text-4xl font-bold mb-4">AIQTP Platform Pricing</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {FEE_SUMMARY.subheadline}
+            Start with paid research and workflow access. Deposits, profit-sharing, and marketplace fees are separate platform rails.
           </p>
         </div>
+
+        <SignalsProPlans />
 
         {/* Tiered Fee Structure - Main Revenue Model */}
         <Card className="mb-12 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
