@@ -190,7 +190,7 @@ export const BOT_PERSONAS: BotPersona[] = [
     strategyType: 'Cross-Exchange Arbitrage',
     personality: 'Lightning fast and ghost-like. Here and gone before you blink.',
     catchphrase: "Price discrepancies are my prey. I hunt at the speed of light.",
-    backstory: 'Existing in the spaces between exchanges, PHANTOM exploits millisecond price differences across markets. Invisible to most traders, PHANTOM extracts risk-free profits from market inefficiencies.',
+    backstory: 'Existing in the spaces between exchanges, PHANTOM studies millisecond price differences across markets. Invisible to most traders, PHANTOM maps arbitrage opportunities while respecting liquidity, slippage, and execution risk.',
     visualTraits: {
       primaryColor: 'ghost-white',
       secondaryColor: 'cyber-cyan',

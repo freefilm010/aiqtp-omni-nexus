@@ -67,6 +67,9 @@ export const PlatformStaking = () => {
   const [staking, setStaking] = useState<string | null>(null);
 
   const handleStake = async (pool: StakingPool) => {
+    toast.info("Token staking is paused pending legal and securities review.");
+    return;
+
     const amount = Number(amounts[pool.symbol] || 0);
     if (amount < pool.minStake) {
       toast.error(`Minimum stake is ${pool.minStake} ${pool.symbol}`);
@@ -114,13 +117,13 @@ export const PlatformStaking = () => {
   return (
     <div>
       <div className="text-center mb-4 sm:mb-8">
-        <Badge className="mb-2 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+        <Badge className="mb-2 bg-amber-500/20 text-amber-400 border-amber-500/30">
           <Coins className="h-3 w-3 mr-1" />
-          Earn Passive Income
+          Compliance Review
         </Badge>
         <h2 className="text-lg sm:text-2xl font-bold">Platform Token Staking</h2>
         <p className="text-muted-foreground mt-1 sm:mt-2 text-xs sm:text-base">
-          Lock tokens to earn rewards. Higher lock = higher APY.
+          Token rewards are paused until program terms, disclosures, and securities analysis are complete.
         </p>
       </div>
 
@@ -138,8 +141,8 @@ export const PlatformStaking = () => {
                     <CardTitle className={`text-sm sm:text-lg ${pool.color}`}>{pool.token}</CardTitle>
                     <CardDescription className="text-[10px] sm:text-sm">{pool.symbol}</CardDescription>
                   </div>
-                  <Badge variant="outline" className="text-xs sm:text-lg font-bold border-emerald-500/50 text-emerald-400">
-                    {pool.apy}% APY
+                  <Badge variant="outline" className="text-xs sm:text-lg font-bold border-amber-500/50 text-amber-400">
+                    Review
                   </Badge>
                 </div>
               </CardHeader>

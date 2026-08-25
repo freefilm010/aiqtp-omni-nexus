@@ -671,15 +671,15 @@ function generateFallbackResponse(query: string): string {
 | Generator | Status | Daily Revenue | Rate |
 |-----------|--------|--------------|------|
 | Arbitrage Bot | 🟢 Active | $245.50 | 2.1% |
-| Liquidity Mining | 🟢 Active | $182.30 | 18.5% APY |
-| Staking Rewards | 🟢 Active | $156.80 | 8.2% APY |
-| Trading Signals | 🟡 Paused | $0 | 68% Win |
+| Liquidity Mining | Under Review | Verified data required | No APY claim |
+| Staking Rewards | Paused | Legal review required | No yield claim |
+| Trading Signals | In Build | Subscription product | No win-rate claim |
 | Platform Fees | 🟢 Active | $89.20 | - |
 
 **Totals:**
-- Daily Revenue: **$673.80**
-- Monthly Projected: **$20,214.00**
-- Auto-Reinvest: 20% enabled
+- Daily Revenue: **requires verified Stripe/Supabase data**
+- Monthly Projected: **not published until real MRR exists**
+- Auto-Reinvest: disabled until compliance review
 
 *Powered by QAQI Revenue Engine*`;
   }

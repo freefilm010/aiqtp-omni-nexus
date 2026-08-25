@@ -109,7 +109,7 @@ const COMPETITOR_INFO = {
   tradingview: {
     name: 'TradingView',
     price: '$0-600/year',
-    users: '50M+',
+    users: 'Large public network',
     strength: 'Social, Charting',
     weakness: 'Execution, Risk',
   },
