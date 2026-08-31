@@ -78,6 +78,8 @@ const WalletAssets = lazy(() => import("./pages/WalletAssets"));
 const AutoInvestPage = lazy(() => import("./pages/AutoInvestPage"));
 const PerformanceShowcase = lazy(() => import("./pages/PerformanceShowcase"));
 const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
+const OllamaSwarmPage = lazy(() => import("./pages/OllamaSwarmPage"));
+const QuantResearchPage = lazy(() => import("./pages/QuantResearchPage"));
 const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
@@ -256,6 +258,22 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <StrategyMarketplacePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/swarm"
+                        element={
+                          <ProtectedRoute>
+                            <OllamaSwarmPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/research"
+                        element={
+                          <ProtectedRoute>
+                            <QuantResearchPage />
                           </ProtectedRoute>
                         }
                       />
