@@ -5,6 +5,7 @@ import PredictionDashboard from "@/components/ml/PredictionDashboard";
 import ModelTrainer from "@/components/ml/ModelTrainer";
 import SignalFeed from "@/components/ml/SignalFeed";
 import FeatureImportance from "@/components/ml/FeatureImportance";
+import AIPredictionEngine from "@/components/ml/AIPredictionEngine";
 
 const MLPredictions = () => {
   return (
@@ -19,11 +20,12 @@ const MLPredictions = () => {
         </div>
 
         <Tabs defaultValue="predictions" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="predictions" className="text-[10px] sm:text-sm px-1 sm:px-3">Predictions</TabsTrigger>
             <TabsTrigger value="signals" className="text-[10px] sm:text-sm px-1 sm:px-3">Signals</TabsTrigger>
             <TabsTrigger value="trainer" className="text-[10px] sm:text-sm px-1 sm:px-3">Trainer</TabsTrigger>
             <TabsTrigger value="features" className="text-[10px] sm:text-sm px-1 sm:px-3">Features</TabsTrigger>
+            <TabsTrigger value="engine" className="text-[10px] sm:text-sm px-1 sm:px-3">Engine</TabsTrigger>
           </TabsList>
 
           <TabsContent value="predictions">
@@ -40,6 +42,10 @@ const MLPredictions = () => {
 
           <TabsContent value="features">
             <FeatureImportance />
+          </TabsContent>
+
+          <TabsContent value="engine">
+            <AIPredictionEngine />
           </TabsContent>
         </Tabs>
       </main>

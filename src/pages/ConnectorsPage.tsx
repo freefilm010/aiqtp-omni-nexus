@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import GitHubEcosystem from "@/components/github/GitHubEcosystem";
 import { Input } from "@/components/ui/input";
 import { Search, Plug, Cloud, Cpu, Coins, Wallet, ArrowRightLeft, Globe, Dice5, Wrench, CreditCard, Bot } from "lucide-react";
 import CloudStorageConnectors from "@/components/connections/CloudStorageConnectors";
@@ -67,6 +68,7 @@ const ConnectorsPage = () => {
           {/* ALL */}
           <TabsContent value="all" className="space-y-8">
             <CloudStorageConnectors />
+            <GitHubEcosystem />
             <SatelliteServicesSection filter={search} categories={["exchange", "wallet", "dex", "staking", "mining", "casino"]} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <AlpacaStockTrading />
@@ -84,8 +86,9 @@ const ConnectorsPage = () => {
           </TabsContent>
 
           {/* Cloud & Tools */}
-          <TabsContent value="cloud">
+          <TabsContent value="cloud" className="space-y-8">
             <CloudStorageConnectors />
+            <GitHubEcosystem />
           </TabsContent>
 
           {/* Exchanges */}

@@ -5,6 +5,7 @@ import NFTCreator from "@/components/nft/NFTCreator";
 import NFTWallet from "@/components/nft/NFTWallet";
 import NFTMarketplace from "@/components/nft/NFTMarketplace";
 import ContractBuilder from "@/components/nft/ContractBuilder";
+import BotTradingCardGallery from "@/components/nft/BotTradingCardGallery";
 import ComplianceRegistry from "@/components/standards/ComplianceRegistry";
 import MarketplaceCompetitions from "@/components/marketplace/MarketplaceCompetitions";
 import MarketplaceSuggestions from "@/components/marketplace/MarketplaceSuggestions";
@@ -35,7 +36,7 @@ const NFTStudio = () => {
         </div>
 
         <Tabs defaultValue="create" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-5 sm:grid-cols-9 h-auto">
+          <TabsList className="grid w-full grid-cols-5 sm:grid-cols-10 h-auto">
             <TabsTrigger value="create" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5">
               <Palette className="h-3 w-3 sm:h-4 sm:w-4" />
               Create
@@ -72,10 +73,14 @@ const NFTStudio = () => {
               <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
               Standards
             </TabsTrigger>
+            <TabsTrigger value="botcards" className="flex items-center gap-0.5 text-[9px] sm:text-xs px-1 py-1.5 hidden sm:flex">
+              <Diamond className="h-3 w-3 sm:h-4 sm:w-4" />
+              Bot Cards
+            </TabsTrigger>
           </TabsList>
 
           {/* Second row for mobile - overflow tabs */}
-          <TabsList className="grid w-full grid-cols-4 sm:hidden h-auto">
+          <TabsList className="grid w-full grid-cols-5 sm:hidden h-auto">
             <TabsTrigger value="competitions" className="flex items-center gap-0.5 text-[9px] px-1 py-1.5">
               <Trophy className="h-3 w-3" />
               Compete
@@ -91,6 +96,10 @@ const NFTStudio = () => {
             <TabsTrigger value="standards" className="flex items-center gap-0.5 text-[9px] px-1 py-1.5">
               <Shield className="h-3 w-3" />
               Standards
+            </TabsTrigger>
+            <TabsTrigger value="botcards" className="flex items-center gap-0.5 text-[9px] px-1 py-1.5">
+              <Diamond className="h-3 w-3" />
+              Bot Cards
             </TabsTrigger>
           </TabsList>
 
@@ -128,6 +137,10 @@ const NFTStudio = () => {
 
           <TabsContent value="standards">
             <ComplianceRegistry />
+          </TabsContent>
+
+          <TabsContent value="botcards">
+            <BotTradingCardGallery />
           </TabsContent>
         </Tabs>
       </main>

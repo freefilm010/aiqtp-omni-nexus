@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +7,9 @@ import LevelIIOrderBook from "@/components/trading/LevelIIOrderBook";
 import SmartOrders from "@/components/trading/SmartOrders";
 import PatternRecognition from "@/components/trading/PatternRecognition";
 import AdvancedCharts from "@/components/trading/AdvancedCharts";
+import AdvancedTradingChart from "@/components/trading/AdvancedTradingChart";
+import MarketOverview from "@/components/trading/MarketOverview";
+import LiveHeatMapWidget from "@/components/home/LiveHeatMapWidget";
 import { 
   LayoutGrid, 
   Layers, 
@@ -15,6 +19,8 @@ import {
 } from "lucide-react";
 
 const AdvancedTrading = () => {
+  const [symbol, setSymbol] = useState("BTC/USDT");
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -50,10 +56,19 @@ const AdvancedTrading = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="charts">
-            <AdvancedCharts />
+          <TabsContent value="charts" className="space-y-4">
+            <AdvancedTradingChart symbol={symbol} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-1">
+                <MarketOverview onSelectSymbol={setSymbol} />
+              </div>
+              <div className="lg:col-span-2">
+                <AdvancedCharts />
+              </div>
+            </div>
           </TabsContent>
-          <TabsContent value="heatmap">
+          <TabsContent value="heatmap" className="space-y-4">
+            <LiveHeatMapWidget />
             <HeatMap />
           </TabsContent>
           <TabsContent value="level2">
