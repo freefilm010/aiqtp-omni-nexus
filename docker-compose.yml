@@ -265,6 +265,64 @@ services:
     depends_on:
       db: { condition: service_healthy }
 
+  # ── Edge Functions Runtime (all 52 Deno functions, self-hosted) ─────────────
+  # Replaces Supabase-hosted functions. Serves POST /<function-name>.
+  functions:
+    image: supabase/edge-runtime:v1.58.6
+    restart: unless-stopped
+    command: ["start", "--main-service", "/home/deno/functions/main"]
+    volumes:
+      - ./supabase/functions:/home/deno/functions:ro
+    environment:
+      SUPABASE_URL: http://caddy:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SUPABASE_DB_URL: "postgres://postgres:${POSTGRES_PASSWORD:-aiqtp_secure_pass_change_me}@db:5432/postgres"
+      VERIFY_JWT: "true"
+      JWT_SECRET: ${JWT_SECRET}
+      IBM_QUANTUM_API_KEY: ${IBM_QUANTUM_API_KEY:-}
+      IBM_QUANTUM_CRN: ${IBM_QUANTUM_CRN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      OLLAMA_URL: http://ollama:11434
+    depends_on:
+      db: { condition: service_healthy }
+
+  # ── Frontend (static build of this repo, served from your own VPS) ──────────
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        VITE_SUPABASE_URL: ${API_EXTERNAL_URL:-http://localhost:8000}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${ANON_KEY}
+        VITE_QUANTUM_AGENT_URL: ${VITE_QUANTUM_AGENT_URL:-http://localhost:8003}
+        VITE_RENDER_WORKER_URL: ${VITE_RENDER_WORKER_URL:-http://localhost:8002}
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  # ── Caddy: single TLS entry point (replaces Kong + Vercel + Render edges) ────
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8000:8000"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+      API_DOMAIN: ${API_DOMAIN:-localhost:8000}
+    depends_on:
+      auth: { condition: service_started }
+      rest: { condition: service_started }
+      functions: { condition: service_started }
+
 volumes:
   db-data:
   storage-data:
@@ -272,3 +330,6 @@ volumes:
   ollama-data:
   rag-repos:
   trading-data:
+  caddy-data:
+  caddy-config:
+
