@@ -45,7 +45,41 @@ BEFORE INSERT ON public.auto_invest_allocations
 FOR EACH ROW
 EXECUTE FUNCTION public.consolidate_auto_invest_allocation();
 
--- 2. Unique index on active allocations
+-- 2. Unique index on active allocations (dedupe first so this is safe on any environment)
+WITH ranked AS (
+  SELECT id,
+         ROW_NUMBER() OVER (
+           PARTITION BY engine_id, asset_symbol
+           ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, id
+         ) AS rn,
+         SUM(COALESCE(quantity, 0)) OVER (PARTITION BY engine_id, asset_symbol) AS total_quantity,
+         SUM(COALESCE(value_usd, 0)) OVER (PARTITION BY engine_id, asset_symbol) AS total_value_usd,
+         SUM(COALESCE(pnl_usd, 0)) OVER (PARTITION BY engine_id, asset_symbol) AS total_pnl_usd
+  FROM public.auto_invest_allocations
+  WHERE is_active = TRUE
+)
+UPDATE public.auto_invest_allocations a
+SET quantity = r.total_quantity,
+    value_usd = r.total_value_usd,
+    pnl_usd = r.total_pnl_usd,
+    updated_at = now()
+FROM ranked r
+WHERE a.id = r.id AND r.rn = 1;
+
+WITH ranked AS (
+  SELECT id,
+         ROW_NUMBER() OVER (
+           PARTITION BY engine_id, asset_symbol
+           ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, id
+         ) AS rn
+  FROM public.auto_invest_allocations
+  WHERE is_active = TRUE
+)
+UPDATE public.auto_invest_allocations a
+SET is_active = FALSE, updated_at = now()
+FROM ranked r
+WHERE a.id = r.id AND r.rn > 1;
+
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_auto_invest_allocation_active
 ON public.auto_invest_allocations (engine_id, asset_symbol)
 WHERE is_active = TRUE;
