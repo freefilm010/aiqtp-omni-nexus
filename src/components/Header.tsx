@@ -168,6 +168,7 @@ const Header = () => {
 
   const agentLinks = [
     { to: "/hivemind", label: "HiveMind Swarm", icon: Brain },
+    { to: "/swarm", label: "Ollama Swarm (Free)", icon: Cpu },
     { to: "/quantclaw", label: "QuantClaw", icon: Bot },
     { to: "/qaqi", label: "QAQI™ Agent", icon: Atom },
     { to: "/ai-assistant", label: "AI Assistant", icon: Bot },
@@ -175,11 +176,13 @@ const Header = () => {
 
   const aiQuantumLinks = [
     { to: "/ai-lab", label: "AI Research Lab", icon: Brain },
+    { to: "/research", label: "Quant Factor Research", icon: FlaskConical },
     { to: "/ml-predictions", label: "ML Predictions", icon: Cpu },
     { to: "/quantum-lab", label: "Quantum Lab", icon: FlaskConical },
     { to: "/titan-codex", label: "Titan Codex™", icon: Shield },
     { to: "/intelligence", label: "Market Intelligence", icon: Brain },
   ];
+
 
   const strategyLinks = [
     { to: "/strategy-studio", label: "Strategy Studio", icon: Target },
