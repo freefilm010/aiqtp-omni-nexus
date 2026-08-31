@@ -1,0 +1,89 @@
+# =============================================================================
+# AIQTP Omni-Nexus — Sovereign edge.
+# One entry point for the whole platform. No Vercel, no Render, no Supabase Inc.
+#
+#   {$APP_DOMAIN}  → the React app (static build, served locally)
+#   {$API_DOMAIN}  → the backend API surface, wire-compatible with supabase-js
+#                    so ZERO application code changes are needed.
+#
+# Set APP_DOMAIN=aiqtp.com and API_DOMAIN=api.aiqtp.com in .env and Caddy
+# provisions and renews Let's Encrypt certificates automatically.
+# =============================================================================
+
+{
+	email admin@aiqtp.com
+	# Uncomment for a fully offline / private VPS with no public DNS:
+	# auto_https off
+}
+
+# ── Application ──────────────────────────────────────────────────────────────
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# SPA: hashed assets get immutable caching, index.html never cached
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache, must-revalidate"
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy web:80
+}
+
+# ── API surface (supabase-js wire compatible) ────────────────────────────────
+{$API_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Access-Control-Allow-Origin "*"
+		Access-Control-Allow-Headers "authorization, x-client-info, apikey, content-type, x-supabase-api-version"
+		Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+		-Server
+	}
+
+	@options method OPTIONS
+	respond @options 204
+
+	# Auth (GoTrue)
+	handle_path /auth/v1/* {
+		reverse_proxy auth:9999
+	}
+
+	# PostgREST — the database Data API
+	handle_path /rest/v1/* {
+		reverse_proxy rest:3000
+	}
+
+	# Realtime (websockets)
+	handle_path /realtime/v1/* {
+		reverse_proxy realtime:4000
+	}
+
+	# Storage
+	handle_path /storage/v1/* {
+		reverse_proxy storage:5000
+	}
+
+	# Edge functions — Deno runtime, all functions in supabase/functions/
+	handle_path /functions/v1/* {
+		reverse_proxy functions:9000
+	}
+
+	# Python trading service (self-hosted replacement for Render)
+	handle_path /trading/* {
+		reverse_proxy trading-tools:8002
+	}
+
+	# RAG / local model service
+	handle_path /rag/* {
+		reverse_proxy rag:8001
+	}
+
+	respond "AIQTP sovereign API" 200
+}
