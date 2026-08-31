@@ -6699,6 +6699,99 @@ export type Database = {
           },
         ]
       }
+      quantum_asset_registry: {
+        Row: {
+          asset_hash: string
+          attestation_signature: string
+          created_at: string
+          dilithium_public_key: string
+          entropy_bits: number
+          entropy_source: string
+          id: string
+          kem_algorithm: string
+          legacy_name: string
+          legacy_quantity: number
+          legacy_symbol: string
+          legacy_value_usd: number
+          quantum_backend: string | null
+          quantum_class: string
+          quantum_job_id: string | null
+          quantum_symbol: string
+          shannon_entropy: number | null
+          sig_algorithm: string
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          wallet_id: string | null
+        }
+        Insert: {
+          asset_hash: string
+          attestation_signature: string
+          created_at?: string
+          dilithium_public_key: string
+          entropy_bits?: number
+          entropy_source?: string
+          id?: string
+          kem_algorithm?: string
+          legacy_name: string
+          legacy_quantity?: number
+          legacy_symbol: string
+          legacy_value_usd?: number
+          quantum_backend?: string | null
+          quantum_class?: string
+          quantum_job_id?: string | null
+          quantum_symbol: string
+          shannon_entropy?: number | null
+          sig_algorithm?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          wallet_id?: string | null
+        }
+        Update: {
+          asset_hash?: string
+          attestation_signature?: string
+          created_at?: string
+          dilithium_public_key?: string
+          entropy_bits?: number
+          entropy_source?: string
+          id?: string
+          kem_algorithm?: string
+          legacy_name?: string
+          legacy_quantity?: number
+          legacy_symbol?: string
+          legacy_value_usd?: number
+          quantum_backend?: string | null
+          quantum_class?: string
+          quantum_job_id?: string | null
+          quantum_symbol?: string
+          shannon_entropy?: number | null
+          sig_algorithm?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          wallet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quantum_asset_registry_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "quwallet_wallets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quantum_asset_registry_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "quwallet_wallets_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quantum_backends: {
         Row: {
           avg_job_time: string | null
