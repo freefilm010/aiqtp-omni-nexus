@@ -80,6 +80,7 @@ const PerformanceShowcase = lazy(() => import("./pages/PerformanceShowcase"));
 const QuantClawPage = lazy(() => import("./pages/QuantClawPage"));
 const OllamaSwarmPage = lazy(() => import("./pages/OllamaSwarmPage"));
 const QuantResearchPage = lazy(() => import("./pages/QuantResearchPage"));
+const InstitutionalLabsPage = lazy(() => import("./pages/InstitutionalLabsPage"));
 const HiveMindPage = lazy(() => import("./pages/HiveMindPage"));
 const CapitolTradesPage = lazy(() => import("./pages/CapitolTradesPage"));
 const BroadcastStationPage = lazy(() => import("./pages/BroadcastStationPage"));
@@ -274,6 +275,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <QuantResearchPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/labs"
+                        element={
+                          <ProtectedRoute>
+                            <InstitutionalLabsPage />
                           </ProtectedRoute>
                         }
                       />

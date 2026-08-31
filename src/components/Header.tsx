@@ -177,6 +177,7 @@ const Header = () => {
   const aiQuantumLinks = [
     { to: "/ai-lab", label: "AI Research Lab", icon: Brain },
     { to: "/research", label: "Quant Factor Research", icon: FlaskConical },
+    { to: "/labs", label: "Institutional Labs", icon: Cpu },
     { to: "/ml-predictions", label: "ML Predictions", icon: Cpu },
     { to: "/quantum-lab", label: "Quantum Lab", icon: FlaskConical },
     { to: "/titan-codex", label: "Titan Codex™", icon: Shield },
