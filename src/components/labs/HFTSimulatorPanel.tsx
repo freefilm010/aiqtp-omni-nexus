@@ -47,7 +47,7 @@ const HFTSimulatorPanel = () => {
       price,
       size,
       side: "buy",
-      timestamp: Date.now() - (10 - i) * 100,
+      submittedAt: Date.now() - (10 - i) * 100,
       latencyMs: 0,
     }));
     // Liquidity per second estimated from the visible top-of-book depth.
@@ -56,7 +56,7 @@ const HFTSimulatorPanel = () => {
       simulateHFTRoundTrip(
         LATENCY_PROFILES[profileKey],
         existing,
-        { id: "ours", price: bestBid, size: 0.05, side: "buy", timestamp: Date.now() },
+        { id: "ours", price: bestBid, size: 0.05, side: "buy", submittedAt: Date.now() },
         Math.max(0.001, liquidity),
       ),
     );
