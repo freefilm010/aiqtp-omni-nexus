@@ -13,14 +13,13 @@ const LOVABLE_HOST_SUFFIXES = [
   "gptengineer.run",
 ];
 
-const MANAGED_HOSTS = ["aiqtp.com", "aiqtp.lovable.app"];
-
 const canUseManagedBroker = () => {
-  if (typeof window === "undefined") return true;
+  if (typeof window === "undefined") return false;
   const host = window.location.hostname;
-  // Managed broker serves all Lovable-hosted surfaces AND custom domains that
-  // resolve to Lovable (aiqtp.com is allow-listed on the OAuth server).
-  if (MANAGED_HOSTS.some((h) => host === h || host.endsWith("." + h))) return true;
+  // The managed broker route (/~oauth/initiate) only exists on Lovable-hosted
+  // surfaces. aiqtp.com is served from Vercel, so that route 404s there and
+  // the user lands on an error page after choosing their Google account.
+  // Everywhere else we use native provider OAuth.
   return LOVABLE_HOST_SUFFIXES.some((s) => host === s || host.endsWith("." + s));
 };
 
