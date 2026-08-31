@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import RevenueActivation from "@/components/payments/RevenueActivation";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import Header from "@/components/Header";
@@ -254,6 +255,10 @@ const RevenueCommandCenter = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="mb-6">
+          <RevenueActivation />
         </div>
 
         <Tabs defaultValue="transactions" className="space-y-4">
