@@ -273,6 +273,8 @@ services:
     command: ["start", "--main-service", "/home/deno/functions/main"]
     volumes:
       - ./supabase/functions:/home/deno/functions:ro
+      - ./docker/edge-main:/home/deno/functions/main:ro
+
     environment:
       SUPABASE_URL: http://caddy:8000
       SUPABASE_ANON_KEY: ${ANON_KEY}
