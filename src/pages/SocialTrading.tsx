@@ -1,13 +1,17 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CopyTrading from "@/components/social/CopyTrading";
+import EliteClubChat from "@/components/social/EliteClubChat";
 
 const SocialTrading = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <CopyTrading />
+        <div className="space-y-6">
+          <CopyTrading />
+          <EliteClubChat />
+        </div>
       </main>
       <Footer />
     </div>

@@ -39,6 +39,10 @@ const CEOMissionControl = lazy(() => import("@/components/admin/CEOMissionContro
 const BotRegistry = lazy(() => import("@/components/admin/BotRegistry"));
 const SystemHealth = lazy(() => import("@/components/admin/SystemHealth"));
 const StakingAdmin = lazy(() => import("@/components/admin/StakingAdmin"));
+const IPRegistry = lazy(() => import("@/components/admin/IPRegistry"));
+const RevenueAutomation = lazy(() => import("@/components/admin/RevenueAutomation"));
+const AdminNFTWallet = lazy(() => import("@/components/admin/AdminNFTWallet"));
+const MasterKillSwitch = lazy(() => import("@/components/trading/MasterKillSwitch"));
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
@@ -112,6 +116,10 @@ const AdminDashboard = () => {
               <Route path="bots" element={<BotRegistry />} />
               <Route path="health" element={<SystemHealth />} />
               <Route path="staking" element={<StakingAdmin />} />
+              <Route path="ip-registry" element={<IPRegistry />} />
+              <Route path="revenue-automation" element={<RevenueAutomation />} />
+              <Route path="nft-wallet" element={<AdminNFTWallet />} />
+              <Route path="kill-switch" element={<MasterKillSwitch />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </Suspense>
