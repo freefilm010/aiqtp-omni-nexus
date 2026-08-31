@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import QAQIAgent from "@/components/qaqi/QAQIAgent";
 import AIQTPAgent from "@/components/qaqi/AIQTPAgent";
+import QuantumAssetRegistry from "@/components/qaqi/QuantumAssetRegistry";
 import { Atom, Bot } from "lucide-react";
 
 const QAQIPage = () => {
@@ -65,7 +66,13 @@ const QAQIPage = () => {
         
         {/* Agent Content */}
         {activeAgent === "qaqi" ? <QAQIAgent /> : <AIQTPAgent />}
+
+        {/* Quantum-asset regeneration tier (QTC twins of legacy holdings) */}
+        <div className="mt-4">
+          <QuantumAssetRegistry />
+        </div>
       </main>
+
       <Footer />
     </div>
   );
