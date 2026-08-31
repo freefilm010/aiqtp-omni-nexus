@@ -35,6 +35,7 @@ const MLPredictions = lazy(() => import("./pages/MLPredictions"));
 const DefiSniperPage = lazy(() => import("./pages/DefiSniperPage"));
 const StrategyMarketplacePage = lazy(() => import("./pages/StrategyMarketplacePage"));
 const RiskManagement = lazy(() => import("./pages/RiskManagement"));
+const QuantEnginesPage = lazy(() => import("./pages/QuantEnginesPage"));
 const SocialTrading = lazy(() => import("./pages/SocialTrading"));
 const InstitutionalServices = lazy(() => import("./pages/InstitutionalServices"));
 const AdvancedTrading = lazy(() => import("./pages/AdvancedTrading"));
@@ -255,6 +256,14 @@ const App = () => (
                         element={
                           <ProtectedRoute>
                             <StrategyMarketplacePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/engines"
+                        element={
+                          <ProtectedRoute>
+                            <QuantEnginesPage />
                           </ProtectedRoute>
                         }
                       />
