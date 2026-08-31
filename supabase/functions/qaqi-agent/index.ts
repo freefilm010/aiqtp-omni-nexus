@@ -509,11 +509,16 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
     
     case "manage_wallets":
       if (args.operation === "list") {
+        if (!adminApproved) {
+          return { operation: "list", status: "requires_approval" };
+        }
         const { data: wallets } = await supabase
           .from('platform_wallets')
           .select('*');
         return { wallets: wallets || [], count: wallets?.length || 0 };
       }
+      
+
       
       if (args.operation === "reinvest" && adminApproved) {
         // Get top strategies

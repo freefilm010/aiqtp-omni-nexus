@@ -34,12 +34,24 @@ serve(async (req) => {
 
     // Rate limiting
     const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    // Admin-only: broadcast_content is published platform-wide
+    const { data: isAdmin, error: roleError } = await serviceClient.rpc("has_role", {
+      _user_id: user.id,
+      _role: "admin",
+    });
+    if (roleError || !isAdmin) {
+      return new Response(JSON.stringify({ error: "Admin access required" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const rateLimitResult = await checkRateLimit(serviceClient, user.id, 'broadcast-generate', 15);
     if (!rateLimitResult.allowed) {
       return rateLimitResponse('broadcast-generate', rateLimitResult);
     }
 
-    // serviceClient already created above for rate limiting
+
 
     const body = await req.json().catch(() => ({}));
     const contentType = body.type || "market_update";
