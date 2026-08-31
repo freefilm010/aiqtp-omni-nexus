@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase as _supabase } from "@/integrations/supabase/client";
 const supabase = _supabase as any;
-import { lovable } from "@/integrations/lovable/index";
+import { signInWithOAuth } from "@/lib/auth/oauthSignIn";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -345,8 +345,8 @@ const Auth = () => {
                   variant="outline"
                   className="w-full mb-2"
                   onClick={async () => {
-                    const result = await lovable.auth.signInWithOAuth("google", {
-                      redirect_uri: `${window.location.origin}${safeNext ?? "/"}`,
+                    const result = await signInWithOAuth("google", {
+                      redirectTo: `${window.location.origin}${safeNext ?? "/"}`,
                     });
 
                     if (result?.error) {
@@ -369,8 +369,8 @@ const Auth = () => {
                   variant="outline"
                   className="w-full mb-4"
                   onClick={async () => {
-                    const result = await lovable.auth.signInWithOAuth("apple", {
-                      redirect_uri: `${window.location.origin}${safeNext ?? "/"}`,
+                    const result = await signInWithOAuth("apple", {
+                      redirectTo: `${window.location.origin}${safeNext ?? "/"}`,
                     });
 
                     if (result?.error) {
