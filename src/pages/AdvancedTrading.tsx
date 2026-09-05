@@ -4,6 +4,8 @@ import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HeatMap from "@/components/trading/HeatMap";
 import LevelIIOrderBook from "@/components/trading/LevelIIOrderBook";
+import OrderBook from "@/components/trading/OrderBook";
+
 import SmartOrders from "@/components/trading/SmartOrders";
 import PatternRecognition from "@/components/trading/PatternRecognition";
 import AdvancedCharts from "@/components/trading/AdvancedCharts";
