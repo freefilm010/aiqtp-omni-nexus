@@ -10599,6 +10599,7 @@ export type Database = {
         }
         Returns: string
       }
+      run_market_refresh_cycle: { Args: { deep?: boolean }; Returns: undefined }
       update_market_price: {
         Args: {
           p_change_24h?: number
