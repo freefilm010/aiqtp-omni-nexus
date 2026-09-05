@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface TradingRequest {
-  action: "fetch_markets" | "fetch_ticker" | "fetch_ohlcv" | "fetch_balance" | "create_order" | "fetch_orders" | "cancel_order";
+  action: "fetch_markets" | "fetch_ticker" | "fetch_ohlcv" | "fetch_order_book" | "fetch_balance" | "create_order" | "fetch_orders" | "cancel_order";
   exchange: "binance" | "coinbase" | "kraken" | "bybit" | "kucoin" | "okx";
   symbol?: string;
   orderType?: "market" | "limit";
@@ -315,6 +315,47 @@ async function krakenFetchMarkets() {
   return pairs;
 }
 
+// ── Order book depth (public) ───────────────────────────────────────────
+async function binanceFetchOrderBook(symbol: string, limit: number = 20) {
+  const formatted = symbol.replace("/", "");
+  const capped = [5, 10, 20, 50, 100].find((n) => n >= limit) ?? 100;
+  const response = await fetch(
+    `https://api.binance.com/api/v3/depth?symbol=${formatted}&limit=${capped}`
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`Binance depth error [${response.status}]: ${JSON.stringify(data)}`);
+  }
+  if (!Array.isArray(data?.bids) || !Array.isArray(data?.asks)) {
+    throw new Error(`Binance depth malformed response: ${JSON.stringify(data)}`);
+  }
+  const map = (rows: string[][]) =>
+    rows.slice(0, limit).map((r) => ({ price: Number(r[0]), size: Number(r[1]) }));
+  return { symbol, source: "binance", timestamp: Date.now(), bids: map(data.bids), asks: map(data.asks) };
+}
+
+async function krakenFetchOrderBook(symbol: string, limit: number = 20) {
+  const pair = krakenPairFromSymbol(symbol);
+  const response = await fetch(
+    `https://api.kraken.com/0/public/Depth?pair=${pair}&count=${Math.min(Math.max(limit, 1), 100)}`
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`Kraken depth error [${response.status}]: ${JSON.stringify(data)}`);
+  }
+  const apiErrors = Array.isArray((data as any)?.error) ? (data as any).error : [];
+  if (apiErrors.length) throw new Error(`Kraken depth error: ${apiErrors.join("; ")}`);
+  const result = (data as any)?.result;
+  const key = result && typeof result === "object" ? Object.keys(result)[0] : null;
+  const book = key ? result[key] : null;
+  if (!book || !Array.isArray(book.bids) || !Array.isArray(book.asks)) {
+    throw new Error(`Kraken depth malformed response: ${JSON.stringify(data)}`);
+  }
+  const map = (rows: any[][]) =>
+    rows.slice(0, limit).map((r) => ({ price: Number(r[0]), size: Number(r[1]) }));
+  return { symbol, source: "kraken", timestamp: Date.now(), bids: map(book.bids), asks: map(book.asks) };
+}
+
 async function binanceFetchBalance(apiKey: string, secret: string) {
   const timestamp = Date.now();
   const queryString = `timestamp=${timestamp}`;
@@ -519,7 +560,11 @@ serve(async (req) => {
       );
     }
 
-    const isPublicAction = action === "fetch_markets" || action === "fetch_ticker" || action === "fetch_ohlcv";
+    const isPublicAction =
+      action === "fetch_markets" ||
+      action === "fetch_ticker" ||
+      action === "fetch_ohlcv" ||
+      action === "fetch_order_book";
     if (exchange === "kraken" && !isPublicAction) {
       return new Response(
         JSON.stringify({
@@ -565,6 +610,21 @@ serve(async (req) => {
           if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
             console.warn("Binance 451 — falling back to Kraken for fetch_ohlcv");
             result = await krakenFetchOHLCV(symbol, timeframe || "1h", limit || 100);
+          } else { throw e; }
+        }
+        break;
+
+      case "fetch_order_book":
+        if (!symbol) throw new Error("Symbol required for fetch_order_book");
+        try {
+          result =
+            exchange === "binance"
+              ? await binanceFetchOrderBook(symbol, limit || 20)
+              : await krakenFetchOrderBook(symbol, limit || 20);
+        } catch (e) {
+          if (exchange === "binance" && /\b451\b|restricted location/i.test(String((e as Error).message))) {
+            console.warn("Binance 451 — falling back to Kraken for fetch_order_book");
+            result = await krakenFetchOrderBook(symbol, limit || 20);
           } else { throw e; }
         }
         break;
