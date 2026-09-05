@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ChatAttachments } from "@/components/chat/ChatAttachments";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,6 +39,7 @@ const EliteClubChat = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<EliteMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [attachments, setAttachments] = useState<{ id: string; name: string; type: string; url: string; size: number }[]>([]);
   const [isEliteMember, setIsEliteMember] = useState<boolean | null>(null);
   const [memberInfo, setMemberInfo] = useState<EliteMember | null>(null);
   const [onlineCount, setOnlineCount] = useState(0);
@@ -108,16 +110,22 @@ const EliteClubChat = () => {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user) return;
+    if ((!newMessage.trim() && attachments.length === 0) || !user) return;
 
     try {
       const { error } = await supabase.from("elite_club_messages").insert({
         user_id: user.id,
-        content: newMessage.trim(),
+        content: [
+          newMessage.trim(),
+          ...attachments.map((a) => `[${a.name}](${a.url})`),
+        ]
+          .filter(Boolean)
+          .join("\n"),
       });
 
       if (error) throw error;
       setNewMessage("");
+      setAttachments([]);
     } catch (err) {
       console.error("Error sending message:", err);
       toast.error("Failed to send message");
@@ -233,7 +241,8 @@ const EliteClubChat = () => {
         </div>
       </ScrollArea>
 
-      <form onSubmit={sendMessage} className="p-4 border-t">
+      <form onSubmit={sendMessage} className="p-4 border-t space-y-2">
+        <ChatAttachments attachments={attachments} onAttachmentsChange={setAttachments} />
         <div className="flex gap-2">
           <Input
             value={newMessage}
@@ -241,7 +250,7 @@ const EliteClubChat = () => {
             placeholder="Message the Elite Club..."
             className="flex-1"
           />
-          <Button type="submit" disabled={!newMessage.trim()}>
+          <Button type="submit" disabled={!newMessage.trim() && attachments.length === 0}>
             <Send className="h-4 w-4" />
           </Button>
         </div>
