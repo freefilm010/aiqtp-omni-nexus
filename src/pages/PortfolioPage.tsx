@@ -201,14 +201,17 @@ const PortfolioPage = () => {
         )}
 
         <Tabs defaultValue="portfolio" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full max-w-xl grid-cols-3">
+          <TabsList className="grid w-full max-w-xl grid-cols-4">
             <TabsTrigger value="portfolio" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs"><Wallet className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> Portfolio</TabsTrigger>
             <TabsTrigger value="heatmap" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs"><LayoutGrid className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> Heatmaps</TabsTrigger>
             <TabsTrigger value="fundamentals" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs"><BarChart3 className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> Fundamentals</TabsTrigger>
+            <TabsTrigger value="tax" className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs"><Coins className="h-3 sm:h-3.5 w-3 sm:w-3.5" /> Tax</TabsTrigger>
           </TabsList>
           <TabsContent value="portfolio"><Suspense fallback={<TabLoader />}><PortfolioAnalyticsDashboard /></Suspense></TabsContent>
           <TabsContent value="heatmap"><Suspense fallback={<TabLoader />}><MarketHeatmap /></Suspense></TabsContent>
           <TabsContent value="fundamentals"><Suspense fallback={<TabLoader />}><FundamentalAnalysis /></Suspense></TabsContent>
+          <TabsContent value="tax"><TaxExportPanel /></TabsContent>
+
         </Tabs>
       </main>
       <Footer />
