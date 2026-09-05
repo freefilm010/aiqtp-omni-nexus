@@ -9,6 +9,8 @@ import { usePortfolioValuation } from "@/hooks/usePortfolioValuation";
 import type { AssetValuation } from "@/hooks/useAssetValuation";
 import { LoadingSkeleton, EmptyState, ErrorState } from "@/components/ui/data-states";
 import Sparkline from "@/components/portfolio/Sparkline";
+import TaxExportPanel from "@/components/portfolio/TaxExportPanel";
+
 
 const PortfolioAnalyticsDashboard = lazy(() => import("@/components/portfolio/PortfolioAnalyticsDashboard"));
 const PortfolioHistoryChart = lazy(() => import("@/components/portfolio/PortfolioHistoryChart"));
