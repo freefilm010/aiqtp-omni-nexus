@@ -18,6 +18,8 @@ import SkipLinks from "./components/accessibility/SkipLinks";
 import ScreenReaderAnnouncer from "./components/accessibility/ScreenReaderAnnouncer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import FloatingWindowsLayer from "./components/floating/FloatingWindowsLayer";
+import FloatingToolbar from "./components/FloatingToolbar";
+import AccessibilityToolbar from "./components/accessibility/AccessibilityToolbar";
 import { FloatingWindowsProvider } from "./contexts/FloatingWindowsContext";
 import Index from "./pages/Index";
 
@@ -181,6 +183,8 @@ const App = () => (
                   <SkipLinks />
                   <ScreenReaderAnnouncer />
                   <FloatingWindowsLayer />
+                  <FloatingToolbar />
+                  <AccessibilityToolbar />
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
