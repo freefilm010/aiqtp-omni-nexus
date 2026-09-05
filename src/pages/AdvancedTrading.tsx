@@ -71,9 +71,13 @@ const AdvancedTrading = () => {
             <LiveHeatMapWidget />
             <HeatMap />
           </TabsContent>
-          <TabsContent value="level2">
-            <LevelIIOrderBook />
+          <TabsContent value="level2" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <OrderBook symbol={symbol} />
+              <LevelIIOrderBook />
+            </div>
           </TabsContent>
+
           <TabsContent value="smart">
             <SmartOrders />
           </TabsContent>
