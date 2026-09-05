@@ -77,15 +77,22 @@ export const ChatAttachments = ({
           continue;
         }
 
-        const { data: { publicUrl } } = supabase.storage
+        // Bucket is private — issue a signed URL (1 year) instead of a public URL
+        const { data: signed, error: signError } = await supabase.storage
           .from("chat-attachments")
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 60 * 60 * 24 * 365);
+
+        if (signError || !signed?.signedUrl) {
+          console.error("Signing error:", signError);
+          toast.error(`Failed to link ${file.name}`);
+          continue;
+        }
 
         newAttachments.push({
           id: data.path,
           name: file.name,
           type: file.type,
-          url: publicUrl,
+          url: signed.signedUrl,
           size: file.size,
         });
       }

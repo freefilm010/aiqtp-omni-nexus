@@ -8703,6 +8703,24 @@ export type Database = {
         }
         Relationships: []
       }
+      system_runtime_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       system_status: {
         Row: {
           active: boolean
@@ -10581,6 +10599,7 @@ export type Database = {
         }
         Returns: string
       }
+      run_market_refresh_cycle: { Args: { deep?: boolean }; Returns: undefined }
       update_market_price: {
         Args: {
           p_change_24h?: number
