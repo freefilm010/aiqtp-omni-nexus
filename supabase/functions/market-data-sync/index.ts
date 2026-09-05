@@ -160,9 +160,11 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
     const authHeader = req.headers.get('Authorization') ?? '';
-    let isAuthedUser = false;
+    const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
+    const isCron = cronSecret.length > 0 && req.headers.get('x-cron-secret') === cronSecret;
+    let isAuthedUser = isCron;
 
-    if (!isPublicAction) {
+    if (!isPublicAction && !isCron) {
       if (authHeader && authHeader !== `Bearer ${supabaseAnonKey}`) {
         const authClient = createClient(supabaseUrl, supabaseAnonKey, {
           global: { headers: { Authorization: authHeader } },
