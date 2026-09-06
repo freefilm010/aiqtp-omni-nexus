@@ -112,10 +112,16 @@ const LiveStrategies = () => {
       <div className="text-center py-16">
         <Bot className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
         <h3 className="text-lg font-semibold text-foreground mb-2">No Live Strategies</h3>
-        <p className="text-muted-foreground text-sm">Deploy a strategy from the Strategy Builder or Marketplace to start live trading.</p>
+        <p className="text-muted-foreground text-sm mb-4">
+          Deploy one of your strategies and choose the venue and instruments it should run on.
+        </p>
+        <div className="flex justify-center">
+          <StrategyDeployDialog onDeployed={() => window.location.reload()} />
+        </div>
       </div>
     );
   }
+
 
   return (
     <div className="space-y-6">
