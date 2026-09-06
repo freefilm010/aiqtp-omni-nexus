@@ -310,7 +310,61 @@ Analyze and return optimal allocations.`,
         });
       }
 
+      case "autonomous_cycle": {
+        // Round-the-clock cycle: for every active engine, re-analyze the real market
+        // and apply the resulting allocations. Callable by the scheduler or an admin.
+        const { data: engines } = await adminClient
+          .from("auto_invest_engine")
+          .select("id, total_capital, status")
+          .eq("status", "active");
+
+        const results: Array<Record<string, unknown>> = [];
+        const selfUrl = `${supabaseUrl}/functions/v1/auto-invest`;
+        const internalHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+          "x-cron-secret": cronSecret,
+        };
+
+        for (const engine of engines || []) {
+          try {
+            const analyzeRes = await fetch(selfUrl, {
+              method: "POST",
+              headers: internalHeaders,
+              body: JSON.stringify({ action: "analyze", engine_id: engine.id }),
+            });
+            const analyzeJson = await analyzeRes.json();
+            const proposed = analyzeJson?.proposals?.allocations;
+
+            if (!analyzeRes.ok || !Array.isArray(proposed) || proposed.length === 0) {
+              results.push({ engine_id: engine.id, applied: false, reason: analyzeJson?.error || "no allocations proposed" });
+              continue;
+            }
+
+            const execRes = await fetch(selfUrl, {
+              method: "POST",
+              headers: internalHeaders,
+              body: JSON.stringify({ action: "execute_allocations", engine_id: engine.id, allocations: proposed }),
+            });
+            const execJson = await execRes.json();
+            results.push({
+              engine_id: engine.id,
+              applied: execRes.ok && execJson?.success === true,
+              allocations: proposed.length,
+              confidence: analyzeJson?.proposals?.confidence_score ?? null,
+              regime: analyzeJson?.proposals?.market_regime ?? null,
+            });
+          } catch (err) {
+            results.push({ engine_id: engine.id, applied: false, reason: err instanceof Error ? err.message : String(err) });
+          }
+        }
+
+        return new Response(JSON.stringify({ success: true, engines: results.length, results }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       default:
+
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
