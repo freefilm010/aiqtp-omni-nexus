@@ -640,6 +640,9 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
           ? "Flagged addresses detected - review recommended" 
           : "All addresses pass security threshold"
       };
+    }
+
+
     
     case "quantum_compute":
       const qubits = Math.min(args.qubits || 8, adminApproved ? 127 : 32);
