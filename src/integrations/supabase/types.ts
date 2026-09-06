@@ -10464,6 +10464,10 @@ export type Database = {
       }
     }
     Functions: {
+      collect_binance_klines: {
+        Args: { p_interval?: string; p_symbol?: string }
+        Returns: number
+      }
       create_operator_with_wallet: {
         Args: {
           p_currencies?: string[]
@@ -10551,6 +10555,10 @@ export type Database = {
         Args: { p_amount: number; p_currency: string }
         Returns: undefined
       }
+      ingest_binance_klines: {
+        Args: { p_interval?: string; p_limit?: number; p_symbol?: string }
+        Returns: number
+      }
       log_security_event: {
         Args: { p_details?: Json; p_event_type: string; p_severity?: string }
         Returns: string
@@ -10613,6 +10621,13 @@ export type Database = {
       }
       run_autonomous_invest_cycle: { Args: never; Returns: undefined }
       run_market_refresh_cycle: { Args: { deep?: boolean }; Returns: undefined }
+      train_strategies_market_replay: {
+        Args: { p_cycles?: number; p_limit?: number; p_symbol?: string }
+        Returns: {
+          graduated: number
+          trained: number
+        }[]
+      }
       update_market_price: {
         Args: {
           p_change_24h?: number
