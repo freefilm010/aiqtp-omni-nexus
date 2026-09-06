@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Play, Pause, TrendingUp, TrendingDown, Activity, Zap, Settings, Bot, Copyright, Bookmark, Sparkles
 } from "lucide-react";
+import StrategyDeployDialog from "./StrategyDeployDialog";
+
 
 interface LiveStrategy {
   id: string;
@@ -125,6 +127,10 @@ const LiveStrategies = () => {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <StrategyDeployDialog />
+      </div>
+
       <div className="grid grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
           <CardContent className="pt-6">
