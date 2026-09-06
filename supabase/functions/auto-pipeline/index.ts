@@ -112,7 +112,7 @@ serve(async (req) => {
         ? Math.round(29 + Math.max(0, stats.avgProfit) * 5 + stats.passRate * 0.3)
         : null;
       const updateData: Record<string, unknown> = {
-        status: stats.graduated ? 'graduated' : 'backtesting',
+        status: stats.graduated ? 'paper_trading' : 'backtesting',
         profitability_score: Math.round(stats.avgProfit * 100) / 100,
         consistency_score: Math.round(stats.avgConsistency * 100) / 100,
         backtest_count: SAMPLE_CYCLES,
