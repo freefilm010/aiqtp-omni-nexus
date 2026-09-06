@@ -479,9 +479,10 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
       };
     
     case "manage_platform":
-      if (!adminApproved && args.operation !== "get_stats") {
+      if (!adminApproved) {
         return { status: "requires_approval", operation: args.operation };
       }
+
       
       if (args.operation === "get_stats") {
         // Get real stats from database
@@ -607,9 +608,13 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
       }
       return { action: args.action, status: "completed" };
     
-    case "fraud_detection":
+    case "fraud_detection": {
+      if (!adminApproved) {
+        return { status: "requires_approval", action: "fraud_detection" };
+      }
       // Query real forensic data from database
       const { data: forensicData } = await supabase
+
         .from("forensic_transactions")
         .select("tx_hash, from_address, to_address, amount, flagged, flag_reason")
         .in("from_address", args.addresses || [])
