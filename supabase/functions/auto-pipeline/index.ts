@@ -1,5 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
+import {
+  getCandles,
+  runMarketReplayCycle,
+  cyclePassed,
+  deterministicFloat as sharedRandom,
+  PASS_CRITERIA,
+  type Candle,
+} from "../_shared/market_replay.ts";
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,44 +39,39 @@ const TEMPLATES = [
 ];
 
 function deterministicFloat(seed: string, index: number): number {
-  let hash = 2166136261;
-  const input = `${seed}:${index}`;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) / 4294967295;
+  return sharedRandom(seed, index);
 }
 
-function runTrainingCycle(entryRules: any, exitRules: any, riskParams: any, cycleIndex: number, totalCycles: number) {
-  const seed = JSON.stringify({ entryRules, exitRules, riskParams, cycleIndex, totalCycles });
-  const jitter = (index: number, range: number) => (deterministicFloat(seed, index) * 2 - 1) * range;
-  const conditions = entryRules?.conditions || [];
-  const stopLoss = parseFloat(exitRules?.stop_loss) || 2;
-  const takeProfit = parseFloat(exitRules?.take_profit) || 5;
-  const maxPosSize = parseFloat(riskParams?.max_position_size) || 5;
-  const complexityBonus = Math.min(conditions.length * 2, 10);
-  const riskRewardRatio = takeProfit / Math.max(stopLoss, 0.5);
-  const positionSizePenalty = maxPosSize > 10 ? (maxPosSize - 10) * 0.5 : 0;
-  const regimePhase = (cycleIndex / totalCycles) * Math.PI * 6;
-  const regimeModifier = Math.sin(regimePhase) * 0.15;
-  const baseWinRate = 50 + complexityBonus + (riskRewardRatio > 2 ? 5 : 0) - positionSizePenalty;
-  const winRate = Math.max(30, Math.min(85, baseWinRate + regimeModifier * 20 + jitter(1, 5)));
-  const trades = Math.floor(80 + deterministicFloat(seed, 2) * 120);
-  const wins = Math.floor(trades * (winRate / 100));
-  const losses = trades - wins;
-  const avgWin = takeProfit * 0.8;
-  const avgLoss = stopLoss * 1.1;
-  const pnl = (wins * avgWin) - (losses * avgLoss);
-  const profitability = pnl > 0 ? Math.min(95, 50 + pnl * 2) : Math.max(10, 50 + pnl);
-  const returns = Array.from({ length: 20 }, (_, i) => (deterministicFloat(seed, i + 10) - 0.4) * takeProfit);
-  const meanReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
-  const stdReturn = Math.sqrt(returns.reduce((s, r) => s + (r - meanReturn) ** 2, 0) / returns.length);
-  const sharpeRatio = stdReturn > 0 ? (meanReturn / stdReturn) * Math.sqrt(252) : 0;
-  const drawdowns = returns.map((_, i) => returns.slice(0, i + 1).reduce((a, b) => a + b, 0));
-  const maxDrawdown = Math.abs(Math.min(...drawdowns, 0));
-  const consistency = Math.max(30, Math.min(95, 60 + complexityBonus + riskRewardRatio * 3 - maxDrawdown * 2 + jitter(50, 5)));
-  return { profitability, winRate, sharpeRatio, maxDrawdown, consistency, trades, finalCapital: 10000 + pnl * 100 };
+const SAMPLE_CYCLES = 60; // real market-replay windows evaluated per strategy
+
+function trainOnRealMarket(
+  entryRules: unknown,
+  exitRules: unknown,
+  riskParams: unknown,
+  candles: Candle[],
+) {
+  let profit = 0, consistency = 0, winRate = 0, sharpe = 0, maxDD = 0, trades = 0, passed = 0;
+  for (let i = 0; i < SAMPLE_CYCLES; i++) {
+    const r = runMarketReplayCycle(entryRules, exitRules, riskParams, i, candles);
+    profit += r.profitability;
+    consistency += r.consistency;
+    winRate += r.winRate;
+    sharpe += r.sharpeRatio;
+    maxDD += r.maxDrawdown;
+    trades += r.trades;
+    if (cyclePassed(r)) passed++;
+  }
+  const passRate = (passed / SAMPLE_CYCLES) * 100;
+  return {
+    avgProfit: profit / SAMPLE_CYCLES,
+    avgConsistency: consistency / SAMPLE_CYCLES,
+    avgWinRate: winRate / SAMPLE_CYCLES,
+    avgSharpe: sharpe / SAMPLE_CYCLES,
+    avgMaxDD: maxDD / SAMPLE_CYCLES,
+    totalTrades: trades,
+    passRate,
+    graduated: passRate >= PASS_CRITERIA.minPassRate,
+  };
 }
 
 serve(async (req) => {
@@ -87,16 +91,109 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Unauthorized');
 
+    // Real exchange candles are mandatory — fail closed, never simulate.
+    let candles: Candle[];
+    let marketSymbol: string;
+    const needsMarket = action === 'full-pipeline' || action === 'train-existing';
+    if (needsMarket) {
+      try {
+        const market = await getCandles();
+        candles = market.candles;
+        marketSymbol = market.symbol;
+      } catch {
+        return new Response(JSON.stringify({
+          error: 'Market data unavailable — pipeline requires live exchange candles',
+        }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
+    async function persist(strategyId: string, stats: ReturnType<typeof trainOnRealMarket>) {
+      const rentalPrice = stats.graduated
+        ? Math.round(29 + Math.max(0, stats.avgProfit) * 5 + stats.passRate * 0.3)
+        : null;
+      const updateData: Record<string, unknown> = {
+        status: stats.graduated ? 'graduated' : 'backtesting',
+        profitability_score: Math.round(stats.avgProfit * 100) / 100,
+        consistency_score: Math.round(stats.avgConsistency * 100) / 100,
+        backtest_count: SAMPLE_CYCLES,
+        is_graduated: stats.graduated,
+      };
+      if (stats.graduated) {
+        updateData.graduation_date = new Date().toISOString();
+        updateData.is_available_for_rent = true;
+        updateData.rental_price_monthly = rentalPrice;
+      }
+      await supabase.from('ai_strategies').update(updateData).eq('id', strategyId);
+
+      await supabase.from('bot_training_queue').insert({
+        user_id: user!.id,
+        strategy_id: strategyId,
+        status: stats.graduated ? 'graduated' : 'completed',
+        profitability_score: stats.avgProfit,
+        consistency_score: stats.avgConsistency,
+        graduation_eligible: stats.graduated,
+        training_started_at: new Date(Date.now() - 60000).toISOString(),
+        training_completed_at: new Date().toISOString(),
+        test_results: {
+          cycle_type: 'market_replay',
+          market_symbol: marketSymbol,
+          source: 'binance_klines_1h',
+          sampled_cycles: SAMPLE_CYCLES,
+          pass_rate: stats.passRate,
+          avg_win_rate: stats.avgWinRate,
+          avg_sharpe: stats.avgSharpe,
+          avg_max_drawdown: stats.avgMaxDD,
+          total_trades: stats.totalTrades,
+        },
+      });
+      return rentalPrice;
+    }
+
+    // Train strategies that already exist (no new records created).
+    if (action === 'train-existing') {
+      const limit = Math.min(batchSize || 25, 100);
+      const { data: pending } = await supabase
+        .from('ai_strategies')
+        .select('id, name, entry_rules, exit_rules, risk_parameters')
+        .eq('user_id', user.id)
+        .eq('is_graduated', false)
+        .order('created_at', { ascending: true })
+        .limit(limit);
+
+      const results: any[] = [];
+      for (const s of pending ?? []) {
+        const stats = trainOnRealMarket(s.entry_rules, s.exit_rules, s.risk_parameters, candles!);
+        const rentalPrice = await persist(s.id, stats);
+        results.push({
+          id: s.id,
+          name: s.name,
+          profitability: Math.round(stats.avgProfit * 100) / 100,
+          consistency: Math.round(stats.avgConsistency * 100) / 100,
+          winRate: Math.round(stats.avgWinRate * 100) / 100,
+          passRate: Math.round(stats.passRate * 100) / 100,
+          graduated: stats.graduated,
+          rentalPrice,
+        });
+      }
+      const graduatedCount = results.filter(r => r.graduated).length;
+      return new Response(JSON.stringify({
+        success: true,
+        total: results.length,
+        graduated: graduatedCount,
+        market: { symbol: marketSymbol!, source: 'binance_klines_1h', cycles_per_strategy: SAMPLE_CYCLES },
+        results,
+        message: `Replayed real ${marketSymbol} history for ${results.length} strategies; ${graduatedCount} graduated.`,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (action === 'full-pipeline') {
       const count = Math.min(batchSize || 5, 10);
-      const totalCycles = 10000;
       const results: any[] = [];
 
       const templateOffset = Math.floor(deterministicFloat(user.id, count) * TEMPLATES.length);
       const selectedTemplates = Array.from({ length: Math.min(count, TEMPLATES.length) }, (_, i) => TEMPLATES[(templateOffset + i) % TEMPLATES.length]);
 
       for (const [templateIndex, tpl] of selectedTemplates.entries()) {
-        // 1. BUILD: Create strategy
         const entryRules = { conditions: tpl.ind.map(i => `${i} signal confirmation`), logic: 'AND' };
         const ruleSeed = `${user.id}:${tpl.name}:${templateIndex}`;
         const exitRules = {
@@ -126,74 +223,17 @@ serve(async (req) => {
           continue;
         }
 
-        // 2. TRAIN: Run 10,000 cycles
-        let totalProfitability = 0, totalConsistency = 0, totalWinRate = 0;
-        let totalSharpe = 0, totalMaxDD = 0, totalTrades = 0;
-        const sampleSize = 100; // Sample cycles for speed
-
-        for (let i = 0; i < sampleSize; i++) {
-          const cycleIdx = Math.floor((i / sampleSize) * totalCycles);
-          const r = runTrainingCycle(entryRules, exitRules, riskParams, cycleIdx, totalCycles);
-          totalProfitability += r.profitability;
-          totalConsistency += r.consistency;
-          totalWinRate += r.winRate;
-          totalSharpe += r.sharpeRatio;
-          totalMaxDD += r.maxDrawdown;
-          totalTrades += r.trades;
-        }
-
-        const avgProfit = totalProfitability / sampleSize;
-        const avgConsistency = totalConsistency / sampleSize;
-        const avgWinRate = totalWinRate / sampleSize;
-        const avgSharpe = totalSharpe / sampleSize;
-        const avgMaxDD = totalMaxDD / sampleSize;
-
-        // 3. GRADUATE: Check 77/77 thresholds
-        const graduated = avgProfit >= 77 && avgConsistency >= 77 && avgWinRate >= 60 && avgMaxDD <= 18;
-        const rentalPrice = graduated ? Math.round(29 + avgProfit * 0.5 + avgConsistency * 0.3) : null;
-
-        const updateData: any = {
-          status: graduated ? 'graduated' : 'trained',
-          profitability_score: Math.round(avgProfit * 100) / 100,
-          consistency_score: Math.round(avgConsistency * 100) / 100,
-          backtest_count: totalCycles,
-          is_graduated: graduated,
-        };
-
-        if (graduated) {
-          updateData.graduation_date = new Date().toISOString();
-          updateData.is_available_for_rent = true;
-          updateData.rental_price_monthly = rentalPrice;
-        }
-
-        await supabase.from('ai_strategies').update(updateData).eq('id', strategy.id);
-
-        // Log training
-        await supabase.from('bot_training_queue').insert({
-          user_id: user.id,
-          strategy_id: strategy.id,
-          status: graduated ? 'graduated' : 'completed',
-          profitability_score: avgProfit,
-          consistency_score: avgConsistency,
-          graduation_eligible: graduated,
-          training_started_at: new Date(Date.now() - 60000).toISOString(),
-          training_completed_at: new Date().toISOString(),
-          test_results: {
-            total_cycles: totalCycles,
-            sampled_cycles: sampleSize,
-            avg_win_rate: avgWinRate,
-            avg_sharpe: avgSharpe,
-            avg_max_drawdown: avgMaxDD,
-            total_trades_simulated: totalTrades,
-          }
-        });
+        const stats = trainOnRealMarket(entryRules, exitRules, riskParams, candles!);
+        const rentalPrice = await persist(strategy.id, stats);
 
         results.push({
           id: strategy.id,
           name: tpl.name,
-          profitability: Math.round(avgProfit * 100) / 100,
-          consistency: Math.round(avgConsistency * 100) / 100,
-          graduated,
+          profitability: Math.round(stats.avgProfit * 100) / 100,
+          consistency: Math.round(stats.avgConsistency * 100) / 100,
+          winRate: Math.round(stats.avgWinRate * 100) / 100,
+          passRate: Math.round(stats.passRate * 100) / 100,
+          graduated: stats.graduated,
           rentalPrice,
         });
       }
@@ -204,8 +244,9 @@ serve(async (req) => {
         total: results.length,
         graduated: graduatedCount,
         earning: graduatedCount > 0,
+        market: { symbol: marketSymbol!, source: 'binance_klines_1h', cycles_per_strategy: SAMPLE_CYCLES },
         results,
-        message: `Built ${results.length} strategies, ${graduatedCount} graduated and listed for rent-to-earn!`,
+        message: `Built ${results.length} strategies on real ${marketSymbol} history, ${graduatedCount} graduated.`,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -218,7 +259,7 @@ serve(async (req) => {
       const stats = {
         total: strategies?.length || 0,
         draft: strategies?.filter(s => s.status === 'draft').length || 0,
-        trained: strategies?.filter(s => s.status === 'trained').length || 0,
+        trained: strategies?.filter(s => s.status === 'backtesting').length || 0,
         graduated: strategies?.filter(s => s.is_graduated).length || 0,
         renting: strategies?.filter(s => s.is_available_for_rent).length || 0,
         avgProfitability: strategies?.length
@@ -233,9 +274,10 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: 'Use action: full-pipeline or pipeline-status' }), {
+    return new Response(JSON.stringify({ error: 'Use action: full-pipeline, train-existing or pipeline-status' }), {
       status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
+
 
   } catch (error) {
     console.error('auto-pipeline error:', error);
