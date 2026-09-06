@@ -244,27 +244,41 @@ serve(async (req) => {
       });
     }
 
-    // Get existing test count
+    // Get existing REAL market-replay test count (legacy synthetic rows don't count)
     const { count: existingTests } = await supabaseClient
       .from('graduation_tests')
       .select('*', { count: 'exact', head: true })
-      .eq('strategy_id', strategyId);
+      .eq('strategy_id', strategyId)
+      .filter('test_data->>cycle_type', 'eq', 'market_replay');
 
     const startCycle = (existingTests || 0) + 1;
-    const TOTAL_CYCLES = 10000;
+    const TOTAL_CYCLES = 1000;
     const remainingCycles = TOTAL_CYCLES - (existingTests || 0);
     const cyclesToRun = Math.min(requestedBatch, remainingCycles);
 
     if (cyclesToRun <= 0) {
       return new Response(JSON.stringify({ 
         success: true, 
-        message: 'Training complete - all 10,000 cycles finished',
+        message: 'Training complete - all 1,000 market-replay cycles finished',
         totalTests: existingTests,
         completed: true
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Run training cycles
+    // Fetch real market candles once per request (fail closed if unavailable)
+    let candles: Candle[];
+    let marketSymbol: string;
+    try {
+      const market = await getCandles();
+      candles = market.candles;
+      marketSymbol = market.symbol;
+    } catch {
+      return new Response(JSON.stringify({ error: 'Market data unavailable — training requires live exchange candles' }), {
+        status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Run training cycles against real market history
     const results = [];
     let passedCount = 0;
     let totalProfitability = 0;
@@ -280,7 +294,8 @@ serve(async (req) => {
         strategy.exit_rules,
         strategy.risk_parameters,
         cycleNum,
-        TOTAL_CYCLES
+        TOTAL_CYCLES,
+        candles
       );
 
       const passed = result.profitability >= 77 &&
