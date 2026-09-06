@@ -60,7 +60,17 @@ async function createOrder(amountUsd: number, userId: string, returnUrl: string,
   return { id: order.id, approveUrl: approveLink?.href ?? "" };
 }
 
-async function captureOrder(orderId: string): Promise<{ status: string; amountUsd: number; payerId: string | null }> {
+async function getOrderOwner(orderId: string): Promise<string | null> {
+  const token = await getAccessToken();
+  const res = await fetch(`${getPayPalBase()}/v2/checkout/orders/${orderId}`, {
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  });
+  if (!res.ok) throw new Error(`PayPal order lookup failed: ${await res.text()}`);
+  const order = await res.json();
+  return order.purchase_units?.[0]?.custom_id ?? null;
+}
+
+async function captureOrder(orderId: string): Promise<{ status: string; amountUsd: number; payerId: string | null; customId: string | null }> {
   const token = await getAccessToken();
   const res = await fetch(`${getPayPalBase()}/v2/checkout/orders/${orderId}/capture`, {
     method: "POST",
@@ -74,8 +84,10 @@ async function captureOrder(orderId: string): Promise<{ status: string; amountUs
     status: data.status,
     amountUsd: parseFloat(capture?.amount?.value ?? "0"),
     payerId: data.payer?.payer_id ?? null,
+    customId: unit?.custom_id ?? capture?.custom_id ?? null,
   };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
