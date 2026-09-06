@@ -74,7 +74,26 @@ const AutoPipeline = () => {
     }
   };
 
+  const trainExisting = async () => {
+    setRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('auto-pipeline', {
+        body: { action: 'train-existing', batchSize: Math.max(parseInt(batchSize) * 5, 25) }
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      setResults(data.results || []);
+      toast.success(data.message, { duration: 6000 });
+      fetchStats();
+    } catch (err: any) {
+      toast.error(err.message || "Training failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
   const startAutoLoop = async () => {
+
     setAutoRunning(true);
     setAutoRound(0);
     for (let i = 0; i < 5; i++) {
@@ -157,6 +176,14 @@ const AutoPipeline = () => {
               )}
             </Button>
 
+            <Button variant="secondary" onClick={trainExisting} disabled={running || autoRunning} size="sm" className="text-xs sm:text-sm h-8 sm:h-10">
+              {running ? (
+                <><Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />Training...</>
+              ) : (
+                <><GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />Train Existing</>
+              )}
+            </Button>
+
             <Button variant="outline" onClick={startAutoLoop} disabled={running || autoRunning} size="sm" className="text-xs sm:text-sm h-8 sm:h-10">
               {autoRunning ? (
                 <><Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />{autoRound}/5</>
@@ -164,6 +191,7 @@ const AutoPipeline = () => {
                 <><Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />5x Loop</>
               )}
             </Button>
+
 
             <Button variant="ghost" size="icon" onClick={fetchStats} disabled={loadingStats} className="h-8 w-8 sm:h-10 sm:w-10">
               <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loadingStats ? 'animate-spin' : ''}`} />
