@@ -322,10 +322,12 @@ serve(async (req) => {
         passed,
         test_data: {
           trades: result.trades,
-          period_days: 365,
+          period_days: 7,
           capital: 10000,
           final_capital: result.finalCapital,
-          cycle_type: 'training',
+          cycle_type: 'market_replay',
+          market_symbol: marketSymbol,
+          source: 'binance_klines_1h',
         }
       });
     }
