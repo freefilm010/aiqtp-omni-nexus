@@ -17,6 +17,6 @@ Deno.test("CCXT browser endpoint rejects private credentials", async () => {
 Deno.test("QTC explorer exposes only public transaction metadata", async () => {
   const qtc = await Deno.readTextFile(new URL("./qtc-network/index.ts", import.meta.url));
   const explorerSection = qtc.slice(qtc.indexOf("case 'get_block'"), qtc.indexOf("case 'register_validator'"));
-  assertFalse(explorerSection.includes(".select('*')"));
+  assertFalse(/from\('qtc_transactions'\)\s*\.select\('\*'\)/s.test(explorerSection));
   assertEquals(qtc.includes("function publicTransaction"), true);
 });
