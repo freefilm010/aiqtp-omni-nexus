@@ -18,10 +18,67 @@ interface OAIRequest {
   max_tokens?: number;
 }
 
+type AIResponse = { choices: Array<{ message: { role: string; content: string | null; tool_calls?: Array<{ id: string; type: "function"; function: { name: string; arguments: string } }> } }> };
+
+// OpenAI-compatible passthrough used for the free paths (self-hosted Ollama first,
+// then the included AI gateway). Anthropic is only a last resort.
+async function callOpenAICompatible(url: string, model: string, apiKey: string | null, body: OAIRequest): Promise<AIResponse> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model,
+      messages: body.messages,
+      ...(body.tools?.length ? { tools: body.tools } : {}),
+      ...(body.tool_choice ? { tool_choice: body.tool_choice } : {}),
+      ...(body.temperature !== undefined ? { temperature: body.temperature } : {}),
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`AI error ${res.status}: ${await res.text()}`);
+  }
+  return await res.json() as AIResponse;
+}
+
 // Converts OpenAI-format request to Anthropic format, calls Anthropic, returns OpenAI-format response.
-export async function callAI(body: OAIRequest): Promise<{ choices: Array<{ message: { role: string; content: string | null; tool_calls?: Array<{ id: string; type: "function"; function: { name: string; arguments: string } }> } }> }> {
+export async function callAI(body: OAIRequest): Promise<AIResponse> {
+  // 1) Free, self-hosted, uncapped: Ollama (Hermes / OpenClaw) when it is reachable.
+  const ollamaBase = (Deno.env.get("OLLAMA_BASE_URL") ?? "").replace(/\/+$/, "");
+  if (ollamaBase) {
+    try {
+      return await callOpenAICompatible(
+        `${ollamaBase}/v1/chat/completions`,
+        Deno.env.get("OLLAMA_MODEL") ?? "hermes3",
+        Deno.env.get("OLLAMA_API_KEY") ?? null,
+        body,
+      );
+    } catch (e) {
+      console.error("Ollama call failed, falling back:", e instanceof Error ? e.message : e);
+    }
+  }
+
+  // 2) Included AI gateway — no separate provider billing.
+  const gatewayKey = Deno.env.get("LOVABLE_API_KEY");
+  if (gatewayKey) {
+    try {
+      return await callOpenAICompatible(
+        "https://ai.gateway.lovable.dev/v1/chat/completions",
+        Deno.env.get("GATEWAY_MODEL") ?? "google/gemini-2.5-flash",
+        gatewayKey,
+        body,
+      );
+    } catch (e) {
+      console.error("Gateway call failed, falling back:", e instanceof Error ? e.message : e);
+    }
+  }
+
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+  if (!apiKey) throw new Error("No AI backend available (set OLLAMA_BASE_URL, LOVABLE_API_KEY, or ANTHROPIC_API_KEY)");
+
 
   // Extract system message from messages array
   const systemMsg = body.messages.find(m => m.role === "system");
