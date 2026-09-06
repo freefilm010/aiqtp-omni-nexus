@@ -192,7 +192,9 @@ const GraduationPipeline = () => {
 
   return (
     <div className="space-y-6">
+      <RealGraduationPass onComplete={fetchData} />
       {/* Requirements Card */}
+
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
