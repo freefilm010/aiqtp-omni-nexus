@@ -3,7 +3,7 @@
 - [x] Audit all cataloged repositories, deployables, monetization paths, and systemic controls.
 - [x] Phase 0: contain critical financial/security paths and remove unsupported live claims.
 - [x] Phase 1: enforce CI, deployment, RLS, auth-contract, backup, restore, and drift gates.
-- [ ] Phase 2: close withdrawals, creator payouts, reconciliation, and compliance gates.
+- [~] Phase 2: withdrawals repaired (missing live engine restored) + admin review/approve/reject-refund queue at /admin/withdrawals. Remaining: creator payouts, provider payout rail, KYC/AML gate.
 - [ ] Phase 3: replace simulated engines with reproducible Freqtrade/Hummingbot/CCXT execution.
 - [ ] Phase 4: operationalize sovereign Ollama/OpenClaw/RAG and evidence-backed IBM jobs.
 - [ ] Phase 5: activate reconciled monetization and enterprise evidence.
