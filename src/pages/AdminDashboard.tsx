@@ -43,6 +43,7 @@ const IPRegistry = lazy(() => import("@/components/admin/IPRegistry"));
 const RevenueAutomation = lazy(() => import("@/components/admin/RevenueAutomation"));
 const AdminNFTWallet = lazy(() => import("@/components/admin/AdminNFTWallet"));
 const MasterKillSwitch = lazy(() => import("@/components/trading/MasterKillSwitch"));
+const WithdrawalQueue = lazy(() => import("@/components/admin/WithdrawalQueue"));
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
