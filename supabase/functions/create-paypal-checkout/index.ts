@@ -127,7 +127,23 @@ Deno.serve(async (req) => {
 
     if (action === "capture") {
       if (!orderId) throw new Error("orderId is required");
+
+      // Verify the order was created for this caller BEFORE capturing it.
+      const owner = await getOrderOwner(orderId);
+      if (!owner || owner !== user.id) {
+        return new Response(JSON.stringify({ error: "Order does not belong to the authenticated user" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const result = await captureOrder(orderId);
+
+      // Re-verify ownership from the capture response as well.
+      if (result.customId && result.customId !== user.id) {
+        return new Response(JSON.stringify({ error: "Order ownership mismatch" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       if (result.status === "COMPLETED" && result.amountUsd > 0) {
         const adminSupabase = createClient(
@@ -136,13 +152,14 @@ Deno.serve(async (req) => {
         );
         await adminSupabase.rpc("credit_platform_deposit", {
           p_user_id: user.id,
-          p_stripe_session_id: null,
+          p_stripe_session_id: `paypal_${orderId}`,
           p_stripe_payment_intent_id: null,
           p_amount_usd: result.amountUsd,
           p_currency: "usd",
           p_environment: Deno.env.get("PAYPAL_MODE") === "live" ? "live" : "sandbox",
         });
       }
+
 
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
