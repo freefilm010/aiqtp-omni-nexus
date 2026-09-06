@@ -28,6 +28,16 @@ function deterministicFloat(seed: string, index: number): number {
   return (hash >>> 0) / 4294967295;
 }
 
+function publicTransaction(tx: Record<string, unknown>) {
+  return {
+    tx_hash: tx.tx_hash,
+    status: tx.status,
+    block_height: tx.block_height,
+    created_at: tx.created_at,
+    confirmed_at: tx.confirmed_at,
+  };
+}
+
 // Proof of Temporal Resonance verification
 interface FloquetParams {
   numQubits: number;
@@ -204,14 +214,14 @@ serve(async (req) => {
 
         const { data: transactions } = await supabase
           .from('qtc_transactions')
-          .select('*')
+          .select('tx_hash, status, block_height, created_at, confirmed_at')
           .eq('block_height', block_height);
 
         return new Response(JSON.stringify({
           success: true,
           block: {
             ...block,
-            transactions: transactions || []
+            transactions: (transactions || []).map(publicTransaction)
           }
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -403,7 +413,7 @@ serve(async (req) => {
 
         const { data: tx, error } = await supabase
           .from('qtc_transactions')
-          .select('*')
+          .select('tx_hash, status, block_height, created_at, confirmed_at')
           .eq('tx_hash', tx_hash)
           .single();
 
@@ -421,7 +431,7 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({
           success: true,
-          transaction: tx,
+          transaction: publicTransaction(tx),
           verification: {
             status: tx.status,
             confirmations: tx.status === 'confirmed' ? 6 : 0,

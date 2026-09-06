@@ -61,17 +61,9 @@ async function creditLightningDeposit(
 ) {
   const amountBtc = amountMsats / MSATS_PER_BTC;
 
-  // Mark the lightning_transactions row as completed
-  await serviceClient
-    .from("lightning_transactions")
-    .update({ status: "completed", completed_at: new Date().toISOString() })
-    .eq("id", txId)
-    .eq("user_id", userId);
-
   // Fetch a live BTC/USD price to convert msats → USD for the wallet credit.
-  // If fetch fails, fall back to 0 so we don't block the webhook response;
-  // the transaction will be marked completed and an operator can credit
-  // the USD balance manually based on the BTC amount.
+  // Fail closed if the conversion price is unavailable. A deposit must never
+  // be marked completed without its corresponding atomic ledger credit.
   let btcPriceUsd = 0;
   try {
     const priceResp = await fetch(
@@ -85,30 +77,25 @@ async function creditLightningDeposit(
     // ignore — price fetch failure is non-fatal
   }
 
-  if (btcPriceUsd > 0) {
-    const amountUsd = amountBtc * btcPriceUsd;
-    // Upsert into portfolio_holdings (same pattern as credit_platform_deposit)
-    const { error: creditError } = await serviceClient
-      .from("portfolio_holdings")
-      .upsert(
-        {
-          user_id: userId,
-          symbol: "USD",
-          name: "US Dollar Cash",
-          quantity: amountUsd,
-          value_usd: amountUsd,
-          change_24h: 0,
-          allocation_percent: 0,
-        },
-        {
-          onConflict: "user_id,symbol",
-          ignoreDuplicates: false,
-        },
-      );
+  if (!Number.isFinite(btcPriceUsd) || btcPriceUsd <= 0) {
+    throw new Error("BTC/USD price unavailable; Lightning credit deferred");
+  }
 
-    if (creditError) {
-      console.error("ZBD credit error:", creditError);
-    }
+  const amountUsd = amountBtc * btcPriceUsd;
+  const { data: credited, error: creditError } = await serviceClient.rpc(
+    "credit_lightning_deposit",
+    {
+      p_transaction_id: txId,
+      p_user_id: userId,
+      p_amount_usd: amountUsd,
+    },
+  );
+
+  if (creditError) {
+    throw new Error(`Atomic Lightning credit failed: ${creditError.message}`);
+  }
+  if (!credited) {
+    console.info("Lightning deposit was already credited", txId);
   }
 }
 
@@ -130,14 +117,22 @@ Deno.serve(async (req: Request) => {
     // ----------------------------------------------------------------
     if (body?.action === "webhook") {
       const zbdWebhookSecret = Deno.env.get("ZBD_WEBHOOK_SECRET");
+      const zbdApiKey = Deno.env.get("ZBD_API_KEY");
       const incomingSecret = req.headers.get("zbd-secret") ?? req.headers.get("x-zbd-secret");
 
-      // If a webhook secret is configured, enforce it
-      if (zbdWebhookSecret && incomingSecret !== zbdWebhookSecret) {
+      if (!zbdWebhookSecret || !zbdApiKey) {
+        console.error("ZBD webhook rejected: required verification secrets are missing");
+        return new Response(JSON.stringify({ error: "Webhook verification unavailable" }), {
+          status: 503,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (incomingSecret !== zbdWebhookSecret) {
         console.warn("ZBD webhook: invalid secret");
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403,
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -145,7 +140,7 @@ Deno.serve(async (req: Request) => {
       if (!charge?.id || !charge?.status) {
         return new Response(JSON.stringify({ error: "Invalid webhook payload" }), {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -153,7 +148,22 @@ Deno.serve(async (req: Request) => {
       if (!isPaid) {
         // Not paid yet — acknowledge without action
         return new Response(JSON.stringify({ received: true, action: "none" }), {
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Never trust status or amount from the callback. Retrieve the charge
+      // from ZBD using the server-held API key and use only that response.
+      const verifiedResponse = await fetch(
+        `https://api.zebedee.io/v0/charges/${encodeURIComponent(charge.id)}`,
+        { headers: { apikey: zbdApiKey } },
+      );
+      const verifiedPayload = await readZbdResponse(verifiedResponse);
+      const verifiedCharge = verifiedPayload?.data;
+      const isPaid = verifiedCharge?.status === "completed" || verifiedCharge?.status === "charged";
+      if (!isPaid) {
+        return new Response(JSON.stringify({ received: true, action: "not_verified_paid" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -170,34 +180,39 @@ Deno.serve(async (req: Request) => {
         console.error("ZBD webhook DB lookup error:", txError);
         return new Response(JSON.stringify({ error: "DB error" }), {
           status: 500,
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       if (!txRow) {
         console.warn("ZBD webhook: no matching transaction for charge", charge.id);
         return new Response(JSON.stringify({ received: true, action: "no_match" }), {
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       if (txRow.status === "completed") {
         // Already credited — idempotent response
         return new Response(JSON.stringify({ received: true, action: "already_credited" }), {
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Determine msat amount from webhook payload or fall back to DB amount
-      const amountMsats = charge.amount
-        ? Number(charge.amount)
-        : Math.round(Number(txRow.amount) * MSATS_PER_BTC);
+      const expectedMsats = Math.round(Number(txRow.amount) * MSATS_PER_BTC);
+      const amountMsats = Number(verifiedCharge.amount);
+      if (!Number.isSafeInteger(amountMsats) || amountMsats <= 0 || amountMsats !== expectedMsats) {
+        console.error("ZBD webhook amount mismatch", { chargeId: charge.id });
+        return new Response(JSON.stringify({ error: "Verified amount mismatch" }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       await creditLightningDeposit(serviceClient, txRow.user_id, txRow.id, amountMsats);
 
       console.log(`ZBD webhook: credited ${amountMsats} msats for user ${txRow.user_id}`);
       return new Response(JSON.stringify({ received: true, action: "credited" }), {
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -312,7 +327,7 @@ Deno.serve(async (req: Request) => {
           btcPriceUsd = parseFloat(priceData?.price ?? "0");
         }
       } catch {
-        // Non-fatal — proceed with 0 price, balance check will be skipped
+        // Fail closed below. A payment cannot be sent without a priced debit.
       }
 
       if (btcPriceUsd > 0) {
@@ -360,6 +375,11 @@ Deno.serve(async (req: Request) => {
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
+      } else {
+        return new Response(
+          JSON.stringify({ error: "BTC/USD price unavailable; payment not sent" }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
       let sendData: any;
