@@ -87,9 +87,10 @@ export async function checkRateLimit(
     }
   }
 
-  const totalLimit = baseLimit + extraCalls;
+  const totalLimit = effectiveLimit + extraCalls;
   const totalUsed = used;
   const allowed = totalUsed < totalLimit;
+
 
   return {
     allowed,
