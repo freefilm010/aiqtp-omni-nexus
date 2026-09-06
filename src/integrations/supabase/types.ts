@@ -10607,6 +10607,10 @@ export type Database = {
         }
         Returns: string
       }
+      review_withdrawal: {
+        Args: { p_action: string; p_notes?: string; p_withdrawal_id: string }
+        Returns: string
+      }
       run_market_refresh_cycle: { Args: { deep?: boolean }; Returns: undefined }
       update_market_price: {
         Args: {
