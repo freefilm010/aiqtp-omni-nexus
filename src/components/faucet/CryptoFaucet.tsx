@@ -149,7 +149,7 @@ const CryptoFaucet = () => {
         .limit(200),
       supabase
         .from("faucet_claims")
-        .select("id", { count: 'exact', head: true })
+        .select("id", { count: 'estimated', head: true })
         .eq("user_id", user.id),
       supabase
         .from("portfolio_holdings")
@@ -259,7 +259,7 @@ const CryptoFaucet = () => {
 
       const { count } = await supabase
         .from("auto_invest_transactions")
-        .select("id", { count: 'exact', head: true })
+        .select("id", { count: 'estimated', head: true })
         .eq("engine_id", data[0].id);
 
       setCompoundStats({

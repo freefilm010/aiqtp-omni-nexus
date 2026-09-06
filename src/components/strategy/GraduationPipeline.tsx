@@ -63,7 +63,7 @@ const GraduationPipeline = () => {
       for (const s of data || []) {
         const { count } = await supabase
           .from('graduation_tests')
-          .select('*', { count: 'exact', head: true })
+          .select('*', { count: 'estimated', head: true })
           .eq('strategy_id', s.id);
         progressMap[s.id] = { completed: count || 0, stats: null };
       }
