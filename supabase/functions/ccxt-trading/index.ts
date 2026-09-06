@@ -16,10 +16,6 @@ interface TradingRequest {
   orderId?: string;
   timeframe?: string;
   limit?: number;
-  // API credentials (encrypted client-side, stored in user profile)
-  apiKey?: string;
-  secret?: string;
-  passphrase?: string; // For exchanges that require it
 }
 
 // Exchange API endpoints
@@ -542,7 +538,7 @@ serve(async (req) => {
 
   try {
     const body: TradingRequest = await req.json();
-    const { action, exchange, symbol, orderType, side, amount, price, orderId, timeframe, limit, apiKey, secret } = body;
+    const { action, exchange, symbol, orderType, side, amount, price, orderId, timeframe, limit } = body;
 
     console.log(`CCXT Trading: ${action} on ${exchange}${symbol ? ` for ${symbol}` : ""}`);
 
@@ -565,6 +561,16 @@ serve(async (req) => {
       action === "fetch_ticker" ||
       action === "fetch_ohlcv" ||
       action === "fetch_order_book";
+
+    if (!isPublicAction) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Private exchange operations are disabled on this endpoint. Use the authenticated trading service with credentials held in the backend vault.",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 },
+      );
+    }
     if (exchange === "kraken" && !isPublicAction) {
       return new Response(
         JSON.stringify({
@@ -630,29 +636,24 @@ serve(async (req) => {
         break;
 
       case "fetch_balance":
-        if (exchange !== "binance") throw new Error("fetch_balance is only supported for binance");
-        if (!apiKey || !secret) throw new Error("API credentials required for fetch_balance");
-        result = await binanceFetchBalance(apiKey, secret);
+        throw new Error("Private exchange operations require backend-vault credentials");
         break;
 
       case "create_order":
         if (exchange !== "binance") throw new Error("create_order is only supported for binance");
-        if (!apiKey || !secret) throw new Error("API credentials required for create_order");
         if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
-        result = await binanceCreateOrder(apiKey, secret, symbol, side, orderType || "market", amount, price);
+        throw new Error("Private exchange operations require backend-vault credentials");
         break;
 
       case "fetch_orders":
         if (exchange !== "binance") throw new Error("fetch_orders is only supported for binance");
-        if (!apiKey || !secret) throw new Error("API credentials required for fetch_orders");
-        result = await binanceFetchOrders(apiKey, secret, symbol);
+        throw new Error("Private exchange operations require backend-vault credentials");
         break;
 
       case "cancel_order":
         if (exchange !== "binance") throw new Error("cancel_order is only supported for binance");
-        if (!apiKey || !secret) throw new Error("API credentials required for cancel_order");
         if (!symbol || !orderId) throw new Error("Symbol and orderId required for cancel_order");
-        result = await binanceCancelOrder(apiKey, secret, symbol, orderId);
+        throw new Error("Private exchange operations require backend-vault credentials");
         break;
 
       default:
