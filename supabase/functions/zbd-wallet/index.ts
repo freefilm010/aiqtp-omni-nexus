@@ -144,14 +144,6 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const isPaid = charge.status === "completed" || charge.status === "charged";
-      if (!isPaid) {
-        // Not paid yet — acknowledge without action
-        return new Response(JSON.stringify({ received: true, action: "none" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
       // Never trust status or amount from the callback. Retrieve the charge
       // from ZBD using the server-held API key and use only that response.
       const verifiedResponse = await fetch(
@@ -160,8 +152,8 @@ Deno.serve(async (req: Request) => {
       );
       const verifiedPayload = await readZbdResponse(verifiedResponse);
       const verifiedCharge = verifiedPayload?.data;
-      const isPaid = verifiedCharge?.status === "completed" || verifiedCharge?.status === "charged";
-      if (!isPaid) {
+      const isVerifiedPaid = verifiedCharge?.status === "completed" || verifiedCharge?.status === "charged";
+      if (!isVerifiedPaid) {
         return new Response(JSON.stringify({ received: true, action: "not_verified_paid" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

@@ -10484,6 +10484,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      credit_lightning_deposit: {
+        Args: {
+          p_amount_usd: number
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       credit_platform_deposit: {
         Args: {
           p_amount_usd: number

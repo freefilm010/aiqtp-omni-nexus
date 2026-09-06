@@ -8,6 +8,7 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -16,42 +17,52 @@ jobs:
         with:
           version: latest
 
-      - name: Verify Supabase project is alive
-        env:
-          SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZWF4aXl2c2VheGt5c25vb2NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NDkwMDEsImV4cCI6MjA4OTQyNTAwMX0.07J92R1g2-ihtnN43iYD63jU3gByBK3otB5zq3haw54"
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "https://rueaxiyvseaxkysnoock.supabase.co/rest/v1/")
-          echo "Project status: $STATUS"
-          # 200 = active, 401 = active but unauthorized, 503 = paused
-          if [ "$STATUS" = "503" ]; then
-            echo "⚠️  PROJECT IS PAUSED — needs manual reactivation at supabase.com/dashboard"
-            exit 1
-          fi
-          echo "✅ Project is active"
-
-      - name: List deployed edge functions (verify all 46 are live)
+      - name: Require backup credentials
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
         run: |
-          if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
-            supabase functions list --project-ref rueaxiyvseaxkysnoock
-          else
-            echo "SUPABASE_ACCESS_TOKEN not set — skipping function list"
-          fi
-
-      - name: Verify all function directories exist in repo
-        run: |
-          MISSING=0
-          for fn in $(ls supabase/functions/ | grep -v _shared); do
-            echo "  ✅ $fn"
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_ID SUPABASE_DB_PASSWORD BACKUP_ENCRYPTION_KEY BACKUP_S3_BUCKET; do
+            test -n "${!name}" || { echo "::error::Missing required backup secret: $name"; exit 1; }
           done
-          echo "All $( ls supabase/functions/ | grep -v _shared | wc -l ) functions present in repo"
 
-      - name: Count migrations
+      - name: Create database and source backups
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          COUNT=$(ls supabase/migrations/*.sql 2>/dev/null | wc -l)
-          echo "📦 $COUNT SQL migrations in repo"
-          ls supabase/migrations/*.sql | tail -5 | xargs -I{} basename {}
+          mkdir -p backup
+          supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+          supabase db dump --linked --file backup/database.sql
+          tar -czf backup/functions-and-migrations.tar.gz supabase/functions supabase/migrations
+
+      - name: Encrypt and checksum backups
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          for source in backup/database.sql backup/functions-and-migrations.tar.gz; do
+            openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 \
+              -in "$source" -out "$source.enc" -pass env:BACKUP_ENCRYPTION_KEY
+            sha256sum "$source.enc" >> backup/SHA256SUMS
+            rm "$source"
+          done
+
+      - name: Upload encrypted backup and verify checksums
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+        run: |
+          test -n "$AWS_ACCESS_KEY_ID" || { echo "::error::Missing BACKUP_S3_ACCESS_KEY_ID"; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo "::error::Missing BACKUP_S3_SECRET_ACCESS_KEY"; exit 1; }
+          test -n "$AWS_ENDPOINT_URL" || { echo "::error::Missing BACKUP_S3_ENDPOINT"; exit 1; }
+          PREFIX="aiqtp/$(date -u +%Y/%m/%d)/${GITHUB_RUN_ID}"
+          aws s3 cp backup/ "s3://${BACKUP_S3_BUCKET}/${PREFIX}/" --recursive --endpoint-url "$AWS_ENDPOINT_URL"
+          mkdir -p restore-check
+          aws s3 cp "s3://${BACKUP_S3_BUCKET}/${PREFIX}/" restore-check/ --recursive --endpoint-url "$AWS_ENDPOINT_URL"
+          (cd restore-check && sha256sum -c SHA256SUMS)
