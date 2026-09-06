@@ -14,7 +14,8 @@ export interface RateLimitResult {
 
 /**
  * Check rate limit for a user on a specific function.
- * Base limit: 10 calls/hour. Extensions add extra calls at 15% surcharge.
+ * Admins and self-hosted (free, open-source) agent paths are never capped.
+ * Everyone else gets a high abuse ceiling only, not a usage quota.
  */
 export async function checkRateLimit(
   supabaseClient: any,
@@ -22,6 +23,35 @@ export async function checkRateLimit(
   functionName: string,
   baseLimit = 10
 ): Promise<RateLimitResult> {
+  const uncapped: RateLimitResult = {
+    allowed: true,
+    remaining: Number.MAX_SAFE_INTEGER,
+    used: 0,
+    limit: Number.MAX_SAFE_INTEGER,
+    canExtend: false,
+    extensionCost: 0,
+  };
+
+  // Self-hosted/open-source inference is free to run — no metering at all.
+  if ((Deno.env.get("OLLAMA_BASE_URL") ?? "").length > 0 && Deno.env.get("AI_METERING") !== "on") {
+    return uncapped;
+  }
+
+  // Admins are never rate limited.
+  try {
+    const { data: adminRole } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (adminRole) return uncapped;
+  } catch (_e) {
+    // fall through to the abuse ceiling
+  }
+
+  // Abuse ceiling only (per hour), far above normal product usage.
+  const effectiveLimit = Math.max(baseLimit, Number(Deno.env.get("AI_ABUSE_CEILING") ?? "1000"));
   const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
 
   // Count recent calls
@@ -37,6 +67,7 @@ export async function checkRateLimit(
   }
 
   const used = count || 0;
+
 
   // Check for active extensions
   const { data: extensions } = await supabaseClient
