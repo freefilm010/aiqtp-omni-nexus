@@ -18,7 +18,7 @@ Deno.test("QTC explorer exposes only public transaction metadata", async () => {
   const qtc = await Deno.readTextFile(new URL("./qtc-network/index.ts", import.meta.url));
   assertEquals(qtc.includes("function publicTransaction"), true);
   assertEquals(qtc.includes(".select('tx_hash, status, block_height, created_at, confirmed_at')"), true);
-  const projection = qtc.slice(qtc.indexOf("function publicTransaction"), qtc.indexOf("function getCirculatingSupply"));
+  const projection = qtc.slice(qtc.indexOf("function publicTransaction"), qtc.indexOf("// Proof of Temporal Resonance"));
   assertFalse(projection.includes("from_address"));
   assertFalse(projection.includes("to_address"));
   assertFalse(projection.includes("amount"));
