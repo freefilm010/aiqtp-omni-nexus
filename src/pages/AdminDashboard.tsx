@@ -121,6 +121,7 @@ const AdminDashboard = () => {
               <Route path="revenue-automation" element={<RevenueAutomation />} />
               <Route path="nft-wallet" element={<AdminNFTWallet />} />
               <Route path="kill-switch" element={<MasterKillSwitch />} />
+              <Route path="withdrawals" element={<WithdrawalQueue />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </Suspense>
