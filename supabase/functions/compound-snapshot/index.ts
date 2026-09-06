@@ -9,15 +9,18 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Restrict to internal/cron callers: require Bearer <SERVICE_ROLE_KEY>.
+    // Restrict to internal/cron callers: Bearer <SERVICE_ROLE_KEY> or the private cron secret.
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
     const authHeader = req.headers.get("Authorization") ?? "";
-    if (authHeader !== `Bearer ${serviceKey}`) {
+    const isCron = cronSecret.length > 0 && req.headers.get("x-cron-secret") === cronSecret;
+    if (!isCron && authHeader !== `Bearer ${serviceKey}`) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
