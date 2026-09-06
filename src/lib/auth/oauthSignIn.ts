@@ -5,32 +5,22 @@ const supabase = _supabase as any;
 
 type OAuthProvider = "google" | "apple";
 
-const LOVABLE_HOST_SUFFIXES = [
-  "lovable.app",
-  "lovableproject.com",
-  "lovableproject-dev.com",
-  "gpt-eng.com",
-  "gptengineer.run",
-];
+const LOCAL_HOSTS = ["localhost", "127.0.0.1"];
 
-const canUseManagedBroker = () => {
+const isLocalDev = () => {
   if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  // The managed broker route (/~oauth/initiate) only exists on Lovable-hosted
-  // surfaces. aiqtp.com is served from Vercel, so that route 404s there and
-  // the user lands on an error page after choosing their Google account.
-  // Everywhere else we use native provider OAuth.
-  return LOVABLE_HOST_SUFFIXES.some((s) => host === s || host.endsWith("." + s));
+  return LOCAL_HOSTS.includes(window.location.hostname);
 };
 
 /**
- * Social sign-in that works on every deployment surface.
+ * Social sign-in.
  *
- * The Lovable-managed OAuth broker redirects through `/~oauth/initiate`,
- * which only exists on Lovable-hosted domains (including the aiqtp.com
- * custom domains). On other surfaces (localhost dev, Vercel preview
- * deployments) that route 404s and the user lands on "Page not found".
- * So: managed broker where it exists, native provider OAuth elsewhere.
+ * The Lovable-managed OAuth broker (/~oauth/initiate) is available on all
+ * Lovable-hosted surfaces AND on connected custom domains (aiqtp.com), which
+ * are proxied through the same worker. Managed credentials only work through
+ * that broker — calling supabase.auth.signInWithOAuth directly fails with
+ * "Unsupported provider: missing OAuth secret". So: managed everywhere except
+ * pure localhost development.
  */
 export const signInWithOAuth = async (
   provider: OAuthProvider,
@@ -38,7 +28,7 @@ export const signInWithOAuth = async (
 ): Promise<{ error?: Error }> => {
   const redirectTo = opts?.redirectTo ?? `${window.location.origin}/`;
 
-  if (canUseManagedBroker()) {
+  if (!isLocalDev()) {
     const result = await lovable.auth.signInWithOAuth(provider, {
       redirect_uri: redirectTo,
     });
@@ -52,3 +42,4 @@ export const signInWithOAuth = async (
   });
   return error ? { error } : {};
 };
+
