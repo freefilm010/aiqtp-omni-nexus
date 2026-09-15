@@ -30,9 +30,9 @@ interface Strategy {
 
 const PROFITABILITY_THRESHOLD = STRATEGY_FEES.graduationThreshold;
 const CONSISTENCY_THRESHOLD = STRATEGY_FEES.consistencyThreshold;
-const MIN_WIN_RATE = 65;
-const MAX_DRAWDOWN = 15;
-const TOTAL_CYCLES = 10000;
+const MIN_WIN_RATE = 60;
+const MAX_DRAWDOWN = 18;
+const TOTAL_CYCLES = 1000;
 const BATCH_SIZE = 200;
 
 const GraduationPipeline = () => {

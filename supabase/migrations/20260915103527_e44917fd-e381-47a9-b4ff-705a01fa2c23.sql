@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.harden_security_surface();

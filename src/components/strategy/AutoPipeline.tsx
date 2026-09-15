@@ -228,10 +228,10 @@ const AutoPipeline = () => {
                     <span className="font-medium truncate max-w-[150px]">{r.name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={r.profitability >= 77 ? "default" : "secondary"} className="text-[10px]">
+                    <Badge variant={r.profitability >= 1 ? "default" : "secondary"} className="text-[10px]">
                       P:{r.profitability}%
                     </Badge>
-                    <Badge variant={r.consistency >= 77 ? "default" : "secondary"} className="text-[10px]">
+                    <Badge variant={r.consistency >= 60 ? "default" : "secondary"} className="text-[10px]">
                       C:{r.consistency}%
                     </Badge>
                     {r.graduated && (
