@@ -25,3 +25,5 @@
 - Wallet payment and automation screens now fail closed and no longer present banned venues, fabricated allocations, or nonfunctional success controls.
 - Latest dependency scan found no high/critical vulnerabilities; latest backend security scan found no issues.
 - Test ownership rules now prevent strategy-rental payout diversion, elite-chat impersonation, direct token balance writes, self-priced redemptions, and self-reported token burns.
+
+- [ ] After Stripe claim: walk $100 deposit end-to-end in test mode and confirm it lands in wallet (blocked: user must claim Stripe account)
