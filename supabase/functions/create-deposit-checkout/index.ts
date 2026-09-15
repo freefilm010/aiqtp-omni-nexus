@@ -101,6 +101,12 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    if (body.environment === 'live' && !Deno.env.get('STRIPE_LIVE_API_KEY')) {
+      return new Response(JSON.stringify({
+        code: 'PAYMENTS_NOT_ACTIVATED',
+        error: 'Card deposits are not activated for real payments yet. Account activation with the payment provider must be completed first.',
+      }), { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     const clientSecret = await createDepositCheckout(body);
     return new Response(JSON.stringify({ clientSecret }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

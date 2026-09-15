@@ -1,4 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+/** Hard risk ceiling for a single vault-executed order, in USD notional. */
+const MAX_ORDER_NOTIONAL_USD = 250;
+
+/** Vault credentials for private exchange operations (never client-supplied). */
+function binanceVaultCredentials(): { apiKey: string; secret: string } | null {
+  const apiKey = Deno.env.get("BINANCE_API_KEY");
+  const secret = Deno.env.get("BINANCE_SECRET_KEY");
+  if (!apiKey || !secret) return null;
+  if (Deno.env.get("BINANCE_LIVE_ENABLED") !== "true") return null;
+  return { apiKey, secret };
+}
+
+/** Resolve the caller and require an admin role. Returns null when unauthorized. */
+async function requireAdmin(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  const url = Deno.env.get("SUPABASE_URL");
+  const anon = Deno.env.get("SUPABASE_ANON_KEY");
+  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!token || !url || !anon || !service) return null;
+
+  const userClient = createClient(url, anon, { global: { headers: { Authorization: authHeader! } } });
+  const { data: { user } } = await userClient.auth.getUser(token);
+  if (!user) return null;
+
+  const admin = createClient(url, service, { auth: { persistSession: false } });
+  const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
+  return isAdmin === true ? user.id : null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -562,23 +593,57 @@ serve(async (req) => {
       action === "fetch_ohlcv" ||
       action === "fetch_order_book";
 
+    let creds: { apiKey: string; secret: string } | null = null;
+
     if (!isPublicAction) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Private exchange operations are disabled on this endpoint. Use the authenticated trading service with credentials held in the backend vault.",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 },
-      );
-    }
-    if (exchange === "kraken" && !isPublicAction) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Action ${action} is not supported for kraken (public market data only)`,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
+      if (exchange !== "binance") {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Action ${action} is not supported for ${exchange} (public market data only)`,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+
+      const adminId = await requireAdmin(req);
+      if (!adminId) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Unauthorized" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 },
+        );
+      }
+
+      creds = binanceVaultCredentials();
+      if (!creds) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: "EXCHANGE_CREDENTIALS_MISSING",
+            error: "Live exchange execution is not activated. Add the exchange API key and secret to the backend vault and set live execution to enabled.",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 },
+        );
+      }
+
+      if (action === "create_order") {
+        if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
+        const reference = price ?? (await binanceFetchTicker(symbol)).last;
+        const notional = Number(reference) * Number(amount);
+        if (!Number.isFinite(notional) || notional <= 0) {
+          throw new Error("Unable to determine order notional");
+        }
+        if (notional > MAX_ORDER_NOTIONAL_USD) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              code: "ORDER_NOTIONAL_LIMIT",
+              error: `Order notional $${notional.toFixed(2)} exceeds the $${MAX_ORDER_NOTIONAL_USD} per-order limit.`,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
+          );
+        }
+      }
     }
 
     switch (action) {
@@ -636,24 +701,28 @@ serve(async (req) => {
         break;
 
       case "fetch_balance":
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceFetchBalance(creds!.apiKey, creds!.secret);
         break;
 
       case "create_order":
-        if (exchange !== "binance") throw new Error("create_order is only supported for binance");
-        if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceCreateOrder(
+          creds!.apiKey,
+          creds!.secret,
+          symbol!,
+          side!,
+          orderType || "market",
+          amount!,
+          price,
+        );
         break;
 
       case "fetch_orders":
-        if (exchange !== "binance") throw new Error("fetch_orders is only supported for binance");
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceFetchOrders(creds!.apiKey, creds!.secret, symbol);
         break;
 
       case "cancel_order":
-        if (exchange !== "binance") throw new Error("cancel_order is only supported for binance");
         if (!symbol || !orderId) throw new Error("Symbol and orderId required for cancel_order");
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceCancelOrder(creds!.apiKey, creds!.secret, symbol, orderId);
         break;
 
       default:
