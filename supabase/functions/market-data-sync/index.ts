@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fetchAllTickers } from "../_shared/hollaex_public.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +9,7 @@ const corsHeaders = {
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const COINGECKO_PRO_API = 'https://pro-api.coingecko.com/api/v3';
-const BINANCE_API = 'https://api.binance.com/api/v3'; // free, no key, 1200 req/min
+// Crypto prices come from the platform venue (HollaEx); CoinGecko covers the rest.
 
 // Cache TTL in seconds - serve cached data if fresh enough
 const CACHE_TTL_SECONDS = 60;
@@ -54,43 +55,32 @@ function isRateLimitError(error: unknown): boolean {
   return /429|rate limit/i.test(message);
 }
 
-// Fetch prices from Binance public API — no API key, 1200 req/min
+// Fetch prices from the platform venue (HollaEx) public market data
 async function fetchBinancePrices(coinIds?: string[]): Promise<Record<string, any>> {
   try {
-    let url: string;
-    if (coinIds && coinIds.length <= 20) {
-      const syms = coinIds.map(id => CG_ID_TO_BINANCE[id]).filter(Boolean);
-      if (syms.length === 0) return {};
-      url = `${BINANCE_API}/ticker/24hr?symbols=${JSON.stringify(syms)}`;
-    } else {
-      url = `${BINANCE_API}/ticker/24hr`; // all pairs
-    }
+    const tickers = await fetchAllTickers();
+    const wanted = coinIds && coinIds.length
+      ? new Set(coinIds.map((id) => CG_ID_TO_BINANCE[id]).filter(Boolean))
+      : null;
 
-    const response = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!response.ok) { console.warn(`Binance ${response.status}`); return {}; }
-
-    const tickers: any[] = await response.json();
     const result: Record<string, any> = {};
-
     for (const t of tickers) {
-      const cgId = BINANCE_TO_CG_ID[t.symbol];
+      const flat = t.symbol.replace('/', '');
+      if (wanted && !wanted.has(flat)) continue;
+      const cgId = BINANCE_TO_CG_ID[flat];
       if (!cgId) continue;
-      const price = parseFloat(t.lastPrice);
-      if (!price || !isFinite(price)) continue;
+      if (!t.last || !isFinite(t.last)) continue;
       result[cgId] = {
-        usd: price,
-        usd_24h_change: parseFloat(t.priceChangePercent),
-        usd_24h_vol: parseFloat(t.quoteVolume),
+        usd: t.last,
+        usd_24h_change: t.changePercent,
+        usd_24h_vol: t.quoteVolume,
         usd_market_cap: null,
-        _source: 'binance',
+        _source: 'hollaex',
       };
     }
     return result;
   } catch (e: any) {
-    console.warn('Binance fetch error:', e?.message ?? e);
+    console.warn('Venue price fetch error:', e?.message ?? e);
     return {};
   }
 }
