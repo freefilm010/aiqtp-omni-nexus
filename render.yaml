@@ -24,17 +24,13 @@ services:
         value: https://rueaxiyvseaxkysnoock.supabase.co
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: ALPACA_API_KEY
+      - key: HOLLAEX_API_KEY
         sync: false
-      - key: ALPACA_SECRET_KEY
+      - key: HOLLAEX_API_SECRET
         sync: false
-      - key: ALPACA_BASE_URL
-        value: https://api.alpaca.markets
-      - key: ALPACA_PAPER_MODE
-        value: "false"
-      - key: ALPACA_SYMBOL_WHITELIST
-        value: BTCUSD,ETHUSD
-      - key: CCXT_LIVE_ENABLED
+      - key: HOLLAEX_BASE_URL
+        value: https://api.hollaex.com
+      - key: HOLLAEX_LIVE_ENABLED
         value: "false"
       # Tradier (equity broker)
       - key: TRADIER_API_KEY
@@ -43,20 +39,6 @@ services:
         sync: false
       - key: TRADIER_SANDBOX_MODE
         value: "true"
-      # Binance (crypto)
-      - key: BINANCE_API_KEY
-        sync: false
-      - key: BINANCE_SECRET_KEY
-        sync: false
-      - key: BINANCE_LIVE_ENABLED
-        value: "false"
-      # Kraken (crypto)
-      - key: KRAKEN_API_KEY
-        sync: false
-      - key: KRAKEN_SECRET_KEY
-        sync: false
-      - key: KRAKEN_LIVE_ENABLED
-        value: "false"
       # Interactive Brokers (Client Portal Gateway)
       - key: IBKR_CPG_URL
         sync: false
@@ -128,12 +110,14 @@ services:
         value: https://rueaxiyvseaxkysnoock.supabase.co
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: ALPACA_BASE_URL
-        value: https://api.alpaca.markets
-      - key: ALPACA_PAPER_MODE
+      - key: HOLLAEX_API_KEY
+        sync: false
+      - key: HOLLAEX_API_SECRET
+        sync: false
+      - key: HOLLAEX_BASE_URL
+        value: https://api.hollaex.com
+      - key: HOLLAEX_LIVE_ENABLED
         value: "false"
-      - key: ALPACA_SYMBOL_WHITELIST
-        value: BTCUSD,ETHUSD
       - key: LOOP_INTERVAL_SECONDS
         value: "60"
 
@@ -150,39 +134,3 @@ services:
       - key: IBM_QUANTUM_CRN
         sync: false
 
-  # ── AIQTP Momentum Trading Bot ───────────────────────────────────────────
-  - type: worker
-    name: aiqtp-momentum-bot
-    runtime: python
-    rootDir: trading-service
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bots/momentum_bot.py
-    envVars:
-      - key: HYPERLIQUID_PRIVATE_KEY
-        sync: false
-      - key: HYPERLIQUID_TESTNET
-        value: "false"
-      - key: BOT_POLL_SECONDS
-        value: "60"
-
-  # ── AIQTP Flash Loan Bot (Arb/Liq) ───────────────────────────────────────
-  - type: worker
-    name: aiqtp-flash-bot
-    runtime: python
-    rootDir: trading-service
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bots/flash_loan_bot.py
-    envVars:
-      - key: ARBITRUM_RPC_URL
-        value: https://arb1.arbitrum.io/rpc
-
-  # ── AIQTP DeFi Yield Scanner ─────────────────────────────────────────────
-  - type: worker
-    name: aiqtp-yield-scanner
-    runtime: python
-    rootDir: trading-service
-    buildCommand: pip install -r requirements.txt
-    startCommand: python bots/yield_scanner.py --loop
-    envVars:
-      - key: YIELD_SCAN_INTERVAL
-        value: "1800"
