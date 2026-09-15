@@ -10524,8 +10524,12 @@ export type Database = {
       }
     }
     Functions: {
-      collect_binance_klines: {
-        Args: { p_interval?: string; p_symbol?: string }
+      collect_venue_candles: {
+        Args: {
+          p_interval?: string
+          p_store_symbol?: string
+          p_symbol?: string
+        }
         Returns: number
       }
       create_operator_with_wallet: {
@@ -10615,7 +10619,7 @@ export type Database = {
         Args: { p_amount: number; p_currency: string }
         Returns: undefined
       }
-      ingest_binance_klines: {
+      ingest_venue_candles: {
         Args: { p_interval?: string; p_limit?: number; p_symbol?: string }
         Returns: number
       }
