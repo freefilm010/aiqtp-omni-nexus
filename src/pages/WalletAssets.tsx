@@ -40,7 +40,6 @@ interface RevenueStream {
   status: "active" | "paused" | "pending";
   dailyRevenue: number;
   monthlyRevenue: number;
-  profitability: number;
   lastActive: string;
 }
 
@@ -89,7 +88,6 @@ const WalletAssets = () => {
             status: "active" as const,
             dailyRevenue: val.total / Math.max(1, Math.ceil((Date.now() - new Date(val.lastDate).getTime()) / 86400000)),
             monthlyRevenue: val.total,
-            profitability: 100,
             lastActive: new Date(val.lastDate).toLocaleString(),
           }));
           setRevenueStreams(streams);
@@ -112,19 +110,6 @@ const WalletAssets = () => {
     setLoading(false);
   };
 
-  const toggleStream = (id: string) => {
-    setRevenueStreams(streams =>
-      streams.map(s =>
-        s.id === id
-          ? { ...s, status: s.status === "active" ? "paused" : "active" }
-          : s
-      )
-    );
-    toast({
-      title: "Stream Updated",
-      description: "Revenue stream status changed",
-    });
-  };
 
   const fundingTourSteps: TourStep[] = [
     { target: "[data-tour='tabs-nav']", title: "Navigation Tabs", description: "Switch between Revenue Streams, Funding, Free Access, and Compounding sections to manage all your money flows.", position: "bottom" },
@@ -295,17 +280,6 @@ const WalletAssets = () => {
                            <p className="text-sm text-muted-foreground">Records</p>
                            <p className="font-semibold">Verified</p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleStream(stream.id)}
-                        >
-                          {stream.status === "active" ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="h-4 w-4" />
-                          )}
-                        </Button>
                       </div>
                     </div>
                   </CardContent>

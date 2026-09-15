@@ -19,7 +19,7 @@ export function AccountBalance({ userId }: Props) {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("20");
-  const [withdrawDest, setWithdrawDest] = useState("bank_ach");
+  const [withdrawDest] = useState("manual_review");
   const [withdrawNote, setWithdrawNote] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -123,14 +123,10 @@ export function AccountBalance({ userId }: Props) {
             </div>
             <div className="space-y-2">
               <Label>Destination</Label>
-              <Select value={withdrawDest} onValueChange={setWithdrawDest}>
+              <Select value={withdrawDest} disabled>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bank_ach">Bank (ACH)</SelectItem>
-                  <SelectItem value="crypto">Crypto wallet</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
-                  <SelectItem value="stripe_payout">Stripe payout</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="manual_review">Verified payout destination</SelectItem>
                 </SelectContent>
               </Select>
             </div>
