@@ -7,14 +7,11 @@ import GuidedTour, { TourStep } from "@/components/onboarding/GuidedTour";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getCachedUser } from "@/lib/auth/getCachedUser";
 import {
   DollarSign,
   TrendingUp,
@@ -26,9 +23,6 @@ import {
   Shield,
   Wallet,
   RefreshCw,
-  Play,
-  Pause,
-  Settings,
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
@@ -43,21 +37,8 @@ interface RevenueStream {
   lastActive: string;
 }
 
-interface StripeStats {
-  totalRevenue: number;
-  pendingPayouts: number;
-  subscriptions: number;
-  oneTimePayments: number;
-}
-
 const WalletAssets = () => {
   const [loading, setLoading] = useState(false);
-  const [stripeStats, setStripeStats] = useState<StripeStats>({
-    totalRevenue: 0,
-    pendingPayouts: 0,
-    subscriptions: 0,
-    oneTimePayments: 0,
-  });
   const [revenueStreams, setRevenueStreams] = useState<RevenueStream[]>([]);
   const { toast } = useToast();
 
@@ -484,89 +465,18 @@ const WalletAssets = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <RefreshCw className="h-5 w-5 text-cyan-400" />
-                  Auto-Compounding Settings
+                  Auto-Compounding Status
                 </CardTitle>
                 <CardDescription>
-                  Configure how profits are automatically reinvested
+                  Verified state from the auto-invest engine
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Auto-Compound Profits</p>
-                        <p className="text-sm text-muted-foreground">
-                          Automatically reinvest trading profits
-                        </p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Ultra-Aggressive Strategy</p>
-                        <p className="text-sm text-muted-foreground">
-                          95% growth / 5% stable allocation
-                        </p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Daily Rebalancing</p>
-                        <p className="text-sm text-muted-foreground">
-                          Automatically rebalance portfolio daily
-                        </p>
-                      </div>
-                      <Switch />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Profit Notifications</p>
-                        <p className="text-sm text-muted-foreground">
-                          Get notified when profits are compounded
-                        </p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-lg bg-muted/50">
-                    <h4 className="font-semibold mb-4">Compounding Allocation</h4>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Trading Bots</span>
-                          <span className="text-emerald-400">40%</span>
-                        </div>
-                        <Progress value={40} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Yield Farming</span>
-                          <span className="text-cyan-400">30%</span>
-                        </div>
-                        <Progress value={30} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Stablecoins</span>
-                          <span className="text-amber-400">20%</span>
-                        </div>
-                        <Progress value={20} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Reserve</span>
-                          <span className="text-purple-400">10%</span>
-                        </div>
-                        <Progress value={10} className="h-2" />
-                      </div>
-                    </div>
-                    <Button className="w-full mt-4" variant="outline">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Customize Allocation
-                    </Button>
+              <CardContent>
+                <div className="flex items-start gap-3 rounded-md border border-border p-4">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
+                  <div>
+                    <p className="font-medium">Live automation is not running</p>
+                    <p className="text-sm text-muted-foreground">The live scheduler has no active jobs, and HollaEx execution remains locked until server credentials and reconciliation pass.</p>
                   </div>
                 </div>
               </CardContent>
