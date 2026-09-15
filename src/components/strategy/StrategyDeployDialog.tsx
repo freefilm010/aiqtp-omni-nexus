@@ -35,7 +35,7 @@ const StrategyDeployDialog = ({ onDeployed, trigger }: Props) => {
   const [open, setOpen] = useState(false);
   const [strategies, setStrategies] = useState<StrategyOption[]>([]);
   const [strategyId, setStrategyId] = useState<string>("");
-  const [venue, setVenue] = useState<"binance" | "kraken">("binance");
+  const [venue, setVenue] = useState<"hollaex">("hollaex");
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loadingMarkets, setLoadingMarkets] = useState(false);
   const [quote, setQuote] = useState<string>("USDT");
@@ -164,13 +164,13 @@ const StrategyDeployDialog = ({ onDeployed, trigger }: Props) => {
             </div>
             <div className="space-y-1.5">
               <Label>Venue</Label>
-              <Select value={venue} onValueChange={(v) => { setVenue(v as "binance" | "kraken"); setSelected([]); }}>
+              <Select value={venue} onValueChange={(v) => { setVenue(v as "hollaex"); setSelected([]); }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="binance">Binance</SelectItem>
-                  <SelectItem value="kraken">Kraken</SelectItem>
+                  <SelectItem value="hollaex">Platform Venue</SelectItem>
+                  
                 </SelectContent>
               </Select>
             </div>

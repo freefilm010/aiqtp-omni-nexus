@@ -1,4 +1,5 @@
-// Real market replay engine — key-free public exchange candles (Binance).
+// Real market replay engine — candles from the platform venue (HollaEx).
+import { fetchOhlcv } from "./hollaex_public.ts";
 // No synthetic performance model: every metric comes from replaying a
 // strategy's own stop-loss / take-profit parameters over real price history.
 
@@ -30,18 +31,11 @@ export async function getCandles(): Promise<{ candles: Candle[]; symbol: string 
   if (candleCache && Date.now() - candleCache.fetchedAt < 10 * 60 * 1000) {
     return { candles: candleCache.candles, symbol: candleCache.symbol };
   }
-  for (const symbol of ['BTCUSDT', 'ETHUSDT']) {
+  for (const symbol of ['BTC/USDT', 'ETH/USDT']) {
     try {
-      const res = await fetch(
-        `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=1000`,
-        { signal: AbortSignal.timeout(10000) },
-      );
-      if (!res.ok) continue;
-      const raw = await res.json();
+      const raw = await fetchOhlcv(symbol, '1h', 1000);
       const candles: Candle[] = raw
-        .map((k: any[]) => ({
-          o: parseFloat(k[1]), h: parseFloat(k[2]), l: parseFloat(k[3]), c: parseFloat(k[4]),
-        }))
+        .map((k) => ({ o: k.open, h: k.high, l: k.low, c: k.close }))
         .filter((k: Candle) => Number.isFinite(k.c) && k.c > 0);
       if (candles.length >= 200) {
         candleCache = { candles, fetchedAt: Date.now(), symbol };

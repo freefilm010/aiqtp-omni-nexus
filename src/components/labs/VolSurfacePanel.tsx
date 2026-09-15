@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VolSurface, type VolPoint } from "@/lib/derivatives/volSurface";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const MATURITIES = [
   { label: "1W", years: 7 / 365, window: 7 },
@@ -23,12 +24,14 @@ const VolSurfacePanel = () => {
 
   useEffect(() => {
     let alive = true;
-    fetch("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=365")
-      .then((r) => {
-        if (!r.ok) throw new Error(`klines ${r.status}`);
-        return r.json();
+    supabase.functions
+      .invoke("ccxt-trading", { body: { action: "fetch_ohlcv", symbol: "BTC/USDT", timeframe: "1d", limit: 365 } })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "candles unavailable");
+        return data.data as { close: number }[];
       })
-      .then((rows: unknown[][]) => alive && setCloses(rows.map((r) => Number(r[4]))))
+      .then((rows) => alive && setCloses(rows.map((r) => Number(r.close))))
       .catch((e) => alive && setError(e instanceof Error ? e.message : String(e)));
     return () => {
       alive = false;

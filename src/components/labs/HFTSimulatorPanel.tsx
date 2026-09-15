@@ -9,6 +9,7 @@ import {
   type QueuedOrder,
 } from "@/lib/hft/hftSimulator";
 import { Loader2, Gauge } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Level = [number, number];
 
@@ -20,12 +21,14 @@ const HFTSimulatorPanel = () => {
 
   const loadBook = async () => {
     try {
-      const r = await fetch("https://api.binance.com/api/v3/depth?symbol=BTCUSDT&limit=20");
-      if (!r.ok) throw new Error(`depth ${r.status}`);
-      const j = await r.json();
+      const { data, error } = await supabase.functions.invoke("ccxt-trading", {
+        body: { action: "fetch_order_book", symbol: "BTC/USDT", limit: 20 },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "order book unavailable");
       setBook({
-        bids: (j.bids as string[][]).map((b) => [Number(b[0]), Number(b[1])] as Level),
-        asks: (j.asks as string[][]).map((b) => [Number(b[0]), Number(b[1])] as Level),
+        bids: (data.data.bids as { price: number; amount: number }[]).map((b) => [b.price, b.amount] as Level),
+        asks: (data.data.asks as { price: number; amount: number }[]).map((b) => [b.price, b.amount] as Level),
       });
       setError(null);
     } catch (e) {

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Candle {
   timestamp: Date;
@@ -9,33 +10,23 @@ export interface Candle {
   volume: number;
 }
 
-const ENDPOINTS = [
-  (s: string, i: string, l: number) =>
-    `https://api.binance.com/api/v3/klines?symbol=${s}&interval=${i}&limit=${l}`,
-  (s: string, i: string, l: number) =>
-    `https://data-api.binance.vision/api/v3/klines?symbol=${s}&interval=${i}&limit=${l}`,
-];
-
+/** Candles come from the platform venue through the backend. No third-party feeds. */
 async function fetchCandles(symbol: string, interval: string, limit: number): Promise<Candle[]> {
-  let lastErr: unknown;
-  for (const build of ENDPOINTS) {
-    try {
-      const res = await fetch(build(symbol, interval, limit));
-      if (!res.ok) throw new Error(`klines ${res.status}`);
-      const rows = (await res.json()) as unknown[][];
-      return rows.map((r) => ({
-        timestamp: new Date(Number(r[0])),
-        open: Number(r[1]),
-        high: Number(r[2]),
-        low: Number(r[3]),
-        close: Number(r[4]),
-        volume: Number(r[5]),
-      }));
-    } catch (e) {
-      lastErr = e;
-    }
+  const { data, error } = await supabase.functions.invoke("ccxt-trading", {
+    body: { action: "fetch_ohlcv", symbol, timeframe: interval, limit },
+  });
+  if (error) throw error;
+  if (!data?.success || !Array.isArray(data?.data)) {
+    throw new Error(data?.error || "market data unavailable");
   }
-  throw lastErr instanceof Error ? lastErr : new Error("market data unavailable");
+  return (data.data as any[]).map((r) => ({
+    timestamp: new Date(Number(r.timestamp)),
+    open: Number(r.open),
+    high: Number(r.high),
+    low: Number(r.low),
+    close: Number(r.close),
+    volume: Number(r.volume),
+  }));
 }
 
 /** Real exchange OHLCV. No synthetic fallback — an error surfaces as an error. */

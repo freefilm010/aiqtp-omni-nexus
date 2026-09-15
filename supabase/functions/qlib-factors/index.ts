@@ -9,6 +9,7 @@
 // is unreachable the function returns ok:false rather than inventing data.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { fetchOhlcv } from "../_shared/hollaex_public.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,18 +26,8 @@ const json = (body: unknown, status = 200) =>
 type Bar = { t: number; o: number; h: number; l: number; c: number; v: number };
 
 async function klines(symbol: string, interval: string, limit: number): Promise<Bar[]> {
-  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`binance ${symbol} ${res.status}`);
-  const rows = (await res.json()) as unknown[][];
-  return rows.map((r) => ({
-    t: Number(r[0]),
-    o: Number(r[1]),
-    h: Number(r[2]),
-    l: Number(r[3]),
-    c: Number(r[4]),
-    v: Number(r[5]),
-  }));
+  const rows = await fetchOhlcv(symbol, interval, limit);
+  return rows.map((r) => ({ t: r.timestamp, o: r.open, h: r.high, l: r.low, c: r.close, v: r.volume }));
 }
 
 const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
@@ -198,7 +189,7 @@ serve(async (req) => {
       observations: Object.values(panel)[0]?.f.length ?? 0,
       factors,
       signals,
-      source: "binance public klines (real OHLCV)",
+      source: "platform venue candles (real OHLCV)",
     });
   } catch (e) {
     return json({ ok: false, reason: e instanceof Error ? e.message : String(e) });

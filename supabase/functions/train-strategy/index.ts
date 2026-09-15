@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
 import { PASS_CRITERIA } from "../_shared/market_replay.ts";
+import { fetchOhlcv } from "../_shared/hollaex_public.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +18,7 @@ function deterministicFloat(seed: string, index: number): number {
   return (hash >>> 0) / 4294967295;
 }
 
-// --- Real market data (key-free public exchange candles) ---
+// --- Real market data (platform venue candles) ---
 interface Candle { o: number; h: number; l: number; c: number; }
 let candleCache: { candles: Candle[]; fetchedAt: number; symbol: string } | null = null;
 
@@ -25,17 +26,12 @@ async function getCandles(): Promise<{ candles: Candle[]; symbol: string }> {
   if (candleCache && Date.now() - candleCache.fetchedAt < 10 * 60 * 1000) {
     return { candles: candleCache.candles, symbol: candleCache.symbol };
   }
-  for (const symbol of ['BTCUSDT', 'ETHUSDT']) {
+  for (const symbol of ['BTC/USDT', 'ETH/USDT']) {
     try {
-      const res = await fetch(
-        `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=1000`,
-        { signal: AbortSignal.timeout(10000) }
-      );
-      if (!res.ok) continue;
-      const raw = await res.json();
-      const candles: Candle[] = raw.map((k: any[]) => ({
-        o: parseFloat(k[1]), h: parseFloat(k[2]), l: parseFloat(k[3]), c: parseFloat(k[4]),
-      })).filter((k: Candle) => Number.isFinite(k.c) && k.c > 0);
+      const raw = await fetchOhlcv(symbol, '1h', 1000);
+      const candles: Candle[] = raw
+        .map((k) => ({ o: k.open, h: k.high, l: k.low, c: k.close }))
+        .filter((k: Candle) => Number.isFinite(k.c) && k.c > 0);
       if (candles.length >= 200) {
         candleCache = { candles, fetchedAt: Date.now(), symbol };
         return { candles, symbol };
