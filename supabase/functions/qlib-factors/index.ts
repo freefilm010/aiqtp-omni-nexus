@@ -189,7 +189,7 @@ serve(async (req) => {
       observations: Object.values(panel)[0]?.f.length ?? 0,
       factors,
       signals,
-      source: "binance public klines (real OHLCV)",
+      source: "platform venue candles (real OHLCV)",
     });
   } catch (e) {
     return json({ ok: false, reason: e instanceof Error ? e.message : String(e) });
