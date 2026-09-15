@@ -660,31 +660,6 @@ serve(async (req) => {
         }
         break;
 
-      case "fetch_balance":
-        result = await binanceFetchBalance(creds!.apiKey, creds!.secret);
-        break;
-
-      case "create_order":
-        result = await binanceCreateOrder(
-          creds!.apiKey,
-          creds!.secret,
-          symbol!,
-          side!,
-          orderType || "market",
-          amount!,
-          price,
-        );
-        break;
-
-      case "fetch_orders":
-        result = await binanceFetchOrders(creds!.apiKey, creds!.secret, symbol);
-        break;
-
-      case "cancel_order":
-        if (!symbol || !orderId) throw new Error("Symbol and orderId required for cancel_order");
-        result = await binanceCancelOrder(creds!.apiKey, creds!.secret, symbol, orderId);
-        break;
-
       default:
         throw new Error(`Unknown action: ${action}`);
     }
