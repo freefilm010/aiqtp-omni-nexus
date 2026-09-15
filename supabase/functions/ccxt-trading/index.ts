@@ -593,57 +593,17 @@ serve(async (req) => {
       action === "fetch_ohlcv" ||
       action === "fetch_order_book";
 
-    let creds: { apiKey: string; secret: string } | null = null;
-
     if (!isPublicAction) {
-      if (exchange !== "binance") {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: `Action ${action} is not supported for ${exchange} (public market data only)`,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-        );
-      }
-
-      const adminId = await requireAdmin(req);
-      if (!adminId) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Unauthorized" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 },
-        );
-      }
-
-      creds = binanceVaultCredentials();
-      if (!creds) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            code: "EXCHANGE_CREDENTIALS_MISSING",
-            error: "Live exchange execution is not activated. Add the exchange API key and secret to the backend vault and set live execution to enabled.",
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 503 },
-        );
-      }
-
-      if (action === "create_order") {
-        if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
-        const reference = price ?? (await binanceFetchTicker(symbol)).last;
-        const notional = Number(reference) * Number(amount);
-        if (!Number.isFinite(notional) || notional <= 0) {
-          throw new Error("Unable to determine order notional");
-        }
-        if (notional > MAX_ORDER_NOTIONAL_USD) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              code: "ORDER_NOTIONAL_LIMIT",
-              error: `Order notional $${notional.toFixed(2)} exceeds the $${MAX_ORDER_NOTIONAL_USD} per-order limit.`,
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
-          );
-        }
-      }
+      // This endpoint is PUBLIC MARKET DATA ONLY. Order execution lives on the
+      // platform's own venue (HollaEx) in the hollaex-trading function.
+      return new Response(
+        JSON.stringify({
+          success: false,
+          code: "EXECUTION_NOT_HERE",
+          error: "This endpoint serves public market data only. Order execution runs through the platform venue (hollaex-trading).",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
+      );
     }
 
     switch (action) {
