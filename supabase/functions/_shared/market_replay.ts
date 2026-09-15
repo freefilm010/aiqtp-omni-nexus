@@ -1,4 +1,5 @@
-// Real market replay engine — key-free public exchange candles (Binance).
+// Real market replay engine — candles from the platform venue (HollaEx).
+import { fetchOhlcv } from "./hollaex_public.ts";
 // No synthetic performance model: every metric comes from replaying a
 // strategy's own stop-loss / take-profit parameters over real price history.
 
