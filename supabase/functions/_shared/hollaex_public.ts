@@ -105,8 +105,7 @@ export async function fetchOhlcv(symbol: string, timeframe = "1h", limit = 200):
   const to = Math.floor(Date.now() / 1000);
   const from = to - minutes * 60 * Math.max(1, limit);
   const data = await get(
-    `/v2/chart?symbol=${encodeURIComponent(pair)}&resolution=${minutes}` +
-      `&from=${new Date(from * 1000).toISOString()}&to=${new Date(to * 1000).toISOString()}`,
+    `/v2/chart?symbol=${encodeURIComponent(pair)}&resolution=${minutes}&from=${from}&to=${to}`,
   );
   if (!Array.isArray(data)) throw new Error("Venue chart data unavailable");
   return data
