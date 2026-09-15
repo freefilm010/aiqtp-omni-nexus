@@ -701,24 +701,28 @@ serve(async (req) => {
         break;
 
       case "fetch_balance":
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceFetchBalance(creds!.apiKey, creds!.secret);
         break;
 
       case "create_order":
-        if (exchange !== "binance") throw new Error("create_order is only supported for binance");
-        if (!symbol || !side || !amount) throw new Error("Symbol, side, and amount required for create_order");
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceCreateOrder(
+          creds!.apiKey,
+          creds!.secret,
+          symbol!,
+          side!,
+          orderType || "market",
+          amount!,
+          price,
+        );
         break;
 
       case "fetch_orders":
-        if (exchange !== "binance") throw new Error("fetch_orders is only supported for binance");
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceFetchOrders(creds!.apiKey, creds!.secret, symbol);
         break;
 
       case "cancel_order":
-        if (exchange !== "binance") throw new Error("cancel_order is only supported for binance");
         if (!symbol || !orderId) throw new Error("Symbol and orderId required for cancel_order");
-        throw new Error("Private exchange operations require backend-vault credentials");
+        result = await binanceCancelOrder(creds!.apiKey, creds!.secret, symbol, orderId);
         break;
 
       default:
