@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
 import { z } from "https://esm.sh/zod@3.23.8";
+import { fetchTicker } from "../_shared/hollaex_public.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,13 +67,8 @@ async function creditLightningDeposit(
   // be marked completed without its corresponding atomic ledger credit.
   let btcPriceUsd = 0;
   try {
-    const priceResp = await fetch(
-      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
-    );
-    if (priceResp.ok) {
-      const priceData = await priceResp.json();
-      btcPriceUsd = parseFloat(priceData?.price ?? "0");
-    }
+    const ticker = await fetchTicker("BTC/USDT");
+    btcPriceUsd = ticker.last;
   } catch {
     // ignore — price fetch failure is non-fatal
   }
@@ -311,13 +307,8 @@ Deno.serve(async (req: Request) => {
       const amountBtc = amount_msats / MSATS_PER_BTC;
       let btcPriceUsd = 0;
       try {
-        const priceResp = await fetch(
-          "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
-        );
-        if (priceResp.ok) {
-          const priceData = await priceResp.json();
-          btcPriceUsd = parseFloat(priceData?.price ?? "0");
-        }
+        const ticker = await fetchTicker("BTC/USDT");
+        btcPriceUsd = ticker.last;
       } catch {
         // Fail closed below. A payment cannot be sent without a priced debit.
       }
