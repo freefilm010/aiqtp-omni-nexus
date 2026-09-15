@@ -1,13 +1,13 @@
 /**
- * useWebSocketPrices — Polls Binance via edge function every 2s for near-real-time prices.
- * Direct WebSocket to Binance is blocked by browser CSP, so we proxy through edge functions.
+ * useWebSocketPrices — Polls the platform venue via edge function every 2s for near-real-time prices.
+ * Direct browser WebSockets are blocked by CSP, so we proxy through edge functions.
  * Patches React Query cache directly for instant UI updates.
  */
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const BINANCE_TO_SYMBOL: Record<string, string> = {
+const VENUE_TO_SYMBOL: Record<string, string> = {
   BTCUSDT: "BTC", ETHUSDT: "ETH", SOLUSDT: "SOL", BNBUSDT: "BNB",
   XRPUSDT: "XRP", ADAUSDT: "ADA", DOGEUSDT: "DOGE", AVAXUSDT: "AVAX",
   DOTUSDT: "DOT", LINKUSDT: "LINK", MATICUSDT: "MATIC", UNIUSDT: "UNI",
@@ -64,7 +64,7 @@ export function useWebSocketPrices() {
             const updated = { ...old.priceMap };
 
             for (const tick of data.prices) {
-              const symbol = BINANCE_TO_SYMBOL[tick.symbol];
+              const symbol = VENUE_TO_SYMBOL[tick.symbol];
               if (!symbol) continue;
 
               const existing = updated[symbol];
