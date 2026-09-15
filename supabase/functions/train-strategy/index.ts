@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.77.0";
+import { PASS_CRITERIA } from "../_shared/market_replay.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -298,10 +299,11 @@ serve(async (req) => {
         candles
       );
 
-      const passed = result.profitability >= 77 &&
-                    result.winRate >= 60 &&
-                    result.maxDrawdown <= 18 &&
-                    result.consistency >= 77;
+      // Criteria calibrated for REAL weekly returns (see _shared/market_replay.ts)
+      const passed = result.profitability >= PASS_CRITERIA.minProfitability &&
+                    result.winRate >= PASS_CRITERIA.minWinRate &&
+                    result.maxDrawdown <= PASS_CRITERIA.maxDrawdown &&
+                    result.consistency >= PASS_CRITERIA.minConsistency;
 
       if (passed) passedCount++;
       totalProfitability += result.profitability;
@@ -350,7 +352,7 @@ serve(async (req) => {
     const passRate = (passedCount / cyclesToRun) * 100;
 
     // Update strategy with latest training stats
-    const shouldGraduate = totalCompleted >= TOTAL_CYCLES && passRate >= 80;
+    const shouldGraduate = totalCompleted >= TOTAL_CYCLES && passRate >= PASS_CRITERIA.minPassRate;
     
     await supabaseClient.from('ai_strategies').update({
       profitability_score: avgProfitability,

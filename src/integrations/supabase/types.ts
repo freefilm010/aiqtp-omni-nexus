@@ -8069,6 +8069,66 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_capital_deployments: {
+        Row: {
+          allocated_usd: number
+          created_at: string
+          funding_source: string
+          id: string
+          mode: string
+          notes: string | null
+          realized_pnl_usd: number
+          reinvest_percent: number
+          status: string
+          strategy_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allocated_usd: number
+          created_at?: string
+          funding_source?: string
+          id?: string
+          mode?: string
+          notes?: string | null
+          realized_pnl_usd?: number
+          reinvest_percent?: number
+          status?: string
+          strategy_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allocated_usd?: number
+          created_at?: string
+          funding_source?: string
+          id?: string
+          mode?: string
+          notes?: string | null
+          realized_pnl_usd?: number
+          reinvest_percent?: number
+          status?: string
+          strategy_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strategy_capital_deployments_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "strategy_capital_deployments_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_strategies_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strategy_historical_analysis: {
         Row: {
           alpha_generated: number | null

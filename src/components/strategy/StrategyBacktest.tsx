@@ -31,7 +31,7 @@ interface TrainingStats {
   passedCount: number;
 }
 
-const TOTAL_CYCLES = 10_000;
+const TOTAL_CYCLES = 1_000;
 const BATCH_SIZE = 500;
 
 const StrategyBacktest = () => {
@@ -73,7 +73,7 @@ const StrategyBacktest = () => {
     }
     abortRef.current = false;
     setRunningId(strategyId);
-    toast.info("Auto-backtest started — running 10,000 cycles in batches of 500");
+    toast.info("Auto-backtest started — replaying 1,000 real market cycles in batches of 500");
 
     let completed = progress[strategyId]
       ? Math.round((progress[strategyId] / 100) * TOTAL_CYCLES)
@@ -153,7 +153,7 @@ const StrategyBacktest = () => {
             <div>
               <h3 className="font-semibold text-foreground text-xs sm:text-base">Auto-Backtest Engine</h3>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
-                10K cycles • 500/batch • Graduate ≥77%
+                1,000 real cycles • 500/batch • Graduate ≥60% pass rate
               </p>
             </div>
           </div>
