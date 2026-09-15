@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import SmartTransferRouter from "@/components/payments/SmartTransferRouter";
-import SavedPaymentMethods from "@/components/payments/SavedPaymentMethods";
+import { PlaidBankLink } from "@/components/payments/PlaidBankLink";
+import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
 import GuidedTour, { TourStep } from "@/components/onboarding/GuidedTour";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,7 @@ import {
   Play,
   Pause,
   Settings,
-  ExternalLink,
   CheckCircle2,
-  Clock,
   AlertTriangle,
 } from "lucide-react";
 
@@ -105,8 +103,6 @@ const WalletAssets = () => {
 
   const totalDailyRevenue = revenueStreams.reduce((sum, s) => sum + s.dailyRevenue, 0);
   const totalMonthlyRevenue = revenueStreams.reduce((sum, s) => sum + s.monthlyRevenue, 0);
-  const avgProfitability = revenueStreams.reduce((sum, s) => sum + s.profitability, 0) / revenueStreams.length;
-
   const [customAmount, setCustomAmount] = useState("");
 
   const handleStripeDeposit = async (amount: number) => {
@@ -132,15 +128,14 @@ const WalletAssets = () => {
 
   const fundingTourSteps: TourStep[] = [
     { target: "[data-tour='tabs-nav']", title: "Navigation Tabs", description: "Switch between Revenue Streams, Funding, Free Access, and Compounding sections to manage all your money flows.", position: "bottom" },
-    { target: "[data-tour='smart-router']", title: "Smart Transfer Router", description: "Automatically finds the cheapest way to move your money. We split the savings 50/50 — you always pay less.", position: "bottom" },
-    { target: "[data-tour='stripe-card']", title: "Card & Bank Payments", description: "Add funds instantly with credit/debit cards or bank transfers via Stripe. Pick a preset amount or enter a custom one.", position: "bottom" },
-    { target: "[data-tour='crypto-onramp']", title: "Crypto On-Ramp", description: "Buy crypto directly with fiat using MoonPay or Onramper — no exchange account needed.", position: "bottom" },
+    { target: "[data-tour='stripe-card']", title: "Card Payments", description: "Use the verified embedded checkout when live card payments are activated.", position: "bottom" },
     { target: "[data-tour='free-access']", title: "Free Access", description: "Platform access and agents are free. Revenue is collected only after realized bot profits.", position: "bottom" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <PaymentTestModeBanner />
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 pt-20 sm:pt-24">
         {/* Hero Stats */}
         <div className="mb-4 sm:mb-8">
@@ -154,7 +149,7 @@ const WalletAssets = () => {
                   Assets & Wallets
                 </h1>
                 <p className="text-muted-foreground">
-                  Autonomous revenue generation • 24/7 profit engines
+                  Verified balances, funding paths, and venue connectivity
                 </p>
               </div>
             </div>
@@ -203,14 +198,12 @@ const WalletAssets = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Avg Profitability</p>
-                  <p className="text-xl sm:text-3xl font-bold text-purple-400">
-                    {avgProfitability.toFixed(1)}%
-                  </p>
+                    <p className="text-sm text-muted-foreground">Recorded Transactions</p>
+                    <p className="text-xl sm:text-3xl font-bold text-purple-400">{revenueStreams.length}</p>
                 </div>
                 <Zap className="h-8 w-8 text-purple-500/50" />
               </div>
-              <Progress value={avgProfitability} className="mt-3 h-2" />
+                <p className="mt-2 text-xs text-muted-foreground">No projected profit included</p>
             </CardContent>
           </Card>
 
@@ -299,13 +292,8 @@ const WalletAssets = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-muted-foreground">Profitability</p>
-                          <p className={`font-semibold ${
-                            stream.profitability >= 90 ? "text-emerald-400" : 
-                            stream.profitability >= 80 ? "text-amber-400" : "text-red-400"
-                          }`}>
-                            {stream.profitability.toFixed(1)}%
-                          </p>
+                           <p className="text-sm text-muted-foreground">Records</p>
+                           <p className="font-semibold">Verified</p>
                         </div>
                         <Button
                           variant="ghost"
@@ -334,7 +322,7 @@ const WalletAssets = () => {
                   <div>
                     <h2 className="text-2xl font-bold mb-1">Deposit & Fund Your Account</h2>
                     <p className="text-muted-foreground text-sm">
-                      Choose how you want to add money — card, bank, crypto, or wire. Funds appear instantly for card payments.
+                      Card deposits credit only after a signed payment confirmation. Bank linking does not credit funds until settlement exists.
                     </p>
                     <div className="flex flex-wrap items-center gap-2 mt-3">
                       <Badge variant="outline" className="gap-1">
@@ -358,24 +346,16 @@ const WalletAssets = () => {
               </CardContent>
             </Card>
 
-            {/* Smart Transfer Router */}
-            <div data-tour="smart-router">
-              <SmartTransferRouter />
-            </div>
-
-            {/* Saved Payment Methods */}
-            <SavedPaymentMethods />
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               {/* Stripe Card Payments */}
               <Card data-tour="stripe-card" className="border-emerald-500/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-emerald-400" />
-                    Card / Bank
+                     Card Deposit
                   </CardTitle>
                   <CardDescription>
-                    Pay with credit/debit card or bank transfer
+                     Embedded payment-provider checkout
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -396,7 +376,7 @@ const WalletAssets = () => {
                     <Input 
                       placeholder="Custom $" 
                       type="number" 
-                      min={5}
+                       min={20}
                       max={10000}
                       className="flex-1" 
                       value={customAmount}
@@ -406,10 +386,10 @@ const WalletAssets = () => {
                       className="bg-emerald-600 hover:bg-emerald-700"
                       onClick={() => {
                         const amt = Number(customAmount);
-                        if (amt >= 5 && amt <= 10000) {
+                         if (amt >= 20 && amt <= 10000) {
                           handleStripeDeposit(amt);
                         } else {
-                          toast({ title: "Invalid amount", description: "Enter between $5 and $10,000", variant: "destructive" });
+                           toast({ title: "Invalid amount", description: "Enter between $20 and $10,000", variant: "destructive" });
                         }
                       }}
                       disabled={loading || !customAmount}
@@ -423,88 +403,6 @@ const WalletAssets = () => {
                     <img src="https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28c9848f.svg" alt="Mastercard payment card logo" className="h-5" loading="lazy" />
                     <img src="https://js.stripe.com/v3/fingerprinted/img/amex-a49b82f46c5cd6a96a6e418a6ca1717c.svg" alt="American Express payment card logo" className="h-5" loading="lazy" />
                     <span className="ml-auto">Powered by Stripe</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Crypto Onramp - MoonPay/Onramper */}
-              <Card data-tour="crypto-onramp" className="border-orange-500/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5 text-orange-400" />
-                    Buy Crypto
-                  </CardTitle>
-                  <CardDescription>
-                    Purchase crypto with card via MoonPay
-                  </CardDescription>
-                </CardHeader>
-               <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    {["BTC", "ETH", "SOL", "USDT"].map((coin) => (
-                      <Button
-                        key={coin}
-                        variant="outline"
-                        className="h-12 gap-2"
-                        onClick={async () => {
-                          // Fetch user's wallet address for this currency
-                          let walletParam = "";
-                          const networkMap: Record<string, string> = {
-                            BTC: "bitcoin", ETH: "ethereum", SOL: "solana", USDT: "ethereum"
-                          };
-                          try {
-                            const user = await getCachedUser();
-                            if (user) {
-                              const network = networkMap[coin] || coin.toLowerCase();
-                              const { data: quAddrs } = await supabase
-                                .from("quwallet_addresses")
-                                .select("address, network")
-                                .limit(20) as { data: any[] | null };
-                              
-                              const matched = quAddrs?.find((a: any) => a.network === network);
-                              if (matched?.address) {
-                                walletParam = `&walletAddress=${encodeURIComponent(matched.address)}`;
-                              } else {
-                                const { data: platWallets } = await supabase
-                                  .from("platform_wallets")
-                                  .select("wallet_address, currency, is_active")
-                                  .limit(20) as { data: any[] | null };
-                                
-                                const matchedPlat = platWallets?.find((w: any) => w.currency === coin && w.is_active);
-                                if (matchedPlat?.wallet_address) {
-                                  walletParam = `&walletAddress=${encodeURIComponent(matchedPlat.wallet_address)}`;
-                                }
-                              }
-                            }
-                          } catch (e) {
-                            console.warn("Could not fetch wallet address for MoonPay:", e);
-                          }
-                          
-                          const params = new URLSearchParams({
-                            defaultCrypto: coin,
-                            defaultAmount: "100",
-                          });
-                          if (walletParam) {
-                            params.set("wallets", walletParam.replace("&walletAddress=", ""));
-                          }
-                          window.open(`https://widget.onramper.com?${params.toString()}`, "_blank");
-                        }}
-                      >
-                        <span className="font-bold">{coin}</span>
-                      </Button>
-                    ))}
-                  </div>
-                  <Button 
-                    variant="outline"
-                    className="w-full border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
-                    onClick={() => {
-                      window.open("https://widget.onramper.com", "_blank");
-                    }}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open Onramper Widget
-                  </Button>
-                  <div className="text-xs text-muted-foreground text-center">
-                    Supports 100+ cryptos • 40+ fiat currencies
                   </div>
                 </CardContent>
               </Card>
@@ -569,35 +467,6 @@ const WalletAssets = () => {
                 </CardContent>
               </Card>
 
-              {/* Wire Transfer */}
-              <Card className="border-cyan-500/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-cyan-400" />
-                    Wire Transfer
-                  </CardTitle>
-                  <CardDescription>
-                    For large deposits ($10k+)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-sm">
-                    <p className="font-medium mb-2">Bank Details</p>
-                    <div className="space-y-1 text-muted-foreground text-xs">
-                      <p>Account: AIQTP Holdings LLC</p>
-                      <p>Routing: Available on request</p>
-                      <p>Reference: Your user ID</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full">
-                    Request Wire Instructions
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    1-3 business days • No fees on deposits over $25k
-                  </p>
-                </CardContent>
-              </Card>
-
               {/* Plaid Bank Link */}
               <Card className="border-blue-500/30">
                 <CardHeader>
@@ -606,25 +475,11 @@ const WalletAssets = () => {
                     Link Bank (Plaid)
                   </CardTitle>
                   <CardDescription>
-                    Connect your bank for instant ACH
+                     Securely connect an eligible bank account
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                      <Shield className="h-5 w-5 text-blue-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Secure Connection</p>
-                      <p className="text-xs text-muted-foreground">Bank-level encryption</p>
-                    </div>
-                  </div>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    Connect with Plaid
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Supports 12,000+ banks • Free ACH transfers
-                  </p>
+                  <PlaidBankLink />
                 </CardContent>
               </Card>
             </div>
@@ -633,79 +488,18 @@ const WalletAssets = () => {
           <TabsContent value="exchange" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Connect Exchange API</CardTitle>
+                <CardTitle>Platform Venue</CardTitle>
                 <CardDescription>
-                  Connect your exchange accounts for live trading
+                  HollaEx is the platform’s only market-data and order venue
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 rounded-lg border">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                          <span className="font-bold text-amber-400">B</span>
-                        </div>
-                        <div>
-                          <p className="font-semibold">Binance</p>
-                          <p className="text-sm text-muted-foreground">Full trading support</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-emerald-500/20 text-emerald-400">Ready</Badge>
-                    </div>
-
-                    {["Coinbase", "Kraken", "Bybit", "KuCoin", "OKX"].map((exchange) => (
-                      <div key={exchange} className="flex items-center justify-between p-4 rounded-lg border opacity-60">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                            <span className="font-bold text-muted-foreground">{exchange[0]}</span>
-                          </div>
-                          <div>
-                            <p className="font-semibold">{exchange}</p>
-                            <p className="text-sm text-muted-foreground">Coming soon</p>
-                          </div>
-                        </div>
-                        <Badge variant="secondary">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Soon
-                        </Badge>
-                      </div>
-                    ))}
+                <div className="flex items-center justify-between rounded-md border border-border p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10"><span className="font-bold text-primary">H</span></div>
+                    <div><p className="font-semibold">HollaEx</p><p className="text-sm text-muted-foreground">Public data active; private orders require secure server credentials</p></div>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                      <h3 className="font-semibold mb-4 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-amber-400" />
-                        Binance API Setup
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <Label>API Key</Label>
-                          <Input placeholder="Enter your Binance API key" type="password" />
-                        </div>
-                        <div>
-                          <Label>API Secret</Label>
-                          <Input placeholder="Enter your Binance API secret" type="password" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Switch id="spot-trading" />
-                          <Label htmlFor="spot-trading">Enable Spot Trading</Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Switch id="futures-trading" />
-                          <Label htmlFor="futures-trading">Enable Futures Trading</Label>
-                        </div>
-                        <Button className="w-full">
-                          <Shield className="h-4 w-4 mr-2" />
-                          Connect Binance
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Your API keys are encrypted and stored securely. We never store your withdrawal permissions.
-                    </p>
-                  </div>
+                  <Badge variant="outline"><AlertTriangle className="mr-1 h-3 w-3" /> Execution locked</Badge>
                 </div>
               </CardContent>
             </Card>
