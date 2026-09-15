@@ -11,14 +11,18 @@ import {
   type PortfolioMetrics,
 } from "@/lib/portfolio/optimization";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const UNIVERSE = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "LINKUSDT"];
+const UNIVERSE = ["BTC/USDT", "ETH/USDT", "XMR/USDT", "BNB/USDT", "LINK/USDT"];
 const ANNUAL = Math.sqrt(365);
 
 async function dailyCloses(symbol: string): Promise<number[]> {
-  const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=180`);
-  if (!res.ok) throw new Error(`klines ${symbol} ${res.status}`);
-  return ((await res.json()) as unknown[][]).map((r) => Number(r[4]));
+  const { data, error } = await supabase.functions.invoke("ccxt-trading", {
+    body: { action: "fetch_ohlcv", symbol, timeframe: "1d", limit: 180 },
+  });
+  if (error) throw error;
+  if (!data?.success) throw new Error(data?.error || `candles unavailable for ${symbol}`);
+  return (data.data as { close: number }[]).map((r) => Number(r.close));
 }
 
 const PortfolioOptimizerPanel = () => {

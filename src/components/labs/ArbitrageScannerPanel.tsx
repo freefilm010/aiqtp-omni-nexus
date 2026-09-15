@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { scanArbitrage, type ArbOpportunity, type ExchangeConfig } from "@/lib/exchange/arbitrageEngine";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 /** Real public tickers — no keys required, no synthetic prices. */
 async function loadVenues(): Promise<ExchangeConfig[]> {
@@ -11,12 +12,16 @@ async function loadVenues(): Promise<ExchangeConfig[]> {
 
   const tasks: { name: string; feePct: number; latencyMs: number; run: () => Promise<number> }[] = [
     {
-      name: "Binance",
+      name: "Platform Venue",
       feePct: 0.001,
       latencyMs: 25,
       run: async () => {
-        const r = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
-        return Number((await r.json()).price);
+        const { data, error } = await supabase.functions.invoke("ccxt-trading", {
+          body: { action: "fetch_ticker", symbol: "BTC/USDT" },
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || "ticker unavailable");
+        return Number(data.data.last);
       },
     },
     {
