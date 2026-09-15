@@ -1,4 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+/** Hard risk ceiling for a single vault-executed order, in USD notional. */
+const MAX_ORDER_NOTIONAL_USD = 250;
+
+/** Vault credentials for private exchange operations (never client-supplied). */
+function binanceVaultCredentials(): { apiKey: string; secret: string } | null {
+  const apiKey = Deno.env.get("BINANCE_API_KEY");
+  const secret = Deno.env.get("BINANCE_SECRET_KEY");
+  if (!apiKey || !secret) return null;
+  if (Deno.env.get("BINANCE_LIVE_ENABLED") !== "true") return null;
+  return { apiKey, secret };
+}
+
+/** Resolve the caller and require an admin role. Returns null when unauthorized. */
+async function requireAdmin(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
+  const url = Deno.env.get("SUPABASE_URL");
+  const anon = Deno.env.get("SUPABASE_ANON_KEY");
+  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!token || !url || !anon || !service) return null;
+
+  const userClient = createClient(url, anon, { global: { headers: { Authorization: authHeader! } } });
+  const { data: { user } } = await userClient.auth.getUser(token);
+  if (!user) return null;
+
+  const admin = createClient(url, service, { auth: { persistSession: false } });
+  const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
+  return isAdmin === true ? user.id : null;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
