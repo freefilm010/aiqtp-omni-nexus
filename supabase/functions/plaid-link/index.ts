@@ -1,5 +1,6 @@
 // Plaid ACH bank funding integration.
-// Flow: create_link_token → user completes Plaid Link → exchange_public_token → initiate_transfer
+// Flow: create_link_token → user completes Plaid Link → exchange_public_token.
+// Funding stays disabled until a real ACH settlement provider and webhook are configured.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -116,32 +117,12 @@ Deno.serve(async (req) => {
     }
 
     if (action === "initiate_transfer") {
-      if (!accountId || !amountUsd) throw new Error("accountId, amountUsd required");
-      const ownAccessToken = await getOwnAccessToken();
-      if (amountUsd < 20) throw new Error("Minimum deposit is $20");
-      if (amountUsd > 50000) throw new Error("Maximum ACH transfer is $50,000");
-
-      // Get routing/account numbers via Plaid Auth
-      const authData = await plaidPost("/auth/get", { access_token: ownAccessToken }) as { numbers: { ach: Array<{ account_id: string; routing: string; account: string }> } };
-      const achAccount = authData.numbers.ach.find(a => a.account_id === accountId);
-      if (!achAccount) throw new Error("Account not found or not ACH-eligible");
-
-      // In production, this would initiate via Plaid Transfer API or your ACH processor
-      // For now: record pending transfer, credit when settled (1-3 business days)
-      const { data: transfer } = await adminSupabase.from("pending_ach_transfers").insert({
-        user_id: user.id,
-        account_id: accountId,
-        amount_usd: amountUsd,
-        status: "pending",
-        created_at: new Date().toISOString(),
-      }).select().single();
-
       return new Response(JSON.stringify({
-        success: true,
-        transferId: transfer?.id,
-        message: "ACH transfer initiated. Funds will appear in 1-3 business days.",
-        estimatedSettlement: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+        success: false,
+        code: "ACH_SETTLEMENT_NOT_CONFIGURED",
+        error: "Bank funding is unavailable until a verified ACH settlement provider and webhook are configured.",
       }), {
+        status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

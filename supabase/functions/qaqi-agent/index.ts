@@ -422,8 +422,11 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
 
       const price = priceRow?.price_usd || 0;
       const change24h = priceRow?.price_change_percentage_24h || 0;
-      const high = priceRow?.high_24h || price * 1.05;
-      const low = priceRow?.low_24h || price * 0.95;
+      if (!priceRow || !price) {
+        return { symbol: args.symbol, timestamp, status: "unavailable", analysis: null, data_source: "unavailable" };
+      }
+      const high = priceRow.high_24h || 0;
+      const low = priceRow.low_24h || 0;
       const trend = change24h >= 0 ? "bullish" : "bearish";
       const strength = Math.min(100, Math.max(0, 50 + Math.abs(change24h) * 5));
 
@@ -468,14 +471,11 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
         };
       }
       
-      // Execute trade via exchange connection
       return {
-        status: "executed",
-        order_id: `ord_${Date.now()}`,
+        status: "unavailable",
         ...args,
-        executed_at: timestamp,
-        fill_price: args.price || "market",
-        message: "Trade executed on exchange — requires connected exchange account"
+        checked_at: timestamp,
+        message: "QAQI cannot execute orders directly. Orders must pass the HollaEx risk and execution service."
       };
     
     case "manage_platform":
@@ -500,13 +500,13 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
           platform_stats: {
             total_revenue: revenue?.reduce((sum, r) => sum + Number(r.amount), 0) || 0,
             total_wallets: wallets?.length || 0,
-            active_generators: 5,
-            system_health: "operational"
+            active_generators: 0,
+            system_health: "database_reachable"
           },
           timestamp
         };
       }
-      return { operation: args.operation, status: "completed", timestamp };
+      return { operation: args.operation, status: "unsupported", timestamp };
     
     case "manage_wallets":
       if (args.operation === "list") {
@@ -534,48 +534,33 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
           operation: "reinvest",
           amount: args.amount,
           top_strategies: strategies?.map(s => s.name) || [],
-          status: "reinvested",
+          status: strategies?.length ? "eligible_strategies_found" : "no_eligible_strategies",
+          funds_moved: false,
           timestamp
         };
       }
-      return { operation: args.operation, status: adminApproved ? "completed" : "requires_approval" };
+      return { operation: args.operation, status: adminApproved ? "unsupported" : "requires_approval" };
     
     case "revenue_automation":
       if (args.action === "list") {
-        return {
-          generators: [
-            { id: "arb-1", type: "arbitrage", status: "active", daily_revenue: 847.52, profit_rate: "3.2%" },
-            { id: "liq-1", type: "liquidity", status: "active", daily_revenue: 1250.00, apy: "18.5%" },
-            { id: "stake-1", type: "staking", status: "active", daily_revenue: 420.15, apy: "8.2%" },
-            { id: "trade-1", type: "trading", status: "active", daily_revenue: 523.40, win_rate: "68%" },
-            { id: "fee-1", type: "fees", status: "active", daily_revenue: 312.80, volume: "$156,400" }
-          ],
-          total_daily: 3353.87,
-          total_monthly_projected: 100616.10,
-          admin_wallet_balance: "Updated in real-time"
-        };
+        const { data: rows, error } = await supabase
+          .from("platform_revenue")
+          .select("source_type, source_category, amount, currency, status, created_at")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (error) return { status: "unavailable", error: "Revenue records could not be loaded" };
+        return { generators: rows || [], records: rows?.length || 0, data_source: "platform_revenue" };
       }
       
       if (args.action === "withdraw_to_admin" && adminApproved) {
-        // Record revenue to admin wallet
-        await supabase.from('platform_revenue').insert({
-          amount: args.amount || 1000,
-          currency: 'USD',
-          source_type: 'revenue_withdrawal',
-          source_category: 'automation',
-          status: 'completed',
-          processed_at: timestamp
-        });
-        
         return {
           action: "withdraw_to_admin",
-          amount: args.amount || 1000,
-          status: "transferred",
-          destination: "admin_treasury",
-          timestamp
+          status: "unsupported",
+          funds_moved: false,
+          message: "Revenue withdrawal requires the verified withdrawal workflow."
         };
       }
-      return { action: args.action, status: "completed", generators_affected: args.generator_type || "all" };
+      return { action: args.action, status: "unsupported", generators_affected: 0 };
     
     case "profit_distribution":
       if (args.action === "get_rules") {
@@ -602,11 +587,12 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
           action: "distribute",
           admin_distributed: (args.admin_share || 10) + "%",
           reinvested: (args.reinvest_share || 90) + "%",
-          reinvested_into: topStrategies?.map(s => s.name) || ["Strategy 1", "Strategy 2", "Strategy 3"],
+          reinvested_into: topStrategies?.map(s => s.name) || [],
+          funds_moved: false,
           timestamp
         };
       }
-      return { action: args.action, status: "completed" };
+      return { action: args.action, status: "unsupported" };
     
     case "fraud_detection": {
       if (!adminApproved) {
@@ -684,23 +670,15 @@ async function executeToolCall(name: string, args: Record<string, any>, context?
         circuit_type: args.circuit_type,
         qubits,
         shots: args.shots || 1000,
-        backend: ibmConnection ? "ibm_quantum" : "local_simulator",
+        backend: ibmConnection ? "ibm_quantum" : "unavailable",
         ibm_quantum: ibmConnection,
         admin_approved: adminApproved,
         sandbox_limits: adminApproved ? "DISABLED" : "32 qubits max",
-        result: {
-          fidelity: 0.967,
-          execution_time_ms: 45,
-          ...(args.circuit_type === "time_crystal" && {
-            dtc_phase_stable: true,
-            period_doubling: true,
-            temporal_symmetry_broken: true
-          }),
-          ...(args.circuit_type === "qaoa" && {
-            optimal_params: [0.85, 1.23],
-            cost_function: -4.56
-          })
-        },
+        status: ibmConnection ? "backend_discovered" : "unavailable",
+        result: null,
+        message: ibmConnection
+          ? "IBM backends were discovered. Submit and verify a provider job before reporting a result."
+          : "IBM Quantum credentials or backend access are unavailable. No simulation was substituted.",
         timestamp
       };
     

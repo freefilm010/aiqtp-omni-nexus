@@ -3,7 +3,12 @@ import { loadStripe, Stripe } from "@stripe/stripe-js";
 type StripeEnv = 'sandbox' | 'live';
 
 const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
-const environment: StripeEnv = clientToken?.startsWith('pk_test_') ? 'sandbox' : 'live';
+
+function paymentsEnvironment(): StripeEnv {
+  if (clientToken?.startsWith('pk_test_')) return 'sandbox';
+  if (clientToken?.startsWith('pk_live_')) return 'live';
+  throw new Error("Card payments are not configured for this build. Complete payment-provider activation to enable checkout.");
+}
 
 let stripePromise: Promise<Stripe | null> | null = null;
 
@@ -15,15 +20,12 @@ let stripePromise: Promise<Stripe | null> | null = null;
  */
 export function getStripe(): Promise<Stripe | null> {
   if (!stripePromise) {
-    if (!clientToken) {
-      console.warn("VITE_PAYMENTS_CLIENT_TOKEN is not set — Stripe payments are disabled");
-      return Promise.resolve(null);
-    }
+    paymentsEnvironment();
     stripePromise = loadStripe(clientToken);
   }
   return stripePromise;
 }
 
 export function getStripeEnvironment(): StripeEnv {
-  return environment;
+  return paymentsEnvironment();
 }

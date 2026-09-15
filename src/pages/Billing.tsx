@@ -14,7 +14,7 @@ import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { toast } from "sonner";
 import { AccountBalance } from "@/components/billing/AccountBalance";
-import { renderApi } from "@/lib/render-api";
+import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
 
 const PLATFORM_ACCESS_FEATURES = [
   "Full platform access is free",
@@ -50,7 +50,7 @@ export default function Billing() {
   // Withdrawal state
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("20");
-  const [withdrawType, setWithdrawType] = useState("bank_ach");
+  const [withdrawType] = useState("manual_review");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   // Fee history state
@@ -84,7 +84,14 @@ export default function Billing() {
     if (!user) { toast.error("Please sign in first"); return; }
     setWithdrawLoading(true);
     try {
-      const data = await renderApi.withdrawals.request(amt, user.id, withdrawType);
+      const { data, error } = await supabase.functions.invoke("request-withdrawal", {
+        body: {
+          amountUsd: amt,
+          destinationType: withdrawType,
+          destinationDetails: { note: "Payout destination confirmed during admin review" },
+        },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "Withdrawal failed");
       toast.success(`Withdrawal of $${amt.toFixed(2)} submitted`, {
         description: `Withdrawal ID: ${data?.withdrawal_id ?? "pending"}. Processing within 1–3 business days.`,
       });
@@ -119,6 +126,7 @@ export default function Billing() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <PaymentTestModeBanner />
       <main className="flex-1 container max-w-5xl py-12 space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold">Fund Trading Balance</h1>
@@ -355,18 +363,15 @@ export default function Billing() {
             </div>
             <div className="space-y-2">
               <Label>Destination</Label>
-              <Select value={withdrawType} onValueChange={setWithdrawType}>
+               <Select value={withdrawType} disabled>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bank_ach">Bank ACH Transfer</SelectItem>
-                  <SelectItem value="stripe_payout">Stripe Payout</SelectItem>
-                  <SelectItem value="crypto">Crypto Wallet</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
+                   <SelectItem value="manual_review">Verified payout destination</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">
-              Minimum $20. Admin reviews and processes withdrawals within 1–3 business days.
+               Minimum $20. Funds are locked for review; no automatic payout rail is currently active.
             </p>
             <Button onClick={handleWithdraw} disabled={withdrawLoading} className="w-full gap-2">
               {withdrawLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUpRight className="h-4 w-4" />}

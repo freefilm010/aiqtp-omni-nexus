@@ -13,7 +13,6 @@ const supabase = _supabase as any;
 import { getCachedUser } from "@/lib/auth/getCachedUser";
 import { AccountBalance } from "@/components/billing/AccountBalance";
 import { toast } from "sonner";
-import { renderApi } from "@/lib/render-api";
 
 type Withdrawal = {
   id: string;
@@ -34,7 +33,7 @@ const STATUS_ICON = {
 export default function WithdrawalPage() {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [amount, setAmount] = useState("20");
-  const [destType, setDestType] = useState("bank_ach");
+  const [destType] = useState("manual_review");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Withdrawal[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -66,7 +65,14 @@ export default function WithdrawalPage() {
     if (!user) { toast.error("Sign in first"); return; }
     setLoading(true);
     try {
-      const data = await renderApi.withdrawals.request(amt, user.id, destType);
+      const { data, error } = await supabase.functions.invoke("request-withdrawal", {
+        body: {
+          amountUsd: amt,
+          destinationType: destType,
+          destinationDetails: { note: "Payout destination confirmed during admin review" },
+        },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "Withdrawal failed");
       toast.success(`Withdrawal of $${amt.toFixed(2)} submitted`, {
         description: `ID: ${data?.withdrawal_id ?? "pending"} — processed within 1–3 business days.`,
       });
@@ -128,15 +134,13 @@ export default function WithdrawalPage() {
               </div>
               <div className="space-y-2">
                 <Label>Destination</Label>
-                <Select value={destType} onValueChange={setDestType}>
+                <Select value={destType} disabled>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="bank_ach">Bank ACH Transfer (1-3 days, free)</SelectItem>
-                    <SelectItem value="paypal">PayPal (instant, 3.49% fee)</SelectItem>
-                    <SelectItem value="crypto">Crypto Wallet (blockchain fee)</SelectItem>
-                    <SelectItem value="stripe_payout">Stripe Payout (2-7 days)</SelectItem>
+                    <SelectItem value="manual_review">Verified payout destination</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">No automatic payout rail is active. An administrator confirms the destination before payment.</p>
               </div>
             </div>
             <Button onClick={handleWithdraw} disabled={loading} className="w-full gap-2" size="lg">

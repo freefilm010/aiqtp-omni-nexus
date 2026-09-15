@@ -193,11 +193,14 @@ services:
       - "11434:11434"
     volumes:
       - ollama-data:/root/.ollama
-    # Pull llama3 on first start
+    # Pull the actual in-house agent models on first start.
     entrypoint: >
       sh -c "ollama serve &
              sleep 5 &&
-             ollama pull llama3 &&
+             ollama pull $${OLLAMA_MODEL_HERMES:-hermes3} &&
+             ollama pull $${OLLAMA_MODEL_OPENCLAW:-qwen2.5-coder} &&
+             ollama pull $${OLLAMA_MODEL_REVIEWER:-qwen2.5-coder} &&
+             ollama pull $${EMBEDDING_MODEL:-nomic-embed-text} &&
              wait"
 
   # ── RAG Service (OpenClaw Gateway — search + ingest) ───────────────────────
@@ -215,7 +218,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       OLLAMA_URL: http://ollama:11434
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
-      LLM_MODEL: ${LLM_MODEL:-llama3}
+      LLM_MODEL: ${LLM_MODEL:-hermes3}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       PORT: 8001
@@ -237,11 +240,10 @@ services:
     environment:
       SUPABASE_URL: http://kong:8000
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
-      ALPACA_API_KEY: ${ALPACA_API_KEY:-}
-      ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
-      ALPACA_BASE_URL: ${ALPACA_BASE_URL:-https://api.alpaca.markets}
-      ALPACA_PAPER_MODE: ${ALPACA_PAPER_MODE:-false}
-      CCXT_LIVE_ENABLED: ${CCXT_LIVE_ENABLED:-false}
+      HOLLAEX_API_KEY: ${HOLLAEX_API_KEY:-}
+      HOLLAEX_API_SECRET: ${HOLLAEX_API_SECRET:-}
+      HOLLAEX_BASE_URL: ${HOLLAEX_BASE_URL:-https://api.hollaex.com}
+      HOLLAEX_LIVE_ENABLED: ${HOLLAEX_LIVE_ENABLED:-false}
       PORT: 8002
     depends_on:
       db: { condition: service_healthy }
@@ -255,11 +257,10 @@ services:
     environment:
       SUPABASE_URL: http://kong:8000
       SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
-      ALPACA_API_KEY: ${ALPACA_API_KEY:-}
-      ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
-      ALPACA_BASE_URL: ${ALPACA_BASE_URL:-https://api.alpaca.markets}
-      ALPACA_PAPER_MODE: ${ALPACA_PAPER_MODE:-false}
-      ALPACA_SYMBOL_WHITELIST: ${ALPACA_SYMBOL_WHITELIST:-BTCUSD,ETHUSD}
+      HOLLAEX_API_KEY: ${HOLLAEX_API_KEY:-}
+      HOLLAEX_API_SECRET: ${HOLLAEX_API_SECRET:-}
+      HOLLAEX_BASE_URL: ${HOLLAEX_BASE_URL:-https://api.hollaex.com}
+      HOLLAEX_LIVE_ENABLED: ${HOLLAEX_LIVE_ENABLED:-false}
       COINGECKO_API_KEY: ${COINGECKO_API_KEY:-}
       LOOP_INTERVAL_SECONDS: ${LOOP_INTERVAL_SECONDS:-60}
     depends_on:
@@ -288,6 +289,10 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       OLLAMA_URL: http://ollama:11434
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL_HERMES: ${OLLAMA_MODEL_HERMES:-hermes3}
+      OLLAMA_MODEL_OPENCLAW: ${OLLAMA_MODEL_OPENCLAW:-qwen2.5-coder}
+      OLLAMA_MODEL_REVIEWER: ${OLLAMA_MODEL_REVIEWER:-qwen2.5-coder}
     depends_on:
       db: { condition: service_healthy }
 

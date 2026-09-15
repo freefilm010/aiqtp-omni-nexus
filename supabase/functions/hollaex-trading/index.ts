@@ -27,6 +27,12 @@ interface Body {
   orderId?: string;
 }
 
+class RequestError extends Error {
+  constructor(message: string, readonly status = 400) {
+    super(message);
+  }
+}
+
 function vault() {
   const apiKey = Deno.env.get("HOLLAEX_API_KEY");
   const apiSecret = Deno.env.get("HOLLAEX_API_SECRET");
@@ -67,7 +73,7 @@ async function signedRequest(
   let data: unknown;
   try { data = JSON.parse(text); } catch { data = { message: text }; }
   if (!res.ok) {
-    throw new Error((data as { message?: string })?.message || `Venue returned ${res.status}`);
+    throw new RequestError((data as { message?: string })?.message || `Venue returned ${res.status}`, 502);
   }
   return data;
 }
@@ -143,13 +149,13 @@ Deno.serve(async (req) => {
 
       case "create_order": {
         const { symbol, side, size, price, orderType } = body;
-        if (!symbol || !side || !size) throw new Error("symbol, side and size are required");
-        if (!["buy", "sell"].includes(side)) throw new Error("Invalid side");
+        if (!symbol || !side || !size) throw new RequestError("symbol, side and size are required");
+        if (!["buy", "sell"].includes(side)) throw new RequestError("Invalid side");
         const type = orderType === "limit" ? "limit" : "market";
-        if (type === "limit" && !price) throw new Error("price is required for a limit order");
+        if (type === "limit" && !price) throw new RequestError("price is required for a limit order");
         if (price) {
           const notional = Number(price) * Number(size);
-          if (!Number.isFinite(notional) || notional <= 0) throw new Error("Invalid order size");
+          if (!Number.isFinite(notional) || notional <= 0) throw new RequestError("Invalid order size");
           if (notional > MAX_ORDER_NOTIONAL) {
             return json({
               success: false,
@@ -165,7 +171,7 @@ Deno.serve(async (req) => {
       }
 
       case "cancel_order": {
-        if (!body.orderId) throw new Error("orderId is required");
+        if (!body.orderId) throw new RequestError("orderId is required");
         const path = `/v2/order?order_id=${encodeURIComponent(body.orderId)}`;
         return json({ success: true, data: await signedRequest(v, "DELETE", path) });
       }
@@ -175,6 +181,7 @@ Deno.serve(async (req) => {
     }
   } catch (e) {
     console.error("hollaex-trading error:", e);
-    return json({ success: false, error: (e as Error).message }, 200);
+    const status = e instanceof RequestError ? e.status : 500;
+    return json({ success: false, error: e instanceof Error ? e.message : "Venue request failed" }, status);
   }
 });
