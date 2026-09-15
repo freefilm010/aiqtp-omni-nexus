@@ -12,7 +12,7 @@ export type ExchangeTicker = {
 };
 
 export function useExchangeTicker(params: {
-  exchange: "binance" | "kraken";
+  exchange?: "hollaex";
   symbol: string;
   pollMs?: number;
 }) {

@@ -27,7 +27,7 @@ type SymbolValue =
 type TimeframeValue = "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1w";
 
 const toTVSymbol = (sym: SymbolValue): string =>
-  `BINANCE:${sym.replace("/", "")}`;
+  `CRYPTO:${sym.replace("/", "")}`;
 
 const toTVInterval = (tf: TimeframeValue): string =>
   ({ "1m": "1", "5m": "5", "15m": "15", "1h": "60", "4h": "240", "1d": "D", "1w": "W" })[tf];
@@ -161,7 +161,7 @@ const TradingViewChart = ({
       const { data, error: fnError } = await supabase.functions.invoke("ccxt-trading", {
         body: {
           action: "fetch_ohlcv",
-          exchange: "binance",
+          exchange: "hollaex",
           symbol,
           timeframe,
           limit: showToolbar ? 240 : 160,

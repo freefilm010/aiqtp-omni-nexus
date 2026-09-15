@@ -256,8 +256,8 @@ serve(async (req) => {
         return new Response(JSON.stringify({
           success: !error,
           synced: rows.length,
-          source: 'binance',
-          message: `Synced ${rows.length} prices from Binance (free, no API key)`,
+          source: 'hollaex',
+          message: `Synced ${rows.length} prices from the platform venue`,
           error: error?.message,
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }

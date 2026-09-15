@@ -34,7 +34,7 @@ const fmt = (n: number, d = 2) =>
   n.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /**
- * Live L2 order book sourced from real exchange depth (Binance, Kraken fallback)
+ * Live L2 order book sourced from the platform venue depth feed
  * through the backend ccxt-trading function. No synthetic levels.
  */
 const OrderBook = ({ symbol = "BTC/USDT", levels = 15 }: OrderBookProps) => {
@@ -46,7 +46,7 @@ const OrderBook = ({ symbol = "BTC/USDT", levels = 15 }: OrderBookProps) => {
     let alive = true;
     const load = async () => {
       const { data, error: fnError } = await supabase.functions.invoke("ccxt-trading", {
-        body: { action: "fetch_order_book", exchange: "binance", symbol, limit: levels },
+        body: { action: "fetch_order_book", exchange: "hollaex", symbol, limit: levels },
       });
       if (!alive) return;
       if (fnError || !data?.success) {

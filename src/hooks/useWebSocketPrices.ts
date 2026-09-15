@@ -46,7 +46,7 @@ export function useWebSocketPrices() {
       if (!activeRef.current) return;
 
       try {
-        const { data, error } = await supabase.functions.invoke("binance-prices", {
+        const { data, error } = await supabase.functions.invoke("venue-prices", {
           body: {},
         });
 
