@@ -57,36 +57,6 @@ async function fetchVenueBooks(symbol: string): Promise<Record<string, VenueBook
   return books;
 }
 
-function buildUnifiedBook(books: Record<string, VenueBook>, groupSize: number): UnifiedBook {
-  const group = (rows: { price: number; amount: number }[]) => {
-    const buckets = new Map<number, { amount: number; exchanges: { name: string; amount: number }[] }>();
-    for (const [venue, book] of Object.entries(books)) {
-      const label = VENUES.find((v) => v.id === venue)?.name ?? venue;
-      for (const row of book.rows ?? []) {
-        const price = Number(row.price);
-        const amount = Number(row.amount);
-        if (!Number.isFinite(price) || !Number.isFinite(amount) || price <= 0 || amount <= 0) continue;
-        const bucketPrice = Math.round(price / groupSize) * groupSize;
-        const existing = buckets.get(bucketPrice);
-        if (existing) {
-          existing.amount += amount;
-          const ex = existing.exchanges.find((e) => e.name === label);
-          if (ex) ex.amount += amount;
-          else existing.exchanges.push({ name: label, amount });
-        } else {
-          buckets.set(bucketPrice, { amount, exchanges: [{ name: label, amount }] });
-        }
-      }
-    }
-    return Array.from(buckets.entries())
-      .map(([price, b]) => ({ price, amount: b.amount, exchanges: b.exchanges, total: price * b.amount, cumulative: 0 }))
-      .sort((a, b) => (rows === "bids" ? b.price - a.price : a.price - b.price));
-  };
-
-  const bids = group(books as any, 0) as unknown as BookLevel[];
-  void groupSize;
-  return { bids, asks: [] as BookLevel[], spread: 0, spreadPercent: 0, midPrice: bids[0]?.price ?? 0 };
-}
 
 const UnifiedOrderBook = () => {
   const [selectedPair, setSelectedPair] = useState("BTC/USDT");
