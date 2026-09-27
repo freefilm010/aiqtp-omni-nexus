@@ -244,7 +244,29 @@ services:
       HOLLAEX_API_SECRET: ${HOLLAEX_API_SECRET:-}
       HOLLAEX_BASE_URL: ${HOLLAEX_BASE_URL:-https://api.hollaex.com}
       HOLLAEX_LIVE_ENABLED: ${HOLLAEX_LIVE_ENABLED:-false}
+      HUMMINGBOT_API_URL: http://hummingbot-api:8000
+      HUMMINGBOT_API_USERNAME: ${HUMMINGBOT_API_USERNAME:-}
+      HUMMINGBOT_API_PASSWORD: ${HUMMINGBOT_API_PASSWORD:-}
+      HUMMINGBOT_LIVE_ENABLED: ${HUMMINGBOT_LIVE_ENABLED:-false}
       PORT: 8002
+    depends_on:
+      db: { condition: service_healthy }
+      hummingbot-api: { condition: service_started }
+
+  # Hummingbot runs only on the private Compose network. No host port is exposed.
+  hummingbot-api:
+    image: hummingbot/hummingbot-api:latest
+    restart: unless-stopped
+    expose:
+      - "8000"
+    volumes:
+      - hummingbot-data:/home/hummingbot-api/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      USERNAME: ${HUMMINGBOT_API_USERNAME:-}
+      PASSWORD: ${HUMMINGBOT_API_PASSWORD:-}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-aiqtp_secure_pass_change_me}@db:5432/postgres
+      CORS_ALLOW_ORIGINS: ""
     depends_on:
       db: { condition: service_healthy }
 
@@ -337,6 +359,7 @@ volumes:
   ollama-data:
   rag-repos:
   trading-data:
+  hummingbot-data:
   caddy-data:
   caddy-config:
 

@@ -57,6 +57,7 @@ from connectors.routes import (
 )
 from strategies import strategies_router
 from stripe_auto_invest import auto_invest_router
+from hummingbot_client import HummingbotClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("trading-tools")
@@ -81,6 +82,7 @@ ALPACA_SECRET_KEY         = os.getenv("ALPACA_SECRET_KEY", "")
 ALPACA_BASE_URL           = os.getenv("ALPACA_BASE_URL", "https://api.alpaca.markets")
 ALPACA_PAPER_MODE         = os.getenv("ALPACA_PAPER_MODE", "false").lower() != "false"
 CCXT_LIVE_ENABLED         = os.getenv("CCXT_LIVE_ENABLED", "false").lower() == "true"
+HUMMINGBOT = HummingbotClient()
 
 # ─── Broker Config ────────────────────────────────────────────────────────────
 TRADIER_API_KEY    = os.getenv("TRADIER_API_KEY", "")
@@ -394,6 +396,10 @@ class CancelLiveOrderRequest(BaseModel):
     exchange: str = Field(..., min_length=1)
     order_id: str = Field(..., min_length=1)
     symbol: str = Field(..., min_length=3)
+
+
+class HummingbotControlRequest(BaseModel):
+    container_name: str = Field(..., min_length=1, max_length=128, pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
 
 
 class BrokerOrderRequest(BaseModel):
@@ -744,6 +750,7 @@ async def health():
         "status": "ok",
         "service": "trading-tools",
         "ccxt_live": CCXT_LIVE_ENABLED,
+        "hummingbot": await HUMMINGBOT.health(),
         "connectors": {
             "hyperliquid": _hl.status(),
             "jupiter": _jup.status(),
@@ -760,6 +767,66 @@ async def health():
             "ibkr": {"configured": bool(IBKR_CPG_URL), "account": bool(IBKR_ACCOUNT_ID)},
         },
     }
+
+
+@app.get("/hummingbot/status")
+@limiter.limit("30/minute")
+async def hummingbot_status(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    return await HUMMINGBOT.health()
+
+
+@app.get("/hummingbot/bots")
+@limiter.limit("30/minute")
+async def hummingbot_bots(
+    request: Request,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    if not HUMMINGBOT.configured:
+        raise HTTPException(503, "Hummingbot API is not configured")
+    try:
+        return await HUMMINGBOT.active_bots()
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc)) from exc
+
+
+@app.post("/hummingbot/bots/start")
+@limiter.limit("5/minute")
+async def hummingbot_start_bot(
+    request: Request,
+    body: HummingbotControlRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    status_rows = await _query("SELECT active FROM public.system_status WHERE key = 'main' LIMIT 1")
+    if not status_rows or status_rows[0].get("active") is not True:
+        raise HTTPException(503, "Trading is halted or system status is unavailable")
+    try:
+        return await HUMMINGBOT.start_bot(body.container_name)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
+
+
+@app.post("/hummingbot/bots/stop")
+@limiter.limit("10/minute")
+async def hummingbot_stop_bot(
+    request: Request,
+    body: HummingbotControlRequest,
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+):
+    _require_user(x_user_id, authorization)
+    try:
+        return await HUMMINGBOT.stop_bot(body.container_name)
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
 
 
 @app.post("/freqtrade/backtest")

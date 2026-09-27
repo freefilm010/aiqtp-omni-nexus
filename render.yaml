@@ -32,6 +32,14 @@ services:
         value: https://api.hollaex.com
       - key: HOLLAEX_LIVE_ENABLED
         value: "false"
+      - key: HUMMINGBOT_API_URL
+        sync: false
+      - key: HUMMINGBOT_API_USERNAME
+        sync: false
+      - key: HUMMINGBOT_API_PASSWORD
+        sync: false
+      - key: HUMMINGBOT_LIVE_ENABLED
+        value: "false"
       # Tradier (equity broker)
       - key: TRADIER_API_KEY
         sync: false

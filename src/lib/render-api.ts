@@ -59,6 +59,12 @@ export const renderApi = {
     start: () => renderPost<{ ok: boolean; active: boolean; message: string }>('/bots/start', {}),
     stop: () => renderPost<{ ok: boolean; active: boolean; message: string }>('/bots/stop', {}),
   },
+  hummingbot: {
+    status: () => renderGet<{ engine: string; configured: boolean; live_enabled: boolean; network: string; reachable?: boolean }>('/hummingbot/status'),
+    activeBots: () => renderGet<unknown>('/hummingbot/bots'),
+    startBot: (containerName: string) => renderPost<unknown>('/hummingbot/bots/start', { container_name: containerName }),
+    stopBot: (containerName: string) => renderPost<unknown>('/hummingbot/bots/stop', { container_name: containerName }),
+  },
   admin: {
     allStrategies: (filters?: { bot_type?: string; graduated?: boolean; active?: boolean; limit?: number }) => {
       const params = new URLSearchParams();
