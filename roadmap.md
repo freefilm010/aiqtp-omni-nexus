@@ -1,37 +1,15 @@
-# AIQTP Completion Roadmap
+# Roadmap
 
-- [x] Audit all cataloged repositories, deployables, monetization paths, and systemic controls.
-- [x] Phase 0: contain critical financial/security paths and remove unsupported live claims.
-- [x] Phase 1: enforce CI, deployment, RLS, auth-contract, backup, restore, and drift gates.
-- [~] Phase 2: withdrawals repaired (missing live engine restored) + admin review/approve/reject-refund queue at /admin/withdrawals. Remaining: creator payouts, provider payout rail, KYC/AML gate.
-- [~] Phase 3: engines now run a real round-the-clock cycle (`autonomous-invest-cycle-hourly` -> auto-invest `autonomous_cycle` + compound snapshot). Remaining: reproducible Freqtrade/Hummingbot/CCXT order execution (needs venue keys).
-- [x] Agent cost/caps removed: AI calls route free self-hosted Ollama -> included gateway -> paid provider last; admins and self-hosted paths are never rate limited.
+## Active
+- [ ] **HollaEx API keys** — secure form opened for HOLLAEX_API_KEY / HOLLAEX_API_SECRET (user to submit; two interruptions so far). Unlocks platform-venue execution + treasury deployment.
+- [ ] **Stripe live activation** — provider reports claim acct_1UAYTFIX09yy4lkP still "in progress" (user says completed; verification email never received; Stripe Support is fastest path). Unlocks live $100 deposit path.
+- [ ] Per-venue execution keys (Binance/Kraken/Coinbase) — optional; user connects per account. Platform stays HollaEx-only until then.
 
-- [~] Phase 4: sovereign Ollama/Hermes/OpenClaw/RAG models are declared and QAQI synthetic trade, revenue, market, and quantum outputs are removed. Remaining: VPS runtime evidence and verified IBM hardware job results.
-- [~] Phase 5: hardened Stripe checkout/webhook, Plaid linking, PayPal, Lightning, withdrawals, and HollaEx-only paths are deployed to Test. Remaining: provider live activation, ACH settlement, payout rail, HollaEx private credentials, and Live publication.
-- [ ] Phase 6: disposition every cataloged repository and deploy safe, complete onramp/income/gasless/Cognitum services with live evidence.
-
-## Live-vs-preview gap (verified 2026-09-06)
-- Live scheduler has 0 cron jobs; preview has 3. Publishing pushes the schedules to Live and unfreezes prices (Live prices last updated 2026-07-30).
-- Live totals: 471 strategies (0 live), 3 currencies (QTC/QAQI/AIQTP), $100 USD sitting in the platform wallet, 50,349 faucet claims, 27,027 active auto-invest allocations.
-- Broker keys (Render) are still absent, so no order can reach a real exchange yet.
-
-## Current verified blockers (2026-09-15)
-- Stripe live onboarding: claim-account step still in progress; live keys absent.
-- HollaEx private execution credentials absent; public HollaEx market data is working.
-- Plaid Link is wired; ACH money movement fails closed until a verified settlement processor and webhook are configured.
-- Live has 0 cron jobs and 0 real HollaEx replay tests; Test has active schedules and 258,800 replay tests.
-- Hosted production remains on Vercel + Render + Lovable Cloud; VPS stack is not cut over.
-- Wallet payment and automation screens now fail closed and no longer present banned venues, fabricated allocations, or nonfunctional success controls.
-- Latest dependency scan found no high/critical vulnerabilities; latest backend security scan found no issues.
-- Test ownership rules now prevent strategy-rental payout diversion, elite-chat impersonation, direct token balance writes, self-priced redemptions, and self-reported token burns.
-
-- [ ] After Stripe claim: walk $100 deposit end-to-end in test mode and confirm it lands in wallet (blocked: user must claim Stripe account)
-- [ ] Save HollaEx API key/secret in secure settings (in progress — secure form opened to user)
-- [ ] Answer venue-coverage question: confirm Alpaca/Hummingbot/CCXT/other exchanges stay banned per HollaEx-only rule; only protocol libraries remain (CCXT pointed at HollaEx, Hummingbot-style engines execute via HollaEx connector)
-
-## Subscriptions & Checkout (done 2026-09-27)
-- [x] Created 3 Stripe products: premium_subscription ($29.99/mo, $299.99/yr), premium_signals ($49.99/mo), api_access ($99.99/mo)
-- [x] create-subscription-checkout + manage-subscription edge functions deployed; payments-webhook handles subscription lifecycle
-- [x] Billing page: SubscriptionPlans + SubscriptionManager (customer-selected cancel: period-end / immediate / pro-rated refund; pro-rated plan changes)
-- [ ] Remaining monetization surfaces from chat history review (data marketplace, signal service, NFT drops) — phased follow-up
+## Completed
+- [x] Venue unban + pipeline repoint (2026-09-27): multi-venue public market data layer (`_shared/exchange_public.ts`), ccxt-trading routed to hollaex/binance/kraken/coinbase, UnifiedOrderBook rewritten from synthetic to real venue books, execution paths verified (trade-execute already venue-agnostic per user account; Alpaca stays banned).
+- [x] Test hardening milestone: clean build/dependency/backend scans, wallet + withdrawal fail-closed paths.
+- [x] Live publish + DB sync (www.aiqtp.com 200, live DB synced same day, 0 error-level security findings).
+- [x] Royalty fee tiers (1.90/0.10 pricing; 5/3/1/0.10% tiers; hourly treasury reinvest job).
+- [x] Withdrawal queue fix (idempotent migration, allowed destination types, RPC grants, /admin/withdrawals).
+- [x] Auto-pipeline real-market replay (40 strategies trained, standardized graduation criteria).
+- [x] $100 deployed 50/50 to two graduated strategies (validation-only until venue keys land).
