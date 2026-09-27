@@ -33,17 +33,18 @@ type AccountingSummary = {
 };
 
 const H20ReservePage = () => {
+  const db = supabase as any;
   const [claims, setClaims] = useState<PublicClaim[]>([]);
   const [summary, setSummary] = useState<AccountingSummary[]>([]);
 
   useEffect(() => {
     const loadVerifiedRecords = async () => {
       const [claimsResult, summaryResult] = await Promise.all([
-        supabase
+        db
           .from("h20_public_claims")
           .select("id,claim_category,public_label,public_content,approval_status,verification_status,effective_at")
           .order("effective_at", { ascending: false }),
-        supabase.rpc("h20_public_accounting_summary"),
+        db.rpc("h20_public_accounting_summary"),
       ]);
       if (!claimsResult.error) setClaims((claimsResult.data ?? []) as PublicClaim[]);
       if (!summaryResult.error) setSummary((summaryResult.data ?? []) as AccountingSummary[]);

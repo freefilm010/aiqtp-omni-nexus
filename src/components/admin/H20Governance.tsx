@@ -13,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  H20_APPROVAL_STATUSES,
   H20_CLAIM_CATEGORIES,
   H20_DISTRIBUTION_TYPES,
   H20_RECIPIENT_CLASSIFICATIONS,
@@ -28,6 +27,7 @@ type LedgerEntry = { id: string; transaction_type: string; amount: number; curre
 
 const H20Governance = () => {
   const { user } = useAuth();
+  const db = supabase as any;
   const [claims, setClaims] = useState<Claim[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [distributions, setDistributions] = useState<Distribution[]>([]);
@@ -39,10 +39,10 @@ const H20Governance = () => {
 
   const load = async () => {
     const [claimResult, recipientResult, distributionResult, ledgerResult] = await Promise.all([
-      supabase.from("h20_public_claims").select("*").order("created_at", { ascending: false }),
-      supabase.from("h20_recipients").select("*").order("created_at", { ascending: false }),
-      supabase.from("h20_distributions").select("*").order("created_at", { ascending: false }),
-      supabase.from("h20_ledger_entries").select("id,transaction_type,amount,currency,transaction_reference,ledger_status,created_at").order("created_at", { ascending: false }).limit(100),
+      db.from("h20_public_claims").select("*").order("created_at", { ascending: false }),
+      db.from("h20_recipients").select("*").order("created_at", { ascending: false }),
+      db.from("h20_distributions").select("*").order("created_at", { ascending: false }),
+      db.from("h20_ledger_entries").select("id,transaction_type,amount,currency,transaction_reference,ledger_status,created_at").order("created_at", { ascending: false }).limit(100),
     ]);
     if (claimResult.error || recipientResult.error || distributionResult.error || ledgerResult.error) {
       toast.error("Could not load H20 governance records");
@@ -59,7 +59,7 @@ const H20Governance = () => {
   const createClaim = async () => {
     if (!user || !claim.claimKey || !claim.label || !claim.content || !claim.source || !claim.effectiveAt) return toast.error("Complete every claim evidence field");
     setBusy(true);
-    const { error } = await supabase.from("h20_public_claims").insert({
+    const { error } = await db.from("h20_public_claims").insert({
       claim_key: claim.claimKey.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_"), claim_category: claim.category,
       public_label: claim.label.trim(), public_content: claim.content.trim(), source_document_reference: claim.source.trim(),
       effective_at: new Date(claim.effectiveAt).toISOString(), created_by: user.id,
@@ -73,7 +73,7 @@ const H20Governance = () => {
 
   const reviewClaim = async (id: string, action: string) => {
     setBusy(true);
-    const { error } = await supabase.rpc("h20_review_claim", { p_claim_id: id, p_action: action, p_verification_status: "NOT_VERIFIED" });
+    const { error } = await db.rpc("h20_review_claim", { p_claim_id: id, p_action: action, p_verification_status: "NOT_VERIFIED" });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(action === "REJECTED" ? "Claim rejected" : "Claim authorized with its exact status");
@@ -83,7 +83,7 @@ const H20Governance = () => {
   const createRecipient = async () => {
     if (!user || !recipient.legalName || !recipient.publicName) return toast.error("Legal and public names are required");
     setBusy(true);
-    const { error } = await supabase.from("h20_recipients").insert({
+    const { error } = await db.from("h20_recipients").insert({
       legal_name: recipient.legalName.trim(), public_name: recipient.publicName.trim(), recipient_classification: recipient.classification,
       verification_status: recipient.verification, verification_scope: recipient.scope || null, evidence_source: recipient.source || null,
       verification_date: recipient.date || null, verification_expires_at: recipient.expires || null, document_reference: recipient.document || null,
@@ -99,7 +99,7 @@ const H20Governance = () => {
   const createDistribution = async () => {
     if (!user || !distribution.recipientId || !distribution.purpose || !distribution.amount || !distribution.approval || !distribution.agreement || !distribution.reportingPeriod) return toast.error("Complete every distribution field");
     setBusy(true);
-    const { error } = await supabase.from("h20_distributions").insert({
+    const { error } = await db.from("h20_distributions").insert({
       recipient_id: distribution.recipientId, distribution_type: distribution.type, purpose: distribution.purpose.trim(),
       amount: Number(distribution.amount), currency: distribution.currency.trim().toUpperCase(), approval_reference: distribution.approval.trim(),
       agreement_document_reference: distribution.agreement.trim(), reporting_period: distribution.reportingPeriod.trim(), created_by: user.id,
