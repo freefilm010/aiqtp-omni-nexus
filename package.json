@@ -10,7 +10,8 @@
     "typecheck": "tsgo --noEmit -p tsconfig.app.json",
     "test:security": "deno test --allow-read supabase/functions/security_contract_test.ts",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:h20-terminology": "node scripts/check-h20-terminology.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
