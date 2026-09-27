@@ -18,7 +18,7 @@ export const useFeatureFlags = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("feature_flags")
-        .select("*")
+        .select("id, flag_key, display_name, description, is_enabled, audience, category, updated_at")
         .order("category", { ascending: true })
         .order("display_name", { ascending: true });
       if (error) throw error;
