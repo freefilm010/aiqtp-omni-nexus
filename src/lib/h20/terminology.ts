@@ -72,5 +72,5 @@ export const H20_DISTRIBUTION_TYPES = [
 ] as const;
 
 export function formatH20Code(value: string) {
-  return value.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+  return value.replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
 }
