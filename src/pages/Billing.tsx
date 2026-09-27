@@ -53,7 +53,7 @@ export default function Billing() {
   // Withdrawal state
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("20");
-  const [withdrawType] = useState("manual_review");
+  const [withdrawType] = useState("other");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
 
   // Fee history state
@@ -96,7 +96,7 @@ export default function Billing() {
       });
       if (error || data?.error) throw new Error(data?.error || error?.message || "Withdrawal failed");
       toast.success(`Withdrawal of $${amt.toFixed(2)} submitted`, {
-        description: `Withdrawal ID: ${data?.withdrawal_id ?? "pending"}. Processing within 1–3 business days.`,
+        description: `Withdrawal ID: ${data?.withdrawalId ?? "pending"}. Processing within 1–3 business days.`,
       });
       setWithdrawOpen(false);
     } catch (e: unknown) {
@@ -381,7 +381,7 @@ export default function Billing() {
                <Select value={withdrawType} disabled>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                   <SelectItem value="manual_review">Verified payout destination</SelectItem>
+                   <SelectItem value="other">Verified payout destination</SelectItem>
                 </SelectContent>
               </Select>
             </div>

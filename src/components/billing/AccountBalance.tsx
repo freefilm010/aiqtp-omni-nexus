@@ -19,7 +19,7 @@ export function AccountBalance({ userId }: Props) {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("20");
-  const [withdrawDest] = useState("manual_review");
+  const [withdrawDest] = useState("other");
   const [withdrawNote, setWithdrawNote] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -126,7 +126,7 @@ export function AccountBalance({ userId }: Props) {
               <Select value={withdrawDest} disabled>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="manual_review">Verified payout destination</SelectItem>
+                  <SelectItem value="other">Verified payout destination</SelectItem>
                 </SelectContent>
               </Select>
             </div>

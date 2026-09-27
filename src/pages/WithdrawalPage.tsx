@@ -33,7 +33,7 @@ const STATUS_ICON = {
 export default function WithdrawalPage() {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [amount, setAmount] = useState("20");
-  const [destType] = useState("manual_review");
+  const [destType] = useState("other");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Withdrawal[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -74,7 +74,7 @@ export default function WithdrawalPage() {
       });
       if (error || data?.error) throw new Error(data?.error || error?.message || "Withdrawal failed");
       toast.success(`Withdrawal of $${amt.toFixed(2)} submitted`, {
-        description: `ID: ${data?.withdrawal_id ?? "pending"} — processed within 1–3 business days.`,
+        description: `ID: ${data?.withdrawalId ?? "pending"} — processed within 1–3 business days.`,
       });
       setAmount("20");
       // Refresh history
@@ -137,7 +137,7 @@ export default function WithdrawalPage() {
                 <Select value={destType} disabled>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="manual_review">Verified payout destination</SelectItem>
+                    <SelectItem value="other">Verified payout destination</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">No automatic payout rail is active. An administrator confirms the destination before payment.</p>
