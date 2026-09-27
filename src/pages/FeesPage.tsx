@@ -23,20 +23,21 @@ import {
 import { PROFIT_TIERS, calculatePlatformFee } from "@/lib/fees/platformFees";
 
 const FeesPage = () => {
-  const [profitAmount, setProfitAmount] = useState<number>(10000);
-  const calculatedFee = calculatePlatformFee(profitAmount);
+  const [profitAmount, setProfitAmount] = useState<number>(1000);
+  const [costBasis, setCostBasis] = useState<number>(10000);
+  const calculatedFee = calculatePlatformFee(profitAmount, costBasis);
 
   const feeCategories = [
     {
       title: "Trading Profits",
       icon: TrendingUp,
-      description: "Platform fee on realized trading gains only",
+      description: "Performance royalty on each realized gain, tiered by % gain",
       details: [
         { label: "No Profits = No Fees", value: "Free" },
-        { label: "$0 - $10,000 profits", value: "9%" },
-        { label: "$10,001 - $100,000", value: "6%" },
-        { label: "$100,001 - $1,000,000", value: "3%" },
-        { label: "$1,000,000+", value: "1%" },
+        { label: "0.01% – 10% gain", value: "5%" },
+        { label: "10.01% – 100% gain", value: "3%" },
+        { label: "100.01% – 1,000% gain", value: "1%" },
+        { label: "1,000.01%+ gain", value: "0.10%" },
       ],
     },
     {
@@ -155,27 +156,30 @@ const FeesPage = () => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 sm:gap-6">
-              <div className="w-full">
-                <label className="text-sm font-medium mb-2 block">Your Profit Amount</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="number"
-                    value={profitAmount}
-                    onChange={(e) => setProfitAmount(Number(e.target.value))}
-                    className="pl-10 text-lg"
-                    placeholder="Enter profit amount"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Realized Profit</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <Input type="number" value={profitAmount} onChange={(e) => setProfitAmount(Number(e.target.value))} className="pl-10 text-lg" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Amount Invested (cost basis)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <Input type="number" value={costBasis} onChange={(e) => setCostBasis(Number(e.target.value))} className="pl-10 text-lg" />
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="text-center">
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Platform Fee</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Royalty ({calculatedFee.gainPct.toFixed(2)}% gain)</p>
                   <p className="text-lg sm:text-4xl font-bold text-primary">
                     ${calculatedFee.fee.toFixed(2)}
                   </p>
                   <Badge variant="outline" className="mt-1 text-[10px] sm:text-xs">
-                    {calculatedFee.rate}% rate
+                    {calculatedFee.tierLabel} rate
                   </Badge>
                 </div>
                 <div className="text-center">
@@ -184,7 +188,7 @@ const FeesPage = () => {
                     ${(profitAmount - calculatedFee.fee).toFixed(2)}
                   </p>
                   <Badge variant="secondary" className="mt-1 text-[10px] sm:text-xs">
-                    {(((profitAmount - calculatedFee.fee) / profitAmount) * 100).toFixed(1)}%
+                    {profitAmount > 0 ? (((profitAmount - calculatedFee.fee) / profitAmount) * 100).toFixed(2) : "0.00"}%
                   </Badge>
                 </div>
               </div>
@@ -244,12 +248,12 @@ const FeesPage = () => {
                         <Badge variant="secondary">{tier.label}</Badge>
                       </td>
                       <td className="py-3 px-4">
-                        ${tier.min.toLocaleString()} - {tier.max === Infinity ? "∞" : `$${tier.max.toLocaleString()}`}
+                        {tier.min.toLocaleString()}% – {tier.max === Infinity ? "∞" : `${tier.max.toLocaleString()}%`} gain
                       </td>
-                      <td className="py-3 px-4 font-bold text-primary">{(tier.rate * 100).toFixed(0)}%</td>
-                      <td className="py-3 px-4 text-success">{(100 - tier.rate * 100).toFixed(0)}%</td>
+                      <td className="py-3 px-4 font-bold text-primary">{tier.label}</td>
+                      <td className="py-3 px-4 text-success">{(100 - tier.rate * 100).toFixed(2)}%</td>
                       <td className="py-3 px-4 text-muted-foreground text-sm">
-                        $10K profit → ${(10000 * tier.rate).toFixed(0)} fee
+                        $10K profit → ${(10000 * tier.rate).toFixed(2)} royalty
                       </td>
                     </tr>
                   ))}
