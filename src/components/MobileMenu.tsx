@@ -25,6 +25,7 @@ interface MobileMenuProps {
   strategyLinks: NavLink[];
   assetLinks: NavLink[];
   infoLinks: NavLink[];
+  h20Links: NavLink[];
   moreLinks: NavLink[];
   popoutLinks: PopoutLink[];
 }
@@ -79,6 +80,7 @@ const MobileMenu = ({
   strategyLinks,
   assetLinks,
   infoLinks,
+  h20Links,
   moreLinks,
   popoutLinks,
 }: MobileMenuProps) => {
@@ -112,6 +114,7 @@ const MobileMenu = ({
         <CollapsibleSection title="Strategies" links={strategyLinks} onClose={onClose} />
         <CollapsibleSection title="Assets & Tools" links={assetLinks} onClose={onClose} />
         <CollapsibleSection title="Information" links={infoLinks} onClose={onClose} />
+        <CollapsibleSection title="H20" links={h20Links} onClose={onClose} />
         <CollapsibleSection title="More" links={moreLinks} onClose={onClose} />
 
         {/* Popouts */}

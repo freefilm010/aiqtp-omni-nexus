@@ -60,6 +60,7 @@ import {
   Gift,
   Wallet,
   Users
+  ,Droplets
 } from "lucide-react";
 
 const AdminAccountItem = ({ onNavigate }: { onNavigate: () => void }) => {
@@ -211,6 +212,10 @@ const Header = () => {
     { to: "/alerts", label: "Market Alerts", icon: BellRing },
     { to: "/education", label: "Education Library", icon: BookOpen },
     { to: "/analytics", label: "Advanced Analytics", icon: BarChart3 },
+  ];
+
+  const h20Links = [
+    { to: "/h20", label: "H20 Global Water Reserve", icon: Droplets },
   ];
 
   const moreLinks = [
@@ -386,6 +391,25 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* H20 is isolated from trading and general asset navigation. */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-neon-cyan cursor-pointer transition-smooth">
+                <Droplets className="h-4 w-4" />
+                <span>H20</span>
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {h20Links.map((link) => (
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to} className="flex items-center w-full">
+                      <link.icon className="mr-2 h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* More Dropdown with Popouts & Theme */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center space-x-1 text-foreground hover:text-gold cursor-pointer transition-smooth">
@@ -518,6 +542,7 @@ const Header = () => {
             strategyLinks={strategyLinks}
             assetLinks={assetLinks}
             infoLinks={infoLinks}
+            h20Links={h20Links}
             moreLinks={moreLinks}
             popoutLinks={popoutLinks}
           />

@@ -62,7 +62,10 @@ const Footer = () => {
     { to: "/faucet", label: "Crypto Faucet", icon: Crosshair },
     { to: "/connections", label: "Connections", icon: Globe },
     { to: "/data-ecosystem", label: "Data Ecosystem", icon: Layers },
-    { to: "/h20", label: "H20 Water Reserve", icon: Globe },
+  ];
+
+  const h20Links = [
+    { to: "/h20", label: "H20 Global Water Reserve", icon: Globe },
   ];
 
   const infoLinks = [
@@ -104,7 +107,7 @@ const Footer = () => {
         </div>
 
         {/* Main Footer Navigation — collapsible on mobile */}
-        <div className="py-6 md:py-12 grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8">
+        <div className="py-6 md:py-12 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 md:gap-8">
           <div>
             <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-gold">Trading</h3>
             <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
@@ -152,6 +155,14 @@ const Footer = () => {
                 <li key={link.to}><Link to={link.to} className="hover:text-gold transition-smooth">{link.label}</Link></li>
               ))}
               {user ? <AdminFooterLink /> : null}
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-[11px] md:text-sm font-semibold mb-2 md:mb-4 text-neon-cyan">H20</h3>
+            <ul className="space-y-1 md:space-y-2 text-[10px] md:text-xs text-white/70">
+              {h20Links.map((link) => (
+                <li key={link.to}><Link to={link.to} className="hover:text-neon-cyan transition-smooth">{link.label}</Link></li>
+              ))}
             </ul>
           </div>
         </div>
@@ -267,7 +278,7 @@ const Footer = () => {
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-white/40">
             <Link to="/" className="hover:text-gold">Home</Link>
             <Link to="/auth" className="hover:text-gold">Sign In</Link>
-            {[...tradingLinks, ...aiQuantumLinks, ...strategyLinks, ...assetLinks, ...infoLinks, ...moreLinks].map((link) => (
+            {[...tradingLinks, ...aiQuantumLinks, ...strategyLinks, ...assetLinks, ...infoLinks, ...moreLinks, ...h20Links].map((link) => (
               <Link key={link.to} to={link.to} className="hover:text-gold">{link.label}</Link>
             ))}
           </div>
