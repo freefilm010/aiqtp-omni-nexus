@@ -15,6 +15,8 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { toast } from "sonner";
 import { AccountBalance } from "@/components/billing/AccountBalance";
 import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
+import { SubscriptionPlans } from "@/components/payments/SubscriptionPlans";
+import { SubscriptionManager } from "@/components/payments/SubscriptionManager";
 
 const PLATFORM_ACCESS_FEATURES = [
   "Full platform access is free",
@@ -204,6 +206,18 @@ export default function Billing() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Subscriptions */}
+        <div className="space-y-4">
+          <div className="text-center space-y-1">
+            <h2 className="text-2xl font-bold">Premium Plans</h2>
+            <p className="text-sm text-muted-foreground">
+              Optional subscriptions — platform access stays free either way.
+            </p>
+          </div>
+          {user && <SubscriptionManager />}
+          <SubscriptionPlans />
         </div>
 
         {/* Withdraw + Fee tiers row */}
