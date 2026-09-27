@@ -16,11 +16,7 @@ export const useFeatureFlags = () => {
   return useQuery({
     queryKey: ["feature_flags"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("feature_flags")
-        .select("id, flag_key, display_name, description, is_enabled, audience, category, updated_at")
-        .order("category", { ascending: true })
-        .order("display_name", { ascending: true });
+      const { data, error } = await (supabase.rpc as any)("list_feature_flags");
       if (error) throw error;
       return (data ?? []) as FeatureFlag[];
     },

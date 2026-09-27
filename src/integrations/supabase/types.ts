@@ -10638,6 +10638,38 @@ export type Database = {
         Args: { p_interval?: string; p_limit?: number; p_symbol?: string }
         Returns: number
       }
+      list_community_predictions: {
+        Args: { p_limit?: number }
+        Returns: {
+          accuracy_score: number
+          confidence: number
+          created_at: string
+          direction: string
+          id: string
+          is_mine: boolean
+          outcome: string
+          outcome_resolved_at: string
+          prediction_type: string
+          reasoning: string
+          target_date: string
+          target_price: number
+          ticker: string
+          upvotes: number
+        }[]
+      }
+      list_feature_flags: {
+        Args: never
+        Returns: {
+          audience: string
+          category: string
+          description: string
+          display_name: string
+          flag_key: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }[]
+      }
       list_marketplace_suggestions: {
         Args: never
         Returns: {
