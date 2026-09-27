@@ -11,7 +11,9 @@ Deno.test("CCXT browser endpoint rejects private credentials", async () => {
   const ccxt = await Deno.readTextFile(new URL("./ccxt-trading/index.ts", import.meta.url));
   assertFalse(ccxt.includes("apiKey?: string"));
   assertFalse(ccxt.includes("secret?: string"));
-  assertEquals(ccxt.includes("Private exchange operations are disabled"), true);
+  assertEquals(ccxt.includes("This endpoint serves venue market data only"), true);
+  assertEquals(ccxt.includes("body?.apiKey"), false);
+  assertEquals(ccxt.includes("body?.secret"), false);
 });
 
 Deno.test("QTC explorer exposes only public transaction metadata", async () => {

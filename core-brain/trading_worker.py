@@ -42,7 +42,6 @@ Optional environment variables:
   ALPACA_SYMBOL_WHITELIST   Comma-separated list of tradeable symbols (default: BTCUSD,ETHUSD,...)
 """
 
-import collections
 import logging
 import os
 import random
@@ -108,66 +107,12 @@ SUPABASE_SERVICE_ROLE_KEY: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 COINGECKO_API_KEY: Optional[str] = os.getenv("COINGECKO_API_KEY")
 LOOP_INTERVAL_SECONDS: int = int(os.getenv("LOOP_INTERVAL_SECONDS", "60"))
 
-# ── Alpaca brokerage (QuantClaw-Prod live order execution) ────────────────────
-# Keys are read from env vars if set, otherwise fetched from Supabase
-# account_key_vault at startup so the user can configure them via the UI.
 ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
-
-ALPACA_API_KEY: Optional[str]    = os.getenv("ALPACA_API_KEY")
-ALPACA_SECRET_KEY: Optional[str] = os.getenv("ALPACA_SECRET_KEY")
-ALPACA_BASE_URL: str             = os.getenv(
-    "ALPACA_BASE_URL", "https://api.alpaca.markets"
-)
-ALPACA_PAPER_MODE: bool = os.getenv("ALPACA_PAPER_MODE", "true").lower() != "false"
-
-ALPACA_SYMBOL_WHITELIST: set[str] = {
-    s.strip() for s in os.getenv(
-        "ALPACA_SYMBOL_WHITELIST",
-        "BTCUSD,ETHUSD,SOLUSD,AVAXUSD,LINKUSD,USDCUSD,USDTUSD,MATICUSD,DOTUSD,ADAUSD"
-    ).split(",")
-    if s.strip()
-}
-
-_alpaca_order_times: dict[str, collections.deque] = {}
 
 # ─── Database backend ─────────────────────────────────────────────────────────
 
 db = _init_db_backend()
 
-
-def _load_alpaca_keys_from_vault() -> None:
-    """
-    If ALPACA_API_KEY / ALPACA_SECRET_KEY are not set as env vars, attempt to
-    read them from the account_key_vault table in Supabase. The UI stores them
-    there when the user enters them in the QuantClaw QAQI credentials panel.
-
-    Expected rows:
-      account_id = 'alpaca_api_key'    → api_key_encrypted = <key ID>
-      account_id = 'alpaca_secret_key' → api_key_encrypted = <secret>
-    """
-    global ALPACA_API_KEY, ALPACA_SECRET_KEY
-    if ALPACA_API_KEY and ALPACA_SECRET_KEY:
-        return  # env vars already set — nothing to do
-
-    try:
-        rows: list[dict] = []
-        for aid in ("alpaca_api_key", "alpaca_secret_key"):
-            r = (
-                db.table("account_key_vault")
-                .select("account_id, api_key_encrypted")
-                .eq("account_id", aid)
-                .execute()
-            )
-            rows.extend(r.data or [])
-        for row in rows:
-            if row["account_id"] == "alpaca_api_key" and not ALPACA_API_KEY:
-                ALPACA_API_KEY = row["api_key_encrypted"]
-                log.info("Alpaca API key loaded from Supabase vault.")
-            elif row["account_id"] == "alpaca_secret_key" and not ALPACA_SECRET_KEY:
-                ALPACA_SECRET_KEY = row["api_key_encrypted"]
-                log.info("Alpaca secret key loaded from Supabase vault.")
-    except Exception as exc:
-        log.warning("Could not load Alpaca keys from vault: %s", exc)
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -354,6 +299,8 @@ def _close_open_positions() -> None:
     and closes them if the strategy signals a reversal or if a stop-loss/take-profit is hit.
     Updates the trade_logs row with realized PnL and marks it 'closed'.
     """
+    log.warning("Legacy autonomous position management is disabled; use an approved user-scoped venue executor.")
+    return
     try:
         # Fetch open positions
         result = (
@@ -543,6 +490,8 @@ def execute_real_trade(strategy: dict, prices: dict[str, float]) -> Optional[dic
     """
     Executes a real trade for the given strategy using live price data and Alpaca.
     """
+    log.warning("Legacy autonomous execution is disabled; use Hummingbot or authenticated CCXT execution.")
+    return None
     symbol      = strategy_symbol(strategy)
     entry_price = prices.get(symbol)
 
@@ -837,113 +786,6 @@ def _run_factor_generation(params: dict) -> dict:
     }
 
 
-def _alpaca_rate_limit_ok(user_id: str) -> bool:
-    now = time.time()
-    dq  = _alpaca_order_times.setdefault(user_id, collections.deque())
-    # Drop timestamps older than 1 hour
-    while dq and now - dq[0] > 3600:
-        dq.popleft()
-    return len(dq) < 5
-
-
-def _record_alpaca_order(user_id: str) -> None:
-    _alpaca_order_times.setdefault(user_id, collections.deque()).append(time.time())
-
-
-def _execute_alpaca_live_order(params: dict, user_id: str, agent_type: str) -> dict:
-    """
-    Submits a live or paper order to Alpaca.
-
-    Safety checks (all enforced before any network call):
-      1. agent_type must be 'prod'
-      2. ALPACA_PAPER_MODE must be False for live; paper orders always allowed
-      3. Symbol must be in ALPACA_SYMBOL_WHITELIST
-      4. Per-user rate limit: ≤ 5 orders per rolling hour
-      5. Notional value ≤ 20% of account NAV (fetched from Alpaca account endpoint)
-      6. ALPACA_API_KEY and ALPACA_SECRET_KEY must be set
-    """
-    if agent_type != "prod":
-        raise ValueError("ccxt_live_order requires agent_type='prod'. Switch to QuantClaw-Prod.")
-
-    if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
-        raise EnvironmentError(
-            "ALPACA_API_KEY and ALPACA_SECRET_KEY must be set in Render environment variables."
-        )
-
-    symbol   = str(params.get("symbol", "BTCUSD")).upper().replace("/", "").replace("-", "")
-    side     = str(params.get("side", "buy")).lower()
-    notional = float(params.get("notional", 0))
-    approved = bool(params.get("approved", False))
-
-    if not approved and not ALPACA_PAPER_MODE:
-        raise ValueError(
-            "Live order requires params.approved=true and explicit operator approval."
-        )
-
-    if symbol not in ALPACA_SYMBOL_WHITELIST:
-        raise ValueError(
-            f"Symbol {symbol} not in whitelist {sorted(ALPACA_SYMBOL_WHITELIST)}. "
-            "Update ALPACA_SYMBOL_WHITELIST env var to add it."
-        )
-
-    if not _alpaca_rate_limit_ok(user_id):
-        raise RuntimeError("Rate limit exceeded: max 5 live orders per hour per user.")
-
-    headers = {
-        "APCA-API-KEY-ID":     ALPACA_API_KEY,
-        "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
-        "Accept":              "application/json",
-        "Content-Type":        "application/json",
-    }
-
-    # Fetch account to enforce 20% position size limit
-    acct_resp = requests.get(f"{ALPACA_BASE_URL}/v2/account", headers=headers, timeout=10)
-    acct_resp.raise_for_status()
-    acct = acct_resp.json()
-    nav  = float(acct.get("portfolio_value") or acct.get("equity") or 0)
-
-    if nav > 0 and notional > nav * 0.20:
-        raise ValueError(
-            f"Notional ${notional:.2f} exceeds 20% position limit "
-            f"(account NAV=${nav:.2f}, max=${nav * 0.20:.2f})."
-        )
-
-    order_payload: dict[str, Any] = {
-        "symbol":        symbol,
-        "side":          side,
-        "type":          "market",
-        "time_in_force": "gtc",
-    }
-    if notional > 0:
-        order_payload["notional"] = str(round(notional, 2))
-    else:
-        order_payload["qty"] = str(params.get("qty", "1"))
-
-    order_resp = requests.post(
-        f"{ALPACA_BASE_URL}/v2/orders",
-        headers=headers,
-        json=order_payload,
-        timeout=10,
-    )
-    order_resp.raise_for_status()
-    order = order_resp.json()
-
-    _record_alpaca_order(user_id)
-
-    return {
-        "order_id":     order.get("id"),
-        "symbol":       order.get("symbol"),
-        "side":         order.get("side"),
-        "status":       order.get("status"),
-        "notional":     order.get("notional"),
-        "qty":          order.get("qty"),
-        "filled_qty":   order.get("filled_qty"),
-        "filled_avg_price": order.get("filled_avg_price"),
-        "paper_mode":   ALPACA_PAPER_MODE,
-        "submitted_at": order.get("submitted_at"),
-    }
-
-
 def _call_anthropic_haiku(system_prompt: str, user_prompt: str) -> str:
     """
     Calls claude-haiku-4-5 via the Anthropic Messages API.
@@ -1130,7 +972,6 @@ def poll_and_execute_directives() -> int:
       freqtrade_backtest  → _run_backtest_simulation()
       freqtrade_optimize  → _run_optimize_simulation()
       ccxt_sim_order      → simulate_trade() (no broker)
-      ccxt_live_order     → _execute_alpaca_live_order() (prod-gated)
       factor_generation   → _run_factor_generation()
       social_media_post   → _run_social_media_post()   (Anthropic claude-haiku-4-5)
       marketing_campaign  → _run_marketing_campaign()  (Anthropic claude-haiku-4-5)
@@ -1186,9 +1027,6 @@ def poll_and_execute_directives() -> int:
                 trade = simulate_trade(fake_strategy, prices)
                 out   = trade if trade else {"error": "No price available for simulation"}
 
-            elif tool == "ccxt_live_order":
-                out = _execute_alpaca_live_order(params, user_id, agent_type)
-
             elif tool == "factor_generation":
                 out = _run_factor_generation(params)
 
@@ -1207,7 +1045,7 @@ def poll_and_execute_directives() -> int:
             else:
                 raise ValueError(
                     f"Unknown tool: {tool!r}. Supported: freqtrade_backtest, "
-                    "freqtrade_optimize, ccxt_sim_order, ccxt_live_order, "
+                    "freqtrade_optimize, ccxt_sim_order, "
                     "factor_generation, social_media_post, marketing_campaign, "
                     "content_generator, campaign_scheduler"
                 )
@@ -1233,17 +1071,11 @@ def main() -> None:
         # DATABASE_URL means we're on Render PostgreSQL — Supabase vars optional
         raise RuntimeError(f"Required env var(s) not set: {', '.join(missing)}")
 
-    # Load Alpaca keys from Supabase vault if not set via env vars
-    _load_alpaca_keys_from_vault()
-
     log.info("=" * 64)
     log.info("AIQTP Omni-Nexus Core Brain — starting up")
     log.info("  Supabase URL   : %s", SUPABASE_URL)
     log.info("  Loop interval  : %ds", LOOP_INTERVAL_SECONDS)
     log.info("  CoinGecko tier : %s", "Pro" if COINGECKO_API_KEY else "Free (rate-limited)")
-    log.info("  Alpaca key     : %s", "set" if ALPACA_API_KEY else "NOT SET — live orders disabled")
-    log.info("  Alpaca mode    : %s", "PAPER" if ALPACA_PAPER_MODE else "LIVE")
-    log.info("  Alpaca symbols : %s", sorted(ALPACA_SYMBOL_WHITELIST))
     log.info("=" * 64)
 
     while True:
