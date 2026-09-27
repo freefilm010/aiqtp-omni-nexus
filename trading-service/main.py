@@ -77,12 +77,9 @@ if _sentry_dsn:
 SUPABASE_URL              = os.getenv("SUPABASE_URL", "http://kong:8000")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 SUPABASE_JWT_SECRET       = os.getenv("SUPABASE_JWT_SECRET", "")
-ALPACA_API_KEY            = os.getenv("ALPACA_API_KEY", "")
-ALPACA_SECRET_KEY         = os.getenv("ALPACA_SECRET_KEY", "")
-ALPACA_BASE_URL           = os.getenv("ALPACA_BASE_URL", "https://api.alpaca.markets")
-ALPACA_PAPER_MODE         = os.getenv("ALPACA_PAPER_MODE", "false").lower() != "false"
 CCXT_LIVE_ENABLED         = os.getenv("CCXT_LIVE_ENABLED", "false").lower() == "true"
 HUMMINGBOT = HummingbotClient()
+HUMMINGBOT_ADMIN_EMAIL = os.getenv("HUMMINGBOT_ADMIN_EMAIL", "1drrey@gmail.com").lower()
 
 # ─── Broker Config ────────────────────────────────────────────────────────────
 TRADIER_API_KEY    = os.getenv("TRADIER_API_KEY", "")
@@ -102,12 +99,6 @@ KRAKEN_LIVE        = os.getenv("KRAKEN_LIVE_ENABLED", "false").lower() == "true"
 
 IBKR_CPG_URL       = os.getenv("IBKR_CPG_URL", "")        # Client Portal Gateway base URL
 IBKR_ACCOUNT_ID    = os.getenv("IBKR_ACCOUNT_ID", "")
-
-SYMBOL_WHITELIST = {
-    s.strip() for s in os.getenv(
-        "ALPACA_SYMBOL_WHITELIST", "BTCUSD,ETHUSD,SOLUSD,AVAXUSD,LINKUSD"
-    ).split(",") if s.strip()
-}
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
@@ -313,6 +304,24 @@ def _require_user(
     if not x_user_id or len(x_user_id) < 10:
         raise HTTPException(401, "X-User-Id header required")
     return x_user_id
+
+
+def _require_hummingbot_admin(authorization: Optional[str]) -> str:
+    """Hummingbot controls require a verified JWT for the sole operator account."""
+    if not SUPABASE_JWT_SECRET or not authorization:
+        raise HTTPException(401, "Verified administrator authorization required")
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(401, "Verified administrator authorization required")
+    try:
+        payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_aud": False})
+    except JWTError as exc:
+        raise HTTPException(401, "Invalid administrator authorization") from exc
+    user_id = payload.get("sub")
+    email = str(payload.get("email", "")).lower()
+    if not user_id or email != HUMMINGBOT_ADMIN_EMAIL:
+        raise HTTPException(403, "Hummingbot administration is restricted")
+    return user_id
 
 
 # ─── DB helpers ───────────────────────────────────────────────────────────────
@@ -539,40 +548,6 @@ def _sim_order_response(req: SimOrderRequest) -> dict[str, Any]:
     }
 
 
-async def _place_alpaca_order(req: LiveOrderRequest) -> dict[str, Any]:
-    sym = req.symbol.replace("/", "")
-    if sym not in SYMBOL_WHITELIST:
-        raise HTTPException(400, f"Symbol {sym} not in whitelist: {SYMBOL_WHITELIST}")
-    if ALPACA_PAPER_MODE:
-        raise HTTPException(403, "Paper mode is active — live orders are disabled")
-    if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
-        raise HTTPException(503, "Alpaca credentials not configured")
-
-    payload: dict[str, Any] = {
-        "symbol": sym,
-        "qty": str(req.qty),
-        "side": req.side,
-        "type": req.order_type,
-        "time_in_force": req.time_in_force,
-    }
-    if req.order_type == "limit" and req.limit_price:
-        payload["limit_price"] = str(req.limit_price)
-
-    async with httpx.AsyncClient() as client:
-        r = await client.post(
-            f"{ALPACA_BASE_URL}/v2/orders",
-            headers={
-                "APCA-API-KEY-ID": ALPACA_API_KEY,
-                "APCA-API-SECRET-KEY": ALPACA_SECRET_KEY,
-            },
-            json=payload,
-            timeout=15,
-        )
-        if r.status_code not in (200, 201):
-            raise HTTPException(r.status_code, f"Alpaca /v2/orders: {r.text}")
-        return r.json()
-
-
 # ─── Broker helpers ───────────────────────────────────────────────────────────
 
 def _tradier_headers() -> dict:
@@ -760,7 +735,6 @@ async def health():
             "ccxt": _cx.status(),
         },
         "brokers": {
-            "alpaca": {"configured": bool(ALPACA_API_KEY), "live": not ALPACA_PAPER_MODE},
             "tradier": {"configured": bool(TRADIER_API_KEY), "sandbox": TRADIER_SANDBOX},
             "binance": {"configured": bool(BINANCE_API_KEY), "live": BINANCE_LIVE},
             "kraken": {"configured": bool(KRAKEN_API_KEY), "live": KRAKEN_LIVE},
@@ -776,7 +750,7 @@ async def hummingbot_status(
     x_user_id: Optional[str] = Header(default=None),
     authorization: Optional[str] = Header(default=None),
 ):
-    _require_user(x_user_id, authorization)
+    _require_hummingbot_admin(authorization)
     return await HUMMINGBOT.health()
 
 
@@ -787,7 +761,7 @@ async def hummingbot_bots(
     x_user_id: Optional[str] = Header(default=None),
     authorization: Optional[str] = Header(default=None),
 ):
-    _require_user(x_user_id, authorization)
+    _require_hummingbot_admin(authorization)
     if not HUMMINGBOT.configured:
         raise HTTPException(503, "Hummingbot API is not configured")
     try:
@@ -804,7 +778,7 @@ async def hummingbot_start_bot(
     x_user_id: Optional[str] = Header(default=None),
     authorization: Optional[str] = Header(default=None),
 ):
-    _require_user(x_user_id, authorization)
+    _require_hummingbot_admin(authorization)
     status_rows = await _query("SELECT active FROM public.system_status WHERE key = 'main' LIMIT 1")
     if not status_rows or status_rows[0].get("active") is not True:
         raise HTTPException(503, "Trading is halted or system status is unavailable")
@@ -822,7 +796,7 @@ async def hummingbot_stop_bot(
     x_user_id: Optional[str] = Header(default=None),
     authorization: Optional[str] = Header(default=None),
 ):
-    _require_user(x_user_id, authorization)
+    _require_hummingbot_admin(authorization)
     try:
         return await HUMMINGBOT.stop_bot(body.container_name)
     except RuntimeError as exc:
@@ -1075,7 +1049,6 @@ async def patch_strategy(
 async def list_brokers():
     """Return which brokers are configured (keys present, not values)."""
     return {
-        "alpaca":  {"configured": bool(ALPACA_API_KEY),    "live": not ALPACA_PAPER_MODE},
         "tradier": {"configured": bool(TRADIER_API_KEY),   "sandbox": TRADIER_SANDBOX},
         "binance": {"configured": bool(BINANCE_API_KEY),   "live": BINANCE_LIVE},
         "kraken":  {"configured": bool(KRAKEN_API_KEY),    "live": KRAKEN_LIVE},

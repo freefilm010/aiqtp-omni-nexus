@@ -55,8 +55,8 @@ class HummingbotClient:
         if not self.configured:
             return self.public_status()
         try:
-            result = await self.request("GET", "/")
-            return {**self.public_status(), "reachable": True, "upstream": result}
+            await self.request("GET", "/")
+            return {**self.public_status(), "reachable": True}
         except Exception:
             return {**self.public_status(), "reachable": False}
 

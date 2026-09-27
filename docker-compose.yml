@@ -248,6 +248,7 @@ services:
       HUMMINGBOT_API_USERNAME: ${HUMMINGBOT_API_USERNAME:-}
       HUMMINGBOT_API_PASSWORD: ${HUMMINGBOT_API_PASSWORD:-}
       HUMMINGBOT_LIVE_ENABLED: ${HUMMINGBOT_LIVE_ENABLED:-false}
+      HUMMINGBOT_ADMIN_EMAIL: ${HUMMINGBOT_ADMIN_EMAIL:-1drrey@gmail.com}
       PORT: 8002
     depends_on:
       db: { condition: service_healthy }

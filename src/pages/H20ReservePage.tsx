@@ -40,10 +40,7 @@ const H20ReservePage = () => {
   useEffect(() => {
     const loadVerifiedRecords = async () => {
       const [claimsResult, summaryResult] = await Promise.all([
-        db
-          .from("h20_public_claims")
-          .select("id,claim_category,public_label,public_content,approval_status,verification_status,effective_at")
-          .order("effective_at", { ascending: false }),
+        db.rpc("h20_public_claims_list"),
         db.rpc("h20_public_accounting_summary"),
       ]);
       if (!claimsResult.error) setClaims((claimsResult.data ?? []) as PublicClaim[]);
