@@ -36,6 +36,7 @@ const H20ReservePage = () => {
   const db = supabase as any;
   const [claims, setClaims] = useState<PublicClaim[]>([]);
   const [summary, setSummary] = useState<AccountingSummary[]>([]);
+  const [dataAvailable, setDataAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     const loadVerifiedRecords = async () => {
@@ -43,8 +44,13 @@ const H20ReservePage = () => {
         db.rpc("h20_public_claims_list"),
         db.rpc("h20_public_accounting_summary"),
       ]);
-      if (!claimsResult.error) setClaims((claimsResult.data ?? []) as PublicClaim[]);
-      if (!summaryResult.error) setSummary((summaryResult.data ?? []) as AccountingSummary[]);
+      if (claimsResult.error || summaryResult.error) {
+        setDataAvailable(false);
+        return;
+      }
+      setClaims((claimsResult.data ?? []) as PublicClaim[]);
+      setSummary((summaryResult.data ?? []) as AccountingSummary[]);
+      setDataAvailable(true);
     };
     void loadVerifiedRecords();
   }, []);
@@ -67,6 +73,13 @@ const H20ReservePage = () => {
         </section>
 
         <div className="mx-auto max-w-6xl space-y-10 px-4 py-10">
+          {dataAvailable === false && (
+            <Alert className="border-warning/40 bg-warning-light/20">
+              <FileWarning className="h-4 w-4 text-warning" />
+              <AlertTitle>DATA_UNAVAILABLE</AlertTitle>
+              <AlertDescription>Verified H20 records cannot be retrieved. No financial or verification status is being represented.</AlertDescription>
+            </Alert>
+          )}
           <Alert className="border-neon-cyan/30 bg-neon-cyan-light/30">
             <ShieldCheck className="h-4 w-4 text-neon-cyan" />
             <AlertTitle>Core public disclosure</AlertTitle>
@@ -118,7 +131,9 @@ const H20ReservePage = () => {
               <Table>
                 <TableHeader><TableRow><TableHead>Separated account</TableHead><TableHead className="text-right">Confirmed amount</TableHead></TableRow></TableHeader>
                 <TableBody>
-                  {summary.length === 0 ? (
+                  {dataAvailable === false ? (
+                    <TableRow><TableCell colSpan={2} className="py-8 text-center text-muted-foreground">Verified accounting data is unavailable.</TableCell></TableRow>
+                  ) : summary.length === 0 ? (
                     <TableRow><TableCell colSpan={2} className="py-8 text-center text-muted-foreground">No confirmed H20 financial activity is recorded.</TableCell></TableRow>
                   ) : summary.map((row) => (
                     <TableRow key={row.account_code}>
@@ -133,7 +148,9 @@ const H20ReservePage = () => {
 
           <section aria-labelledby="claims-heading">
             <h2 id="claims-heading" className="mb-4 text-xl font-semibold">Evidence-backed public records</h2>
-            {claims.length === 0 ? (
+            {dataAvailable === false ? (
+              <Card><CardContent className="py-8 text-center"><Badge variant="outline" className="mb-3 font-mono">DATA_UNAVAILABLE</Badge><p className="text-sm text-muted-foreground">No H20 claim status can be displayed while verified records are unavailable.</p></CardContent></Card>
+            ) : claims.length === 0 ? (
               <Card><CardContent className="py-8 text-center"><Badge variant="outline" className="mb-3 font-mono">NOT_VERIFIED</Badge><p className="text-sm text-muted-foreground">No supported public H20 claims have been authorized.</p></CardContent></Card>
             ) : (
               <div className="space-y-3">

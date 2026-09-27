@@ -2,6 +2,7 @@
 
 ## Active
 - [ ] **H20 Truthful Terminology Standard** — isolated in its own desktop/mobile/footer category with only a small linked mention at the bottom of the main page; public disclosure and admin governance screens are built. Blocked from completion because the Lovable Cloud database is unreachable after two unchanged migration attempts; schema, security scan for new tables, publish, and live verification remain pending.
+- [ ] **Hummingbot execution** — private-network adapter, fail-closed live gate, sole-admin control, service configuration, status UI, and regression tests added. Launch remains blocked until its private service URL and generated credentials are stored securely.
 - [ ] **HollaEx API keys** — secure form opened for HOLLAEX_API_KEY / HOLLAEX_API_SECRET (user to submit; two interruptions so far). Unlocks platform-venue execution + treasury deployment.
 - [ ] **Stripe live activation** — provider reports claim acct_1UAYTFIX09yy4lkP still "in progress" (user says completed; verification email never received; Stripe Support is fastest path). Unlocks live $100 deposit path.
 - [ ] Per-venue execution keys (Binance/Kraken/Coinbase) — optional; user connects per account. Platform stays HollaEx-only until then.

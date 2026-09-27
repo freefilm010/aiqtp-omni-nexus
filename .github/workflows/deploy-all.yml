@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run lint && bun run typecheck && bun run build && bun run test:security
+      - run: bun run lint && bun run typecheck && bun run build && bun run test:security && bun run test:h20-terminology && bun run test:trading
 
   preflight:
     runs-on: ubuntu-latest
