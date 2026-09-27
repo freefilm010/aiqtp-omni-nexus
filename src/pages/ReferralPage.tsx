@@ -157,7 +157,7 @@ export default function ReferralPage() {
               {[
                 ["Share your link", "Send your unique referral URL to traders, friends, or your audience."],
                 ["They sign up & trade", "When they register using your link, they're permanently linked to you."],
-                ["You earn automatically", "For every profitable trade they close, the platform takes a tiered fee (1–9%). You receive 10% of that fee, credited to your account balance — no action needed."],
+                ["You earn automatically", "For every profitable trade they close, the platform takes a performance royalty tiered by % gain (5% down to 0.10%). You receive 10% of that fee, credited to your account balance — no action needed."],
                 ["Withdraw anytime", "Your referral earnings accumulate in your USD balance and can be withdrawn at any time."],
               ].map(([title, desc], i) => (
                 <li key={i} className="flex gap-3">

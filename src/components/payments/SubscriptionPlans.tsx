@@ -22,7 +22,7 @@ const PLANS: Plan[] = [
   {
     priceId: "premium_monthly",
     name: "Premium",
-    price: "$29.99",
+    price: "$1.90",
     interval: "/month",
     description: "Full platform access with advanced analytics and priority AI agents.",
     icon: <Crown className="h-6 w-6 text-primary" />,
@@ -37,7 +37,7 @@ const PLANS: Plan[] = [
   {
     priceId: "premium_yearly",
     name: "Premium Yearly",
-    price: "$299.99",
+    price: "$19.00",
     interval: "/year",
     description: "Everything in Premium — two months free.",
     icon: <Crown className="h-6 w-6 text-primary" />,
@@ -50,7 +50,7 @@ const PLANS: Plan[] = [
   {
     priceId: "signals_monthly",
     name: "Premium Signals",
-    price: "$49.99",
+    price: "$1.90",
     interval: "/month",
     description: "AI-powered premium trading signals with real-time alerts.",
     icon: <Signal className="h-6 w-6 text-primary" />,
@@ -62,15 +62,16 @@ const PLANS: Plan[] = [
   },
   {
     priceId: "api_monthly",
-    name: "API Access",
-    price: "$99.99",
-    interval: "/month",
-    description: "Developer API access for programmatic platform integration.",
+    name: "API Access & Strategy Agents",
+    price: "$0",
+    interval: " + performance royalty",
+    description: "Every graduated strategy is a selectable agent. No profit, no fee — you only pay actual order/exchange costs.",
     icon: <Code className="h-6 w-6 text-primary" />,
     features: [
-      "Full REST API access",
-      "Programmatic trading integration",
-      "Developer documentation",
+      "Full REST API + all graduated strategy agents",
+      "Royalty per realized gain: ≤10% → 5%, ≤100% → 3%",
+      "≤1,000% → 1%, above 1,000% → 0.10%",
+      "Applicable sales tax calculated at checkout",
     ],
   },
 ];

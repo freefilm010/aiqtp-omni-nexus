@@ -6,39 +6,39 @@
  * Gas/transfer fees applied separately
  */
 
-// Tiered profit-based fees - applies to trading bots and most asset classes
+// Performance royalty — tier chosen by % gain realized on each closed trade
+// (gain ÷ cost basis). Mirrors DB function public.performance_royalty_rate.
+// min/max are gain percentages.
 export const PROFIT_TIERS = [
-  { min: 0.01, max: 9999.99, rate: 0.09, label: "9%" },
-  { min: 10000, max: 99999.99, rate: 0.06, label: "6%" },
-  { min: 100000, max: 999999.99, rate: 0.03, label: "3%" },
-  { min: 1000000, max: Infinity, rate: 0.01, label: "1%" },
+  { min: 0.01, max: 10, rate: 0.05, label: "5%" },
+  { min: 10.01, max: 100, rate: 0.03, label: "3%" },
+  { min: 100.01, max: 1000, rate: 0.01, label: "1%" },
+  { min: 1000.01, max: Infinity, rate: 0.001, label: "0.10%" },
 ] as const;
 
 // Minimum investment requirement
 export const MIN_INVESTMENT = 20;
 
-// Calculate fee based on profit amount
-export function calculatePlatformFee(profitAmount: number): { fee: number; rate: number; tierLabel: string } {
-  if (profitAmount <= 0) {
-    return { fee: 0, rate: 0, tierLabel: "No charge (no profit)" };
-  }
+export function royaltyRateForGainPct(gainPct: number): number {
+  if (!(gainPct > 0)) return 0;
+  if (gainPct <= 10) return 0.05;
+  if (gainPct <= 100) return 0.03;
+  if (gainPct <= 1000) return 0.01;
+  return 0.001;
+}
 
-  for (const tier of PROFIT_TIERS) {
-    if (profitAmount >= tier.min && profitAmount <= tier.max) {
-      return { 
-        fee: profitAmount * tier.rate, 
-        rate: tier.rate,
-        tierLabel: tier.label 
-      };
-    }
+// Calculate royalty for a realized gain given its cost basis
+export function calculatePlatformFee(
+  profitAmount: number,
+  costBasis: number,
+): { fee: number; rate: number; tierLabel: string; gainPct: number } {
+  if (profitAmount <= 0 || costBasis <= 0) {
+    return { fee: 0, rate: 0, tierLabel: "No charge (no profit)", gainPct: 0 };
   }
-
-  // Default to highest tier
-  return { 
-    fee: profitAmount * 0.01, 
-    rate: 0.01,
-    tierLabel: "1%" 
-  };
+  const gainPct = (profitAmount / costBasis) * 100;
+  const rate = royaltyRateForGainPct(gainPct);
+  const tier = PROFIT_TIERS.find((t) => t.rate === rate);
+  return { fee: Math.round(profitAmount * rate * 100) / 100, rate, tierLabel: tier?.label ?? "0%", gainPct };
 }
 
 // NFT Marketplace fees - competitive with OpenSea (2.5%), LooksRare (2%), Blur (0.5%)
@@ -145,12 +145,12 @@ export const AFFILIATE_FEES = {
   lifetimeReferral: true, // Lifetime earnings from referrals
   example: {
     referredUserProfit: 5000,
-    platformFee: 450, // 9% of $5,000
+    platformFee: 150, // $5,000 gain on $50,000 basis = 10% gain → 5% royalty = $250; on $10,000 basis = 50% → 3% = $150
     referrerEarnings: {
-      base: 45, // 10% of $450
-      tier10: 67.50, // 15% of $450
-      tier50: 90, // 20% of $450
-      tier100: 112.50, // 25% of $450
+      base: 15, // 10% of $150
+      tier10: 22.50, // 15% of $150
+      tier50: 30, // 20% of $150
+      tier100: 37.50, // 25% of $150
     }
   }
 } as const;
@@ -180,12 +180,12 @@ export function calculateAffiliateEarnings(
 // Summary for display
 export const FEE_SUMMARY = {
   headline: "Free to Start. Pay Only on Profits.",
-  subheadline: "$0 platform fee • $20 minimum investment • Fees only when you profit",
+  subheadline: "$0 platform fee • $0 strategy agents • Royalty only on realized gains",
   tiers: [
-    { range: "$0.01 - $9,999.99", rate: "9% of profit" },
-    { range: "$10,000 - $99,999.99", rate: "6% of profit" },
-    { range: "$100,000 - $999,999.99", rate: "3% of profit" },
-    { range: "$1,000,000+", rate: "1% of profit" },
+    { range: "0.01% – 10% gain", rate: "5% of profit" },
+    { range: "10.01% – 100% gain", rate: "3% of profit" },
+    { range: "100.01% – 1,000% gain", rate: "1% of profit" },
+    { range: "1,000.01%+ gain", rate: "0.10% of profit" },
   ],
   additionalCosts: [
     "Gas fees (network dependent)",

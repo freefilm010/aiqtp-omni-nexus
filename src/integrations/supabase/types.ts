@@ -5800,13 +5800,18 @@ export type Database = {
       }
       platform_fee_events: {
         Row: {
+          cost_basis_usd: number | null
           created_at: string
           creator_share_usd: number
           fee_rate: number
+          gain_pct: number | null
           gross_profit_usd: number
           id: string
           platform_fee_usd: number
           platform_share_usd: number
+          reinvest_status: string
+          reinvest_targets: Json | null
+          reinvested_at: string | null
           rental_id: string | null
           status: string
           strategy_id: string | null
@@ -5815,13 +5820,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cost_basis_usd?: number | null
           created_at?: string
           creator_share_usd?: number
           fee_rate: number
+          gain_pct?: number | null
           gross_profit_usd: number
           id?: string
           platform_fee_usd: number
           platform_share_usd: number
+          reinvest_status?: string
+          reinvest_targets?: Json | null
+          reinvested_at?: string | null
           rental_id?: string | null
           status?: string
           strategy_id?: string | null
@@ -5830,13 +5840,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cost_basis_usd?: number | null
           created_at?: string
           creator_share_usd?: number
           fee_rate?: number
+          gain_pct?: number | null
           gross_profit_usd?: number
           id?: string
           platform_fee_usd?: number
           platform_share_usd?: number
+          reinvest_status?: string
+          reinvest_targets?: Json | null
+          reinvested_at?: string | null
           rental_id?: string | null
           status?: string
           strategy_id?: string | null
@@ -10635,6 +10650,10 @@ export type Database = {
         Args: { _engine_id: string }
         Returns: boolean
       }
+      performance_royalty_rate: {
+        Args: { p_gain_pct: number }
+        Returns: number
+      }
       process_profit_distribution: {
         Args: { p_revenue_id: string }
         Returns: undefined
@@ -10654,6 +10673,7 @@ export type Database = {
       }
       record_profit_fee: {
         Args: {
+          p_cost_basis_usd: number
           p_gross_profit_usd: number
           p_rental_id: string
           p_symbol?: string
@@ -10662,6 +10682,7 @@ export type Database = {
         }
         Returns: string
       }
+      reinvest_treasury_royalties: { Args: never; Returns: number }
       rent_strategy: { Args: { p_strategy_id: string }; Returns: string }
       repair_auto_invest_allocation_duplicates: {
         Args: never

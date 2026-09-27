@@ -336,11 +336,11 @@ const PricingPage = () => {
             <div className="bg-muted/50 rounded-lg p-4 mb-4">
               <h4 className="font-semibold mb-2 text-sm">Example Earnings:</h4>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Your referral profits <strong>$5,000</strong> → Platform takes <strong>$450</strong> (9%)</p>
-                <p>• At 0-9 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.base}</strong> ({AFFILIATE_FEES.baseTier.label} of $450)</p>
-                <p>• At 10-49 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier10}</strong> (15% of $450)</p>
-                <p>• At 50-99 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier50}</strong> (20% of $450)</p>
-                <p>• At 100+ referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier100}</strong> (25% of $450)</p>
+                <p>• Your referral realizes <strong>$5,000</strong> on $10,000 (50% gain) → Platform royalty <strong>$150</strong> (3%)</p>
+                <p>• At 0-9 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.base}</strong> ({AFFILIATE_FEES.baseTier.label} of $150)</p>
+                <p>• At 10-49 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier10}</strong> (15% of $150)</p>
+                <p>• At 50-99 referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier50}</strong> (20% of $150)</p>
+                <p>• At 100+ referrals: You earn <strong>${AFFILIATE_FEES.example.referrerEarnings.tier100}</strong> (25% of $150)</p>
               </div>
             </div>
 
