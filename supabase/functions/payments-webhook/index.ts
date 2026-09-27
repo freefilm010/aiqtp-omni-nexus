@@ -1,8 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type StripeEnv, verifyWebhook } from "../_shared/stripe.ts";
 
-// AIQTP runs a deposit-only payment model. There are no subscriptions.
-// This webhook handles one-time Stripe Checkout deposits and payment failures.
+// Handles one-time Stripe Checkout deposits, subscription lifecycle events,
+// and payment failures.
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -77,12 +77,92 @@ async function handlePaymentFailed(invoice: any, env: StripeEnv) {
   }, 'warning');
 }
 
+function resolvePriceId(item: any): string {
+  return item?.price?.lookup_key
+    || item?.price?.metadata?.lovable_external_id
+    || item?.price?.id;
+}
+
+async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
+  const userId = subscription.metadata?.userId;
+  if (!userId) {
+    console.error("No userId in subscription metadata");
+    return;
+  }
+  const item = subscription.items?.data?.[0];
+  const periodStart = item?.current_period_start ?? subscription.current_period_start;
+  const periodEnd = item?.current_period_end ?? subscription.current_period_end;
+
+  await getSupabase().from("subscriptions").upsert(
+    {
+      user_id: userId,
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: subscription.customer,
+      product_id: item?.price?.product,
+      price_id: resolvePriceId(item),
+      status: subscription.status,
+      current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
+      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+      environment: env,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_subscription_id" }
+  );
+
+  await logAudit('subscription_created', userId, {
+    subscription_id: subscription.id,
+    price_id: resolvePriceId(item),
+    environment: env,
+  });
+}
+
+async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
+  const item = subscription.items?.data?.[0];
+  const periodStart = item?.current_period_start ?? subscription.current_period_start;
+  const periodEnd = item?.current_period_end ?? subscription.current_period_end;
+
+  await getSupabase()
+    .from("subscriptions")
+    .update({
+      status: subscription.status,
+      product_id: item?.price?.product,
+      price_id: resolvePriceId(item),
+      current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
+      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+      cancel_at_period_end: subscription.cancel_at_period_end || false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", subscription.id)
+    .eq("environment", env);
+}
+
+async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
+  await getSupabase()
+    .from("subscriptions")
+    .update({ status: "canceled", updated_at: new Date().toISOString() })
+    .eq("stripe_subscription_id", subscription.id)
+    .eq("environment", env);
+
+  await logAudit('subscription_canceled', subscription.metadata?.userId || null, {
+    subscription_id: subscription.id, environment: env,
+  });
+}
+
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
 
   switch (event.type) {
     case "checkout.session.completed":
       await handleCheckoutCompleted(event.data.object, env);
+      break;
+    case "customer.subscription.created":
+      await handleSubscriptionCreated(event.data.object, env);
+      break;
+    case "customer.subscription.updated":
+      await handleSubscriptionUpdated(event.data.object, env);
+      break;
+    case "customer.subscription.deleted":
+      await handleSubscriptionDeleted(event.data.object, env);
       break;
     case "invoice.payment_failed":
       await handlePaymentFailed(event.data.object, env);
