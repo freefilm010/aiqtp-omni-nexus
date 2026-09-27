@@ -27,3 +27,9 @@
 - Test ownership rules now prevent strategy-rental payout diversion, elite-chat impersonation, direct token balance writes, self-priced redemptions, and self-reported token burns.
 
 - [ ] After Stripe claim: walk $100 deposit end-to-end in test mode and confirm it lands in wallet (blocked: user must claim Stripe account)
+
+## Subscriptions & Checkout (done 2026-09-27)
+- [x] Created 3 Stripe products: premium_subscription ($29.99/mo, $299.99/yr), premium_signals ($49.99/mo), api_access ($99.99/mo)
+- [x] create-subscription-checkout + manage-subscription edge functions deployed; payments-webhook handles subscription lifecycle
+- [x] Billing page: SubscriptionPlans + SubscriptionManager (customer-selected cancel: period-end / immediate / pro-rated refund; pro-rated plan changes)
+- [ ] Remaining monetization surfaces from chat history review (data marketplace, signal service, NFT drops) — phased follow-up
