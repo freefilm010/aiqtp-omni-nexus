@@ -253,7 +253,7 @@ async function callAgent(
       role: "system" as const,
       content: `${agent.systemPrompt}\n\nYour specialty: ${agent.specialty}\n\nTask context: ${taskContext}\n\nProvide your best analysis. Another AI will synthesize all agent responses into a unified answer, so focus on your unique perspective and strengths.`,
     },
-    ...messages,
+    ...(messages as any[]).filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string").map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 20000) })),
   ];
 
   try {
@@ -397,9 +397,9 @@ serve(async (req) => {
 
     // Validate messages
     for (const msg of messages) {
-      if (!msg.role || !msg.content || typeof msg.content !== "string") {
+      if (!["user","assistant"].includes(msg.role) || !msg.content || typeof msg.content !== "string") {
         return new Response(
-          JSON.stringify({ error: "Each message must have role and content." }),
+          JSON.stringify({ error: "Each message must have role user or assistant and string content." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }

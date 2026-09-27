@@ -1019,7 +1019,7 @@ serve(async (req) => {
     // Build messages array
     const messages = [
       { role: "system", content: systemPrompt },
-      ...(request.messages || [])
+      ...((request.messages || []) as any[]).filter((m: any) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string").map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 20000) }))
     ];
 
     // If no messages from user, add a greeting trigger

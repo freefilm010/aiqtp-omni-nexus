@@ -38,6 +38,7 @@ async function triggerWebhook(webhookUrl: string, data: any): Promise<any> {
   try {
     const response = await fetch(webhookUrl, {
       method: "POST",
+      redirect: "manual",
       headers: {
         "Content-Type": "application/json",
       },
