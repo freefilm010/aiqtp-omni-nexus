@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Active
-- [ ] **H20 Truthful Terminology Standard** — build the new H20 module with separated funds, evidence-backed claims, recipient/distribution verification, immutable corrections, and public disclosures after plan approval.
+- [ ] **H20 Truthful Terminology Standard** — approved; building the new H20 module with `WATER_IMPACT_TREASURY` (never a default donation treasury), separated funds, evidence-backed claims, recipient/distribution verification, immutable corrections, and public disclosures.
 - [ ] **HollaEx API keys** — secure form opened for HOLLAEX_API_KEY / HOLLAEX_API_SECRET (user to submit; two interruptions so far). Unlocks platform-venue execution + treasury deployment.
 - [ ] **Stripe live activation** — provider reports claim acct_1UAYTFIX09yy4lkP still "in progress" (user says completed; verification email never received; Stripe Support is fastest path). Unlocks live $100 deposit path.
 - [ ] Per-venue execution keys (Binance/Kraken/Coinbase) — optional; user connects per account. Platform stays HollaEx-only until then.
