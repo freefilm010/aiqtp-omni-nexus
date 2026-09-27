@@ -139,39 +139,31 @@ export const revenueStreams: RevenueStream[] = [
     name: 'Premium Subscriptions',
     type: 'subscription',
     isEnabled: true,
-    rate: 29.99,
-    description: 'Monthly premium membership fees'
+    rate: 1.90,
+    description: 'Monthly premium membership ($1.90/mo, $19/yr)'
   },
   {
-    id: 'trading_commission',
-    name: 'Trading Commission',
+    id: 'performance_royalty',
+    name: 'Performance Royalty',
     type: 'commission',
     isEnabled: true,
-    rate: 0.1,
-    description: '0.1% commission on all trades'
-  },
-  {
-    id: 'spread_fees',
-    name: 'Spread Fees',
-    type: 'spread',
-    isEnabled: true,
-    rate: 0.05,
-    description: 'Built-in spread on crypto trades'
+    rate: 5,
+    description: 'Per realized gain: ≤10% → 5%, ≤100% → 3%, ≤1000% → 1%, >1000% → 0.10%'
   },
   {
     id: 'api_access',
-    name: 'API Access Fees',
+    name: 'API Access & Strategy Agents',
     type: 'api',
     isEnabled: true,
-    rate: 99.99,
-    description: 'Monthly API access for developers'
+    rate: 0,
+    description: '$0 — monetized via performance royalty only'
   },
   {
     id: 'premium_signals',
     name: 'Premium Trading Signals',
     type: 'premium',
     isEnabled: true,
-    rate: 49.99,
+    rate: 1.90,
     description: 'AI-powered premium signal subscription'
   }
 ];

@@ -26,11 +26,12 @@ const PLATFORM_ACCESS_FEATURES = [
   "Profit fees are deducted in-platform only after realized gains",
 ];
 
+// Performance royalty — tier set by % gain realized on each closed trade.
 const PROFIT_FEE_TIERS = [
-  { range: "$0.01 – $9,999.99", fee: "9%" },
-  { range: "$10,000 – $99,999.99", fee: "6%" },
-  { range: "$100,000 – $999,999.99", fee: "3%" },
-  { range: "$1,000,000+", fee: "1%" },
+  { range: "0.01% – 10% gain", fee: "5%" },
+  { range: "10.01% – 100% gain", fee: "3%" },
+  { range: "100.01% – 1,000% gain", fee: "1%" },
+  { range: "1,000.01%+ gain", fee: "0.10%" },
 ];
 
 type FeeEvent = {

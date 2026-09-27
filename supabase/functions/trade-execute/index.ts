@@ -358,14 +358,21 @@ serve(async (req) => {
       }
 
       case 'settle_trade': {
-        // Record a realized close. If profit > 0, invoke record_profit_fee
-        // which debits the user's USD balance for the tiered platform fee
-        // (9/6/3/1%) and credits 25% to the strategy creator (when rented).
-        const { symbol, realizedPnlUsd, rentalId, tradeRef } = params;
+        // Record a realized close. If profit > 0, invoke record_profit_fee which
+        // debits the performance royalty tiered by % gain on cost basis
+        // (<=10% → 5%, <=100% → 3%, <=1000% → 1%, >1000% → 0.10%) and credits
+        // 25% of it to the strategy creator (when rented).
+        const { symbol, realizedPnlUsd, costBasisUsd, rentalId, tradeRef } = params;
 
         if (typeof realizedPnlUsd !== 'number') {
           return new Response(
             JSON.stringify({ success: false, error: 'realizedPnlUsd is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        if (realizedPnlUsd > 0 && (typeof costBasisUsd !== 'number' || costBasisUsd <= 0)) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'costBasisUsd is required for profitable closes' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -392,6 +399,7 @@ serve(async (req) => {
           p_user_id: user.id,
           p_rental_id: rentalId ?? null,
           p_gross_profit_usd: realizedPnlUsd,
+          p_cost_basis_usd: costBasisUsd,
           p_trade_ref: tradeRef ?? null,
           p_symbol: symbol ?? null,
         });

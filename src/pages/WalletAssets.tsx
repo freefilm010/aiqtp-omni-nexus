@@ -387,7 +387,7 @@ const WalletAssets = () => {
                         "Full platform access",
                         "AI agents included",
                         "Rent strategy bots for $0 upfront",
-                        "9% / 6% / 3% / 1% realized-profit fees",
+                        "5% / 3% / 1% / 0.10% performance royalty by % gain",
                         "$20 minimum trading balance",
                         "No profit means no platform fee",
                       ].map((feature) => (

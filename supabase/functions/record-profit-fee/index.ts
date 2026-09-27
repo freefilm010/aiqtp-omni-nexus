@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey);
-    const { userId, rentalId, grossProfitUsd, tradeRef, symbol } = await req.json();
+    const { userId, rentalId, grossProfitUsd, costBasisUsd, tradeRef, symbol } = await req.json();
 
     if (!userId || typeof userId !== 'string') {
       return new Response(JSON.stringify({ error: 'userId required' }), {
@@ -39,8 +39,14 @@ Deno.serve(async (req) => {
       });
     }
     const profit = Number(grossProfitUsd);
+    const basis = Number(costBasisUsd);
     if (!Number.isFinite(profit) || profit <= 0) {
       return new Response(JSON.stringify({ error: 'grossProfitUsd must be > 0' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!Number.isFinite(basis) || basis <= 0) {
+      return new Response(JSON.stringify({ error: 'costBasisUsd must be > 0' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -49,6 +55,7 @@ Deno.serve(async (req) => {
       p_user_id: userId,
       p_rental_id: rentalId ?? null,
       p_gross_profit_usd: profit,
+      p_cost_basis_usd: basis,
       p_trade_ref: tradeRef ?? null,
       p_symbol: symbol ?? null,
     });
