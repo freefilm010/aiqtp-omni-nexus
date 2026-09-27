@@ -10638,6 +10638,21 @@ export type Database = {
         Args: { p_interval?: string; p_limit?: number; p_symbol?: string }
         Returns: number
       }
+      list_marketplace_suggestions: {
+        Args: never
+        Returns: {
+          category: string
+          comments: number
+          created_at: string
+          description: string
+          id: string
+          is_hot: boolean
+          is_mine: boolean
+          status: string
+          title: string
+          votes: number
+        }[]
+      }
       log_security_event: {
         Args: { p_details?: Json; p_event_type: string; p_severity?: string }
         Returns: string
