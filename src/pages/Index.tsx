@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import LazySection from "@/components/LazySection";
@@ -129,6 +130,16 @@ const Index = () => {
             <Security />
           </Suspense>
         </LazySection>
+
+        <section className="border-t border-border/60 bg-background px-4 py-5">
+          <p className="mx-auto max-w-7xl text-center text-xs text-muted-foreground">
+            Explore the separate{" "}
+            <Link to="/h20" className="font-medium text-neon-cyan underline underline-offset-4 hover:text-foreground">
+              H20 Global Water Reserve
+            </Link>{" "}
+            information area.
+          </p>
+        </section>
       </main>
       <LazySection minHeight="200px" rootMargin={footerRootMargin}>
         <Suspense fallback={<SectionLoader />}>
