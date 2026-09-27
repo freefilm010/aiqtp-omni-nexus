@@ -27,6 +27,8 @@
 - Test ownership rules now prevent strategy-rental payout diversion, elite-chat impersonation, direct token balance writes, self-priced redemptions, and self-reported token burns.
 
 - [ ] After Stripe claim: walk $100 deposit end-to-end in test mode and confirm it lands in wallet (blocked: user must claim Stripe account)
+- [ ] Save HollaEx API key/secret in secure settings (in progress — secure form opened to user)
+- [ ] Answer venue-coverage question: confirm Alpaca/Hummingbot/CCXT/other exchanges stay banned per HollaEx-only rule; only protocol libraries remain (CCXT pointed at HollaEx, Hummingbot-style engines execute via HollaEx connector)
 
 ## Subscriptions & Checkout (done 2026-09-27)
 - [x] Created 3 Stripe products: premium_subscription ($29.99/mo, $299.99/yr), premium_signals ($49.99/mo), api_access ($99.99/mo)
