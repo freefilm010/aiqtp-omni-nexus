@@ -11,7 +11,6 @@ import AccountConnections from "@/components/connections/AccountConnections";
 import AutomationIntegrations from "@/components/integrations/AutomationIntegrations";
 import MoonshotIntegration from "@/components/integrations/MoonshotIntegration";
 import BTCCTrading from "@/components/integrations/BTCCTrading";
-import AlpacaStockTrading from "@/components/trading/AlpacaStockTrading";
 import StockMarketHub from "@/components/trading/StockMarketHub";
 import PaymentHub from "@/components/payments/PaymentHub";
 import AutomationTemplates from "@/components/admin/AutomationTemplates";
@@ -70,10 +69,7 @@ const ConnectorsPage = () => {
             <CloudStorageConnectors />
             <GitHubEcosystem />
             <SatelliteServicesSection filter={search} categories={["exchange", "wallet", "dex", "staking", "mining", "casino"]} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AlpacaStockTrading />
-              <BTCCTrading />
-            </div>
+            <BTCCTrading />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PaymentHub />
               <AccountConnections />
@@ -104,10 +100,7 @@ const ConnectorsPage = () => {
 
           {/* Trading */}
           <TabsContent value="trading" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AlpacaStockTrading />
-              <BTCCTrading />
-            </div>
+            <BTCCTrading />
             <MoonshotIntegration />
           </TabsContent>
 

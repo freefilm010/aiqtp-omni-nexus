@@ -2,8 +2,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RiskAnalyticsPanel from "@/components/engines/RiskAnalyticsPanel";
 import OptionsPricerPanel from "@/components/engines/OptionsPricerPanel";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { renderApi } from "@/lib/render-api";
 
 const PIPELINE: { name: string; status: "live" | "wiring" | "backlog"; note: string }[] = [
   { name: "Risk Analytics (VaR/CVaR/Stress)", status: "live", note: "Launched on this page" },
@@ -14,7 +16,7 @@ const PIPELINE: { name: string; status: "live" | "wiring" | "backlog"; note: str
   { name: "Backtest Replay Engine", status: "wiring", note: "Needs strategy selector UI" },
   { name: "Cross-Exchange Arbitrage", status: "wiring", note: "Needs 2+ authenticated venue feeds" },
   { name: "HFT Fill Simulator", status: "wiring", note: "Needs live order-book depth" },
-  { name: "Signal / Automation Engine", status: "backlog", note: "Requires broker keys in backend vault" },
+  { name: "Signal / Automation Engine", status: "wiring", note: "Hummingbot adapter deployed; private service configuration required" },
   { name: "Execution Planner", status: "backlog", note: "Requires broker keys in backend vault" },
   { name: "Autonomous Fund Manager", status: "backlog", note: "Requires broker keys + capital gate" },
   { name: "Macro Engine", status: "backlog", note: "Requires macro data provider" },
@@ -26,7 +28,14 @@ const PIPELINE: { name: string; status: "live" | "wiring" | "backlog"; note: str
 const badgeFor = (s: string) =>
   s === "live" ? "default" : s === "wiring" ? "secondary" : "outline";
 
-const QuantEnginesPage = () => (
+const QuantEnginesPage = () => {
+  const [hummingbot, setHummingbot] = useState<{ configured: boolean; live_enabled: boolean; reachable?: boolean } | null>(null);
+
+  useEffect(() => {
+    renderApi.hummingbot.status().then(setHummingbot).catch(() => setHummingbot({ configured: false, live_enabled: false, reachable: false }));
+  }, []);
+
+  return (
   <div className="min-h-screen bg-background">
     <Header />
     <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-6">
@@ -41,6 +50,19 @@ const QuantEnginesPage = () => (
         <RiskAnalyticsPanel />
         <OptionsPricerPanel />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Hummingbot Execution Engine</CardTitle>
+          <CardDescription className="text-xs">Private, open-source bot orchestration routed through the authenticated trading service.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-2 text-xs">
+          <Badge variant={hummingbot?.configured ? "default" : "outline"}>{hummingbot?.configured ? "Configured" : "Not configured"}</Badge>
+          <Badge variant={hummingbot?.reachable ? "default" : "secondary"}>{hummingbot?.reachable ? "Reachable" : "Unavailable"}</Badge>
+          <Badge variant={hummingbot?.live_enabled ? "default" : "outline"}>{hummingbot?.live_enabled ? "Live enabled" : "Live disabled"}</Badge>
+          <span className="text-muted-foreground">No keys or bot-control API are exposed to the browser.</span>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -66,6 +88,7 @@ const QuantEnginesPage = () => (
     </main>
     <Footer />
   </div>
-);
+  );
+};
 
 export default QuantEnginesPage;

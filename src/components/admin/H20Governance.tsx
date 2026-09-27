@@ -73,7 +73,7 @@ const H20Governance = () => {
 
   const reviewClaim = async (id: string, action: string) => {
     setBusy(true);
-    const { error } = await db.rpc("h20_review_claim", { p_claim_id: id, p_action: action, p_verification_status: "NOT_VERIFIED" });
+    const { error } = await db.rpc("h20_review_claim", { p_claim_id: id, p_action: action, p_verification_status: action === "ADMIN_APPROVED" ? "VERIFIED" : "VERIFICATION_FAILED" });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(action === "REJECTED" ? "Claim rejected" : "Claim authorized with its exact status");

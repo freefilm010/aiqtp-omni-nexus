@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2, Play, CheckCircle2, XCircle, Clock, Send, TrendingUp } from "lucide-react";
+import { Bot, Brain, FlaskConical, Shield, Search, Zap, GitBranch, BarChart3, Lock, AlertTriangle, Megaphone, Share2, Mail, Calendar, Loader2, Play, CheckCircle2, XCircle, Clock, Send } from "lucide-react";
 import StrategyBacktest from "@/components/strategy/StrategyBacktest";
 import AIAgentLeaderboard from "@/components/trading/AIAgentLeaderboard";
 import { useState, useEffect, useRef } from "react";
@@ -131,10 +131,6 @@ const QuantClawPage = () => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(loadChatHistory);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Live order state (alpaca-trading edge function)
-  const [alpacaLoading, setAlpacaLoading] = useState(false);
-  const [alpacaResult, setAlpacaResult] = useState<Record<string, unknown> | null>(null);
-
   // Persist chat history to localStorage whenever it changes
   useEffect(() => {
     saveChatHistory(chatHistory);
@@ -160,12 +156,6 @@ const QuantClawPage = () => {
 
   const submitDirective = async () => {
     if (!dispatchingTool) return;
-
-    // ccxt_live_order → alpaca-trading edge function (direct, immediate)
-    if (dispatchingTool === "ccxt_live_order") {
-      await invokeLiveOrder();
-      return;
-    }
 
     let params: Record<string, unknown> = {};
     try {
@@ -219,54 +209,6 @@ const QuantClawPage = () => {
       toast.error("QAQI search failed", { description: msg });
     } finally {
       setRagLoading(false);
-    }
-  };
-
-  // Live order — routes through existing alpaca-trading edge function directly
-  const invokeLiveOrder = async () => {
-    if (activeAgent !== "prod") {
-      toast.error("Switch to QuantClaw-Prod before submitting live orders.");
-      return;
-    }
-    let params: Record<string, unknown> = {};
-    try {
-      params = JSON.parse(dispatchParams);
-    } catch {
-      toast.error("Invalid JSON in params");
-      return;
-    }
-    if (!params.approved) {
-      toast.error("Set approved: true in params to confirm this live order.");
-      return;
-    }
-    setAlpacaLoading(true);
-    setAlpacaResult(null);
-    try {
-      const { data, error } = await supabase.functions.invoke("alpaca-trading", {
-        body: {
-          action: "place_order",
-          mode: "live",
-          params: {
-            symbol:      params.symbol,
-            side:        params.side,
-            quantity:    params.qty ?? undefined,
-            notional:    params.notional ?? undefined,
-            type:        "market",
-            timeInForce: "gtc",
-          },
-        },
-      });
-      if (error) throw error;
-      setAlpacaResult(data);
-      toast.success("Live order submitted via Alpaca", {
-        description: `${params.side} ${params.symbol}`,
-      });
-      setDispatchingTool(null);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error("Alpaca order failed", { description: msg });
-    } finally {
-      setAlpacaLoading(false);
     }
   };
 
@@ -409,7 +351,7 @@ const QuantClawPage = () => {
             </Card>
           </TabsContent>
 
-          {/* ── QAQI Agent Tab — full persistent chat + RAG + Alpaca ─────── */}
+          {/* ── QAQI Agent Tab — full persistent chat + RAG ─────── */}
           <TabsContent value="qaqi">
             <div className="grid gap-4">
               {/* Chat window */}
@@ -545,53 +487,6 @@ const QuantClawPage = () => {
                 </div>
               </Card>
 
-              {/* Alpaca account status */}
-              <Card className="bg-[hsl(223,18%,9%)] border-[hsl(222,14%,17%)]">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-yellow-400" />
-                    Alpaca Account Status
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Broker credentials are server-side only and loaded from backend/runtime secrets.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 h-8 px-3 text-xs"
-                      disabled={alpacaLoading}
-                      onClick={async () => {
-                        setAlpacaLoading(true);
-                        try {
-                          const { data, error } = await supabase.functions.invoke("alpaca-trading", {
-                            body: { action: "get_account", mode: activeAgent === "prod" ? "live" : "paper" },
-                          });
-                          if (error) throw error;
-                          setAlpacaResult(data);
-                        } catch (e: unknown) {
-                          toast.error("Alpaca fetch failed", { description: e instanceof Error ? e.message : String(e) });
-                        } finally {
-                          setAlpacaLoading(false);
-                        }
-                      }}
-                    >
-                      {alpacaLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <TrendingUp className="h-3 w-3" />}
-                      View Account
-                    </Button>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    Keys are never collected or written from the browser.
-                  </p>
-                  {alpacaResult && (
-                    <pre className="text-[11px] text-muted-foreground bg-background/50 border border-border/50 rounded p-3 overflow-x-auto max-h-48">
-                      {JSON.stringify(alpacaResult, null, 2)}
-                    </pre>
-                  )}
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
@@ -720,13 +615,13 @@ const QuantClawPage = () => {
                       { tool: "freqtrade_backtest",    service: "Render Worker ← agent_directives",                   worker: true  },
                       { tool: "freqtrade_optimize",    service: "Render Worker ← agent_directives",                   worker: true  },
                       { tool: "ccxt_sim_order",        service: "Render Worker ← agent_directives (paper, no broker)", worker: true  },
-                      { tool: "ccxt_live_order",       service: "alpaca-trading edge function → Alpaca live API",     alpaca: true, prod: true },
+                      { tool: "ccxt_live_order",       service: "Authenticated CCXT service → approved user venue", worker: true, prod: true },
                       { tool: "social_media_post",     service: "quantclaw-marketing edge function",                  worker: false },
                       { tool: "marketing_campaign",    service: "quantclaw-marketing edge function",                  worker: false },
                       { tool: "content_generator",     service: "quantclaw-marketing edge function",                  worker: false },
                       { tool: "factor_generation",     service: "Render Worker ← agent_directives",                   worker: true  },
                       { tool: "portfolio_optimize",    service: "portfolio/optimization.ts (client-side lib)",        worker: false },
-                    ].map(({ tool, service, worker, rag, alpaca, prod }) => (
+                    ].map(({ tool, service, worker, rag, prod }) => (
                       <div key={tool} className="flex items-center justify-between p-2 rounded bg-background/30 gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <code className="text-primary text-xs shrink-0">{tool}</code>
@@ -758,17 +653,6 @@ const QuantClawPage = () => {
                             >
                               <Play className="h-3 w-3" />
                               Dispatch
-                            </Button>
-                          )}
-                          {alpaca && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 px-2 text-[11px] gap-1 border-green-500/30 text-green-400 hover:bg-green-500/10"
-                              onClick={() => openDispatch(tool)}
-                            >
-                              <TrendingUp className="h-3 w-3" />
-                              Trade
                             </Button>
                           )}
                         </div>
