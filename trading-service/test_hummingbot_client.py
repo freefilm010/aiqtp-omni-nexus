@@ -1,7 +1,11 @@
 import asyncio
 import os
+import sys
+import types
 import unittest
 from unittest.mock import AsyncMock, patch
+
+sys.modules.setdefault("httpx", types.SimpleNamespace(AsyncClient=object))
 
 from hummingbot_client import HummingbotClient
 
