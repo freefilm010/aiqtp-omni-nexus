@@ -39,7 +39,6 @@ const CommunityPredictions = () => {
   const [reasoning, setReasoning] = useState("");
 
   const fetchPredictions = useCallback(async () => {
-    const { data } = await supabase
     const { data } = await (supabase.rpc as any)("list_community_predictions", { p_limit: 30 });
     setPredictions((data as Prediction[]) || []);
   }, []);
