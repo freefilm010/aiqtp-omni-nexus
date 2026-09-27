@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION private.request_withdrawal(uuid, numeric, text, jsonb) TO authenticated;
