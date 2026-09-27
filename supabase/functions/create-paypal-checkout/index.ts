@@ -145,23 +145,11 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (result.status === "COMPLETED" && result.amountUsd > 0) {
-        const adminSupabase = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-        );
-        await adminSupabase.rpc("credit_platform_deposit", {
-          p_user_id: user.id,
-          p_stripe_session_id: `paypal_${orderId}`,
-          p_stripe_payment_intent_id: null,
-          p_amount_usd: result.amountUsd,
-          p_currency: "usd",
-          p_environment: Deno.env.get("PAYPAL_MODE") === "live" ? "live" : "sandbox",
-        });
-      }
+      // Balance crediting is intentionally NOT done here: a client-triggered call must never
+      // mint balance. Crediting requires a signature-verified PayPal webhook (not yet configured).
+      const settlement = result.status === "COMPLETED" ? "awaiting_verified_webhook" : "not_completed";
 
-
-      return new Response(JSON.stringify(result), {
+      return new Response(JSON.stringify({ ...result, settlement }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
