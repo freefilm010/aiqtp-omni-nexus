@@ -89,6 +89,15 @@ async function captureOrder(orderId: string): Promise<{ status: string; amountUs
 }
 
 
+const PP_ALLOWED = ["https://www.aiqtp.com","https://aiqtp.com","https://aiqtp.lovable.app","https://aiqtp.vercel.app"];
+function safeUrl(raw: unknown, path: string): string {
+  try {
+    const u = new URL(String(raw ?? ""));
+    if (PP_ALLOWED.includes(u.origin) || /^https:\/\/[a-z0-9-]+\.lovable\.app$/.test(u.origin)) return u.toString();
+  } catch { /* fall through */ }
+  return `https://www.aiqtp.com${path}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -119,7 +128,7 @@ Deno.serve(async (req) => {
     if (action === "create") {
       if (!amountUsd || amountUsd < 20) throw new Error("Minimum deposit is $20");
       if (amountUsd > 10000) throw new Error("Maximum deposit is $10,000");
-      const order = await createOrder(amountUsd, user.id, returnUrl, cancelUrl);
+      const order = await createOrder(amountUsd, user.id, safeUrl(returnUrl, "/wallet?paypal=success"), safeUrl(cancelUrl, "/wallet?paypal=cancel"));
       return new Response(JSON.stringify(order), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

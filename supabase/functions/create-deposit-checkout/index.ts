@@ -62,7 +62,7 @@ async function createDepositCheckout(opts: DepositBody) {
     }],
     mode: "payment",
     ui_mode: "embedded_page",
-    return_url: opts.returnUrl,
+    return_url: safeReturnUrl(opts.returnUrl),
     customer: customerId,
     payment_intent_data: { description: "AIQTP Platform Deposit" },
     metadata: {
@@ -72,6 +72,16 @@ async function createDepositCheckout(opts: DepositBody) {
     },
   } as any);
   return session.client_secret;
+}
+
+const ALLOWED_ORIGINS = ["https://www.aiqtp.com","https://aiqtp.com","https://aiqtp.lovable.app","https://aiqtp.vercel.app"];
+function safeReturnUrl(raw?: string): string {
+  const fallback = "https://www.aiqtp.com/checkout/return?session_id={CHECKOUT_SESSION_ID}";
+  try {
+    const u = new URL(String(raw ?? ""));
+    const ok = ALLOWED_ORIGINS.includes(u.origin) || /^https:\/\/[a-z0-9-]+\.lovable\.app$/.test(u.origin) || /^http:\/\/localhost(:\d+)?$/.test(u.origin);
+    return ok ? decodeURI(u.toString()) : fallback;
+  } catch { return fallback; }
 }
 
 Deno.serve(async (req) => {
