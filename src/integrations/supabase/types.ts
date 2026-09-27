@@ -10638,6 +10638,19 @@ export type Database = {
         Args: { p_interval?: string; p_limit?: number; p_symbol?: string }
         Returns: number
       }
+      list_feature_flags: {
+        Args: never
+        Returns: {
+          audience: string
+          category: string
+          description: string
+          display_name: string
+          flag_key: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }[]
+      }
       list_marketplace_suggestions: {
         Args: never
         Returns: {
