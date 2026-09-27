@@ -261,7 +261,11 @@ serve(async (req) => {
         result = await trackReferral(supabase, userId, tokenAddress, "click");
         break;
         
-      case "get_referral_stats":
+      case "get_referral_stats": {
+        if (!userId) throw new Error("Authentication required");
+        const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+        if (isAdmin !== true) throw new Error("Admin access required");
+      }
         result = await getReferralStats(supabase);
         break;
         

@@ -173,6 +173,26 @@ serve(async (req) => {
     const { action, ...params } = await req.json();
     console.log('QuWallet action: %s', action, { userId, params: Object.keys(params) });
 
+    const requireOwnedWallet = async (address: string): Promise<Response | null> => {
+      if (!userId) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const { data: owned } = await supabase
+        .from('quwallet_wallets')
+        .select('id')
+        .eq('wallet_address', address)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (owned) return null;
+      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+      if (isAdmin === true) return null;
+      return new Response(JSON.stringify({ error: 'Wallet does not belong to you' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    };
+
     switch (action) {
       case 'create_wallet': {
         if (!userId) {
@@ -326,6 +346,8 @@ serve(async (req) => {
       case 'get_balance': {
         const { wallet_address } = params;
         if (!wallet_address) throw new Error('wallet_address required');
+        const denyBal = await requireOwnedWallet(String(wallet_address));
+        if (denyBal) return denyBal;
 
         const { data: ledger, error } = await supabase
           .from('qtc_ledger')
@@ -483,6 +505,9 @@ serve(async (req) => {
       case 'get_transactions': {
         const { wallet_address, limit = 50 } = params;
         if (!wallet_address) throw new Error('wallet_address required');
+        if (!/^[A-Za-z0-9_]+$/.test(String(wallet_address))) throw new Error('Invalid wallet_address');
+        const denyTx = await requireOwnedWallet(String(wallet_address));
+        if (denyTx) return denyTx;
 
         const { data: transactions, error } = await supabase
           .from('qtc_transactions')

@@ -167,7 +167,7 @@ serve(async (req) => {
           balance_sol: balanceSol,
           last_activity: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }).eq('wallet_address', walletAddress);
+        }).eq('wallet_address', walletAddress).eq('user_id', user.id);
 
         return new Response(JSON.stringify({ 
           success: true,
