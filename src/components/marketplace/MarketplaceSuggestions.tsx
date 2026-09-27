@@ -59,11 +59,13 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
   const [loading, setLoading] = useState(true);
 
   const loadSuggestions = useCallback(async () => {
-    const { data } = await supabase
-      .from("marketplace_suggestions" as any)
-      .select("*")
-      .order(sortBy === "votes" ? "votes" : "created_at", { ascending: false }) as any;
-    if (data) setSuggestions(data);
+    // Public board via author-anonymized RPC (no user ids exposed)
+    const { data } = await (supabase.rpc as any)("list_marketplace_suggestions");
+    if (data) {
+      const rows = [...(data as any[])].sort((a, b) =>
+        sortBy === "votes" ? (b.votes ?? 0) - (a.votes ?? 0) : new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setSuggestions(rows);
+    }
 
     const user = await getCachedUser();
     if (user) {
@@ -82,13 +84,12 @@ export const MarketplaceSuggestions = ({ marketType }: MarketplaceSuggestionsPro
     const user = await getCachedUser();
     if (!user) { toast.error("Sign in to vote"); return; }
 
+    // Vote totals are recalculated server-side on insert/delete
     if (voted.includes(id)) {
       await supabase.from("suggestion_votes" as any).delete().eq("suggestion_id", id).eq("user_id", user.id);
-      await supabase.from("marketplace_suggestions" as any).update({ votes: suggestions.find(s => s.id === id)!.votes - 1 } as any).eq("id", id);
       setVoted(prev => prev.filter(v => v !== id));
     } else {
       await supabase.from("suggestion_votes" as any).insert({ suggestion_id: id, user_id: user.id } as any);
-      await supabase.from("marketplace_suggestions" as any).update({ votes: suggestions.find(s => s.id === id)!.votes + 1 } as any).eq("id", id);
       setVoted(prev => [...prev, id]);
       toast.success("Vote recorded!");
     }
