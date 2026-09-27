@@ -8,7 +8,7 @@ Responsibility split:
                        operates the master kill-switch via system_status;
                        dispatches QuantClaw tool directives via agent_directives
   This worker       → reads configs, fetches live prices, generates real signals
-                       via RSI+EMA+Volume strategy, executes real Alpaca orders,
+                       via RSI+EMA+Volume strategy; execution remains venue-gated,
                        manages open positions with stop-loss/take-profit close loop,
                        writes to trade_logs + performance_evaluator;
                        polls agent_directives and executes QuantClaw tools
@@ -19,27 +19,18 @@ Trading execution flow (main loop):
   3. Fetch active strategy configurations
   4. Fetch live prices from CoinGecko
   4.5 Close open positions: check stop-loss/take-profit/reversal via _close_open_positions()
-  5. Per-strategy: generate RSI+EMA+Volume signal → validate → execute Alpaca order
+  5. Per-strategy: generate RSI+EMA+Volume signal → validate → approved venue only
 
 Required environment variables:
   SUPABASE_URL              Supabase project REST URL
   SUPABASE_SERVICE_ROLE_KEY Service-role key (bypasses RLS for writes)
 
-  ALPACA_API_KEY            Alpaca brokerage API key ID
-  ALPACA_SECRET_KEY         Alpaca brokerage secret key
 
   *** CRITICAL: LIVE vs PAPER MODE ***
-  ALPACA_BASE_URL           Set to https://paper-api.alpaca.markets for paper trading
-                            Set to https://api.alpaca.markets for LIVE trading with real money
-  ALPACA_PAPER_MODE         'true'  → blocks live order submission (SAFE DEFAULT)
-                            'false' → ENABLES REAL MONEY EXECUTION
-                            Your render.yaml currently sets this to 'false'.
-                            Ensure this is intentional before deploying with real API keys.
 
 Optional environment variables:
   COINGECKO_API_KEY         Pro API key; free-tier endpoint used if absent
   LOOP_INTERVAL_SECONDS     Main loop cadence in seconds (default: 60)
-  ALPACA_SYMBOL_WHITELIST   Comma-separated list of tradeable symbols (default: BTCUSD,ETHUSD,...)
 """
 
 import logging
@@ -294,145 +285,8 @@ def fetch_market_prices(symbols: list[str]) -> dict[str, float]:
 
 
 def _close_open_positions() -> None:
-    """
-    Polls trade_logs for 'open' positions, checks Alpaca for current status,
-    and closes them if the strategy signals a reversal or if a stop-loss/take-profit is hit.
-    Updates the trade_logs row with realized PnL and marks it 'closed'.
-    """
-    log.warning("Legacy autonomous position management is disabled; use an approved user-scoped venue executor.")
+    """Disabled legacy broker position manager."""
     return
-    try:
-        # Fetch open positions
-        result = (
-            db.table("trade_logs")
-            .select("*")
-            .eq("status", "open")
-            .execute()
-        )
-        open_trades = result.data or []
-    except Exception as exc:
-        log.error("Failed to fetch open positions: %s", exc)
-        return
-
-    if not open_trades:
-        return
-
-    # Fetch current prices for open symbols
-    symbols = list({t["symbol"] for t in open_trades if t.get("symbol")})
-    prices = fetch_market_prices(symbols)
-
-    # Take-profit / stop-loss thresholds (configurable via env vars).
-    take_profit_pct = float(os.getenv("TAKE_PROFIT_PCT", "0.05"))   # +5 %
-    stop_loss_pct   = float(os.getenv("STOP_LOSS_PCT",   "0.02"))   # −2 %
-
-    for trade in open_trades:
-        try:
-            symbol = trade["symbol"]
-            current_price = prices.get(symbol)
-            if not current_price:
-                continue
-
-            # Re-evaluate the signal directly from the strategy module instead
-            # of mutating the global CATEGORY_SYMBOLS pool. This keeps the
-            # close-loop reentrant and avoids hidden side-effects.
-            try:
-                fresh_signal = real_strategy.generate_signal(symbol)
-                signal_direction = fresh_signal.get("direction", "hold")
-            except Exception as sig_exc:
-                log.warning(
-                    "[PositionManager] Signal refresh failed for %s: %s — "
-                    "falling back to TP/SL only", symbol, sig_exc,
-                )
-                signal_direction = "hold"
-
-            entry_price = float(trade["entry_price"])
-            direction   = trade["direction"]
-
-            if direction == "buy":
-                pnl_pct = (current_price - entry_price) / entry_price
-                reversal = signal_direction == "sell"
-            else:
-                pnl_pct = (entry_price - current_price) / entry_price
-                reversal = signal_direction == "buy"
-
-            should_close = (
-                reversal
-                or pnl_pct >= take_profit_pct
-                or pnl_pct <= -stop_loss_pct
-            )
-
-            if should_close:
-                close_reason = (
-                    "reversal"      if reversal
-                    else "take_profit" if pnl_pct >= take_profit_pct
-                    else "stop_loss"
-                )
-                log.info(
-                    "Closing position %s for %s (reason=%s, PnL=%.2f%%)",
-                    trade.get("id", "?")[:8], symbol, close_reason, pnl_pct * 100,
-                )
-
-                close_side = "sell" if direction == "buy" else "buy"
-
-                # Reconstruct the actual notional that was filled at entry.
-                # Prefer the explicit qty stored on the trade row when present;
-                # otherwise fall back to entry_price * TRADE_QUANTITY which
-                # mirrors what execute_real_trade() submitted on the open.
-                stored_qty = trade.get("qty")
-                if stored_qty:
-                    try:
-                        notional = float(stored_qty) * entry_price
-                    except (TypeError, ValueError):
-                        notional = entry_price * TRADE_QUANTITY
-                else:
-                    notional = entry_price * TRADE_QUANTITY
-
-                alpaca_params = {
-                    "symbol":   symbol,
-                    "side":     close_side,
-                    "notional": notional,
-                    "approved": True,
-                }
-
-                order_result = _execute_alpaca_live_order(
-                    alpaca_params, trade["user_id"], "prod",
-                )
-
-                exit_price = float(order_result.get("filled_avg_price") or current_price)
-
-                # Final PnL based on real fill prices
-                if direction == "buy":
-                    gross_pnl = (exit_price - entry_price) * TRADE_QUANTITY
-                else:
-                    gross_pnl = (entry_price - exit_price) * TRADE_QUANTITY
-
-                close_fee = exit_price * TRADE_QUANTITY * MAKER_FEE_RATE
-                total_fee = float(trade.get("fee", 0)) + close_fee
-                net_pnl   = gross_pnl - total_fee
-
-                actual_slip_pct = abs(exit_price - current_price) / current_price * 100
-
-                update_data = {
-                    "status":           "closed",
-                    "exit_price":       round(exit_price, 8),
-                    "closed_at":        utcnow_iso(),
-                    "realized_pnl_usd": round(net_pnl, 6),
-                    "fee":              round(total_fee, 6),
-                    "slippage_pct":     round(actual_slip_pct, 4),
-                }
-
-                db.table("trade_logs").update(update_data).eq("id", trade["id"]).execute()
-
-                # Collect platform fee on positive net PnL only
-                trade.update(update_data)
-                collect_platform_fee(trade)
-
-                # Refresh strategy performance metrics
-                update_performance(trade["strategy_id"])
-
-        except Exception as e:
-            log.error("Failed to manage open position %s: %s", trade.get("id"), e)
-
 
 def simulate_trade(strategy: dict, prices: dict[str, float]) -> Optional[dict]:
     """
@@ -487,63 +341,9 @@ def simulate_trade(strategy: dict, prices: dict[str, float]) -> Optional[dict]:
 
 
 def execute_real_trade(strategy: dict, prices: dict[str, float]) -> Optional[dict]:
-    """
-    Executes a real trade for the given strategy using live price data and Alpaca.
-    """
-    log.warning("Legacy autonomous execution is disabled; use Hummingbot or authenticated CCXT execution.")
+    """Fail closed until an approved user-scoped venue executor is selected."""
+    log.warning("Autonomous execution requires an approved user-scoped venue executor.")
     return None
-    symbol      = strategy_symbol(strategy)
-    entry_price = prices.get(symbol)
-
-    if entry_price is None:
-        log.warning("[%s] No price available for %s — skipping", strategy["name"], symbol)
-        return None
-
-    direction = determine_direction(strategy, entry_price)
-    
-    if direction == "hold":
-        return None
-
-    # Calculate notional value (e.g., $100 per trade, or based on TRADE_QUANTITY)
-    notional = entry_price * TRADE_QUANTITY
-    
-    # Execute via Alpaca
-    try:
-        alpaca_params = {
-            "symbol": symbol,
-            "side": direction,
-            "notional": notional,
-            "approved": True # Worker execution is pre-approved
-        }
-        
-        # We use 'prod' agent_type to pass the safety check in _execute_alpaca_live_order
-        order_result = _execute_alpaca_live_order(alpaca_params, strategy["user_id"], "prod")
-        
-        # Log the real entry. The position is now open; PnL is calculated by
-        # _close_open_positions() when the closing order is executed.
-        now = utcnow_iso()
-        actual_price = float(order_result.get("filled_avg_price") or entry_price)
-        
-        return {
-            "strategy_id":      strategy["id"],
-            "direction":        direction,
-            "entry_price":      round(actual_price, 8),
-            "exit_price":       round(actual_price, 8),  # Updated to real exit by close-loop
-            "closed_at":        now,
-            "action":           "worker_execution",
-            "user_id":          strategy["user_id"],
-            "status":           "open",  # _close_open_positions() will flip this to 'closed'
-            "symbol":           symbol,
-            "realized_pnl_usd": 0.0,     # Updated to real PnL by close-loop
-            "fee":              round(notional * MAKER_FEE_RATE, 6),
-            "slippage_pct":     0.0,
-            "created_at":       now,
-        }
-        
-    except Exception as e:
-        log.error(f"[{strategy['name']}] Real trade execution failed: {e}")
-        return None
-
 
 def log_trade(trade: dict) -> bool:
     """
