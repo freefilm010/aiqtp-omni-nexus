@@ -34,6 +34,7 @@ import {
   Target,
   Lock,
   FolderLock,
+  Droplets,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -52,6 +53,7 @@ const navItems: NavItem[] = [
   { title: "Financials", href: "/admin/financials", icon: DollarSign },
   { title: "Revenue", href: "/admin/revenue", icon: TrendingUp },
   { title: "Treasury Wallets", href: "/admin/treasury", icon: Wallet },
+  { title: "H20 Governance", href: "/admin/h20", icon: Droplets },
   { title: "Withdrawal Queue", href: "/admin/withdrawals", icon: ArrowUpDown },
   { title: "Profit Automation", href: "/admin/profit-automation", icon: RefreshCw },
   { title: "Investments", href: "/admin/investments", icon: TrendingUp },

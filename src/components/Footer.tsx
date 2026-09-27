@@ -62,6 +62,7 @@ const Footer = () => {
     { to: "/faucet", label: "Crypto Faucet", icon: Crosshair },
     { to: "/connections", label: "Connections", icon: Globe },
     { to: "/data-ecosystem", label: "Data Ecosystem", icon: Layers },
+    { to: "/h20", label: "H20 Water Reserve", icon: Globe },
   ];
 
   const infoLinks = [

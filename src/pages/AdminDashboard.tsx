@@ -44,6 +44,7 @@ const RevenueAutomation = lazy(() => import("@/components/admin/RevenueAutomatio
 const AdminNFTWallet = lazy(() => import("@/components/admin/AdminNFTWallet"));
 const MasterKillSwitch = lazy(() => import("@/components/trading/MasterKillSwitch"));
 const WithdrawalQueue = lazy(() => import("@/components/admin/WithdrawalQueue"));
+const H20Governance = lazy(() => import("@/components/admin/H20Governance"));
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
@@ -122,6 +123,7 @@ const AdminDashboard = () => {
               <Route path="nft-wallet" element={<AdminNFTWallet />} />
               <Route path="kill-switch" element={<MasterKillSwitch />} />
               <Route path="withdrawals" element={<WithdrawalQueue />} />
+              <Route path="h20" element={<H20Governance />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </Suspense>
