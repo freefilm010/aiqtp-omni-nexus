@@ -197,6 +197,12 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const { data: isAdminRole } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
+    const isAdmin = isAdminRole === true;
+    const forbidden = (msg: string) => new Response(JSON.stringify({ success: false, error: msg }), {
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
     const { action, ...params } = await req.json();
     console.log(`QTC Network action: ${action}`);
 
@@ -248,6 +254,7 @@ serve(async (req) => {
       }
 
       case 'mine_block': {
+        if (!isAdmin) return forbidden('Only the network operator can produce blocks');
         // Get pending transactions
         const { data: pendingTxs } = await supabase
           .from('qtc_transactions')
@@ -336,6 +343,15 @@ serve(async (req) => {
         if (!wallet_address || !stake_amount) {
           throw new Error('wallet_address and stake_amount required');
         }
+        const stakeNum = Number(stake_amount);
+        if (!Number.isFinite(stakeNum) || stakeNum <= 0) throw new Error('Invalid stake_amount');
+        const { data: ownedWallet } = await supabase
+          .from('quwallet_wallets')
+          .select('id')
+          .eq('wallet_address', wallet_address)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (!ownedWallet) return forbidden('You can only stake from your own wallet');
 
         // Check wallet balance
         const { data: ledger } = await supabase

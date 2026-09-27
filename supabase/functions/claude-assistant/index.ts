@@ -95,10 +95,9 @@ serve(async (req) => {
       );
     }
 
-    let sanitizedSystem = system;
-    if (system && typeof system === 'string' && system.length > MAX_SYSTEM_LENGTH) {
-      sanitizedSystem = system.substring(0, MAX_SYSTEM_LENGTH);
-    }
+    // System instructions are server-owned; caller-supplied `system` is ignored.
+    void system; void MAX_SYSTEM_LENGTH;
+    const sanitizedSystem = "";
 
     // Rate limiting
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
