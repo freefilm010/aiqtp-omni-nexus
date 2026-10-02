@@ -4263,6 +4263,267 @@ export type Database = {
           },
         ]
       }
+      h20_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: string
+          previous_record: Json | null
+          reason: string | null
+          record_id: string
+          record_type: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          previous_record?: Json | null
+          reason?: string | null
+          record_id: string
+          record_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          previous_record?: Json | null
+          reason?: string | null
+          record_id?: string
+          record_type?: string
+        }
+        Relationships: []
+      }
+      h20_distributions: {
+        Row: {
+          agreement_document_reference: string
+          amount: number
+          approval_reference: string
+          created_at: string
+          created_by: string
+          currency: string
+          distribution_type: string
+          id: string
+          purpose: string
+          recipient_id: string
+          reporting_period: string
+          status: string
+          transaction_date: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          agreement_document_reference: string
+          amount: number
+          approval_reference: string
+          created_at?: string
+          created_by?: string
+          currency: string
+          distribution_type: string
+          id?: string
+          purpose: string
+          recipient_id: string
+          reporting_period: string
+          status?: string
+          transaction_date?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          agreement_document_reference?: string
+          amount?: number
+          approval_reference?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          distribution_type?: string
+          id?: string
+          purpose?: string
+          recipient_id?: string
+          reporting_period?: string
+          status?: string
+          transaction_date?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "h20_distributions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "h20_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      h20_ledger_entries: {
+        Row: {
+          amount: number
+          approval_reference: string
+          business_purpose: string
+          correction_of: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          destination_account: string
+          id: string
+          ledger_status: string
+          source_account: string
+          transaction_group_id: string
+          transaction_reference: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          approval_reference: string
+          business_purpose: string
+          correction_of?: string | null
+          created_at?: string
+          created_by?: string
+          currency: string
+          destination_account: string
+          id?: string
+          ledger_status?: string
+          source_account: string
+          transaction_group_id: string
+          transaction_reference: string
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          approval_reference?: string
+          business_purpose?: string
+          correction_of?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          destination_account?: string
+          id?: string
+          ledger_status?: string
+          source_account?: string
+          transaction_group_id?: string
+          transaction_reference?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "h20_ledger_entries_correction_of_fkey"
+            columns: ["correction_of"]
+            isOneToOne: false
+            referencedRelation: "h20_ledger_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      h20_public_claims: {
+        Row: {
+          approval_status: string
+          claim_category: string
+          claim_key: string
+          created_at: string
+          created_by: string
+          effective_at: string
+          expires_at: string | null
+          id: string
+          public_content: string
+          public_label: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_document_reference: string
+          supersedes_claim_id: string | null
+          verification_status: string
+        }
+        Insert: {
+          approval_status?: string
+          claim_category: string
+          claim_key: string
+          created_at?: string
+          created_by?: string
+          effective_at: string
+          expires_at?: string | null
+          id?: string
+          public_content: string
+          public_label: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_document_reference: string
+          supersedes_claim_id?: string | null
+          verification_status?: string
+        }
+        Update: {
+          approval_status?: string
+          claim_category?: string
+          claim_key?: string
+          created_at?: string
+          created_by?: string
+          effective_at?: string
+          expires_at?: string | null
+          id?: string
+          public_content?: string
+          public_label?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_document_reference?: string
+          supersedes_claim_id?: string | null
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "h20_public_claims_supersedes_claim_id_fkey"
+            columns: ["supersedes_claim_id"]
+            isOneToOne: false
+            referencedRelation: "h20_public_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      h20_recipients: {
+        Row: {
+          created_at: string
+          created_by: string
+          document_reference: string | null
+          evidence_source: string | null
+          id: string
+          legal_name: string
+          public_name: string
+          recipient_classification: string
+          reviewed_by: string | null
+          verification_date: string | null
+          verification_expires_at: string | null
+          verification_scope: string | null
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          document_reference?: string | null
+          evidence_source?: string | null
+          id?: string
+          legal_name: string
+          public_name: string
+          recipient_classification: string
+          reviewed_by?: string | null
+          verification_date?: string | null
+          verification_expires_at?: string | null
+          verification_scope?: string | null
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          document_reference?: string | null
+          evidence_source?: string | null
+          id?: string
+          legal_name?: string
+          public_name?: string
+          recipient_classification?: string
+          reviewed_by?: string | null
+          verification_date?: string | null
+          verification_expires_at?: string | null
+          verification_scope?: string | null
+          verification_status?: string
+        }
+        Relationships: []
+      }
       heatmap_data: {
         Row: {
           change_24h: number | null
@@ -10611,6 +10872,49 @@ export type Database = {
         }[]
       }
       get_user_usd_balance: { Args: { p_user_id?: string }; Returns: number }
+      h20_is_approver: { Args: never; Returns: boolean }
+      h20_public_accounting_summary: {
+        Args: never
+        Returns: {
+          account_code: string
+          confirmed_amount: number
+          currency: string
+          display_name: string
+        }[]
+      }
+      h20_public_claims_list: {
+        Args: never
+        Returns: {
+          approval_status: string
+          claim_category: string
+          effective_at: string
+          id: string
+          public_content: string
+          public_label: string
+          verification_status: string
+        }[]
+      }
+      h20_record_primary_sale: {
+        Args: {
+          p_approval_reference: string
+          p_blockchain: number
+          p_business_purpose: string
+          p_currency: string
+          p_gross: number
+          p_processing: number
+          p_taxes: number
+          p_transaction_reference: string
+        }
+        Returns: string
+      }
+      h20_review_claim: {
+        Args: {
+          p_action: string
+          p_claim_id: string
+          p_verification_status: string
+        }
+        Returns: undefined
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
