@@ -21,8 +21,8 @@ import {
 } from "@/lib/h20/terminology";
 
 type Claim = { id: string; claim_key: string; public_label: string; claim_category: string; approval_status: string; verification_status: string; source_document_reference: string; public_content: string };
-type Recipient = { id: string; public_name: string; legal_name: string; recipient_type: string | null; recipient_classification: string; verification_status: string };
-type Distribution = { id: string; transfer_type: string | null; distribution_type: string; amount: number; currency: string; status: string; purpose: string; recipient_id: string };
+type Recipient = { id: string; public_name: string; legal_name: string; recipient_classification: string; verification_status: string };
+type Distribution = { id: string; distribution_type: string; amount: number; currency: string; status: string; purpose: string; recipient_id: string };
 type LedgerEntry = { id: string; transaction_type: string; amount: number; currency: string; transaction_reference: string; ledger_status: string; created_at: string };
 
 const H20Governance = () => {
@@ -84,7 +84,7 @@ const H20Governance = () => {
     if (!user || !recipient.legalName || !recipient.publicName) return toast.error("Legal and public names are required");
     setBusy(true);
     const { error } = await db.from("h20_recipients").insert({
-      legal_name: recipient.legalName.trim(), public_name: recipient.publicName.trim(), recipient_classification: "OTHER_APPROVED_WATER_IMPACT_ENTITY", recipient_type: recipient.classification,
+      legal_name: recipient.legalName.trim(), public_name: recipient.publicName.trim(), recipient_classification: recipient.classification,
       verification_status: recipient.verification, verification_scope: recipient.scope || null, evidence_source: recipient.source || null,
       verification_date: recipient.date || null, verification_expires_at: recipient.expires || null, document_reference: recipient.document || null,
       reviewed_by: recipient.verification === "VERIFIED" ? user.id : null, created_by: user.id,
@@ -100,7 +100,7 @@ const H20Governance = () => {
     if (!user || !distribution.recipientId || !distribution.purpose || !distribution.amount || !distribution.approval || !distribution.agreement || !distribution.reportingPeriod) return toast.error("Complete every distribution field");
     setBusy(true);
     const { error } = await db.from("h20_distributions").insert({
-      recipient_id: distribution.recipientId, distribution_type: "OTHER_APPROVED_DISTRIBUTION", transfer_type: distribution.type, purpose: distribution.purpose.trim(),
+      recipient_id: distribution.recipientId, distribution_type: distribution.type, purpose: distribution.purpose.trim(),
       amount: Number(distribution.amount), currency: distribution.currency.trim().toUpperCase(), approval_reference: distribution.approval.trim(),
       agreement_document_reference: distribution.agreement.trim(), reporting_period: distribution.reportingPeriod.trim(), created_by: user.id,
     });
@@ -143,7 +143,7 @@ const H20Governance = () => {
             <Field label="Verification date"><Input type="date" value={recipient.date} onChange={(e) => setRecipient({ ...recipient, date: e.target.value })} /></Field><Field label="Expiration date"><Input type="date" value={recipient.expires} onChange={(e) => setRecipient({ ...recipient, expires: e.target.value })} /></Field>
             <Field label="Document reference"><Input value={recipient.document} onChange={(e) => setRecipient({ ...recipient, document: e.target.value })} /></Field><div className="flex items-end"><Button disabled={busy} onClick={createRecipient}>Create recipient record</Button></div>
           </CardContent></Card>
-          <Card><Table><TableHeader><TableRow><TableHead>Approved Water-Impact Recipient</TableHead><TableHead>Classification</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{recipients.length === 0 ? <EmptyRow columns={3} label="No recipients recorded" /> : recipients.map((item) => <TableRow key={item.id}><TableCell><p className="font-medium">{item.public_name}</p><p className="text-xs text-muted-foreground">{item.legal_name}</p></TableCell><TableCell className="font-mono text-xs">{item.recipient_type ?? "LEGACY_CLASSIFICATION_PENDING_REVIEW"}</TableCell><TableCell><Badge variant="outline">{item.verification_status}</Badge></TableCell></TableRow>)}</TableBody></Table></Card>
+          <Card><Table><TableHeader><TableRow><TableHead>Approved Water-Impact Recipient</TableHead><TableHead>Classification</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{recipients.length === 0 ? <EmptyRow columns={3} label="No recipients recorded" /> : recipients.map((item) => <TableRow key={item.id}><TableCell><p className="font-medium">{item.public_name}</p><p className="text-xs text-muted-foreground">{item.legal_name}</p></TableCell><TableCell className="font-mono text-xs">{item.recipient_classification}</TableCell><TableCell><Badge variant="outline">{item.verification_status}</Badge></TableCell></TableRow>)}</TableBody></Table></Card>
         </TabsContent>
 
         <TabsContent value="distributions" className="space-y-4">
@@ -155,7 +155,7 @@ const H20Governance = () => {
             <Field label="Reporting period"><Input value={distribution.reportingPeriod} onChange={(e) => setDistribution({ ...distribution, reportingPeriod: e.target.value })} placeholder="2026-Q4" /></Field><Field label="Purpose"><Textarea value={distribution.purpose} onChange={(e) => setDistribution({ ...distribution, purpose: e.target.value })} /></Field>
             <div className="md:col-span-2"><Button disabled={busy} onClick={createDistribution}>Save proposed distribution</Button></div>
           </CardContent></Card>
-          <Card><Table><TableHeader><TableRow><TableHead>Classification</TableHead><TableHead>Purpose</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{distributions.length === 0 ? <EmptyRow columns={4} label="No distributions recorded" /> : distributions.map((item) => <TableRow key={item.id}><TableCell className="font-mono text-xs">{item.transfer_type ?? "LEGACY_CLASSIFICATION_PENDING_REVIEW"}</TableCell><TableCell>{item.purpose}</TableCell><TableCell className="text-right font-mono">{item.amount} {item.currency}</TableCell><TableCell><Badge variant="outline">{item.status}</Badge></TableCell></TableRow>)}</TableBody></Table></Card>
+          <Card><Table><TableHeader><TableRow><TableHead>Classification</TableHead><TableHead>Purpose</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{distributions.length === 0 ? <EmptyRow columns={4} label="No distributions recorded" /> : distributions.map((item) => <TableRow key={item.id}><TableCell className="font-mono text-xs">{item.distribution_type}</TableCell><TableCell>{item.purpose}</TableCell><TableCell className="text-right font-mono">{item.amount} {item.currency}</TableCell><TableCell><Badge variant="outline">{item.status}</Badge></TableCell></TableRow>)}</TableBody></Table></Card>
         </TabsContent>
 
         <TabsContent value="ledger"><Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Landmark className="h-4 w-4" />Append-only financial history</CardTitle></CardHeader><Table><TableHeader><TableRow><TableHead>Classification</TableHead><TableHead>Reference</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{ledger.length === 0 ? <EmptyRow columns={4} label="No H20 financial movements recorded" /> : ledger.map((item) => <TableRow key={item.id}><TableCell className="font-mono text-xs">{item.transaction_type}</TableCell><TableCell className="font-mono text-xs">{item.transaction_reference}</TableCell><TableCell className="text-right font-mono">{item.amount} {item.currency}</TableCell><TableCell><Badge variant="outline">{item.ledger_status}</Badge></TableCell></TableRow>)}</TableBody></Table></Card></TabsContent>
