@@ -112,7 +112,7 @@ function runTrainingCycle(
 
   // Consistency: fraction of 24h segments in the window that were profitable
   let profitableSegments = 0, segments = 0;
-  for (let s = 0; s + 24 <= window.length; s += 24) {
+  for (let s = 0; s + 24 < window.length; s += 24) {
     segments++;
     if (window[s + 24].c > window[s].c) profitableSegments++;
   }

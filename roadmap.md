@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Active
+- [ ] **System-wide issue resolution** — repair strategy training, missing trade close timestamps, role/subscription access checks, managed social sign-in, and verify current runtime/database health end to end.
 - [ ] **H20 IRS gift terminology rewrite** — public and administrator wording is rewritten and verified without donation/deductibility jargon. The forward-only gift classification migration remains blocked because the Test database is still restarting/unreachable; active forms temporarily use only legacy-safe neutral classifications and do not offer `GIFT` until that migration lands.
 - [ ] **H20 Truthful Terminology Standard** — isolated category, public disclosure, admin governance, append-only evidence/ledger schema, sole-admin approval, sanitized public functions, and server-side 90/5/5 allocation are built. Test migration applied; direct database verification is blocked by the connection pooler timeout. Live rollout still requires the GitHub PR/merge deployment path and jurisdictional professional review before activation.
 - [ ] **Hummingbot execution** — private-network adapter, fail-closed live gate, sole-admin control, service configuration, status UI, and regression tests added. Launch remains blocked until a private Hummingbot API deployment exists and its URL/credentials are stored securely; live mode stays off.
