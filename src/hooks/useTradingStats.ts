@@ -58,7 +58,7 @@ export function useTradingStats(refetchInterval = 30_000) {
         .from("trade_logs")
         .select("realized_pnl_usd")
         .eq("status", "closed")
-        .gte("closed_at", today.toISOString())
+        .gte("created_at", today.toISOString())
         .not("realized_pnl_usd", "is", null),
     ]);
 
