@@ -58,10 +58,10 @@ export default function QuWalletPage() {
     if (!user) return;
     supabase
       .from("trade_logs")
-      .select("id,symbol,side,realized_pnl_usd,closed_at,strategy_id")
+      .select("id,symbol,side,realized_pnl_usd,created_at")
       .eq("user_id", user.id)
       .eq("status", "closed")
-      .order("closed_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(200)
       .then(({ data }) => setRecentTrades(data ?? []));
   }, [user]);
@@ -373,7 +373,7 @@ export default function QuWalletPage() {
                       <p className={(t.realized_pnl_usd ?? 0) >= 0 ? "text-green-500" : "text-red-500"}>
                         {(t.realized_pnl_usd ?? 0) >= 0 ? "+" : ""}${Number(t.realized_pnl_usd ?? 0).toFixed(4)}
                       </p>
-                      <p className="text-xs text-muted-foreground">{t.closed_at ? new Date(t.closed_at).toLocaleTimeString() : "—"}</p>
+                      <p className="text-xs text-muted-foreground">{t.created_at ? new Date(t.created_at).toLocaleTimeString() : "—"}</p>
                     </div>
                   </div>
                 ))}
@@ -400,7 +400,7 @@ export default function QuWalletPage() {
                     <tbody>
                       {paginated.map((t, i) => (
                         <tr key={t.id ?? i} className="border-t hover:bg-muted/50">
-                          <td className="p-2 text-xs">{t.closed_at ? new Date(t.closed_at).toLocaleString() : "—"}</td>
+                          <td className="p-2 text-xs">{t.created_at ? new Date(t.created_at).toLocaleString() : "—"}</td>
                           <td className="p-2 font-mono">{t.symbol ?? "—"}</td>
                           <td className="p-2"><Badge variant={t.side === "buy" ? "default" : "secondary"}>{t.side ?? "—"}</Badge></td>
                           <td className={`p-2 text-right font-mono ${(t.realized_pnl_usd ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
