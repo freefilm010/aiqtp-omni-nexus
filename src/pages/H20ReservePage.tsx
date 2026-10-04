@@ -65,7 +65,7 @@ const H20ReservePage = () => {
               <Droplets className="h-9 w-9 text-neon-cyan" aria-hidden="true" />
               <Badge variant="outline" className="border-neon-cyan/40 text-neon-cyan">FACTUAL DISCLOSURE</Badge>
             </div>
-            <h1 className="max-w-4xl text-3xl font-bold md:text-5xl">H20 Global Water Reserve</h1>
+            <h1 className="max-w-4xl text-3xl font-bold md:text-5xl">H20 Global Drinking Water Protection</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
               Truthful terminology, separated accounting, evidence-backed public statements, and traceable Water-Impact Program activity.
             </p>
@@ -113,7 +113,7 @@ const H20ReservePage = () => {
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <Badge variant="secondary" className="font-mono">TAX_TREATMENT_NOT_DETERMINED</Badge>
                 <p>{H20_TAX_DISCLOSURE}</p>
-                <p>Transaction-history exports are provided for recordkeeping and are not tax advice.</p>
+                <p>Transaction-history exports are factual records only and are not tax advice.</p>
               </CardContent>
             </Card>
             <Card>
