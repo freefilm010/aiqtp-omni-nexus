@@ -1,10 +1,11 @@
 import { execFileSync } from "node:child_process";
 
 const prohibited = [
+  "\\bdonations?\\b", "\\bdonors?\\b", "\\bdonees?\\b", "\\bcharit(?:y|ies|able)\\b",
   "guaranteed return", "guaranteed profit", "guaranteed income", "risk-free",
   "guaranteed liquidity", "guaranteed redemption", "guaranteed withdrawal",
   "ownership of water", "water-backed token", "government approved",
-  "legally approved", "tax deductible", "tax free", "registered charity",
+  "legally approved", "tax[- ]deductible", "tax free", "registered charity",
   "charitable donation", "security-approved", "insured investment", "guaranteed royalty",
 ];
 let output = "";

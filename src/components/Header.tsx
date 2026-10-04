@@ -215,7 +215,7 @@ const Header = () => {
   ];
 
   const h20Links = [
-    { to: "/h20", label: "H20 Global Water Reserve", icon: Droplets },
+    { to: "/h20", label: "H20 Drinking Water Protection", icon: Droplets },
   ];
 
   const moreLinks = [

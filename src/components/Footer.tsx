@@ -65,7 +65,7 @@ const Footer = () => {
   ];
 
   const h20Links = [
-    { to: "/h20", label: "H20 Global Water Reserve", icon: Globe },
+    { to: "/h20", label: "H20 Drinking Water Protection", icon: Globe },
   ];
 
   const infoLinks = [

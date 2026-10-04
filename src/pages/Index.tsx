@@ -135,7 +135,7 @@ const Index = () => {
           <p className="mx-auto max-w-7xl text-center text-xs text-muted-foreground">
             Explore the separate{" "}
             <Link to="/h20" className="font-medium text-neon-cyan underline underline-offset-4 hover:text-foreground">
-              H20 Global Water Reserve
+              H20 Global Drinking Water Protection
             </Link>{" "}
             information area.
           </p>
