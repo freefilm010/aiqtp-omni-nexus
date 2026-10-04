@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Active
+- [ ] **H20 IRS-aware terminology rewrite** — rename the experience to H20 Global Drinking Water Protection, eliminate donation jargon, retire donation/charity classifications through a forward-only migration, and verify neutral tax disclosures end to end.
 - [ ] **H20 Truthful Terminology Standard** — isolated category, public disclosure, admin governance, append-only evidence/ledger schema, sole-admin approval, sanitized public functions, and server-side 90/5/5 allocation are built. Test migration applied; direct database verification is blocked by the connection pooler timeout. Live rollout still requires the GitHub PR/merge deployment path and jurisdictional professional review before activation.
 - [ ] **Hummingbot execution** — private-network adapter, fail-closed live gate, sole-admin control, service configuration, status UI, and regression tests added. Launch remains blocked until a private Hummingbot API deployment exists and its URL/credentials are stored securely; live mode stays off.
 - [ ] **HollaEx API keys** — secure form opened for HOLLAEX_API_KEY / HOLLAEX_API_SECRET (user to submit; two interruptions so far). Unlocks platform-venue execution + treasury deployment.
