@@ -8,7 +8,7 @@ export const H20_LIQUIDITY_DISCLOSURE =
   "The matching and initial liquidity-support reserve is limited to available funds and does not guarantee token price, trading volume, market liquidity, redemption, resale, or withdrawal.";
 
 export const H20_TAX_DISCLOSURE =
-  "An H20 purchase is an exchange for a blockchain asset, not a gift. A separate transfer is recorded as a gift only when the transferor receives less than full consideration in money or money's worth. No H20 transfer is represented as a charitable contribution, a tax-deductible payment, or an IRS-approved transaction. Gift-tax filing responsibility and all other tax treatment depend on the facts, parties, and applicable jurisdiction; consult a qualified tax adviser.";
+  "An H20 purchase is an exchange for a blockchain asset, not a gift. A separate transfer is recorded as a gift only when the transferor receives less than full consideration in money or money's worth. No tax benefit, exempt status, or IRS approval is represented. Gift-tax filing responsibility and all other tax treatment depend on the facts, parties, and applicable jurisdiction; consult a qualified tax adviser.";
 
 export const H20_ALLOCATIONS = [
   { code: "WATER_IMPACT_ALLOCATION", label: "Water-Impact Program Allocation", percent: 90 },
