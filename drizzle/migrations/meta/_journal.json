@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791158932714,
+      "tag": "0000_fix_helper_grants_and_h20_gift_types",
+      "breakpoints": true
+    }
+  ]
+}

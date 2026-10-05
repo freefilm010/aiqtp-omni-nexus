@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Active
-- [ ] **System-wide issue resolution** — strategy training, trade-date queries, and managed Google/Apple sign-in are repaired and verified. The role/subscription helper repair and H20 classification migration remain blocked while the Test database finishes restarting; current homepage data errors are the same database outage, not separate client defects.
-- [ ] **H20 IRS gift terminology rewrite** — public and administrator wording is rewritten and verified without donation/deductibility jargon. The forward-only gift classification migration remains blocked because the Test database is still restarting/unreachable; active forms temporarily use only legacy-safe neutral classifications and do not offer `GIFT` until that migration lands.
+- [x] **System-wide issue resolution** — training, trade dates, social sign-in, role/subscription permission helpers, and H20 gift classification all repaired on Test (2026-10-05).
+- [x] **H20 IRS gift terminology rewrite** — wording and GIFT classification live on Test database (2026-10-05).
 - [ ] **H20 Truthful Terminology Standard** — isolated category, public disclosure, admin governance, append-only evidence/ledger schema, sole-admin approval, sanitized public functions, and server-side 90/5/5 allocation are built. Test migration applied; direct database verification is blocked by the connection pooler timeout. Live rollout still requires the GitHub PR/merge deployment path and jurisdictional professional review before activation.
 - [ ] **Hummingbot execution** — private-network adapter, fail-closed live gate, sole-admin control, service configuration, status UI, and regression tests added. Launch remains blocked until a private Hummingbot API deployment exists and its URL/credentials are stored securely; live mode stays off.
 - [ ] **HollaEx API keys** — secure form opened for HOLLAEX_API_KEY / HOLLAEX_API_SECRET (user to submit; two interruptions so far). Unlocks platform-venue execution + treasury deployment.
