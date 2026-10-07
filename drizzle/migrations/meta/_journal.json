@@ -8,6 +8,13 @@
       "when": 1791158932714,
       "tag": "0000_fix_helper_grants_and_h20_gift_types",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791334865253,
+      "tag": "0001_grant_authenticated_automation_leaderboard",
+      "breakpoints": true
     }
   ]
 }

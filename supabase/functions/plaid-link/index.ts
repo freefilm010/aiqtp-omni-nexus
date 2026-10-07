@@ -109,7 +109,20 @@ Deno.serve(async (req) => {
     }
 
     if (action === "get_accounts") {
-      const ownAccessToken = await getOwnAccessToken();
+      const { data: item, error: itemError } = await adminSupabase
+        .from("plaid_items")
+        .select("access_token")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (itemError || !item?.access_token) {
+        // No linked bank (or bank-link storage not provisioned): report it plainly.
+        return new Response(JSON.stringify({
+          accounts: [],
+          linked: false,
+          code: itemError ? "BANK_LINK_STORAGE_UNAVAILABLE" : "NO_LINKED_BANK",
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const ownAccessToken = item.access_token as string;
       const data = await plaidPost("/accounts/get", { access_token: ownAccessToken }) as { accounts: unknown[] };
       return new Response(JSON.stringify({ accounts: data.accounts }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

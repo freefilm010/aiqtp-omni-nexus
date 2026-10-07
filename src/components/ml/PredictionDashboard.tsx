@@ -43,7 +43,7 @@ const PredictionDashboard = () => {
       const { data: models } = await supabase
         .from('ml_models' as any)
         .select('*')
-        .eq('is_deployed', true)
+        .eq('status', 'deployed')
         .limit(5) as { data: any[] | null };
 
       const assets = [
