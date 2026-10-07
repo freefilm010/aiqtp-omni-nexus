@@ -281,8 +281,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('auto-pipeline error:', error);
-    return new Response(JSON.stringify({ error: (error instanceof Error ? error.message : String(error)) }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: message }), {
+      status: message === 'Unauthorized' ? 401 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
