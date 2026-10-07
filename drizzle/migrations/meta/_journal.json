@@ -15,6 +15,20 @@
       "when": 1791334865253,
       "tag": "0001_grant_authenticated_automation_leaderboard",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791335375660,
+      "tag": "0002_restore_helper_grants_authenticated",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791335739402,
+      "tag": "0003_make_permission_wrappers_security_definer",
+      "breakpoints": true
     }
   ]
 }
