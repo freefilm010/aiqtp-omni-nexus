@@ -42,7 +42,7 @@ class DCATests(unittest.TestCase):
         with self.assertRaises(ValueError):
             dca.build_dca_plan("X", base_usd=0)
         with self.assertRaises(ValueError):
-            dca.build_dca_plan("X", cadence="hourly")
+            dca.build_dca_plan("X", cadence="yearly")
 
 
 class MomentumTests(unittest.TestCase):
