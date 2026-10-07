@@ -62,13 +62,18 @@ export class ChartPatternDetector {
   detectAllPatterns(): ChartPattern[] {
     const patterns: ChartPattern[] = [];
     
-    patterns.push(...this.detectHeadAndShoulders());
-    patterns.push(...this.detectDoubleTopBottom());
-    patterns.push(...this.detectTriangles());
-    patterns.push(...this.detectWedges());
-    patterns.push(...this.detectChannels());
-    patterns.push(...this.detectFlags());
-    patterns.push(...this.detectCupAndHandle());
+    const groups = [
+      this.detectHeadAndShoulders(),
+      this.detectDoubleTopBottom(),
+      this.detectTriangles(),
+      this.detectWedges(),
+      this.detectChannels(),
+      this.detectFlags(),
+      this.detectCupAndHandle(),
+    ];
+    // Append item-by-item: spreading very large result arrays into push()
+    // overflows the call stack on long candle histories.
+    for (const group of groups) for (const p of group) patterns.push(p);
     
     return patterns.sort((a, b) => b.confidence - a.confidence);
   }

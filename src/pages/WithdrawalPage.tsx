@@ -49,7 +49,7 @@ export default function WithdrawalPage() {
     setHistoryLoading(true);
     supabase
       .from("withdrawal_requests")
-      .select("id, amount_usd, destination_type, status, created_at, processed_at")
+      .select("id, amount_usd, destination_type, status, created_at, processed_at:reviewed_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20)
@@ -80,7 +80,7 @@ export default function WithdrawalPage() {
       // Refresh history
       const { data: newHistory } = await supabase
         .from("withdrawal_requests")
-        .select("id, amount_usd, destination_type, status, created_at, processed_at")
+        .select("id, amount_usd, destination_type, status, created_at, processed_at:reviewed_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(20);
